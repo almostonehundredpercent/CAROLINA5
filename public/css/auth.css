@@ -1,0 +1,148 @@
+/* auth.css */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+    font-family: 'Inter', sans-serif;
+    background: #c87010;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Orange header section */
+.page {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+    background: #c87010;
+    position: relative;
+}
+
+.header {
+    width: 100%;
+    height: 200px;
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    position: relative;
+    z-index: 2;
+}
+
+/* Logo overlaps header and card */
+.logo-wrap {
+    width: 140px;
+    height: 140px;
+    border-radius: 50%;
+    border: 4px solid #fff;
+    overflow: hidden;
+    position: absolute;
+    bottom: -70px;
+    z-index: 3;
+    background: #fff;
+}
+
+.logo-wrap img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* White rounded card */
+.card {
+    background: #fff;
+    border-radius: 36px 36px 0 0;
+    width: 100%;
+    flex: 1;
+    padding: 110px 2rem 3rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+}
+
+/* Buttons */
+.btn {
+    width: 100%;
+    max-width: 320px;
+    padding: 14px;
+    border-radius: 30px;
+    font-size: 16px;
+    font-weight: 600;
+    font-family: 'Inter', sans-serif;
+    cursor: pointer;
+    text-align: center;
+    text-decoration: none;
+    display: block;
+    border: none;
+    transition: opacity 0.15s;
+}
+
+.btn:hover { opacity: 0.88; }
+
+.btn-signin {
+    background: #fff;
+    border: 2px solid #c87010;
+    color: #1a1a1a;
+}
+
+.btn-signup {
+    background: #c87010;
+    color: #fff;
+}
+
+.btn-google {
+    background: #fff;
+    border: 1.5px solid #ccc;
+    color: #1a1a1a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    font-weight: 500;
+    font-size: 15px;
+    border-radius: 8px;
+    max-width: 320px;
+    width: 100%;
+    padding: 13px;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+}
+
+.btn-noacct {
+    background: #c87010;
+    color: #fff;
+    font-weight: 700;
+    font-size: 15px;
+}
+
+/* Divider */
+.divider {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    max-width: 320px;
+    gap: 10px;
+    color: #555;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.divider::before,
+.divider::after {
+    content: '';
+    flex: 1;
+    height: 1.5px;
+    background: #333;
+}
+
+/* Fine print */
+.fine-print {
+    font-size: 12px;
+    color: #888;
+    text-align: center;
+    line-height: 1.6;
+    max-width: 300px;
+}
+
+.fine-print a { color: #666; }

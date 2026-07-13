@@ -1,0 +1,37 @@
+services:
+  app:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      APP_ENV: production
+      APP_DEBUG: "false"
+      APP_URL: http://localhost:8000
+      APP_KEY: ${APP_KEY:?Set APP_KEY in .env before starting Docker}
+      DB_CONNECTION: mysql
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_DATABASE: carolina5
+      DB_USERNAME: carolina
+      DB_PASSWORD: carolina_secret
+      SESSION_DRIVER: database
+      CACHE_STORE: database
+    depends_on:
+      db:
+        condition: service_healthy
+  db:
+    image: mysql:8.4
+    environment:
+      MYSQL_DATABASE: carolina5
+      MYSQL_USER: carolina
+      MYSQL_PASSWORD: carolina_secret
+      MYSQL_ROOT_PASSWORD: change_this_root_password
+    volumes:
+      - carolina5_mysql:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-pchange_this_root_password"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+volumes:
+  carolina5_mysql:
