@@ -8,6 +8,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ asset('css/site.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/responsive.css') }}">
 </head>
 <body>
     <header class="nav">
@@ -16,6 +17,7 @@
         </a>
         <nav>
             <a href="{{ route('rooms.index') }}">Rooms</a>
+            <a href="{{ route('bookings.lookup') }}">Find booking</a>
             <a href="{{ route('home') }}#about">About</a>
             <a href="#contact">Contact</a>
 

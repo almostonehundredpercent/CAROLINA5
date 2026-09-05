@@ -1,0 +1,2 @@
+@extends('layouts.app')
+@section('content')<section class="confirmation"><span class="eyebrow">BOOKING DETAILS</span><h1>{{ $booking->room->name }}</h1><div class="confirmation-card"><div><small>Reference</small><b>{{ $booking->reference }}</b></div><div><small>Status</small><b>{{ ucfirst($booking->status) }}</b></div><div><small>Stay</small><b>{{ $booking->check_in->format('M j') }} - {{ $booking->check_out->format('M j, Y') }}</b></div><div><small>Total</small><b>₱{{ number_format($booking->total_amount) }}</b></div></div></section>@endsection

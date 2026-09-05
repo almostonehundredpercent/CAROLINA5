@@ -1,0 +1,80 @@
+/* Keep the footer at the bottom when a page has little content. */
+body { min-height: 100vh; display: flex; flex-direction: column; }
+main { flex: 1 0 auto; }
+footer { flex-shrink: 0; }
+
+/* Responsive improvements for tablet and mobile */
+@media (max-width: 1100px) {
+    .nav { padding-left: 5%; padding-right: 5%; }
+    .section { padding-left: 5%; padding-right: 5%; }
+    .room-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .room-detail, .booking-page { gap: 30px; padding-left: 5%; padding-right: 5%; }
+}
+
+@media (max-width: 800px) {
+    .nav { height: auto; min-height: 66px; flex-wrap: wrap; padding-top: 12px; }
+    .nav nav { width: 100%; order: 2; justify-content: center; flex-wrap: wrap; gap: 14px; padding: 10px 0 2px; }
+    .nav nav > a:not(.nav-button) { display: inline-flex; }
+    .nav .brand { font-size: 1.05rem; }
+    .nav-button { padding: 8px 13px; }
+    .hero { min-height: 470px; padding: 58px 7%; }
+    .hero-copy h1 { font-size: clamp(2.6rem, 13vw, 4rem); }
+    .search-wrap { margin: 22px 0 0; padding: 0 5%; }
+    .search-card, .filter-bar { gap: 12px; }
+    .search-card label, .filter-bar input, .filter-bar select, .search-card .button, .filter-bar .button { width: 100%; }
+    .section { padding-top: 60px; padding-bottom: 60px; }
+    .section-heading { align-items: flex-start; gap: 15px; flex-direction: column; }
+    .room-grid, .benefit-grid { grid-template-columns: 1fr; }
+    .room-card img { height: 220px; }
+    .room-detail, .booking-page { grid-template-columns: 1fr; margin: 32px auto; }
+    .room-detail > img { height: 290px; }
+    .booking-form { padding: 24px 18px; }
+    .booking-form form { gap: 14px; }
+    .booking-summary { order: -1; }
+    .booking-row { grid-template-columns: 78px 1fr; gap: 13px; }
+    .booking-row img { width: 78px; height: 78px; }
+    .booking-row > div:last-child { grid-column: 1 / -1; text-align: left; }
+    .confirmation { padding: 60px 20px; }
+    .confirmation-card { grid-template-columns: 1fr; gap: 14px; margin: 25px 0; }
+    .auth-page { min-height: calc(100vh - 116px); padding: 35px 16px; }
+    .auth-card { padding: 28px 20px; }
+    .auth-card h1 { font-size: 2.8rem; }
+    .stats { grid-template-columns: 1fr; }
+    footer { grid-template-columns: 1fr; padding: 35px 8%; }
+}
+
+@media (max-width: 430px) {
+    body { font-size: 15px; }
+    .nav nav { justify-content: space-between; gap: 8px; font-size: .8rem; }
+    .nav nav > a { white-space: nowrap; }
+    .nav .brand small { letter-spacing: .8px; }
+    .hero { min-height: 430px; }
+    .facts, .amenities { gap: 7px; }
+    .facts span, .amenities span { font-size: .8rem; }
+    .empty-state { padding: 42px 20px; }
+    .receipt-actions { display: grid; gap: 12px; }
+    .receipt-actions .button, .receipt-actions form .button { width: 100%; justify-content: center; }
+}
+
+@media print {
+    .nav, footer, .receipt-actions { display: none !important; }
+    body { background: #fff; }
+    .receipt-page { padding: 20px 0; }
+}
+
+.reservation-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 14px;
+    margin-top: 24px;
+}
+
+.reservation-actions .button { flex: 0 0 auto; }
+.button.button-outline { background: transparent; border: 1px solid var(--gold); color: var(--gold); }
+.button.button-outline:hover { background: var(--gold); color: #fff; }
+
+@media (max-width: 430px) {
+    .reservation-actions { align-items: stretch; }
+    .reservation-actions .button { width: 100%; justify-content: center; }
+}

@@ -10,6 +10,8 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', fn () => view('home', ['featuredRooms' => Room::where('is_active', true)->orderBy('price_per_night')->take(3)->get()]))->name('home');
 Route::get('/rooms', [RoomController::class, 'index'])->name('rooms.index');
 Route::get('/rooms/{room:slug}', [RoomController::class, 'show'])->name('rooms.show');
+Route::get('/booking-lookup', [BookingController::class, 'lookupForm'])->name('bookings.lookup');
+Route::post('/booking-lookup', [BookingController::class, 'lookup'])->name('bookings.lookup.submit');
 
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
 Route::get('/login/form', [AuthController::class, 'showLoginForm'])->name('login.form');
@@ -18,11 +20,13 @@ Route::get('/register', [AuthController::class, 'showRegister'])->name('register
 Route::post('/register', [AuthController::class, 'register'])->name('register.submit');
 Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth')->name('logout');
 
+Route::get('/rooms/{room:slug}/book', [BookingController::class, 'create'])->name('bookings.create');
+Route::post('/rooms/{room:slug}/book', [BookingController::class, 'store'])->name('bookings.store');
+Route::get('/bookings/{booking}/receipt', [BookingController::class, 'receipt'])->name('bookings.receipt');
+Route::post('/bookings/{booking}/confirm-payment', [BookingController::class, 'confirmPayment'])->name('bookings.confirm-payment');
+Route::get('/bookings/{booking}/confirmation', [BookingController::class, 'confirmation'])->name('bookings.confirmation');
 Route::middleware('auth')->group(function () {
-    Route::get('/rooms/{room:slug}/book', [BookingController::class, 'create'])->name('bookings.create');
-    Route::post('/rooms/{room:slug}/book', [BookingController::class, 'store'])->name('bookings.store');
     Route::get('/bookings', [BookingController::class, 'index'])->name('bookings.index');
-    Route::get('/bookings/{booking}/confirmation', [BookingController::class, 'confirmation'])->name('bookings.confirmation');
     Route::patch('/bookings/{booking}/cancel', [BookingController::class, 'cancel'])->name('bookings.cancel');
 });
 
