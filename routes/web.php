@@ -7,7 +7,7 @@ use App\Http\Controllers\RoomController;
 use App\Models\Room;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', fn () => view('home', ['featuredRooms' => Room::where('is_active', true)->where('operational_status', 'available')->orderBy('price_per_night')->take(3)->get()]))->name('home');
+Route::get('/', fn () => view('home', ['featuredRooms' => Room::where('is_active', true)->where(fn ($query) => $query->where('operational_status', 'available')->orWhere('operational_until', '<=', now()))->orderBy('price_per_night')->take(3)->get()]))->name('home');
 Route::get('/rooms', [RoomController::class, 'index'])->name('rooms.index');
 Route::get('/rooms/{room:slug}', [RoomController::class, 'show'])->name('rooms.show');
 Route::get('/rooms/{room:slug}/availability', [BookingController::class, 'availability'])->name('rooms.availability');
