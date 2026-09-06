@@ -11,7 +11,24 @@ use Illuminate\Support\Facades\Mail;
 
 class BookingController extends Controller
 {
-    public function create(Request $request, Room $room) { return view('bookings.create', ['room' => $room, 'isGuest' => $request->boolean('guest')]); }
+    public function create(Request $request, Room $room)
+    {
+        $blockedRanges = $room->bookings()
+            ->whereIn('status', ['pending', 'confirmed'])
+            ->where('check_out', '>', now()->startOfDay())
+            ->orderBy('check_in')
+            ->get(['check_in', 'check_out'])
+            ->map(fn (Booking $booking) => [
+                'start' => $booking->check_in->toDateString(),
+                'end' => $booking->check_out->toDateString(),
+            ]);
+
+        return view('bookings.create', [
+            'room' => $room,
+            'isGuest' => $request->boolean('guest'),
+            'blockedRanges' => $blockedRanges,
+        ]);
+    }
 
     public function store(Request $request, Room $room)
     {

@@ -1,6 +1,9 @@
 @extends('layouts.app')
 
 @section('content')
+<style>
+.stay-date-fields{display:grid;grid-template-columns:1fr 1fr;gap:15px}.stay-date-fields input[readonly]{cursor:pointer;background:#fff}.availability-calendar{border:1px solid var(--line);background:#fff;border-radius:9px;padding:16px}.calendar-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:14px}.calendar-heading strong{display:block;font-size:.92rem}.calendar-heading small{display:block;color:var(--muted);font-size:.73rem;margin-top:3px}.calendar-controls{display:flex;align-items:center;gap:8px}.calendar-controls b{min-width:119px;text-align:center;font-size:.78rem}.calendar-controls button{width:29px;height:29px;border:1px solid var(--line);background:#fff;border-radius:5px;color:var(--deep);font-size:1.35rem;line-height:1;cursor:pointer}.calendar-controls button:hover{background:var(--sand)}.calendar-weekdays,.calendar-days{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}.calendar-weekdays{margin-bottom:6px}.calendar-weekdays span{text-align:center;font-size:.65rem;color:var(--muted);font-weight:700}.calendar-day,.calendar-blank{aspect-ratio:1;min-width:0;border:0;border-radius:5px;background:transparent;color:var(--ink);font:600 .75rem 'DM Sans';display:grid;place-items:center}.calendar-day{cursor:pointer}.calendar-day:hover:not([disabled]){background:#fff0d8;color:var(--deep)}.calendar-day.booked{background:#fbe1df;color:#a84239;cursor:not-allowed;text-decoration:line-through}.calendar-day.past{color:#c8c0b8;cursor:not-allowed}.calendar-day.selected{background:var(--gold);color:#fff}.calendar-note{margin:13px 0 0;font-size:.77rem;color:var(--deep);line-height:1.45}.booking-form form .availability-calendar{margin-top:-4px}@media(max-width:520px){.stay-date-fields{grid-template-columns:1fr}.availability-calendar{padding:13px}.calendar-heading{display:block}.calendar-controls{margin-top:11px;justify-content:space-between}.calendar-controls b{min-width:auto}.calendar-weekdays,.calendar-days{gap:4px}.calendar-day,.calendar-blank{font-size:.7rem}}
+</style>
 <section class="booking-page">
     <div class="booking-form">
         <span class="eyebrow">RESERVE {{ strtoupper($room->name) }}</span>
@@ -25,8 +28,17 @@
             <form method="POST" action="{{ route('bookings.store', $room) }}">
                 @csrf
                 <input type="hidden" name="checkout_type" value="{{ $isGuest ? 'guest' : 'account' }}">
-                <label>Check in<input name="check_in" type="date" value="{{ old('check_in') }}" min="{{ now()->toDateString() }}" required></label>
-                <label>Check out<input name="check_out" type="date" value="{{ old('check_out') }}" min="{{ now()->addDay()->toDateString() }}" required></label>
+
+                <div class="stay-date-fields">
+                    <label>Check in<input id="check-in-display" type="text" placeholder="Select a date" readonly required><input id="check-in" name="check_in" type="hidden" value="{{ old('check_in') }}"></label>
+                    <label>Check out<input id="check-out-display" type="text" placeholder="Select a date" readonly required><input id="check-out" name="check_out" type="hidden" value="{{ old('check_out') }}"></label>
+                </div>
+                <section class="availability-calendar" aria-label="Room availability calendar">
+                    <div class="calendar-heading"><div><strong>Room availability</strong><small>Unavailable dates are shown in red.</small></div><div class="calendar-controls"><button type="button" id="previous-month" aria-label="Previous month">‹</button><b id="calendar-month"></b><button type="button" id="next-month" aria-label="Next month">›</button></div></div>
+                    <div class="calendar-weekdays"><span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span></div>
+                    <div class="calendar-days" id="calendar-days"></div>
+                    <p class="calendar-note" id="calendar-note" aria-live="polite"></p>
+                </section>
                 <label>Guests<select name="guests">@for($i = 1; $i <= $room->guests; $i++)<option value="{{ $i }}" @selected(old('guests') == $i)>{{ $i }} guest{{ $i > 1 ? 's' : '' }}</option>@endfor</select></label>
 
                 @if($isGuest)
@@ -61,4 +73,55 @@
         <small>Final total is calculated from your dates. A GCash payment link is sent after the reservation is reviewed.</small>
     </aside>
 </section>
+@if(auth()->check() || $isGuest)
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const ranges = @json($blockedRanges);
+    const checkIn = document.getElementById('check-in');
+    const checkOut = document.getElementById('check-out');
+    const checkInDisplay = document.getElementById('check-in-display');
+    const checkOutDisplay = document.getElementById('check-out-display');
+    const days = document.getElementById('calendar-days');
+    const monthLabel = document.getElementById('calendar-month');
+    const note = document.getElementById('calendar-note');
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    let cursor = new Date(today.getFullYear(), today.getMonth(), 1);
+    const iso = (date) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+    const pretty = (value) => value ? new Date(`${value}T00:00:00`).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' }) : '';
+    const occupied = (value) => ranges.some(range => value >= range.start && value < range.end);
+    const overlap = (start, end) => ranges.some(range => start < range.end && end > range.start);
+    const nextAvailable = () => { const date = new Date(today); while (occupied(iso(date))) date.setDate(date.getDate() + 1); return iso(date); };
+    const refreshInputs = () => { checkInDisplay.value = pretty(checkIn.value); checkOutDisplay.value = pretty(checkOut.value); };
+    const choose = (value) => {
+        if (!checkIn.value || checkOut.value) { checkIn.value = value; checkOut.value = ''; note.textContent = 'Check-in selected. Now select your check-out date.'; }
+        else if (value <= checkIn.value) { checkIn.value = value; checkOut.value = ''; note.textContent = 'Check-in updated. Now select your check-out date.'; }
+        else if (overlap(checkIn.value, value)) { note.textContent = 'Those dates include an unavailable stay. Please choose dates outside the red period.'; return; }
+        else { checkOut.value = value; note.textContent = 'Your selected dates are available.'; }
+        refreshInputs(); render();
+    };
+    const render = () => {
+        days.innerHTML = '';
+        monthLabel.textContent = cursor.toLocaleDateString('en-PH', { month: 'long', year: 'numeric' });
+        const first = new Date(cursor.getFullYear(), cursor.getMonth(), 1);
+        const last = new Date(cursor.getFullYear(), cursor.getMonth() + 1, 0);
+        for (let blank = 0; blank < first.getDay(); blank++) days.insertAdjacentHTML('beforeend', '<span class="calendar-blank"></span>');
+        for (let number = 1; number <= last.getDate(); number++) {
+            const date = new Date(cursor.getFullYear(), cursor.getMonth(), number);
+            const value = iso(date); const isPast = date < today; const isBooked = occupied(value);
+            const selected = value === checkIn.value ? ' selected start' : value === checkOut.value ? ' selected end' : '';
+            const disabled = isPast || isBooked ? ' disabled' : '';
+            const state = isBooked ? ' booked' : isPast ? ' past' : '';
+            days.insertAdjacentHTML('beforeend', `<button type="button" class="calendar-day${state}${selected}" data-date="${value}"${disabled}>${number}</button>`);
+        }
+        document.querySelectorAll('.calendar-day:not([disabled])').forEach(button => button.addEventListener('click', () => choose(button.dataset.date)));
+        if (!checkIn.value && !note.textContent) note.textContent = `Next available date: ${pretty(nextAvailable())}. Select check-in, then check-out.`;
+    };
+    document.getElementById('previous-month').addEventListener('click', () => { const previous = new Date(cursor.getFullYear(), cursor.getMonth() - 1, 1); if (previous >= new Date(today.getFullYear(), today.getMonth(), 1)) { cursor = previous; render(); } });
+    document.getElementById('next-month').addEventListener('click', () => { cursor = new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1); render(); });
+    checkInDisplay.addEventListener('click', () => document.querySelector('.availability-calendar').scrollIntoView({ behavior: 'smooth', block: 'center' }));
+    checkOutDisplay.addEventListener('click', () => document.querySelector('.availability-calendar').scrollIntoView({ behavior: 'smooth', block: 'center' }));
+    refreshInputs(); render();
+});
+</script>
+@endif
 @endsection
