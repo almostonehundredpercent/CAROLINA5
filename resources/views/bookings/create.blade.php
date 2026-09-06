@@ -9,6 +9,7 @@
 </style>
 <style>.availability-calendar{max-width:500px}.calendar-day,.calendar-blank{font-size:.88rem}.calendar-weekdays span{font-size:.72rem}@media(max-width:520px){.availability-calendar{max-width:none}.calendar-day,.calendar-blank{font-size:.8rem}}</style>
 <style>.hourly-rental{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px;padding:17px;border:1px solid var(--line);border-radius:9px;background:#fff}.hourly-rental>p{grid-column:1/-1;margin:0;line-height:1.55}.hourly-rental #hourly-total{padding:10px 12px;border-radius:6px;background:#fff1db;color:var(--deep);font-weight:700}@media(max-width:520px){.hourly-rental{grid-template-columns:1fr;padding:14px}}</style>
+<style>.booking-type-selector{padding:16px;border:1px solid var(--line);border-radius:9px;background:#fff}.booking-type-label{display:block;margin-bottom:10px;color:var(--muted);font-size:.74rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase}.booking-type-options{display:grid;grid-template-columns:1fr 1fr;gap:10px}.booking-type-options a{display:grid;gap:4px;padding:13px 14px;border:1px solid var(--line);border-radius:7px;background:#fff;color:var(--ink);transition:background .18s ease,border-color .18s ease,color .18s ease}.booking-type-options a:hover{border-color:var(--gold);background:#fff8ee}.booking-type-options strong{font-size:.92rem}.booking-type-options small{color:var(--muted);font-size:.75rem;line-height:1.35}.booking-type-options a.active{border-color:var(--gold);background:var(--gold);color:#fff}.booking-type-options a.active small{color:#fff6e7}@media(max-width:520px){.booking-type-options{grid-template-columns:1fr}}</style>
 <section class="booking-page">
     <div class="booking-form">
         <span class="eyebrow">RESERVE {{ strtoupper($room->name) }}</span>
@@ -34,7 +35,13 @@
                 @csrf
                 <input type="hidden" name="checkout_type" value="{{ $isGuest ? 'guest' : 'account' }}">
                 <input type="hidden" name="booking_type" value="{{ $bookingMode === 'hourly' ? 'hourly' : 'dates' }}">
-                <div class="checkout-choice"><a class="{{ $bookingMode !== 'hourly' ? 'active' : '' }}" href="{{ route('bookings.create', ['room' => $room, 'guest' => $isGuest ? 1 : null, 'mode' => 'dates']) }}">📅 Book by dates</a><a class="{{ $bookingMode === 'hourly' ? 'active' : '' }}" href="{{ route('bookings.create', ['room' => $room, 'guest' => $isGuest ? 1 : null, 'mode' => 'hourly']) }}">⏱️ Rent by hours</a></div>
+                <section class="booking-type-selector" aria-label="Choose booking type">
+                    <span class="booking-type-label">Choose your stay type</span>
+                    <div class="booking-type-options">
+                        <a class="{{ $bookingMode !== 'hourly' ? 'active' : '' }}" href="{{ route('bookings.create', ['room' => $room, 'guest' => $isGuest ? 1 : null, 'mode' => 'dates']) }}"><strong>Book by dates</strong><small>Overnight or multi-day stays</small></a>
+                        <a class="{{ $bookingMode === 'hourly' ? 'active' : '' }}" href="{{ route('bookings.create', ['room' => $room, 'guest' => $isGuest ? 1 : null, 'mode' => 'hourly']) }}"><strong>Rent by hours</strong><small>Short stays for 3, 12, or 24 hours</small></a>
+                    </div>
+                </section>
 
                 @if($bookingMode === 'hourly')
                     <div class="hourly-rental"><p><strong>Short stay rental</strong><br>Rate: ₱{{ number_format($room->price_per_night / 24, 2) }} per hour.</p><label>Duration<select name="hours" id="hourly-hours"><option value="3">3 hours</option><option value="12">12 hours</option><option value="24">24 hours</option></select></label><label>Check-in date<input name="hourly_date" type="date" min="{{ now()->toDateString() }}" value="{{ old('hourly_date', now()->toDateString()) }}" required></label><label>Check-in time<input name="check_in_time" type="time" value="{{ old('check_in_time', now()->addHour()->format('H:i')) }}" required></label><p id="hourly-total">Estimated total: ₱{{ number_format(($room->price_per_night / 24) * 3, 2) }}</p></div>
