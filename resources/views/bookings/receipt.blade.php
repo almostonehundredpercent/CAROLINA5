@@ -30,7 +30,7 @@
         @if(! $paymentComplete)
             <div class="deposit-instructions">
                 <p><strong>Step 1 — Pay the deposit through GCash.</strong></p>
-                @if(config('payments.gcash_qr_url'))<img src="{{ config('payments.gcash_qr_url') }}" alt="Carolina GCash payment QR" style="width:160px;max-width:100%;margin:8px 0;border-radius:7px">@endif
+                <img src="{{ asset('images/gcash-qr.png') }}" alt="Carolina GCash payment QR" style="width:160px;max-width:100%;margin:8px 0;border-radius:7px">
                 <p>Recipient: <strong>{{ config('payments.gcash_recipient_name') ?: 'Carolina GCash Business account' }}</strong></p>
                 @if(config('payments.gcash_number'))<p>GCash number: <strong>{{ config('payments.gcash_number') }}</strong></p>@endif
                 <p>Amount: <strong>₱{{ number_format($deposit, 2) }}</strong> · Reference: <strong>{{ $booking->reference }}</strong></p>
