@@ -45,11 +45,38 @@
 
         @yield('content')
     </main>
-    <footer id="contact">
-        <div class="brand"><img class="brand-logo" src="{{ asset('images/carolina-logo.jpg') }}" alt="Carolina logo"><span>Carolina <small>TRANSIENT & AIRBNB</small></span></div>
-        <p>Affordable lodging made easy in Tabaco City.</p>
-        <p>Questions? Contact our front desk anytime.</p>
-        <small>&copy; {{ date('Y') }} Carolina Transient & Airbnb</small>
+    <footer id="contact" class="site-footer">
+        <div class="footer-content">
+            <section class="footer-brand">
+                <a class="brand" href="{{ route('home') }}"><img class="brand-logo" src="{{ asset('images/carolina-logo.jpg') }}" alt="Carolina logo"><span>Carolina <small>TRANSIENT & AIRBNB</small></span></a>
+                <p>Comfortable stays in the heart of Tabaco City.</p>
+            </section>
+
+            <section class="footer-column">
+                <h2>Quick links</h2>
+                <a href="{{ route('rooms.index') }}">Rooms</a>
+                <a href="{{ route('bookings.lookup') }}">Find booking</a>
+                <a href="{{ route('home') }}#about">About</a>
+                <a href="#contact">Contact</a>
+            </section>
+
+            <section class="footer-column footer-contact">
+                <h2>Contact</h2>
+                <p><span aria-hidden="true">⌖</span> Tabaco City, Albay</p>
+                <a href="{{ route('bookings.lookup') }}"><span aria-hidden="true">⌕</span> Find your booking</a>
+                <a href="https://www.facebook.com/profile.php?id=61556306344437" target="_blank" rel="noopener noreferrer"><span aria-hidden="true">●</span> Message Carolina on Facebook</a>
+            </section>
+
+            <section class="footer-column footer-follow">
+                <h2>Follow us</h2>
+                <a class="social-link" href="https://www.facebook.com/profile.php?id=61556306344437" target="_blank" rel="noopener noreferrer" aria-label="Follow Carolina Transient & Airbnb on Facebook">f</a>
+                <p>Stay connected<br>for updates!</p>
+            </section>
+        </div>
+        <div class="footer-bottom">
+            <small>&copy; {{ date('Y') }} Carolina Transient & Airbnb. All rights reserved.</small>
+            <div><a href="#">Privacy Policy</a><a href="#">Terms of Service</a></div>
+        </div>
     </footer>
 </body>
 </html>

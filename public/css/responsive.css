@@ -94,3 +94,39 @@ footer { flex-shrink: 0; }
     .reservation-actions { align-items: stretch; }
     .reservation-actions .button { width: 100%; justify-content: center; }
 }
+
+/* Full contact footer */
+.site-footer { display: block; padding: 0; color: #fff4df; background: linear-gradient(120deg, #7a3f18, #9b5a2d 54%, #703714); }
+.site-footer .footer-content { width: min(100%, 1540px); margin: 0 auto; padding: 62px 6%; display: grid; grid-template-columns: 1.55fr .9fr 1.35fr .9fr; gap: 42px; }
+.site-footer .footer-brand { padding-right: 36px; }
+.site-footer .brand { color: #ffe5af; font-size: clamp(1.65rem, 2.2vw, 2.3rem); gap: 16px; }
+.site-footer .brand-logo { width: 92px; height: 92px; box-shadow: none; border: 2px solid rgba(255, 239, 199, .8); }
+.site-footer .brand small { margin-top: 7px; color: #fff1cf; font-size: .63rem; letter-spacing: 2.5px; }
+.site-footer .footer-brand p { max-width: 360px; margin: 26px 0 0; color: #fff0d3; font: 1.25rem/1.5 'Playfair Display', serif; }
+.site-footer .footer-column { min-width: 0; padding-left: 42px; border-left: 1px solid rgba(255, 232, 190, .58); display: flex; flex-direction: column; align-items: flex-start; gap: 14px; }
+.site-footer h2 { margin: 8px 0 14px; color: #ffe8b9; font: 700 .92rem 'DM Sans', sans-serif; letter-spacing: 3px; text-transform: uppercase; }
+.site-footer .footer-column > a, .site-footer .footer-contact p { margin: 0; color: #fff5e4; font-size: 1.03rem; line-height: 1.45; }
+.site-footer .footer-column > a:hover, .site-footer .footer-bottom a:hover { color: #ffd17a; }
+.site-footer .footer-contact { gap: 15px; }
+.site-footer .footer-contact span { display: inline-block; width: 28px; color: #ffe0a0; font-weight: 700; text-align: center; }
+.site-footer .social-link { display: grid; place-items: center; width: 64px; height: 64px; border: 2px solid #ffe8bb; border-radius: 50%; color: #fff8e9; font: 700 2.2rem/1 Arial, sans-serif; }
+.site-footer .social-link:hover { color: #8b481e; background: #ffe8bb; }
+.site-footer .footer-follow p { margin: 16px 0 0; color: #ffe5bb; font: italic 1.3rem/1.45 'Playfair Display', serif; }
+.site-footer .footer-bottom { border-top: 1px solid rgba(255, 232, 190, .75); padding: 28px 6%; display: flex; justify-content: space-between; align-items: center; gap: 24px; }
+.site-footer .footer-bottom small, .site-footer .footer-bottom a { color: #fff4df; font-size: .94rem; }
+.site-footer .footer-bottom div { display: flex; gap: 28px; }
+
+@media (max-width: 950px) {
+    .site-footer .footer-content { grid-template-columns: 1.3fr 1fr; gap: 38px 24px; }
+    .site-footer .footer-brand { padding-right: 16px; }
+    .site-footer .footer-column { padding-left: 28px; }
+}
+
+@media (max-width: 620px) {
+    .site-footer .footer-content { grid-template-columns: 1fr; padding: 42px 8%; gap: 30px; }
+    .site-footer .footer-brand { padding: 0 0 12px; }
+    .site-footer .brand-logo { width: 72px; height: 72px; }
+    .site-footer .footer-column { padding: 26px 0 0; border-left: 0; border-top: 1px solid rgba(255, 232, 190, .5); }
+    .site-footer .footer-bottom { padding: 22px 8%; align-items: flex-start; flex-direction: column; }
+    .site-footer .footer-bottom div { gap: 18px; flex-wrap: wrap; }
+}
