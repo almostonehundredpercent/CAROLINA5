@@ -12,13 +12,13 @@
 <div class="admin-shell">
     <aside class="admin-sidebar">
         <a class="admin-brand" href="{{ route('home') }}"><span>c</span><b>Carolina</b><small>TRANSIENT & AIRBNB</small></a>
-        <nav class="admin-nav"><a href="{{ route('admin.dashboard') }}"><i>▦</i> Dashboard</a><a href="{{ route('admin.rooms') }}"><i>⌂</i> Rooms</a><a class="active" href="{{ route('admin.bookings') }}"><i>▤</i> Bookings</a><a href="{{ route('admin.reports') }}"><i>⌁</i> Reports</a></nav>
+        <nav class="admin-nav"><a href="{{ route('admin.dashboard') }}"><i>▦</i> Dashboard</a><a href="{{ route('admin.rooms') }}"><i>⌂</i> Rooms</a><a class="active" href="{{ route('admin.bookings') }}"><i>▤</i> Bookings</a><a href="{{ route('admin.walk-ins.create') }}"><i>＋</i> Walk-ins</a><a href="{{ route('admin.reports') }}"><i>⌁</i> Reports</a></nav>
         <a href="{{ route('home') }}" class="admin-home" style="position:absolute;bottom:84px;left:16px;right:16px;border:1px solid rgba(255,255,255,.85);border-radius:8px;padding:12px 13px;color:#fff;text-decoration:none;font:600 14px 'DM Sans',sans-serif;display:flex;gap:12px;align-items:center;"><i>⌂</i> Go to home page</a>
         <form method="POST" action="{{ route('logout') }}" class="admin-logout">@csrf<button class="logout-button" type="submit"><i>⎋</i> Log out</button></form>
     </aside>
 
     <main class="admin-main">
-        <header class="admin-topbar"><div><p class="admin-kicker">RESERVATION MANAGEMENT</p><h1>Bookings</h1><p class="admin-subtitle">Live room status, booking volume, and new guests.</p></div><div class="admin-user"><a href="{{ route('admin.walk-ins.create') }}" style="display:inline-block;margin-right:14px;padding:10px 13px;border-radius:7px;background:var(--orange);color:#fff;text-decoration:none;font-weight:700">+ New walk-in</a><span class="avatar">{{ strtoupper(substr(auth()->user()->name, 0, 1)) }}</span><div><b>{{ auth()->user()->name }}</b><small>Administrator</small></div></div></header>
+        <header class="admin-topbar"><div><p class="admin-kicker">RESERVATION MANAGEMENT</p><h1>Bookings</h1><p class="admin-subtitle">Live room status, booking volume, and new guests.</p></div><div class="admin-user"><span class="avatar">{{ strtoupper(substr(auth()->user()->name, 0, 1)) }}</span><div><b>{{ auth()->user()->name }}</b><small>Administrator</small></div></div></header>
 
         <section class="booking-stat-grid"><article class="occupied"><small>Rooms occupied</small><strong>{{ $occupiedRooms }}</strong><em>Current checked-in guests</em></article><article class="reserved"><small>Rooms reserved</small><strong>{{ $reservedRooms }}</strong><em>Upcoming stays</em></article><article class="available"><small>Rooms available</small><strong>{{ $availableRooms }}</strong><em>Ready to book</em></article><article class="maintenance"><small>Under maintenance</small><strong>{{ $maintenanceRooms }}</strong><em>Temporarily unavailable</em></article></section>
 
