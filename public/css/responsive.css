@@ -1,5 +1,6 @@
 /* Keep the room-card action label visible against its gold background. */
 .room-card-body a.button { color: #fff; }
+.room-card-body { display: flow-root; }
 
 /* Larger, clearer public navigation. */
 .nav { min-height: 96px; padding-left: 8%; padding-right: 8%; box-shadow: 0 2px 15px rgba(45, 37, 31, .06); }
