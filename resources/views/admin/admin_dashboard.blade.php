@@ -19,6 +19,7 @@
             <a href="{{ route('admin.bookings') }}"><i>▤</i> Bookings</a>
             <a href="{{ route('admin.reports') }}"><i>⌁</i> Reports</a>
         </nav>
+        <a href="{{ route('home') }}" class="admin-home" style="position:absolute;bottom:84px;left:16px;right:16px;border:1px solid rgba(255,255,255,.85);border-radius:8px;padding:12px 13px;color:#fff;text-decoration:none;font:600 14px 'DM Sans',sans-serif;display:flex;gap:12px;align-items:center;"><i>⌂</i> Go to home page</a>
         <form method="POST" action="{{ route('logout') }}" class="admin-logout">@csrf<button class="logout-button" type="submit"><i>⎋</i> Log out</button></form>
     </aside>
     <main class="admin-main">
