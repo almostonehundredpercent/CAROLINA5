@@ -13,7 +13,7 @@ class BookingController extends Controller
 {
     public function create(Request $request, Room $room)
     {
-        if (! $room->is_active || (in_array($room->operational_status, ['cleaning', 'maintenance'], true) && (! $room->operational_until || $room->operational_until->isFuture()))) {
+        if (! $room->is_active || $room->operational_status !== 'available') {
             return redirect()->route('rooms.index')->withErrors(['room' => "{$room->name} is currently {$room->operational_status} and cannot be booked right now."]);
         }
         $blockedRanges = $this->blockedRanges($room);
@@ -46,7 +46,7 @@ class BookingController extends Controller
 
     public function store(Request $request, Room $room)
     {
-        if (! $room->is_active || (in_array($room->operational_status, ['cleaning', 'maintenance'], true) && (! $room->operational_until || $room->operational_until->isFuture()))) {
+        if (! $room->is_active || $room->operational_status !== 'available') {
             return redirect()->route('rooms.index')->withErrors(['room' => "{$room->name} is currently {$room->operational_status} and cannot be booked right now."]);
         }
         if ($request->filled('guest_phone')) {

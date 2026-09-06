@@ -42,7 +42,7 @@ class AdminController extends Controller
         // are currently unavailable for operational reasons are excluded here.
         $rooms = Room::query()
             ->where('is_active', true)
-            ->where(fn ($query) => $query->where('operational_status', 'available')->orWhere('operational_until', '<=', now()))
+            ->where('operational_status', 'available')
             ->orderBy('name')
             ->get();
 
@@ -63,7 +63,7 @@ class AdminController extends Controller
         ]);
 
         $room = Room::findOrFail($data['room_id']);
-        abort_if($this->isOperationallyUnavailable($room), 422, 'This room is currently unavailable for walk-ins.');
+        abort_if($room->operational_status !== 'available', 422, 'This room is not available for walk-ins.');
 
         $conflict = Booking::where('room_id', $room->id)
             ->whereIn('status', ['pending', 'confirmed'])
@@ -177,13 +177,8 @@ class AdminController extends Controller
 
     public function updateRoomStatus(Request $request, Room $room)
     {
-        $data = $request->validate(['operational_status' => 'required|in:available,cleaning,maintenance', 'duration_hours' => 'nullable|integer|min:1|max:168']);
-        $room->update([
-            'operational_status' => $data['operational_status'],
-            'operational_until' => $data['operational_status'] === 'available' ? null : now()->addHours($data['duration_hours'] ?? 1),
-        ]);
-
-        return back()->with('success', $data['operational_status'] === 'available' ? 'Room marked available.' : "Room marked {$data['operational_status']} for " . ($data['duration_hours'] ?? 1) . ' hour(s).');
+        $room->update($request->validate(['operational_status' => 'required|in:available,cleaning,maintenance']));
+        return back()->with('success', 'Room operational status updated.');
     }
 
     private function roomsWithDisplayStatus()
@@ -201,19 +196,12 @@ class AdminController extends Controller
                 $currentBooking = $room->bookings->first(fn (Booking $booking) => $booking->check_in->lte($today) && $booking->check_out->gt($today));
                 $upcomingBooking = $room->bookings->first(fn (Booking $booking) => $booking->check_in->gt($today));
                 $room->display_booking = $currentBooking ?? $upcomingBooking;
-                $isUnavailable = $this->isOperationallyUnavailable($room);
-                $room->display_status = $isUnavailable
+                $room->display_status = in_array($room->operational_status, ['cleaning', 'maintenance'], true)
                     ? $room->operational_status
                     : ($currentBooking ? 'occupied' : ($upcomingBooking ? 'reserved' : 'available'));
 
                 return $room;
             });
-    }
-
-    private function isOperationallyUnavailable(Room $room): bool
-    {
-        return in_array($room->operational_status, ['cleaning', 'maintenance'], true)
-            && (! $room->operational_until || $room->operational_until->isFuture());
     }
 
     private function bookingChartData(string $period): array

@@ -9,7 +9,7 @@ class RoomController extends Controller
 {
     public function index(Request $request)
     {
-        $rooms = Room::where('is_active', true)->where(fn ($query) => $query->where('operational_status', 'available')->orWhere('operational_until', '<=', now()));
+        $rooms = Room::where('is_active', true)->where('operational_status', 'available');
         $checkIn = $request->date('check_in');
         $checkOut = $request->date('check_out');
         if ($checkIn && $checkOut && $checkOut->gt($checkIn)) {
