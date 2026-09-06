@@ -8,6 +8,7 @@
 .calendar-days{column-gap:0;row-gap:5px}.calendar-day{border-radius:0}.calendar-day.booked{background:#d9524b;color:#fff;text-decoration:none}.calendar-day.booked-start{border-radius:5px 0 0 5px}.calendar-day.booked-end{border-radius:0 5px 5px 0}.calendar-day.booked-start.booked-end{border-radius:5px}.calendar-day.selected{background:var(--gold)}.calendar-day.selected.start{border-radius:5px 0 0 5px}.calendar-day.selected.end{border-radius:0 5px 5px 0}.calendar-day.selected.start.end{border-radius:5px}.calendar-day.selected.range{background:#f6d59b;color:var(--deep)}
 </style>
 <style>.availability-calendar{max-width:500px}.calendar-day,.calendar-blank{font-size:.88rem}.calendar-weekdays span{font-size:.72rem}@media(max-width:520px){.availability-calendar{max-width:none}.calendar-day,.calendar-blank{font-size:.8rem}}</style>
+<style>.hourly-rental{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px;padding:17px;border:1px solid var(--line);border-radius:9px;background:#fff}.hourly-rental>p{grid-column:1/-1;margin:0;line-height:1.55}.hourly-rental #hourly-total{padding:10px 12px;border-radius:6px;background:#fff1db;color:var(--deep);font-weight:700}@media(max-width:520px){.hourly-rental{grid-template-columns:1fr;padding:14px}}</style>
 <section class="booking-page">
     <div class="booking-form">
         <span class="eyebrow">RESERVE {{ strtoupper($room->name) }}</span>
@@ -32,7 +33,12 @@
             <form method="POST" action="{{ route('bookings.store', $room) }}">
                 @csrf
                 <input type="hidden" name="checkout_type" value="{{ $isGuest ? 'guest' : 'account' }}">
+                <input type="hidden" name="booking_type" value="{{ $bookingMode === 'hourly' ? 'hourly' : 'dates' }}">
+                <div class="checkout-choice"><a class="{{ $bookingMode !== 'hourly' ? 'active' : '' }}" href="{{ route('bookings.create', ['room' => $room, 'guest' => $isGuest ? 1 : null, 'mode' => 'dates']) }}">📅 Book by dates</a><a class="{{ $bookingMode === 'hourly' ? 'active' : '' }}" href="{{ route('bookings.create', ['room' => $room, 'guest' => $isGuest ? 1 : null, 'mode' => 'hourly']) }}">⏱️ Rent by hours</a></div>
 
+                @if($bookingMode === 'hourly')
+                    <div class="hourly-rental"><p><strong>Short stay rental</strong><br>Rate: ₱{{ number_format($room->price_per_night / 24, 2) }} per hour.</p><label>Duration<select name="hours" id="hourly-hours"><option value="3">3 hours</option><option value="12">12 hours</option><option value="24">24 hours</option></select></label><label>Check-in date<input name="hourly_date" type="date" min="{{ now()->toDateString() }}" value="{{ old('hourly_date', now()->toDateString()) }}" required></label><label>Check-in time<input name="check_in_time" type="time" value="{{ old('check_in_time', now()->addHour()->format('H:i')) }}" required></label><p id="hourly-total">Estimated total: ₱{{ number_format(($room->price_per_night / 24) * 3, 2) }}</p></div>
+                @else
                 <div class="stay-date-fields">
                     <label>Check in<input id="check-in-display" type="text" placeholder="Select a date" readonly required><input id="check-in" name="check_in" type="hidden" value="{{ old('check_in') }}"></label>
                     <label>Check out<input id="check-out-display" type="text" placeholder="Select a date" readonly required><input id="check-out" name="check_out" type="hidden" value="{{ old('check_out') }}"></label>
@@ -43,6 +49,7 @@
                     <div class="calendar-days" id="calendar-days"></div>
                     <p class="calendar-note" id="calendar-note" aria-live="polite"></p>
                 </section>
+                @endif
                 <label>Guests<select name="guests">@for($i = 1; $i <= $room->guests; $i++)<option value="{{ $i }}" @selected(old('guests') == $i)>{{ $i }} guest{{ $i > 1 ? 's' : '' }}</option>@endfor</select></label>
 
                 @if($isGuest)
@@ -72,14 +79,20 @@
         <img src="{{ $room->image_url }}" alt="{{ $room->name }}">
         <h3>{{ $room->name }}</h3>
         <p>{{ $room->room_type }} · Up to {{ $room->guests }} guests</p>
-        <strong>₱{{ number_format($room->price_per_night) }} <small>/ night</small></strong>
+        @if($bookingMode === 'hourly')
+            <strong>₱{{ number_format($room->price_per_night / 24, 2) }} <small>/ hour</small></strong>
+        @else
+            <strong>₱{{ number_format($room->price_per_night) }} <small>/ night</small></strong>
+        @endif
         <hr>
-        <small>Final total is calculated from your dates. A GCash payment link is sent after the reservation is reviewed.</small>
+        <small>{{ $bookingMode === 'hourly' ? 'Your total is based on your selected hours.' : 'Final total is calculated from your dates.' }} A GCash payment link is sent after the reservation is reviewed.</small>
     </aside>
 </section>
 @if(auth()->check() || $isGuest)
 <script>
 document.addEventListener('DOMContentLoaded', () => {
+    const hourlyHours = document.getElementById('hourly-hours');
+    if (hourlyHours) { const total = document.getElementById('hourly-total'); const rate = {{ $room->price_per_night / 24 }}; const refresh = () => total.textContent = `Estimated total: ₱${(rate * Number(hourlyHours.value)).toLocaleString('en-PH', { minimumFractionDigits: 2 })}`; hourlyHours.addEventListener('change', refresh); refresh(); return; }
     const ranges = @json($blockedRanges);
     const checkIn = document.getElementById('check-in');
     const checkOut = document.getElementById('check-out');
