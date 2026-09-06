@@ -1,62 +1,15 @@
 @extends('layouts.app')
 
 @section('content')
-<section class="hero">
-    <div class="hero-copy">
-        <span class="eyebrow">CAROLINA TRANSIENT & AIRBNB</span>
-        <h1>Smart stay,<br>spend less.</h1>
-        <p>Comfortable, affordable lodging in the heart of Tabaco City.</p>
-        <a class="button light" href="{{ route('rooms.index') }}">Find your room <span>→</span></a>
-    </div>
-</section>
+<section class="hero"><div class="hero-copy"><span class="eyebrow">CAROLINA TRANSIENT & AIRBNB</span><h1>Smart stay,<br>spend less.</h1><p>Comfortable, affordable lodging in the heart of Tabaco City.</p><a class="button light" href="{{ route('rooms.index') }}">Find your room <span>→</span></a></div></section>
 
-<section class="search-wrap">
-    <form class="search-card" method="GET" action="{{ route('rooms.index') }}">
-        <label>Check in<input id="home-check-in" type="date" name="check_in" min="{{ now()->toDateString() }}" required></label>
-        <label>Check out<input id="home-check-out" type="date" name="check_out" min="{{ now()->addDay()->toDateString() }}" required></label>
-        <label>Guests<select name="guests"><option value="1">1 guest</option><option value="2">2 guests</option><option value="3">3 guests</option><option value="4">4+ guests</option></select></label>
-        <button class="button" type="submit">Search rooms</button>
-    </form>
-</section>
+<style>.home-availability{max-width:1080px;margin:16px auto 0;background:#fff;border-radius:10px;padding:20px;box-shadow:0 12px 35px #4a35151c}.home-availability-top{display:grid;grid-template-columns:minmax(0,1fr) minmax(250px,360px);align-items:end;gap:28px}.home-availability-top b{display:block;font-size:1.04rem}.home-room-picker{display:grid;gap:7px;color:var(--muted);font-size:.76rem;font-weight:700}.home-room-picker select{width:100%;min-width:0;height:46px}.home-calendar{max-width:510px;margin-top:15px}.home-calendar-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}.home-calendar-head button{border:1px solid var(--line);background:#fff;border-radius:5px;width:29px;height:29px;color:var(--deep);font-size:18px;cursor:pointer}.home-week,.home-days{display:grid;grid-template-columns:repeat(7,1fr);column-gap:0;row-gap:4px}.home-week span{text-align:center;color:var(--muted);font-size:10px;font-weight:700}.home-day,.home-blank{aspect-ratio:1;display:grid;place-items:center;border:0;background:transparent;font:600 12px 'DM Sans';color:var(--ink)}.home-day.booked{background:#f8dcd9;color:#8f332d;cursor:not-allowed}.home-day.booked-start,.home-day.booked-end{background:#c63e36;color:#fff}.home-day.booked-start{border-radius:5px 0 0 5px}.home-day.booked-end{border-radius:0 5px 5px 0}.home-day.booked-start.booked-end{border-radius:5px}.home-booked-list{display:grid;gap:6px;margin:14px 0 0}.home-booked-list span{font-size:12px;color:#913a32;background:#fff1ee;border-radius:5px;padding:7px 9px}.home-calendar-note{font-size:12px;color:var(--muted);margin:8px 0 0;max-width:520px}@media(max-width:800px){.home-availability{padding:17px}.home-availability-top{grid-template-columns:1fr;gap:18px}.home-room-picker select{width:100%}}</style>
 
-<section class="section" id="rooms">
-    <div class="section-heading">
-        <div><span class="eyebrow">STAY YOUR WAY</span><h2>Comfortable stays, just like home.</h2></div>
-        <a href="{{ route('rooms.index') }}" class="text-link">Explore all rooms →</a>
-    </div>
-    <div class="room-grid">
-        @forelse($featuredRooms as $room)
-            <article class="room-card">
-                <img src="{{ $room->image_url }}" alt="{{ $room->name }}">
-                <div class="room-card-body">
-                    <span>{{ $room->room_type }} · Up to {{ $room->guests }} guests</span>
-                    <h3>{{ $room->name }}</h3>
-                    <p>₱{{ number_format($room->price_per_night) }} <small>/ night</small></p>
-                    <a href="{{ route('rooms.show', $room) }}">View room →</a>
-                </div>
-            </article>
-        @empty
-            <p>Rooms will appear here after the first database seed.</p>
-        @endforelse
-    </div>
-</section>
+<section class="search-wrap"><section class="home-availability"><div class="home-availability-top"><div><span class="eyebrow">ROOM CALENDAR</span><b>See booked dates before you book</b><p class="home-calendar-note">Red ranges are unavailable. Each entry shows how long the room is booked.</p></div><label class="home-room-picker">View room availability<select id="home-room-calendar"><option value="">Choose a room</option>@foreach($availabilityRooms as $room)<option data-url="{{ route('rooms.availability', $room) }}">{{ $room->name }}</option>@endforeach</select></label></div><div class="home-calendar" id="home-calendar" hidden><div class="home-calendar-head"><button type="button" id="home-prev" aria-label="Previous month">‹</button><b id="home-month"></b><button type="button" id="home-next" aria-label="Next month">›</button></div><div class="home-week"><span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span></div><div class="home-days" id="home-days"></div><div class="home-booked-list" id="home-booked-list"></div></div></section></section>
 
-<section class="section" id="find-booking">
-    <div class="empty-state">
-        <span class="eyebrow">ALREADY BOOKED?</span>
-        <h2>Find your booking.</h2>
-        <p>Use your email address and booking reference to view your reservation details anytime - no account required.</p>
-        <a class="button" href="{{ route('bookings.lookup') }}">Find your booking</a>
-    </div>
-</section>
+<section class="section" id="rooms"><div class="section-heading"><div><span class="eyebrow">STAY YOUR WAY</span><h2>Comfortable stays, just like home.</h2></div><a href="{{ route('rooms.index') }}" class="text-link">Explore all rooms →</a></div><div class="room-grid">@forelse($featuredRooms as $room)<article class="room-card"><img src="{{ $room->image_url }}" alt="{{ $room->name }}"><div class="room-card-body"><span>{{ $room->room_type }} · Up to {{ $room->guests }} guests</span><h3>{{ $room->name }}</h3><p>₱{{ number_format($room->price_per_night) }} <small>/ night</small></p><a href="{{ route('rooms.show', $room) }}">View room →</a></div></article>@empty<p>Rooms will appear here after the first database seed.</p>@endforelse</div></section>
+<section class="section" id="find-booking"><div class="empty-state"><span class="eyebrow">ALREADY BOOKED?</span><h2>Find your booking.</h2><p>Use your email address and booking reference to view your reservation details anytime - no account required.</p><a class="button" href="{{ route('bookings.lookup') }}">Find your booking</a></div></section>
+<section class="benefits section" id="about"><div class="section-heading center"><div><span class="eyebrow">WHAT WE OFFER</span><h2>Everything you need for an easy stay.</h2></div></div><div class="benefit-grid"><div><b>⌂</b><h3>Clean rooms</h3><p>Thoughtfully prepared before every arrival.</p></div><div><b>◌</b><h3>Free Wi-Fi</h3><p>Stay connected throughout your visit.</p></div><div><b>✦</b><h3>Pet-friendly</h3><p>Bring your companion along with you.</p></div><div><b>▣</b><h3>Parking</h3><p>Convenient on-site parking for guests.</p></div></div></section>
 
-<section class="benefits section" id="about">
-    <div class="section-heading center"><div><span class="eyebrow">WHAT WE OFFER</span><h2>Everything you need for an easy stay.</h2></div></div>
-    <div class="benefit-grid">
-        <div><b>⌂</b><h3>Clean rooms</h3><p>Thoughtfully prepared before every arrival.</p></div>
-        <div><b>◌</b><h3>Free Wi-Fi</h3><p>Stay connected throughout your visit.</p></div>
-        <div><b>✦</b><h3>Pet-friendly</h3><p>Bring your companion along with you.</p></div>
-        <div><b>▣</b><h3>Parking</h3><p>Convenient on-site parking for guests.</p></div>
-    </div>
-</section>
+<script>document.addEventListener('DOMContentLoaded',()=>{const select=document.getElementById('home-room-calendar'),cal=document.getElementById('home-calendar'),days=document.getElementById('home-days'),month=document.getElementById('home-month'),list=document.getElementById('home-booked-list'),today=new Date();today.setHours(0,0,0,0);let cursor=new Date(today.getFullYear(),today.getMonth(),1),ranges=[];const iso=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`,occupied=v=>ranges.some(r=>v>=r.start&&v<r.end),pretty=v=>new Date(`${v}T00:00:00`).toLocaleDateString('en-PH',{month:'short',day:'numeric',year:'numeric'});const render=()=>{days.innerHTML='';month.textContent=cursor.toLocaleDateString('en-PH',{month:'long',year:'numeric'});const first=new Date(cursor.getFullYear(),cursor.getMonth(),1),last=new Date(cursor.getFullYear(),cursor.getMonth()+1,0);for(let i=0;i<first.getDay();i++)days.insertAdjacentHTML('beforeend','<span class="home-blank"></span>');for(let n=1;n<=last.getDate();n++){const d=new Date(cursor.getFullYear(),cursor.getMonth(),n),v=iso(d),booked=occupied(v),p=new Date(d),next=new Date(d);p.setDate(p.getDate()-1);next.setDate(next.getDate()+1);const c=booked?` booked${occupied(iso(p))?'':' booked-start'}${occupied(iso(next))?'':' booked-end'}`:'';days.insertAdjacentHTML('beforeend',`<span class="home-day${c}">${n}</span>`)}list.innerHTML=ranges.length?ranges.map(r=>{const nights=Math.round((new Date(`${r.end}T00:00:00`)-new Date(`${r.start}T00:00:00`))/86400000);return `<span>Booked: ${pretty(r.start)} to ${pretty(r.end)} · ${nights} night${nights===1?'':'s'}</span>`}).join(''):'<span>No booked dates recorded for this room.</span>'};const load=async()=>{const url=select.selectedOptions[0]?.dataset.url;if(!url){cal.hidden=true;return}try{const response=await fetch(url,{headers:{Accept:'application/json'},cache:'no-store'});if(!response.ok)return;ranges=(await response.json()).ranges;cal.hidden=false;render()}catch(error){cal.hidden=true}};select.addEventListener('change',load);document.getElementById('home-prev').onclick=()=>{cursor=new Date(cursor.getFullYear(),cursor.getMonth()-1,1);render()};document.getElementById('home-next').onclick=()=>{cursor=new Date(cursor.getFullYear(),cursor.getMonth()+1,1);render()}});</script>
 @endsection
