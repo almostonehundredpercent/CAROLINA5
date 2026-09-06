@@ -130,3 +130,11 @@ footer { flex-shrink: 0; }
     .site-footer .footer-bottom { padding: 22px 8%; align-items: flex-start; flex-direction: column; }
     .site-footer .footer-bottom div { gap: 18px; flex-wrap: wrap; }
 }
+
+/* Billing confirmation */
+.booking-form label.checkbox { display: flex; align-items: flex-start; gap: 13px; padding: 15px 16px; border: 1px solid #e2cda9; border-radius: 9px; background: #fffaf2; color: var(--ink); cursor: pointer; }
+.booking-form label.checkbox input[type="checkbox"] { flex: 0 0 20px; width: 20px; height: 20px; margin: 1px 0 0; padding: 0; accent-color: var(--gold); cursor: pointer; }
+.booking-form label.checkbox span { display: grid; gap: 4px; }
+.booking-form label.checkbox strong { font-size: .9rem; }
+.booking-form label.checkbox small { color: var(--muted); font-size: .8rem; font-weight: 500; line-height: 1.45; }
+.booking-form label.checkbox:has(input:checked) { border-color: var(--gold); background: #fff4df; }
