@@ -45,7 +45,7 @@
                     </label>
                 @endif
 
-                <label>Payment method<select name="payment_method"><option value="gcash">GCash</option><option value="card">Credit/debit card</option><option value="cash">Pay at property</option></select></label>
+                <label>Payment method<select name="payment_method"><option value="gcash">GCash</option><option value="cash">Pay at property</option></select></label>
                 <label>Special request<textarea name="special_request" rows="3">{{ old('special_request') }}</textarea></label>
                 <button class="button">Continue to payment</button>
             </form>
