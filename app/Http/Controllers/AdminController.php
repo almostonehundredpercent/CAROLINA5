@@ -38,7 +38,13 @@ class AdminController extends Controller
 
     public function walkInForm()
     {
-        $rooms = $this->roomsWithDisplayStatus()->where('display_status', 'available');
+        // Future reservations are handled by the date calendar. Only rooms that
+        // are currently unavailable for operational reasons are excluded here.
+        $rooms = Room::query()
+            ->where('is_active', true)
+            ->where('operational_status', 'available')
+            ->orderBy('name')
+            ->get();
 
         return view('admin.walk_in', compact('rooms'));
     }
