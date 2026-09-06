@@ -36,6 +36,63 @@ class AdminController extends Controller
         return back()->with('success', 'Booking status updated.');
     }
 
+    public function walkInForm()
+    {
+        $rooms = $this->roomsWithDisplayStatus()->where('display_status', 'available');
+
+        return view('admin.walk_in', compact('rooms'));
+    }
+
+    public function storeWalkIn(Request $request)
+    {
+        $data = $request->validate([
+            'room_id' => 'required|exists:rooms,id',
+            'guest_name' => 'required|string|max:255',
+            'guest_email' => 'nullable|email|max:255',
+            'guest_phone' => 'required|string|max:30',
+            'guests' => 'required|integer|min:1|max:20',
+            'check_in' => 'required|date|after_or_equal:today',
+            'check_out' => 'required|date|after:check_in',
+            'payment_method' => 'required|in:gcash,cash',
+        ]);
+
+        $room = Room::findOrFail($data['room_id']);
+        abort_if($room->operational_status !== 'available', 422, 'This room is not available for walk-ins.');
+
+        $conflict = Booking::where('room_id', $room->id)
+            ->whereIn('status', ['pending', 'confirmed'])
+            ->where('check_in', '<', $data['check_out'])
+            ->where('check_out', '>', $data['check_in'])
+            ->exists();
+        if ($conflict) {
+            return back()->withInput()->withErrors(['room_id' => 'That room is already reserved for the selected dates.']);
+        }
+
+        $nights = Carbon::parse($data['check_in'])->diffInDays(Carbon::parse($data['check_out']));
+        Booking::create([
+            'user_id' => null,
+            'room_id' => $room->id,
+            'guest_name' => $data['guest_name'],
+            'guest_email' => $data['guest_email'],
+            'guest_phone' => $data['guest_phone'],
+            'billing_street' => 'Walk-in guest',
+            'billing_city' => 'Tabaco City',
+            'billing_province' => 'Albay',
+            'billing_postal_code' => '4511',
+            'billing_verified_at' => now(),
+            'check_in' => $data['check_in'],
+            'check_out' => $data['check_out'],
+            'guests' => $data['guests'],
+            'nights' => $nights,
+            'total_amount' => $room->price_per_night * $nights,
+            'status' => 'confirmed',
+            'payment_method' => $data['payment_method'],
+            'special_request' => 'Walk-in booking created by admin.',
+        ]);
+
+        return redirect()->route('admin.bookings')->with('success', 'Walk-in booking confirmed.');
+    }
+
     public function rooms()
     {
         $rooms = $this->roomsWithDisplayStatus();
