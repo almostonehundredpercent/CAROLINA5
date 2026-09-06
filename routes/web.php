@@ -32,5 +32,9 @@ Route::middleware('auth')->group(function () {
 
 Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/dashboard', [AdminController::class, 'index'])->name('dashboard');
+    Route::get('/rooms', [AdminController::class, 'rooms'])->name('rooms');
+    Route::get('/bookings', [AdminController::class, 'bookings'])->name('bookings');
+    Route::get('/reports', [AdminController::class, 'reports'])->name('reports');
+    Route::patch('/rooms/{room}/status', [AdminController::class, 'updateRoomStatus'])->name('rooms.status');
     Route::patch('/bookings/{booking}', [AdminController::class, 'updateBooking'])->name('bookings.update');
 });

@@ -13,7 +13,7 @@
 <body>
     <header class="nav">
         <a class="brand" href="{{ route('home') }}">
-            <i>c</i><span>Carolina <small>TRANSIENT & AIRBNB</small></span>
+            <img class="brand-logo" src="{{ asset('images/carolina-logo.jpg') }}" alt="Carolina logo"><span>Carolina <small>TRANSIENT & AIRBNB</small></span>
         </a>
         <nav>
             <a href="{{ route('rooms.index') }}">Rooms</a>
@@ -46,8 +46,8 @@
         @yield('content')
     </main>
     <footer id="contact">
-        <div class="brand"><i>c</i><span>Carolina <small>TRANSIENT & AIRBNB</small></span></div>
-        <p>Affordable lodging made easy in Tandag City.</p>
+        <div class="brand"><img class="brand-logo" src="{{ asset('images/carolina-logo.jpg') }}" alt="Carolina logo"><span>Carolina <small>TRANSIENT & AIRBNB</small></span></div>
+        <p>Affordable lodging made easy in Tabaco City.</p>
         <p>Questions? Contact our front desk anytime.</p>
         <small>&copy; {{ date('Y') }} Carolina Transient & Airbnb</small>
     </footer>

@@ -1,2 +1,41 @@
-@extends('layouts.app')
-@section('content')<section class="page-hero slim"><span class="eyebrow">ADMINISTRATION</span><h1>Booking dashboard</h1><p>Review reservations and keep availability accurate.</p></section><section class="section compact"><div class="stats"><div><small>Total bookings</small><b>{{ $bookingCount }}</b></div><div><small>Pending review</small><b>{{ $pendingCount }}</b></div><div><small>Active rooms</small><b>{{ $roomCount }}</b></div></div><div class="admin-table-wrap"><table><thead><tr><th>Guest</th><th>Room</th><th>Stay</th><th>Total</th><th>Status</th></tr></thead><tbody>@forelse($bookings as $booking)<tr><td>{{ $booking->user->name }}<small>{{ $booking->reference }}</small></td><td>{{ $booking->room->name }}</td><td>{{ $booking->check_in->format('M j') }} - {{ $booking->check_out->format('M j, Y') }}</td><td>₱{{ number_format($booking->total_amount) }}</td><td><form method="POST" action="{{ route('admin.bookings.update', $booking) }}">@csrf @method('PATCH')<select name="status" onchange="this.form.submit()">@foreach(['pending','confirmed','cancelled'] as $status)<option value="{{ $status }}" @selected($booking->status === $status)>{{ ucfirst($status) }}</option>@endforeach</select></form></td></tr>@empty<tr><td colspan="5">No bookings have been placed yet.</td></tr>@endforelse</tbody></table></div></section>@endsection
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Admin Dashboard - Carolina</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ asset('css/admin.css') }}">
+</head>
+<body>
+<div class="admin-shell">
+    <aside class="admin-sidebar">
+        <a class="admin-brand" href="{{ route('home') }}"><img src="{{ asset('images/carolina-logo.jpg') }}" alt="Carolina logo"><b>Carolina</b><small>TRANSIENT & AIRBNB</small></a>
+        <nav class="admin-nav">
+            <a class="active" href="{{ route('admin.dashboard') }}"><i>▦</i> Dashboard</a>
+            <a href="{{ route('admin.rooms') }}"><i>⌂</i> Rooms</a>
+            <a href="{{ route('admin.bookings') }}"><i>▤</i> Bookings</a>
+            <a href="{{ route('admin.reports') }}"><i>⌁</i> Reports</a>
+        </nav>
+        <form method="POST" action="{{ route('logout') }}" class="admin-logout">@csrf<button class="logout-button" type="submit"><i>⎋</i> Log out</button></form>
+    </aside>
+    <main class="admin-main">
+        <header class="admin-topbar"><div><p class="admin-kicker">OVERVIEW</p><h1>Dashboard</h1></div><div class="admin-user"><span class="avatar">{{ strtoupper(substr(auth()->user()->name, 0, 1)) }}</span><div><b>{{ auth()->user()->name }}</b><small>Administrator</small></div></div></header>
+        @if(session('success'))<div class="admin-flash">{{ session('success') }}</div>@endif
+        <section class="metric-grid" id="rooms">
+            <article><span>₱</span><small>Confirmed revenue</small><strong>₱{{ number_format($revenue) }}</strong><em>Verified bookings</em></article>
+            <article><span>▤</span><small>Total bookings</small><strong>{{ $bookingCount }}</strong><em>All reservations</em></article>
+            <article><span>✓</span><small>Confirmed</small><strong>{{ $confirmedCount }}</strong><em>Ready for arrival</em></article>
+            <article><span>⌂</span><small>Active rooms</small><strong>{{ $roomCount }}</strong><em>Available to book</em></article>
+        </section>
+        <section class="dashboard-grid" id="reports">
+            <article class="panel chart-panel"><div class="panel-heading"><div><p class="admin-kicker">LAST 7 DAYS</p><h2>Booking activity</h2></div><span class="pill">Live data</span></div><div class="bar-chart">@foreach($chartValues as $index => $value)<div class="bar-item"><span class="bar" style="height: {{ max(8, $value * 22) }}px" title="{{ $value }} booking{{ $value === 1 ? '' : 's' }}"></span><b>{{ $value }}</b><small>{{ $chartLabels[$index] }}</small></div>@endforeach</div></article>
+            <article class="panel status-panel"><div class="panel-heading"><div><p class="admin-kicker">AT A GLANCE</p><h2>Reservation status</h2></div></div><div class="status-row"><span>Pending review</span><b>{{ $pendingCount }}</b><i style="--value: {{ $bookingCount ? min(100, round($pendingCount / $bookingCount * 100)) : 0 }}%"></i></div><div class="status-row"><span>Confirmed stays</span><b>{{ $confirmedCount }}</b><i class="green" style="--value: {{ $bookingCount ? min(100, round($confirmedCount / $bookingCount * 100)) : 0 }}%"></i></div><div class="status-row"><span>Active rooms</span><b>{{ $roomCount }}</b><i class="blue" style="--value: 100%"></i></div></article>
+        </section>
+        <section class="panel bookings-panel" id="bookings"><div class="panel-heading"><div><p class="admin-kicker">LATEST ACTIVITY</p><h2>Recent bookings</h2></div><span class="booking-count">{{ $bookingCount }} total</span></div><div class="admin-table-wrap"><table><thead><tr><th>Guest</th><th>Room</th><th>Stay dates</th><th>Total</th><th>Status</th></tr></thead><tbody>@forelse($bookings as $booking)<tr><td><b>{{ $booking->guest_name ?? $booking->user?->name ?? 'Guest' }}</b><small>{{ $booking->guest_email ?? $booking->user?->email }} · {{ $booking->reference }}</small></td><td>{{ $booking->room?->name ?? 'Room removed' }}</td><td>{{ $booking->check_in->format('M j') }} - {{ $booking->check_out->format('M j, Y') }}</td><td>₱{{ number_format($booking->total_amount) }}</td><td><form method="POST" action="{{ route('admin.bookings.update', $booking) }}">@csrf @method('PATCH')<select class="status-select {{ $booking->status }}" name="status" onchange="this.form.submit()">@foreach(['pending','confirmed','cancelled'] as $status)<option value="{{ $status }}" @selected($booking->status === $status)>{{ ucfirst($status) }}</option>@endforeach</select></form></td></tr>@empty<tr><td colspan="5" class="no-bookings">No bookings have been placed yet.</td></tr>@endforelse</tbody></table></div></section>
+    </main>
+</div>
+</body>
+</html>
