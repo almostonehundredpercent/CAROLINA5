@@ -117,6 +117,7 @@ class AdminController extends Controller
             'availableRooms' => $rooms->where('display_status', 'available')->count(),
             'maintenanceRooms' => $rooms->where('display_status', 'maintenance')->count(),
             'newCustomers' => Booking::with(['user', 'room'])->latest()->take(5)->get(),
+            'individualBookings' => Booking::with(['user', 'room'])->latest()->paginate(15, ['*'], 'booking_page'),
         ]);
     }
 
