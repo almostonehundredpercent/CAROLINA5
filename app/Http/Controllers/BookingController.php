@@ -13,7 +13,23 @@ class BookingController extends Controller
 {
     public function create(Request $request, Room $room)
     {
-        $blockedRanges = $room->bookings()
+        $blockedRanges = $this->blockedRanges($room);
+
+        return view('bookings.create', [
+            'room' => $room,
+            'isGuest' => $request->boolean('guest'),
+            'blockedRanges' => $blockedRanges,
+        ]);
+    }
+
+    public function availability(Room $room)
+    {
+        return response()->json(['ranges' => $this->blockedRanges($room)->values()]);
+    }
+
+    private function blockedRanges(Room $room)
+    {
+        return $room->bookings()
             ->whereIn('status', ['pending', 'confirmed'])
             ->where('check_out', '>', now()->startOfDay())
             ->orderBy('check_in')
@@ -23,11 +39,6 @@ class BookingController extends Controller
                 'end' => $booking->check_out->toDateString(),
             ]);
 
-        return view('bookings.create', [
-            'room' => $room,
-            'isGuest' => $request->boolean('guest'),
-            'blockedRanges' => $blockedRanges,
-        ]);
     }
 
     public function store(Request $request, Room $room)

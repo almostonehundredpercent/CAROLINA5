@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', fn () => view('home', ['featuredRooms' => Room::where('is_active', true)->orderBy('price_per_night')->take(3)->get()]))->name('home');
 Route::get('/rooms', [RoomController::class, 'index'])->name('rooms.index');
 Route::get('/rooms/{room:slug}', [RoomController::class, 'show'])->name('rooms.show');
+Route::get('/rooms/{room:slug}/availability', [BookingController::class, 'availability'])->name('rooms.availability');
 Route::get('/booking-lookup', [BookingController::class, 'lookupForm'])->name('bookings.lookup');
 Route::post('/booking-lookup', [BookingController::class, 'lookup'])->name('bookings.lookup.submit');
 Route::patch('/booking-lookup/{booking}/cancel', [BookingController::class, 'cancelGuest'])->name('bookings.lookup.cancel');
