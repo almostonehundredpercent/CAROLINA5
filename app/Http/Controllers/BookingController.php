@@ -54,9 +54,38 @@ class BookingController extends Controller
     public function receipt(Request $request, Booking $booking) { $this->authorizeBookingAccess($request, $booking); return view('bookings.receipt', compact('booking')); }
     public function confirmation(Request $request, Booking $booking) { $isOwner = $booking->user_id && $request->user() && $booking->user_id === $request->user()->id; $isGuestSession = $booking->user_id === null && $request->session()->get('guest_booking_reference') === $booking->reference; abort_unless($isOwner || $isGuestSession || $request->user()?->is_admin, 403); return view('bookings.confirmation', compact('booking')); }
     public function confirmPayment(Request $request, Booking $booking) { $this->authorizeBookingAccess($request, $booking); $request->session()->put('guest_booking_reference', $booking->reference); return redirect()->route('bookings.confirmation', $booking); }
-    public function cancel(Request $request, Booking $booking) { abort_unless($booking->user_id === $request->user()?->id, 403); abort_if($booking->check_in->isToday() || $booking->check_in->isPast(), 422, 'This reservation can no longer be cancelled online.'); $booking->update(['status' => 'cancelled']); return back()->with('success', 'Your booking has been cancelled.'); }
+    public function cancel(Request $request, Booking $booking)
+    {
+        abort_unless($booking->user_id === $request->user()?->id, 403);
+        $this->cancelBeforeCheckIn($booking);
+
+        return back()->with('success', 'Your booking has been cancelled. The room is available for those dates again.');
+    }
+
+    public function cancelGuest(Request $request, Booking $booking)
+    {
+        $data = $request->validate(['email' => 'required|email', 'reference' => 'required|string']);
+        abort_unless(
+            $booking->user_id === null
+                && strcasecmp($booking->reference, trim($data['reference'])) === 0
+                && strcasecmp((string) $booking->guest_email, trim($data['email'])) === 0,
+            403
+        );
+
+        $this->cancelBeforeCheckIn($booking);
+        session()->flash('success', 'Your booking has been cancelled. The room is available for those dates again.');
+
+        return view('bookings.lookup-result', ['booking' => $booking->fresh('room'), 'lookupEmail' => $data['email']]);
+    }
     public function lookupForm() { return view('bookings.lookup'); }
-    public function lookup(Request $request) { $data = $request->validate(['email' => 'required|email', 'reference' => 'required|string']); $booking = Booking::with('room')->where('reference', strtoupper(trim($data['reference'])))->where(function ($query) use ($data) { $query->where('guest_email', $data['email'])->orWhereHas('user', fn ($user) => $user->where('email', $data['email'])); })->first(); if (! $booking) return back()->withErrors(['reference' => 'No booking matches that email and reference code.']); return view('bookings.lookup-result', compact('booking')); }
+    public function lookup(Request $request) { $data = $request->validate(['email' => 'required|email', 'reference' => 'required|string']); $booking = Booking::with('room')->where('reference', strtoupper(trim($data['reference'])))->where(function ($query) use ($data) { $query->where('guest_email', $data['email'])->orWhereHas('user', fn ($user) => $user->where('email', $data['email'])); })->first(); if (! $booking) return back()->withErrors(['reference' => 'No booking matches that email and reference code.']); return view('bookings.lookup-result', ['booking' => $booking, 'lookupEmail' => $data['email']]); }
+
+    private function cancelBeforeCheckIn(Booking $booking): void
+    {
+        abort_if($booking->status === 'cancelled', 422, 'This booking has already been cancelled.');
+        abort_if($booking->check_in->isToday() || $booking->check_in->isPast(), 422, 'This reservation can no longer be cancelled online after check-in day begins.');
+        $booking->update(['status' => 'cancelled']);
+    }
 
     private function authorizeBookingAccess(Request $request, Booking $booking): void
     {

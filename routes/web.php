@@ -12,6 +12,7 @@ Route::get('/rooms', [RoomController::class, 'index'])->name('rooms.index');
 Route::get('/rooms/{room:slug}', [RoomController::class, 'show'])->name('rooms.show');
 Route::get('/booking-lookup', [BookingController::class, 'lookupForm'])->name('bookings.lookup');
 Route::post('/booking-lookup', [BookingController::class, 'lookup'])->name('bookings.lookup.submit');
+Route::patch('/booking-lookup/{booking}/cancel', [BookingController::class, 'cancelGuest'])->name('bookings.lookup.cancel');
 
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
 Route::get('/login/form', [AuthController::class, 'showLoginForm'])->name('login.form');
