@@ -7,6 +7,7 @@
 <style>
 .calendar-days{column-gap:0;row-gap:5px}.calendar-day{border-radius:0}.calendar-day.booked{background:#d9524b;color:#fff;text-decoration:none}.calendar-day.booked-start{border-radius:5px 0 0 5px}.calendar-day.booked-end{border-radius:0 5px 5px 0}.calendar-day.booked-start.booked-end{border-radius:5px}.calendar-day.selected{background:var(--gold)}.calendar-day.selected.start{border-radius:5px 0 0 5px}.calendar-day.selected.end{border-radius:0 5px 5px 0}.calendar-day.selected.start.end{border-radius:5px}.calendar-day.selected.range{background:#f6d59b;color:var(--deep)}
 </style>
+<style>.availability-calendar{max-width:500px}.calendar-day,.calendar-blank{font-size:.88rem}.calendar-weekdays span{font-size:.72rem}@media(max-width:520px){.availability-calendar{max-width:none}.calendar-day,.calendar-blank{font-size:.8rem}}</style>
 <section class="booking-page">
     <div class="booking-form">
         <span class="eyebrow">RESERVE {{ strtoupper($room->name) }}</span>
