@@ -23,9 +23,9 @@ Route::post('/register', [AuthController::class, 'register'])->name('register.su
 Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth')->name('logout');
 
 Route::get('/rooms/{room:slug}/book', [BookingController::class, 'create'])->name('bookings.create');
-Route::post('/rooms/{room:slug}/book', [BookingController::class, 'store'])->name('bookings.store');
+Route::post('/rooms/{room:slug}/book', [BookingController::class, 'store'])->middleware('throttle:10,1')->name('bookings.store');
 Route::get('/bookings/{booking}/receipt', [BookingController::class, 'receipt'])->name('bookings.receipt');
-Route::post('/bookings/{booking}/confirm-payment', [BookingController::class, 'confirmPayment'])->name('bookings.confirm-payment');
+Route::post('/bookings/{booking}/deposit', [BookingController::class, 'submitDeposit'])->middleware('throttle:5,1')->name('bookings.deposit.submit');
 Route::get('/bookings/{booking}/confirmation', [BookingController::class, 'confirmation'])->name('bookings.confirmation');
 Route::middleware('auth')->group(function () {
     Route::get('/bookings', [BookingController::class, 'index'])->name('bookings.index');
@@ -41,4 +41,5 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::get('/reports', [AdminController::class, 'reports'])->name('reports');
     Route::patch('/rooms/{room}/status', [AdminController::class, 'updateRoomStatus'])->name('rooms.status');
     Route::patch('/bookings/{booking}', [AdminController::class, 'updateBooking'])->name('bookings.update');
+    Route::get('/bookings/{booking}/payment-proof', [AdminController::class, 'paymentProof'])->name('bookings.payment-proof');
 });

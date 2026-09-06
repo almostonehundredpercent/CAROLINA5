@@ -8,6 +8,7 @@ use App\Models\Room;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Crypt;
 
 class BookingController extends Controller
 {
@@ -33,6 +34,7 @@ class BookingController extends Controller
 
     private function blockedRanges(Room $room)
     {
+        $this->expireUnpaidBookings($room);
         return $room->bookings()
             ->whereIn('status', ['pending', 'confirmed'])
             ->where('check_out', '>', now()->startOfDay())
@@ -47,6 +49,7 @@ class BookingController extends Controller
 
     public function store(Request $request, Room $room)
     {
+        $this->expireUnpaidBookings($room);
         if (! $room->is_active || $room->operational_status !== 'available') {
             return redirect()->route('rooms.index')->withErrors(['room' => "{$room->name} is currently {$room->operational_status} and cannot be booked right now."]);
         }
@@ -69,7 +72,8 @@ class BookingController extends Controller
         } else { $taken = $room->bookings()->whereIn('status', ['pending', 'confirmed'])->where('check_in', '<', $data['check_out'])->where('check_out', '>', $data['check_in'])->exists(); $nights = Carbon::parse($data['check_in'])->diffInDays(Carbon::parse($data['check_out'])); $total = $nights * $room->price_per_night; }
         if ($taken) return back()->withInput()->withErrors(['check_in' => 'Those dates are no longer available for this room.']);
         $guestData = $data['checkout_type'] === 'guest' ? ['guest_name' => $data['guest_name'], 'guest_email' => $data['guest_email'], 'guest_phone' => $data['guest_phone'], 'billing_street' => $data['billing_street'], 'billing_city' => $data['billing_city'], 'billing_province' => $data['billing_province'], 'billing_postal_code' => $data['billing_postal_code'], 'billing_verified_at' => now()] : [];
-        $booking = Booking::create($data + $guestData + ['user_id' => $request->user()?->id, 'room_id' => $room->id, 'nights' => $nights, 'total_amount' => $total, 'status' => 'pending']);
+        $deposit = min($total, max((float) config('payments.minimum_deposit'), round($total * ((float) config('payments.deposit_percentage') / 100), 2)));
+        $booking = Booking::create($data + $guestData + ['user_id' => $request->user()?->id, 'room_id' => $room->id, 'nights' => $nights, 'total_amount' => $total, 'deposit_amount' => $deposit, 'deposit_status' => 'awaiting_deposit', 'deposit_due_at' => now()->addMinutes(30), 'status' => 'pending']);
         $request->session()->put('guest_booking_reference', $booking->reference);
         $email = $booking->guest_email ?? $request->user()?->email;
         if ($email) Mail::to($email)->send(new BookingConfirmation($booking));
@@ -79,7 +83,41 @@ class BookingController extends Controller
     public function index(Request $request) { return view('bookings.index', ['bookings' => $request->user()->bookings()->with('room')->latest()->get()]); }
     public function receipt(Request $request, Booking $booking) { $this->authorizeBookingAccess($request, $booking); return view('bookings.receipt', compact('booking')); }
     public function confirmation(Request $request, Booking $booking) { $isOwner = $booking->user_id && $request->user() && $booking->user_id === $request->user()->id; $isGuestSession = $booking->user_id === null && $request->session()->get('guest_booking_reference') === $booking->reference; abort_unless($isOwner || $isGuestSession || $request->user()?->is_admin, 403); return view('bookings.confirmation', compact('booking')); }
-    public function confirmPayment(Request $request, Booking $booking) { $this->authorizeBookingAccess($request, $booking); $request->session()->put('guest_booking_reference', $booking->reference); return redirect()->route('bookings.confirmation', $booking); }
+    public function submitDeposit(Request $request, Booking $booking)
+    {
+        $this->authorizeBookingAccess($request, $booking);
+        abort_if($booking->status === 'cancelled', 422, 'This booking has been cancelled.');
+        if ($booking->deposit_status === 'awaiting_deposit' && $booking->deposit_due_at?->isPast()) {
+            $booking->update(['deposit_status' => 'expired', 'status' => 'cancelled']);
+            abort(422, 'The 30-minute deposit window has expired and this room is available again.');
+        }
+
+        $data = $request->validate([
+            'payment_reference' => 'required|string|min:4|max:100',
+            'payment_proof' => 'required|file|mimes:jpg,jpeg,png,webp|max:2048',
+        ]);
+
+        $booking->update([
+            'payment_reference' => trim($data['payment_reference']),
+            'payment_proof_data' => Crypt::encryptString(base64_encode($request->file('payment_proof')->get())),
+            'payment_proof_mime' => $request->file('payment_proof')->getMimeType(),
+            'deposit_status' => 'submitted',
+            'deposit_submitted_at' => now(),
+        ]);
+        $request->session()->put('guest_booking_reference', $booking->reference);
+
+        return redirect()->route('bookings.receipt', $booking)->with('success', 'Deposit proof submitted. Carolina will verify it before confirming your booking.');
+    }
+
+    private function expireUnpaidBookings(Room $room): void
+    {
+        $room->bookings()
+            ->where('status', 'pending')
+            ->where('deposit_status', 'awaiting_deposit')
+            ->whereNotNull('deposit_due_at')
+            ->where('deposit_due_at', '<=', now())
+            ->update(['status' => 'cancelled', 'deposit_status' => 'expired']);
+    }
     public function cancel(Request $request, Booking $booking)
     {
         abort_unless($booking->user_id === $request->user()?->id, 403);

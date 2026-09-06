@@ -75,7 +75,7 @@
                     </label>
                 @endif
 
-                <label>Payment method<select name="payment_method"><option value="gcash">GCash</option><option value="cash">Pay at property</option></select></label>
+                <label>Remaining balance payment<select name="payment_method"><option value="gcash">GCash at property</option><option value="cash">Pay at property (cash)</option></select></label>
                 <label>Special request<textarea name="special_request" rows="3">{{ old('special_request') }}</textarea></label>
                 <button class="button">Continue to payment</button>
             </form>
@@ -92,7 +92,7 @@
             <strong>₱{{ number_format($room->price_per_night) }} <small>/ night</small></strong>
         @endif
         <hr>
-        <small>{{ $bookingMode === 'hourly' ? 'Your total is based on your selected hours.' : 'Final total is calculated from your dates.' }} A GCash payment link is sent after the reservation is reviewed.</small>
+        <small>{{ $bookingMode === 'hourly' ? 'Your total is based on your selected hours.' : 'Final total is calculated from your dates.' }} A 30% GCash reservation deposit (minimum ₱500, never more than the total) is required before Carolina confirms your stay.</small>
     </aside>
 </section>
 @if(auth()->check() || $isGuest)

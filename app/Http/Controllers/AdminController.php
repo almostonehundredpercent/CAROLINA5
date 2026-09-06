@@ -7,11 +7,13 @@ use App\Models\Room;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Crypt;
 
 class AdminController extends Controller
 {
     public function index()
     {
+        $this->expireOutstandingDeposits();
         $recentBookings = Booking::with(['user', 'room'])->latest()->take(8)->get();
         $chartStart = now()->subDays(6)->startOfDay();
         $bookingsByDay = Booking::where('created_at', '>=', $chartStart)
@@ -32,8 +34,39 @@ class AdminController extends Controller
 
     public function updateBooking(Request $request, Booking $booking)
     {
-        $booking->update($request->validate(['status' => 'required|in:pending,confirmed,cancelled']));
+        $action = $request->input('action');
+
+        if ($action === 'verify_deposit') {
+            abort_unless($booking->deposit_status === 'submitted' && $booking->payment_proof_data, 422, 'A deposit proof must be submitted before verification.');
+            $booking->update([
+                'status' => 'confirmed',
+                'deposit_status' => 'verified',
+                'deposit_verified_at' => now(),
+                'deposit_verified_by' => $request->user()->id,
+            ]);
+            return back()->with('success', 'Deposit verified and booking confirmed.');
+        }
+
+        if ($action === 'reject_deposit') {
+            abort_unless($booking->deposit_status === 'submitted', 422, 'There is no submitted deposit to return.');
+            $booking->update(['deposit_status' => 'awaiting_deposit', 'payment_reference' => null, 'payment_proof_data' => null, 'payment_proof_mime' => null, 'deposit_submitted_at' => null, 'deposit_due_at' => now()->addMinutes(30)]);
+            return back()->with('success', 'Deposit proof returned. The guest can submit a new payment reference and proof.');
+        }
+
+        $status = $request->validate(['status' => 'required|in:pending,confirmed,cancelled'])['status'];
+        if ($status === 'confirmed' && ! in_array($booking->deposit_status, ['verified', 'not_required'], true)) {
+            return back()->withErrors(['status' => 'Verify the submitted GCash deposit before confirming this booking.']);
+        }
+        $booking->update(['status' => $status]);
         return back()->with('success', 'Booking status updated.');
+    }
+
+    public function paymentProof(Booking $booking)
+    {
+        abort_unless($booking->payment_proof_data, 404);
+        $content = base64_decode(Crypt::decryptString($booking->payment_proof_data), true);
+        abort_if($content === false, 404);
+        return response($content, 200, ['Content-Type' => $booking->payment_proof_mime ?: 'application/octet-stream', 'Content-Disposition' => 'inline; filename="payment-proof-' . $booking->reference . '"']);
     }
 
     public function walkInForm()
@@ -101,6 +134,7 @@ class AdminController extends Controller
 
     public function rooms()
     {
+        $this->expireOutstandingDeposits();
         $rooms = $this->roomsWithDisplayStatus();
 
         return view('admin.rooms', compact('rooms'));
@@ -108,6 +142,7 @@ class AdminController extends Controller
 
     public function bookings(Request $request)
     {
+        $this->expireOutstandingDeposits();
         $period = $request->string('period', 'daily')->value();
         abort_unless(in_array($period, ['daily', 'weekly', 'monthly', 'yearly'], true), 404);
 
@@ -129,6 +164,7 @@ class AdminController extends Controller
 
     public function reports(Request $request)
     {
+        $this->expireOutstandingDeposits();
         $period = $request->string('period', 'daily')->value();
         $metric = $request->string('metric', 'earnings')->value();
         abort_unless(in_array($period, ['daily', 'weekly', 'monthly', 'yearly'], true), 404);
@@ -202,6 +238,15 @@ class AdminController extends Controller
 
                 return $room;
             });
+    }
+
+    private function expireOutstandingDeposits(): void
+    {
+        Booking::where('status', 'pending')
+            ->where('deposit_status', 'awaiting_deposit')
+            ->whereNotNull('deposit_due_at')
+            ->where('deposit_due_at', '<=', now())
+            ->update(['status' => 'cancelled', 'deposit_status' => 'expired']);
     }
 
     private function bookingChartData(string $period): array
