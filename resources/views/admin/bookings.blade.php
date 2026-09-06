@@ -6,7 +6,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ asset('css/admin.css') }}">
-    <style>.line-graph{position:relative}.line-graph .graph-scale{position:absolute;top:3px;right:4px;color:var(--muted);font-size:10px}.line-graph .chart-empty{height:210px;display:grid;place-items:center;border-bottom:1px solid var(--line);color:var(--muted);font-size:13px;text-align:center;background:linear-gradient(#fff,#fcfbf9)}.booking-line,.booking-dot{vector-effect:non-scaling-stroke}@media(max-width:700px){.line-graph .chart-empty{height:165px}}</style>
+    <style>.line-graph{position:relative}.line-chart-panel .line-graph{max-width:720px;margin-inline:auto}.line-chart-panel .line-graph svg{height:auto;aspect-ratio:600/220}.line-graph .graph-scale{position:absolute;top:3px;right:4px;color:var(--muted);font-size:10px}.line-graph .chart-empty{height:210px;display:grid;place-items:center;border-bottom:1px solid var(--line);color:var(--muted);font-size:13px;text-align:center;background:linear-gradient(#fff,#fcfbf9)}.booking-line,.booking-dot{vector-effect:non-scaling-stroke}@media(max-width:700px){.line-graph .chart-empty{height:165px}}</style>
 </head>
 <body>
 <div class="admin-shell">
