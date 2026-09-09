@@ -19,7 +19,6 @@ class RoomController extends Controller
         return view('rooms.index', [
             'rooms' => $rooms->orderBy('price_per_night')->get(),
             'filters' => $request->only('check_in', 'check_out', 'guests'),
-            'availabilityRooms' => Room::where('is_active', true)->where('operational_status', 'available')->orderBy('name')->get(),
         ]);
     }
 
