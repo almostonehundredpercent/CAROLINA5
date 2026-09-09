@@ -13,6 +13,7 @@
         }
     </script>
     <link rel="stylesheet" href="{{ asset('css/site.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/password-toggle.css') }}">
     <link rel="stylesheet" href="{{ asset('css/responsive.css') }}">
 </head>
 <body>
@@ -110,6 +111,18 @@
                 document.documentElement.classList.toggle('dark-mode');
                 localStorage.setItem('carolina-theme', document.documentElement.classList.contains('dark-mode') ? 'dark' : 'light');
                 setThemeToggle();
+            });
+
+            document.querySelectorAll('.password-toggle').forEach((button) => {
+                button.addEventListener('click', () => {
+                    const input = button.closest('.password-field')?.querySelector('input');
+                    if (!input) return;
+                    const visible = input.type === 'text';
+                    input.type = visible ? 'password' : 'text';
+                    button.textContent = visible ? 'Show' : 'Hide';
+                    button.setAttribute('aria-label', visible ? 'Show password' : 'Hide password');
+                    button.setAttribute('aria-pressed', String(!visible));
+                });
             });
 
             if (!toggle || !navigation) return;
