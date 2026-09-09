@@ -20,6 +20,7 @@
             <div><small>Booking total</small><b>₱{{ number_format($booking->total_amount, 2) }}</b></div>
             <div><small>Balance due at property</small><b>₱{{ number_format($booking->total_amount, 2) }}</b></div>
         </div>
+        @if($booking->add_ons)<p class="receipt-note"><strong>Add-ons:</strong> {{ collect($booking->add_ons)->pluck('label')->join(', ') }}</p>@endif
         <p class="receipt-note">Please keep your reference number. Carolina will review the reservation, and the full balance is payable when you arrive.</p>
     </section>
     <button class="button light" type="button" onclick="window.print()">Print / save receipt</button>

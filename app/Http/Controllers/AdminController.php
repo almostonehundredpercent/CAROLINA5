@@ -3,11 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Models\Booking;
+use App\Models\ActivityLog;
 use App\Models\Room;
+use App\Mail\BookingUpdate;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\Mail;
 
 class AdminController extends Controller
 {
@@ -36,6 +39,22 @@ class AdminController extends Controller
     {
         $action = $request->input('action');
 
+        if ($action === 'check_in') {
+            abort_if($booking->status === 'cancelled' || $booking->checked_out_at, 422, 'This booking cannot be checked in.');
+            $booking->update(['checked_in_at' => now(), 'status' => 'confirmed']);
+            $this->log($booking, $request->user()->id, 'checked_in', 'Guest checked in by staff.');
+            $this->email($booking->fresh('room'), 'Welcome to Carolina', 'You have been checked in. We hope you enjoy your stay.');
+            return back()->with('success', 'Guest checked in and notified.');
+        }
+        if ($action === 'check_out') {
+            abort_if(! $booking->checked_in_at || $booking->checked_out_at, 422, 'This guest is not currently checked in.');
+            $booking->update(['checked_out_at' => now()]);
+            $booking->room->update(['operational_status' => 'cleaning']);
+            $this->log($booking, $request->user()->id, 'checked_out', 'Guest checked out; room moved to cleaning.');
+            $this->email($booking->fresh('room'), 'Thank you for staying with Carolina', 'You have been checked out. Thank you for choosing Carolina.');
+            return back()->with('success', 'Guest checked out. The room is now on the cleaning board.');
+        }
+
         if ($action === 'verify_deposit') {
             abort_unless($booking->deposit_status === 'submitted' && $booking->payment_proof_data, 422, 'A deposit proof must be submitted before verification.');
             $booking->update([
@@ -58,6 +77,8 @@ class AdminController extends Controller
             return back()->withErrors(['status' => 'Verify the submitted GCash deposit before confirming this booking.']);
         }
         $booking->update(['status' => $status]);
+        $this->log($booking, $request->user()->id, 'booking_' . $status, 'Booking status changed to ' . $status . '.');
+        $this->email($booking->fresh('room'), 'Your Carolina booking was updated', 'Your booking status is now ' . $status . '.');
         return back()->with('success', 'Booking status updated.');
     }
 
@@ -159,6 +180,9 @@ class AdminController extends Controller
             'maintenanceRooms' => $rooms->where('display_status', 'maintenance')->count(),
             'newCustomers' => Booking::with(['user', 'room'])->latest()->take(5)->get(),
             'individualBookings' => Booking::with(['user', 'room'])->latest()->paginate(15, ['*'], 'booking_page'),
+            'arrivalsToday' => Booking::with('room')->whereIn('status', ['pending', 'confirmed'])->whereDate('check_in', today())->whereNull('checked_in_at')->get(),
+            'departuresToday' => Booking::with('room')->whereNotNull('checked_in_at')->whereNull('checked_out_at')->whereDate('check_out', '<=', today())->get(),
+            'recentActivity' => ActivityLog::with(['booking.room', 'user'])->latest()->take(8)->get(),
         ]);
     }
 
@@ -196,6 +220,7 @@ class AdminController extends Controller
             'chartLabels' => $labels,
             'chartValues' => $values,
             'latestBookings' => Booking::with(['user', 'room'])->latest()->take(5)->get(),
+            'roomPerformance' => Booking::with('room')->where('status', 'confirmed')->get()->groupBy('room_id')->map(fn ($items) => ['room' => $items->first()->room?->name ?? 'Room removed', 'bookings' => $items->count(), 'revenue' => (float) $items->sum('total_amount')])->sortByDesc('revenue')->take(5),
             'bookingReportMetrics' => $metric === 'bookings' ? [
                 'total' => Booking::count(),
                 'cancelled' => Booking::where('status', 'cancelled')->count(),
@@ -250,6 +275,17 @@ class AdminController extends Controller
             ->whereNotNull('deposit_due_at')
             ->where('deposit_due_at', '<=', now())
             ->update(['status' => 'cancelled', 'deposit_status' => 'expired']);
+    }
+
+    private function log(Booking $booking, ?int $userId, string $event, string $description): void
+    {
+        ActivityLog::create(['booking_id' => $booking->id, 'user_id' => $userId, 'event' => $event, 'description' => $description]);
+    }
+
+    private function email(Booking $booking, string $subject, string $message): void
+    {
+        $email = $booking->guest_email ?? $booking->user?->email;
+        if ($email) Mail::to($email)->send(new BookingUpdate($booking, $subject, $message));
     }
 
     private function bookingChartData(string $period): array

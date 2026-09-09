@@ -14,6 +14,7 @@ Route::get('/rooms/{room:slug}/availability', [BookingController::class, 'availa
 Route::get('/booking-lookup', [BookingController::class, 'lookupForm'])->name('bookings.lookup');
 Route::post('/booking-lookup', [BookingController::class, 'lookup'])->name('bookings.lookup.submit');
 Route::patch('/booking-lookup/{booking}/cancel', [BookingController::class, 'cancelGuest'])->name('bookings.lookup.cancel');
+Route::patch('/booking-lookup/{booking}/extend', [BookingController::class, 'extendGuest'])->name('bookings.lookup.extend');
 
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
 Route::get('/login/form', [AuthController::class, 'showLoginForm'])->name('login.form');
@@ -41,5 +42,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::get('/reports', [AdminController::class, 'reports'])->name('reports');
     Route::patch('/rooms/{room}/status', [AdminController::class, 'updateRoomStatus'])->name('rooms.status');
     Route::patch('/bookings/{booking}', [AdminController::class, 'updateBooking'])->name('bookings.update');
+    Route::post('/bookings/{booking}/check-in', [AdminController::class, 'updateBooking'])->name('bookings.check-in');
+    Route::post('/bookings/{booking}/check-out', [AdminController::class, 'updateBooking'])->name('bookings.check-out');
     Route::get('/bookings/{booking}/payment-proof', [AdminController::class, 'paymentProof'])->name('bookings.payment-proof');
 });

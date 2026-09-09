@@ -261,6 +261,7 @@ footer { flex-shrink: 0; }
 .booking-form label.checkbox small { color: var(--muted); font-size: .8rem; font-weight: 500; line-height: 1.45; }
 .booking-form label.checkbox:has(input:checked) { border-color: var(--gold); background: #fff4df; }
 .booking-form .payment-choice { display: none !important; }
+.booking-add-ons{display:grid;gap:9px;margin:0;padding:15px;border:1px solid var(--line);border-radius:9px;background:var(--paper)}.booking-add-ons legend{padding:0 4px;font-weight:700}.booking-add-ons>small{color:var(--muted)}.booking-add-ons label{display:grid!important;grid-template-columns:auto 1fr auto;align-items:center;gap:9px;font-size:.85rem!important;color:var(--ink)!important}.booking-add-ons input{width:17px;height:17px;padding:0;accent-color:var(--gold)}.booking-add-ons b{color:var(--deep)}
 
 /* Tighter public-site rhythm: less empty space, without removing content. */
 .nav { min-height: 80px; }
