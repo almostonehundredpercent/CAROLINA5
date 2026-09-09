@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class Room extends Model
 {
     use HasFactory;
-    protected $fillable = ['name', 'slug', 'description', 'image_url', 'room_type', 'beds', 'guests', 'price_per_night', 'amenities', 'is_active', 'operational_status', 'operational_until'];
-    protected function casts(): array { return ['amenities' => 'array', 'price_per_night' => 'decimal:2', 'is_active' => 'boolean', 'operational_until' => 'datetime']; }
+    protected $fillable = ['name', 'slug', 'description', 'image_url', 'room_type', 'beds', 'guests', 'price_per_night', 'rate_label', 'rental_hours', 'amenities', 'is_active', 'operational_status', 'operational_until'];
+    protected function casts(): array { return ['amenities' => 'array', 'price_per_night' => 'decimal:2', 'rental_hours' => 'integer', 'is_active' => 'boolean', 'operational_until' => 'datetime']; }
     public function bookings() { return $this->hasMany(Booking::class); }
 }

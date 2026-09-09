@@ -18,7 +18,7 @@
     </form>
 
     <p class="result-count">{{ $rooms->count() }} room{{ $rooms->count() === 1 ? '' : 's' }} available</p>
-    <div class="room-grid">@forelse($rooms as $room)<article class="room-card"><img src="{{ $room->image_url }}" alt="{{ $room->name }}"><div class="room-card-body"><span>{{ $room->room_type }} · {{ $room->beds }} bed{{ $room->beds > 1 ? 's' : '' }} · {{ $room->guests }} guests</span><h3>{{ $room->name }}</h3><p>{{ Str::limit($room->description, 86) }}</p><strong>₱{{ number_format($room->price_per_night) }} <small>/ night</small></strong><a class="button small" href="{{ route('rooms.show', $room) }}">Select room</a></div></article>@empty<div class="empty-state"><h2>No rooms found</h2><p>Try different dates or a smaller group size.</p><a class="text-link" href="{{ route('rooms.index') }}">Clear search</a></div>@endforelse</div>
+    <div class="room-grid">@forelse($rooms as $room)<article class="room-card"><img src="{{ $room->image_url }}" alt="{{ $room->name }}"><div class="room-card-body"><span>{{ $room->room_type }} · {{ $room->beds }} bed{{ $room->beds > 1 ? 's' : '' }} · {{ $room->guests }} guests</span><h3>{{ $room->name }}</h3><p>{{ Str::limit($room->description, 86) }}</p><strong>₱{{ number_format($room->price_per_night) }} <small>{{ $room->rate_label }}</small></strong><a class="button small" href="{{ route('rooms.show', $room) }}">Select room</a></div></article>@empty<div class="empty-state"><h2>No rooms found</h2><p>Try different dates or a smaller group size.</p><a class="text-link" href="{{ route('rooms.index') }}">Clear search</a></div>@endforelse</div>
 </section>
 
 <script>

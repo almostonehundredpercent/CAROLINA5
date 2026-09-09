@@ -35,6 +35,7 @@
                 @csrf
                 <input type="hidden" name="checkout_type" value="{{ $isGuest ? 'guest' : 'account' }}">
                 <input type="hidden" name="booking_type" value="{{ $bookingMode === 'hourly' ? 'hourly' : 'dates' }}">
+                @if(!$room->rental_hours)
                 <section class="booking-type-selector" aria-label="Choose booking type">
                     <span class="booking-type-label">Choose your stay type</span>
                     <div class="booking-type-options">
@@ -42,9 +43,10 @@
                         <a class="{{ $bookingMode === 'hourly' ? 'active' : '' }}" href="{{ route('bookings.create', ['room' => $room, 'guest' => $isGuest ? 1 : null, 'mode' => 'hourly']) }}"><strong>Rent by hours</strong><small>Short stays for 3, 12, or 24 hours</small></a>
                     </div>
                 </section>
+                @endif
 
                 @if($bookingMode === 'hourly')
-                    <div class="hourly-rental"><p><strong>Short stay rental</strong><br>Rate: ₱{{ number_format($room->price_per_night / 24, 2) }} per hour.</p><label>Duration<select name="hours" id="hourly-hours"><option value="3">3 hours</option><option value="12">12 hours</option><option value="24">24 hours</option></select></label><label>Check-in date<input name="hourly_date" type="date" min="{{ now()->toDateString() }}" value="{{ old('hourly_date', now()->toDateString()) }}" required></label><label>Check-in time<input name="check_in_time" type="time" value="{{ old('check_in_time', now()->addHour()->format('H:i')) }}" required></label><p id="hourly-total">Estimated total: ₱{{ number_format(($room->price_per_night / 24) * 3, 2) }}</p></div>
+                    <div class="hourly-rental"><p><strong>{{ $room->rental_hours ? 'Fixed short-stay package' : 'Short stay rental' }}</strong><br>@if($room->rental_hours) This room is offered as a {{ $room->rental_hours }}-hour stay for ₱{{ number_format($room->price_per_night) }}.@else Rate: ₱{{ number_format($room->price_per_night / 24, 2) }} per hour.@endif</p><label>Duration<select name="hours" id="hourly-hours">@if($room->rental_hours)<option value="{{ $room->rental_hours }}">{{ $room->rental_hours }} hours</option>@else<option value="3">3 hours</option><option value="12">12 hours</option><option value="24">24 hours</option>@endif</select></label><label>Check-in date<input name="hourly_date" type="date" min="{{ now()->toDateString() }}" value="{{ old('hourly_date', now()->toDateString()) }}" required></label><label>Check-in time<input name="check_in_time" type="time" value="{{ old('check_in_time', now()->addHour()->format('H:i')) }}" required></label><p id="hourly-total">Estimated total: ₱{{ number_format($room->rental_hours ? $room->price_per_night : ($room->price_per_night / 24) * 3, 2) }}</p></div>
                 @else
                 <div class="stay-date-fields">
                     <label>Check in<input id="check-in-display" type="text" placeholder="Select a date" readonly required><input id="check-in" name="check_in" type="hidden" value="{{ old('check_in') }}"></label>
@@ -87,19 +89,19 @@
         <h3>{{ $room->name }}</h3>
         <p>{{ $room->room_type }} · Up to {{ $room->guests }} guests</p>
         @if($bookingMode === 'hourly')
-            <strong>₱{{ number_format($room->price_per_night / 24, 2) }} <small>/ hour</small></strong>
+            <strong>₱{{ number_format($room->rental_hours ? $room->price_per_night : $room->price_per_night / 24, 2) }} <small>{{ $room->rental_hours ? $room->rate_label : '/ hour' }}</small></strong>
         @else
-            <strong>₱{{ number_format($room->price_per_night) }} <small>/ night</small></strong>
+            <strong>₱{{ number_format($room->price_per_night) }} <small>{{ $room->rate_label }}</small></strong>
         @endif
         <hr>
-        <small>{{ $bookingMode === 'hourly' ? 'Your total is based on your selected hours.' : 'Final total is calculated from your dates.' }} A 30% GCash reservation deposit (minimum ₱500, never more than the total) is required before Carolina confirms your stay.</small>
+        <small>{{ $bookingMode === 'hourly' ? ($room->rental_hours ? 'Your package total is fixed for the listed stay duration.' : 'Your total is based on your selected hours.') : 'Final total is calculated from your dates.' }} A 30% GCash reservation deposit (minimum ₱500, never more than the total) is required before Carolina confirms your stay.</small>
     </aside>
 </section>
 @if(auth()->check() || $isGuest)
 <script>
 document.addEventListener('DOMContentLoaded', () => {
     const hourlyHours = document.getElementById('hourly-hours');
-    if (hourlyHours) { const total = document.getElementById('hourly-total'); const rate = {{ $room->price_per_night / 24 }}; const refresh = () => total.textContent = `Estimated total: ₱${(rate * Number(hourlyHours.value)).toLocaleString('en-PH', { minimumFractionDigits: 2 })}`; hourlyHours.addEventListener('change', refresh); refresh(); return; }
+    if (hourlyHours) { const total = document.getElementById('hourly-total'); const packageRate = {{ $room->rental_hours ? $room->price_per_night : 'null' }}; const rate = {{ $room->price_per_night / 24 }}; const refresh = () => total.textContent = `Estimated total: ₱${(packageRate ?? rate * Number(hourlyHours.value)).toLocaleString('en-PH', { minimumFractionDigits: 2 })}`; hourlyHours.addEventListener('change', refresh); refresh(); return; }
     const ranges = @json($blockedRanges);
     const checkIn = document.getElementById('check-in');
     const checkOut = document.getElementById('check-out');
