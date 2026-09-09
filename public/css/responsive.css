@@ -154,16 +154,19 @@ footer { flex-shrink: 0; }
 .site-footer .footer-theme-toggle:hover { border-color: #ffe8bb; background: rgba(255, 232, 190, .13); color: #fff; }
 
 /* What we offer */
-.benefits.section { max-width: none; padding: 78px 8%; background: #2b211b; color: #fff4df; }
+.benefits.section { max-width: none; padding: 78px 8%; background: var(--sand); color: var(--ink); }
 .benefits .section-heading { justify-content: center; margin-bottom: 36px; }
 .benefits .eyebrow { color: #e28b00; }
-.benefits h2 { color: #fff4df; font-size: clamp(2rem, 3.2vw, 3rem); }
+.benefits h2 { color: var(--ink); font-size: clamp(2rem, 3.2vw, 3rem); }
 .benefits .benefit-grid { max-width: 1220px; gap: 34px; }
 .benefits .benefit-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); }
 .benefits .benefit-grid b { width: 58px; height: 58px; background: #dc8500; color: #fff; border: 1px solid #eea32f; box-shadow: 0 8px 20px rgba(0, 0, 0, .2); font-size: 1.65rem; }
 .benefits .benefit-grid b svg { width: 28px; height: 28px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
-.benefits .benefit-grid h3 { margin: 16px 0 9px; color: #fff8e9; font-size: 1.08rem; }
-.benefits .benefit-grid p { max-width: 230px; margin: 0 auto; color: #f1d8bd; line-height: 1.55; }
+.benefits .benefit-grid h3 { margin: 16px 0 9px; color: var(--ink); font-size: 1.08rem; }
+.benefits .benefit-grid p { max-width: 230px; margin: 0 auto; color: var(--muted); line-height: 1.55; }
+.dark-mode .benefits.section { background: #2b211b; color: #fff4df; }
+.dark-mode .benefits h2, .dark-mode .benefits .benefit-grid h3 { color: #fff8e9; }
+.dark-mode .benefits .benefit-grid p { color: #f1d8bd; }
 
 @media (max-width: 950px) {
     .site-footer .footer-content { grid-template-columns: 1.3fr 1fr; gap: 38px 24px; }
@@ -195,8 +198,8 @@ footer { flex-shrink: 0; }
     .site-footer .footer-theme-toggle svg { width: 14px; height: 14px; }
     .benefits.section { padding: 48px 7%; }
     .benefits .section-heading { margin-bottom: 27px; }
-    .benefits .benefit-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 26px 15px; }
-    .benefits .benefit-grid > :last-child { grid-column: 1 / -1; width: min(100%, 180px); margin: 0 auto; }
+    .benefits .benefit-grid { grid-template-columns: repeat(5, minmax(138px, 1fr)); gap: 16px; overflow-x: auto; padding: 2px 3px 10px; scroll-snap-type: x proximity; }
+    .benefits .benefit-grid > div { scroll-snap-align: start; }
     .benefits .benefit-grid b { width: 48px; height: 48px; font-size: 1.35rem; }
     .benefits .benefit-grid b svg { width: 23px; height: 23px; }
     .benefits .benefit-grid h3 { margin: 11px 0 6px; font-size: .96rem; }
