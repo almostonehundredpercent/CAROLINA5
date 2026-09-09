@@ -15,7 +15,11 @@
         <a class="brand" href="{{ route('home') }}">
             <img class="brand-logo" src="{{ asset('images/carolina-logo.jpg') }}" alt="Carolina logo"><span>Carolina <small>TRANSIENT & AIRBNB</small></span>
         </a>
-        <nav>
+        <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="primary-navigation">
+            <span class="sr-only">Open navigation menu</span>
+            <span></span><span></span><span></span>
+        </button>
+        <nav id="primary-navigation">
             <a href="{{ route('rooms.index') }}">Rooms</a>
             <a href="{{ route('bookings.lookup') }}">Find booking</a>
             <a href="{{ route('home') }}#about">About</a>
@@ -78,5 +82,25 @@
             <div><a href="#">Privacy Policy</a><a href="#">Terms of Service</a></div>
         </div>
     </footer>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const toggle = document.querySelector('.menu-toggle');
+            const navigation = document.querySelector('#primary-navigation');
+            if (!toggle || !navigation) return;
+
+            toggle.addEventListener('click', () => {
+                const open = toggle.getAttribute('aria-expanded') === 'true';
+                toggle.setAttribute('aria-expanded', String(!open));
+                navigation.classList.toggle('is-open', !open);
+                document.body.classList.toggle('menu-open', !open);
+            });
+
+            navigation.querySelectorAll('a').forEach((link) => link.addEventListener('click', () => {
+                toggle.setAttribute('aria-expanded', 'false');
+                navigation.classList.remove('is-open');
+                document.body.classList.remove('menu-open');
+            }));
+        });
+    </script>
 </body>
 </html>
