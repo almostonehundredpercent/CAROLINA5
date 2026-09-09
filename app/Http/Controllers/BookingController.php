@@ -57,7 +57,7 @@ class BookingController extends Controller
             $request->merge(['guest_phone' => preg_replace('/[\s()\-]/', '', (string) $request->input('guest_phone'))]);
         }
         $rules = ['booking_type' => 'required|in:dates,hourly', 'guests' => 'required|integer|min:1|max:' . $room->guests, 'payment_method' => 'required|in:gcash,cash', 'special_request' => 'nullable|string|max:500', 'checkout_type' => 'required|in:guest,account'];
-        if ($request->input('booking_type') === 'hourly') $rules += ['hourly_date' => 'required|date|after_or_equal:today', 'check_in_time' => 'required|date_format:H:i', 'hours' => 'required|integer|in:' . ($room->rental_hours ?: '3,12,24')];
+        if ($request->input('booking_type') === 'hourly') $rules += ['hourly_date' => 'required|date|after_or_equal:today', 'check_in_time' => 'required|date_format:H:i', 'hours' => 'required|integer|in:' . ($room->rental_hours ? implode(',', array_unique([$room->rental_hours, 48, 72, 96, 120, 168])) : '3,12,24,48,72,96,120,168')];
         else $rules += ['check_in' => 'required|date|after_or_equal:today', 'check_out' => 'required|date|after:check_in'];
         if ($request->input('checkout_type') === 'guest') $rules += ['guest_name' => 'required|string|max:255', 'guest_email' => 'required|email:rfc,dns|max:255', 'guest_phone' => ['required', 'regex:/^(?:\\+63|63|0)9\\d{9}$/'], 'billing_street' => 'required|string|max:255', 'billing_city' => 'required|string|max:100', 'billing_province' => 'required|string|max:100', 'billing_postal_code' => 'required|regex:/^\\d{4}$/', 'billing_verified' => 'accepted'];
         $data = $request->validate($rules);
@@ -67,13 +67,15 @@ class BookingController extends Controller
             $checkOutAt = $checkInAt->copy()->addHours($data['hours']);
             $hourlyEndDate = $checkOutAt->isStartOfDay() ? $checkOutAt->toDateString() : $checkOutAt->copy()->addDay()->toDateString();
             $taken = $room->bookings()->whereIn('status', ['pending', 'confirmed'])->where(function ($query) use ($checkInAt, $checkOutAt, $hourlyEndDate) { $query->where(fn ($hourly) => $hourly->whereNotNull('check_in_at')->where('check_in_at', '<', $checkOutAt)->where('check_out_at', '>', $checkInAt))->orWhere(fn ($dates) => $dates->whereNull('check_in_at')->where('check_in', '<', $hourlyEndDate)->where('check_out', '>', $checkInAt->toDateString())); })->exists();
-            $nights = 1; $total = $room->rental_hours ? (float) $room->price_per_night : round(($room->price_per_night / 24) * $data['hours'], 2);
+            $nights = max(1, (int) ceil($data['hours'] / 24));
+            $total = $room->rental_hours
+                ? round($room->price_per_night * match ((int) $data['hours']) { 48 => 2, 72 => 3, 96 => 4, 120 => 5, 168 => 7, default => 1 }, 2)
+                : round(($room->price_per_night / 24) * $data['hours'], 2);
             $data['check_in'] = $checkInAt->toDateString(); $data['check_out'] = $checkOutAt->toDateString(); $data['check_in_at'] = $checkInAt; $data['check_out_at'] = $checkOutAt;
         } else { $taken = $room->bookings()->whereIn('status', ['pending', 'confirmed'])->where('check_in', '<', $data['check_out'])->where('check_out', '>', $data['check_in'])->exists(); $nights = Carbon::parse($data['check_in'])->diffInDays(Carbon::parse($data['check_out'])); $total = $nights * $room->price_per_night; }
         if ($taken) return back()->withInput()->withErrors(['check_in' => 'Those dates are no longer available for this room.']);
         $guestData = $data['checkout_type'] === 'guest' ? ['guest_name' => $data['guest_name'], 'guest_email' => $data['guest_email'], 'guest_phone' => $data['guest_phone'], 'billing_street' => $data['billing_street'], 'billing_city' => $data['billing_city'], 'billing_province' => $data['billing_province'], 'billing_postal_code' => $data['billing_postal_code'], 'billing_verified_at' => now()] : [];
-        $deposit = min($total, max((float) config('payments.minimum_deposit'), round($total * ((float) config('payments.deposit_percentage') / 100), 2)));
-        $booking = Booking::create($data + $guestData + ['user_id' => $request->user()?->id, 'room_id' => $room->id, 'nights' => $nights, 'total_amount' => $total, 'deposit_amount' => $deposit, 'deposit_status' => 'awaiting_deposit', 'deposit_due_at' => now()->addMinutes(30), 'status' => 'pending']);
+        $booking = Booking::create($data + $guestData + ['user_id' => $request->user()?->id, 'room_id' => $room->id, 'nights' => $nights, 'total_amount' => $total, 'deposit_amount' => 0, 'deposit_status' => 'not_required', 'deposit_due_at' => null, 'status' => 'pending']);
         $request->session()->put('guest_booking_reference', $booking->reference);
         $email = $booking->guest_email ?? $request->user()?->email;
         if ($email) Mail::to($email)->send(new BookingConfirmation($booking));

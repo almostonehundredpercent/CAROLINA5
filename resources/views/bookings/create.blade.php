@@ -38,6 +38,7 @@
                 @csrf
                 <input type="hidden" name="checkout_type" value="{{ $isGuest ? 'guest' : 'account' }}">
                 <input type="hidden" name="booking_type" value="{{ $bookingMode === 'hourly' ? 'hourly' : 'dates' }}">
+                <input type="hidden" name="payment_method" value="cash">
                 @if(!$room->rental_hours)
                 <section class="booking-type-selector" aria-label="Choose booking type">
                     <span class="booking-type-label">Choose your stay type</span>
@@ -82,7 +83,7 @@
 
                 <label class="clean-select">Remaining balance payment<input name="payment_method" type="hidden" value="{{ old('payment_method', 'gcash') }}"><button type="button" class="clean-select-trigger" data-select-trigger>GCash at property</button><section class="clean-select-menu" hidden><button type="button" class="clean-select-option" data-select-value="gcash">GCash at property</button><button type="button" class="clean-select-option" data-select-value="cash">Pay at property (cash)</button></section></label>
                 <label>Special request<textarea name="special_request" rows="3">{{ old('special_request') }}</textarea></label>
-                <button class="button">Continue to payment</button>
+                <button class="button">Continue to receipt</button>
             </form>
         @endif
     </div>
@@ -97,18 +98,20 @@
             <strong>₱{{ number_format($room->price_per_night) }} <small>{{ $room->rate_label }}</small></strong>
         @endif
         <hr>
-        <small>{{ $bookingMode === 'hourly' ? ($room->rental_hours ? 'Your package total is fixed for the listed stay duration.' : 'Your total is based on your selected hours.') : 'Final total is calculated from your dates.' }} A 30% GCash reservation deposit (minimum ₱500, never more than the total) is required before Carolina confirms your stay.</small>
+        <small>{{ $bookingMode === 'hourly' ? 'Choose your stay length and see the adjusted total before continuing.' : 'Final total is calculated from your dates.' }} No online payment is required—your receipt will show the balance payable at the property.</small>
     </aside>
 </section>
 @if(auth()->check() || $isGuest)
 <script>
 document.addEventListener('DOMContentLoaded', () => {
     const closeOpenPickers = (except = null) => document.querySelectorAll('.clean-select-menu, #hourly-calendar, #hourly-time-menu').forEach(menu => { if (menu !== except) menu.hidden = true; });
+    const paymentChoice = document.querySelector('.clean-select input[name="payment_method"]'); if (paymentChoice) { paymentChoice.closest('label')?.classList.add('payment-choice'); paymentChoice.name = 'payment_method_display'; }
     document.querySelectorAll('.clean-select').forEach(field => { const input = field.querySelector('input[type="hidden"]'), trigger = field.querySelector('[data-select-trigger]'), menu = field.querySelector('.clean-select-menu'); if (!trigger || !menu || !input) return; const select = value => { const option = menu.querySelector(`[data-select-value="${value}"]`); input.value = value; trigger.textContent = option?.textContent ?? value; menu.querySelectorAll('.clean-select-option').forEach(button => button.classList.toggle('selected', button.dataset.selectValue === value)); }; select(input.value); trigger.addEventListener('click', () => { const opening = menu.hidden; closeOpenPickers(menu); menu.hidden = !opening; }); menu.querySelectorAll('.clean-select-option').forEach(button => button.addEventListener('click', () => { select(button.dataset.selectValue); menu.hidden = true; input.dispatchEvent(new Event('change')); })); });
     const hourlyHours = document.getElementById('hourly-hours');
     if (hourlyHours) {
-        const total = document.getElementById('hourly-total'); const packageRate = {{ $room->rental_hours ? $room->price_per_night : 'null' }}; const rate = {{ $room->price_per_night / 24 }};
-        const refresh = () => total.textContent = `Estimated total: ₱${(packageRate ?? rate * Number(hourlyHours.value)).toLocaleString('en-PH', { minimumFractionDigits: 2 })}`;
+        const total = document.getElementById('hourly-total'); const packageRate = {{ $room->rental_hours ? $room->price_per_night : 'null' }}; const packageHours = {{ $room->rental_hours ?: 'null' }}; const rate = {{ $room->price_per_night / 24 }};
+        if (packageRate) { const field = hourlyHours.closest('.clean-select'), display = field.querySelector('.selector-display'), options = [[packageHours, `${packageHours} hours`], [48, '2 days'], [72, '3 days'], [96, '4 days'], [120, '5 days'], [168, '1 week']]; if (display) { const trigger = document.createElement('button'), menu = document.createElement('section'); trigger.type = 'button'; trigger.className = 'clean-select-trigger'; menu.className = 'clean-select-menu'; menu.hidden = true; options.forEach(([value, label]) => { const option = document.createElement('button'); option.type = 'button'; option.className = 'clean-select-option'; option.dataset.selectValue = value; option.textContent = label; menu.append(option); }); const select = value => { hourlyHours.value = value; trigger.textContent = options.find(([option]) => Number(option) === Number(value))?.[1] ?? `${value} hours`; menu.querySelectorAll('button').forEach(option => option.classList.toggle('selected', Number(option.dataset.selectValue) === Number(value))); hourlyHours.dispatchEvent(new Event('change')); }; display.replaceWith(trigger); field.append(menu); select(hourlyHours.value); trigger.addEventListener('click', () => { const opening = menu.hidden; closeOpenPickers(menu); menu.hidden = !opening; }); menu.querySelectorAll('button').forEach(option => option.addEventListener('click', () => { select(option.dataset.selectValue); menu.hidden = true; })); } }
+        const refresh = () => { const hours = Number(hourlyHours.value); const multiplier = ({48:2,72:3,96:4,120:5,168:7})[hours] ?? 1; total.textContent = `Estimated total: ₱${(packageRate ? packageRate * multiplier : rate * hours).toLocaleString('en-PH', { minimumFractionDigits: 2 })}`; };
         hourlyHours.addEventListener('change', refresh); refresh();
         const value = document.getElementById('hourly-date'), trigger = document.getElementById('hourly-date-trigger'), picker = document.getElementById('hourly-calendar'), days = document.getElementById('hourly-calendar-days'), month = document.getElementById('hourly-calendar-month');
         const today = new Date(); today.setHours(0, 0, 0, 0); let cursor = new Date(today.getFullYear(), today.getMonth(), 1);

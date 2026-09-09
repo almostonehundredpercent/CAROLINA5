@@ -260,6 +260,7 @@ footer { flex-shrink: 0; }
 .booking-form label.checkbox strong { font-size: .9rem; }
 .booking-form label.checkbox small { color: var(--muted); font-size: .8rem; font-weight: 500; line-height: 1.45; }
 .booking-form label.checkbox:has(input:checked) { border-color: var(--gold); background: #fff4df; }
+.booking-form .payment-choice { display: none !important; }
 
 /* Tighter public-site rhythm: less empty space, without removing content. */
 .nav { min-height: 80px; }
