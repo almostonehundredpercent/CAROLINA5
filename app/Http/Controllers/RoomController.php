@@ -16,7 +16,11 @@ class RoomController extends Controller
             $rooms->whereDoesntHave('bookings', fn ($query) => $query->whereIn('status', ['pending', 'confirmed'])->where('check_in', '<', $checkOut)->where('check_out', '>', $checkIn));
         }
         if ($request->filled('guests')) $rooms->where('guests', '>=', (int) $request->guests);
-        return view('rooms.index', ['rooms' => $rooms->orderBy('price_per_night')->get(), 'filters' => $request->only('check_in', 'check_out', 'guests')]);
+        return view('rooms.index', [
+            'rooms' => $rooms->orderBy('price_per_night')->get(),
+            'filters' => $request->only('check_in', 'check_out', 'guests'),
+            'availabilityRooms' => Room::where('is_active', true)->where('operational_status', 'available')->orderBy('name')->get(),
+        ]);
     }
 
     public function show(Room $room) { abort_unless($room->is_active, 404); return view('rooms.show', compact('room')); }
