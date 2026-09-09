@@ -260,3 +260,48 @@ footer { flex-shrink: 0; }
 .booking-form label.checkbox strong { font-size: .9rem; }
 .booking-form label.checkbox small { color: var(--muted); font-size: .8rem; font-weight: 500; line-height: 1.45; }
 .booking-form label.checkbox:has(input:checked) { border-color: var(--gold); background: #fff4df; }
+
+/* Tighter public-site rhythm: less empty space, without removing content. */
+.nav { min-height: 80px; }
+.nav .brand { font-size: 1.35rem; }
+.brand-logo { width: 50px; height: 50px; }
+.nav nav { gap: 24px; }
+.hero { min-height: 500px; padding-top: 58px; padding-bottom: 58px; }
+.search-card, .filter-bar { padding: 16px; }
+.section { padding-top: 72px; padding-bottom: 72px; }
+.section.compact { padding-top: 34px; }
+.section-heading { margin-bottom: 26px; }
+.room-card img { height: 190px; }
+.room-card-body { padding: 16px; }
+.page-hero { padding-top: 66px; padding-bottom: 66px; }
+.page-hero.slim { padding-top: 48px; padding-bottom: 48px; }
+.room-detail, .booking-page { margin-top: 45px; margin-bottom: 45px; gap: 38px; }
+.booking-form { padding: 28px; }
+.confirmation { padding-top: 75px; padding-bottom: 75px; }
+.site-footer .footer-content { padding-top: 44px; padding-bottom: 44px; gap: 30px; }
+.site-footer .footer-brand { padding-right: 20px; }
+.site-footer .brand-logo { width: 72px; height: 72px; }
+.site-footer .footer-brand p { margin-top: 18px; font-size: 1.08rem; }
+.site-footer .footer-column { padding-left: 30px; gap: 10px; }
+.site-footer .footer-bottom { padding-top: 16px; padding-bottom: 16px; }
+.benefits.section { padding-top: 60px; padding-bottom: 60px; }
+.benefits .section-heading { margin-bottom: 26px; }
+.benefits .benefit-grid { gap: 24px; }
+.benefits .benefit-grid b { width: 50px; height: 50px; }
+.benefits .benefit-grid h3 { margin-top: 12px; }
+
+@media (max-width: 800px) {
+    .hero { min-height: 430px; padding-top: 48px; padding-bottom: 48px; }
+    .section { padding-top: 46px; padding-bottom: 46px; }
+    .section-heading { margin-bottom: 22px; }
+    .room-card img { height: 205px; }
+    .room-detail, .booking-page { margin-top: 26px; margin-bottom: 26px; }
+    .booking-form { padding: 20px 16px; }
+    .confirmation { padding-top: 48px; padding-bottom: 48px; }
+}
+
+@media (max-width: 620px) {
+    .benefits.section { padding-top: 36px; padding-bottom: 36px; }
+    .benefits .section-heading { margin-bottom: 20px; }
+    .site-footer .footer-content { padding-top: 14px; padding-bottom: 10px; }
+}
