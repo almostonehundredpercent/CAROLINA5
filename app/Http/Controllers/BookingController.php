@@ -24,6 +24,7 @@ class BookingController extends Controller
             'isGuest' => $request->boolean('guest'),
             'bookingMode' => $room->rental_hours ? 'hourly' : $request->string('mode', 'dates')->value(),
             'blockedRanges' => $blockedRanges,
+            'hourlyBlockedSlots' => $this->hourlyBlockedSlots($room),
         ]);
     }
 
@@ -45,6 +46,21 @@ class BookingController extends Controller
                 'end' => $booking->check_out->toDateString(),
             ]);
 
+    }
+
+    private function hourlyBlockedSlots(Room $room)
+    {
+        return $room->bookings()
+            ->whereIn('status', ['pending', 'confirmed'])
+            ->where('check_out', '>', now()->startOfDay())
+            ->orderBy('check_in')
+            ->get()
+            ->map(function (Booking $booking) {
+                $start = $booking->check_in_at ?? $booking->check_in->copy()->startOfDay();
+                $end = $booking->check_out_at ?? $booking->check_out->copy()->startOfDay();
+
+                return ['start' => $start->toIso8601String(), 'end' => $end->toIso8601String()];
+            });
     }
 
     public function store(Request $request, Room $room)
