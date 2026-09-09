@@ -93,6 +93,15 @@ footer { flex-shrink: 0; }
 .dark-mode .home-room-picker { color: var(--muted); }
 .dark-mode .home-room-picker select, .dark-mode .home-calendar-head button { background: #211a15; border-color: var(--line); color: var(--ink); }
 .dark-mode .home-booked-list span { background: #3b201e; color: #ffd2cd; }
+.dark-mode .booking-form label { color: #e3d5c5; }
+.dark-mode .booking-form input, .dark-mode .booking-form select, .dark-mode .booking-form textarea, .dark-mode .booking-form .hourly-rental, .dark-mode .booking-form .booking-type-selector, .dark-mode .booking-form .availability-calendar, .dark-mode .booking-form .selector-display, .dark-mode .booking-form .hourly-date-trigger, .dark-mode .booking-form .hourly-time-trigger, .dark-mode .booking-form .clean-select-trigger { background: #211a15; border-color: var(--line); color: var(--ink); }
+.dark-mode .booking-form .hourly-rental p, .dark-mode .booking-form .booking-type-options small { color: var(--muted); }
+.dark-mode .booking-form .hourly-rental #hourly-total { background: #3a2c22; color: #ffe2af; }
+.dark-mode .booking-form .hourly-calendar, .dark-mode .booking-form .hourly-time-menu, .dark-mode .booking-form .clean-select-menu { background: #211a15; border-color: var(--line); }
+.dark-mode .booking-form .hourly-calendar-head button, .dark-mode .booking-form .hourly-calendar-day, .dark-mode .booking-form .hourly-time-option, .dark-mode .booking-form .clean-select-option { background: #211a15; color: var(--ink); }
+.dark-mode .booking-form .hourly-calendar-day:hover:not(:disabled), .dark-mode .booking-form .hourly-time-option:hover, .dark-mode .booking-form .clean-select-option:hover { background: #3a2c22; }
+.dark-mode .booking-form .hourly-calendar-day.selected, .dark-mode .booking-form .hourly-time-option.selected, .dark-mode .booking-form .clean-select-option.selected { background: var(--gold); color: #fff; }
+.dark-mode .booking-form label.checkbox { background: #211a15; border-color: var(--line); color: var(--ink); }
 
 /* Rooms search availability calendar */
 .rooms-search { position: relative; align-items: stretch; }
