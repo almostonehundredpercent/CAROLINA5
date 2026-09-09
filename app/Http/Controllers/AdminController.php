@@ -221,7 +221,7 @@ class AdminController extends Controller
     {
         $today = now()->startOfDay();
 
-        return Room::with(['bookings' => fn ($query) => $query
+        return Room::where('is_active', true)->with(['bookings' => fn ($query) => $query
             ->with('user')
             ->whereIn('status', ['pending', 'confirmed'])
             ->where('check_out', '>', $today)
