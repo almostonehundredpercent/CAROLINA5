@@ -103,7 +103,13 @@ class BookingController extends Controller
         $this->log($booking, $request->user()?->id, 'booking_created', 'Booking created and awaiting staff confirmation.');
         $request->session()->put('guest_booking_reference', $booking->reference);
         $email = $booking->guest_email ?? $request->user()?->email;
-        if ($email) Mail::to($email)->send(new BookingConfirmation($booking));
+        if ($email) {
+            try {
+                Mail::to($email)->send(new BookingConfirmation($booking));
+            } catch (\Throwable $exception) {
+                report($exception);
+            }
+        }
         return redirect()->route('bookings.receipt', $booking);
     }
 
