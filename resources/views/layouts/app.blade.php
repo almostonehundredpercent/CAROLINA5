@@ -20,10 +20,6 @@
         <a class="brand" href="{{ route('home') }}">
             <img class="brand-logo" src="{{ asset('images/carolina-logo.jpg') }}" alt="Carolina logo"><span>Carolina <small>TRANSIENT & AIRBNB</small></span>
         </a>
-        <button class="theme-toggle" type="button" aria-label="Enable dark mode" aria-pressed="false">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.6 15.3A8.3 8.3 0 0 1 8.7 3.4 8.4 8.4 0 1 0 20.6 15.3Z"/></svg>
-            <span>Dark</span>
-        </button>
         <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="primary-navigation">
             <span class="sr-only">Open navigation menu</span>
             <span></span><span></span><span></span>
@@ -88,7 +84,13 @@
         </div>
         <div class="footer-bottom">
             <small>&copy; {{ date('Y') }} Carolina Transient & Airbnb. All rights reserved.</small>
-            <div><a href="#">Privacy Policy</a><a href="#">Terms of Service</a></div>
+            <div class="footer-bottom-actions">
+                <button class="theme-toggle footer-theme-toggle" type="button" aria-label="Enable dark mode" aria-pressed="false">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.6 15.3A8.3 8.3 0 0 1 8.7 3.4 8.4 8.4 0 1 0 20.6 15.3Z"/></svg>
+                    <span>Dark mode</span>
+                </button>
+                <a href="#">Privacy Policy</a><a href="#">Terms of Service</a>
+            </div>
         </div>
     </footer>
     <script>
@@ -100,7 +102,7 @@
                 const dark = document.documentElement.classList.contains('dark-mode');
                 themeToggle?.setAttribute('aria-pressed', String(dark));
                 themeToggle?.setAttribute('aria-label', dark ? 'Enable light mode' : 'Enable dark mode');
-                if (themeToggle) themeToggle.querySelector('span').textContent = dark ? 'Light' : 'Dark';
+                if (themeToggle) themeToggle.querySelector('span').textContent = dark ? 'Light mode' : 'Dark mode';
             };
 
             setThemeToggle();
