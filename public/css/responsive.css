@@ -82,9 +82,14 @@ footer { flex-shrink: 0; }
 .dark-mode { --ink: #f7ede0; --paper: #181411; --sand: #29211b; --muted: #c9baaa; --line: #4b3b30; }
 .dark-mode body, .dark-mode .nav, .dark-mode input, .dark-mode select, .dark-mode textarea, .dark-mode .room-card, .dark-mode table, .dark-mode .auth-card, .dark-mode .booking-summary { background: var(--paper); color: var(--ink); }
 .dark-mode .nav { border-bottom-color: var(--line); box-shadow: 0 2px 15px rgba(0, 0, 0, .28); }
-.dark-mode .nav nav, .dark-mode .menu-toggle { background: #211a15; border-color: var(--line); color: var(--ink); }
+.dark-mode .nav nav { background: transparent; border-color: transparent; color: var(--ink); }
+.dark-mode .menu-toggle { background: #211a15; border-color: var(--line); color: var(--ink); }
 .dark-mode .nav nav > a:not(.nav-button) { color: var(--ink); }
 .dark-mode .nav nav > a:not(.nav-button):hover { background: #32271f; }
+
+@media (max-width: 800px) {
+  .dark-mode .nav nav { background: #211a15; border-color: var(--line); }
+}
 .dark-mode .theme-toggle { color: var(--ink); }
 .dark-mode .search-card, .dark-mode .filter-bar, .dark-mode .booking-form, .dark-mode .page-hero, .dark-mode .facts span, .dark-mode .amenities span, .dark-mode .stats div, .dark-mode .empty-state { background: var(--sand); }
 .dark-mode .room-card, .dark-mode .booking-row, .dark-mode .confirmation-card, .dark-mode .booking-summary, .dark-mode th, .dark-mode td { border-color: var(--line); }
