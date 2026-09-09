@@ -61,7 +61,7 @@
                 <p>Comfortable stays in the heart of Tabaco City.</p>
             </section>
 
-            <section class="footer-column">
+            <section class="footer-column footer-quick">
                 <h2>Quick links</h2>
                 <a href="{{ route('rooms.index') }}">Rooms</a>
                 <a href="{{ route('bookings.lookup') }}">Find booking</a>
@@ -73,7 +73,7 @@
                 <h2>Contact</h2>
                 <p><span aria-hidden="true">⌖</span> Tabaco City, Albay</p>
                 <a href="{{ route('bookings.lookup') }}"><span aria-hidden="true">⌕</span> Find your booking</a>
-                <a href="https://www.facebook.com/profile.php?id=61556306344437" target="_blank" rel="noopener noreferrer"><span aria-hidden="true">●</span> Message Carolina on Facebook</a>
+                <a href="https://www.facebook.com/profile.php?id=61556306344437" target="_blank" rel="noopener noreferrer"><span aria-hidden="true">●</span> Facebook</a>
             </section>
 
             <section class="footer-column footer-follow">
