@@ -3,7 +3,7 @@ namespace Database\Seeders;
 use App\Models\Room;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Str;
-class RoomSeeder
+class RoomSeeder extends Seeder
 {
     public function run(): void
     {
