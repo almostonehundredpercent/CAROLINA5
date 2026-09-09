@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Booking;
 use App\Models\ActivityLog;
 use App\Models\Room;
+use App\Models\Review;
 use App\Mail\BookingUpdate;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -183,7 +184,22 @@ class AdminController extends Controller
             'arrivalsToday' => Booking::with('room')->whereIn('status', ['pending', 'confirmed'])->whereDate('check_in', today())->whereNull('checked_in_at')->get(),
             'departuresToday' => Booking::with('room')->whereNotNull('checked_in_at')->whereNull('checked_out_at')->whereDate('check_out', '<=', today())->get(),
             'recentActivity' => ActivityLog::with(['booking.room', 'user'])->latest()->take(8)->get(),
+            'pendingReviews' => Review::with(['booking.room', 'user'])->where('status', 'pending')->latest()->take(10)->get(),
+            'recentReviews' => Review::with(['booking.room'])->whereIn('status', ['approved', 'hidden'])->latest()->take(8)->get(),
         ]);
+    }
+
+    public function updateReview(Request $request, Review $review)
+    {
+        $data = $request->validate(['status' => 'required|in:approved,hidden']);
+        $review->update([
+            'status' => $data['status'],
+            'approved_at' => $data['status'] === 'approved' ? now() : null,
+            'approved_by' => $data['status'] === 'approved' ? $request->user()->id : null,
+        ]);
+        $this->log($review->booking, $request->user()->id, 'review_' . $data['status'], 'Guest review ' . $data['status'] . ' by staff.');
+
+        return back()->with('success', 'Review ' . $data['status'] . '.');
     }
 
     public function reports(Request $request)

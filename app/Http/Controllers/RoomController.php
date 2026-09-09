@@ -9,7 +9,8 @@ class RoomController extends Controller
 {
     public function index(Request $request)
     {
-        $rooms = Room::where('is_active', true)->where('operational_status', 'available');
+        $rooms = Room::where('is_active', true)->where('operational_status', 'available')
+            ->withAvg('approvedReviews', 'rating')->withCount('approvedReviews');
         $checkIn = $request->date('check_in');
         $checkOut = $request->date('check_out');
         if ($checkIn && $checkOut && $checkOut->gt($checkIn)) {
@@ -22,5 +23,10 @@ class RoomController extends Controller
         ]);
     }
 
-    public function show(Room $room) { abort_unless($room->is_active, 404); return view('rooms.show', compact('room')); }
+    public function show(Room $room)
+    {
+        abort_unless($room->is_active, 404);
+        $room->loadAvg('approvedReviews', 'rating')->loadCount('approvedReviews')->load(['approvedReviews' => fn ($query) => $query->latest()->take(8)]);
+        return view('rooms.show', compact('room'));
+    }
 }

@@ -28,4 +28,5 @@ class Room extends Model
         return $this->rental_hours ? "per {$this->rental_hours}-hour stay" : 'per night';
     }
     public function bookings() { return $this->hasMany(Booking::class); }
+    public function approvedReviews() { return $this->hasMany(Review::class)->where('status', 'approved'); }
 }

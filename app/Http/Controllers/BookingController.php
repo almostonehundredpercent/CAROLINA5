@@ -7,6 +7,7 @@ use App\Mail\BookingUpdate;
 use App\Models\ActivityLog;
 use App\Models\Booking;
 use App\Models\Room;
+use App\Models\Review;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
@@ -106,7 +107,33 @@ class BookingController extends Controller
         return redirect()->route('bookings.receipt', $booking);
     }
 
-    public function index(Request $request) { return view('bookings.index', ['bookings' => $request->user()->bookings()->with('room')->latest()->get()]); }
+    public function index(Request $request) { return view('bookings.index', ['bookings' => $request->user()->bookings()->with(['room', 'review'])->latest()->get()]); }
+
+    public function submitReview(Request $request, Booking $booking)
+    {
+        abort_unless($booking->user_id === $request->user()?->id, 403);
+        abort_if($booking->status === 'cancelled' || ! $booking->checked_out_at, 422, 'Reviews are available after check-out.');
+        abort_if($booking->review()->exists(), 422, 'You have already reviewed this stay.');
+
+        $data = $request->validate([
+            'rating' => 'required|integer|between:1,5',
+            'cleanliness_rating' => 'nullable|integer|between:1,5',
+            'comfort_rating' => 'nullable|integer|between:1,5',
+            'value_rating' => 'nullable|integer|between:1,5',
+            'comment' => 'nullable|string|max:750',
+        ]);
+
+        Review::create($data + [
+            'booking_id' => $booking->id,
+            'room_id' => $booking->room_id,
+            'user_id' => $request->user()->id,
+            'guest_name' => $request->user()->name,
+            'status' => 'pending',
+        ]);
+        $this->log($booking, $request->user()->id, 'review_submitted', 'Guest submitted a review for staff approval.');
+
+        return back()->with('success', 'Thank you. Your review was submitted for approval.');
+    }
     public function receipt(Request $request, Booking $booking) { $this->authorizeBookingAccess($request, $booking); return view('bookings.receipt', compact('booking')); }
     public function confirmation(Request $request, Booking $booking) { $isOwner = $booking->user_id && $request->user() && $booking->user_id === $request->user()->id; $isGuestSession = $booking->user_id === null && $request->session()->get('guest_booking_reference') === $booking->reference; abort_unless($isOwner || $isGuestSession || $request->user()?->is_admin, 403); return view('bookings.confirmation', compact('booking')); }
     public function submitDeposit(Request $request, Booking $booking)

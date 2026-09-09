@@ -7,7 +7,7 @@ use App\Http\Controllers\RoomController;
 use App\Models\Room;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', fn () => view('home', ['featuredRooms' => Room::where('is_active', true)->where('operational_status', 'available')->orderBy('price_per_night')->take(6)->get(), 'availabilityRooms' => Room::where('is_active', true)->where('operational_status', 'available')->orderBy('name')->get()]))->name('home');
+Route::get('/', fn () => view('home', ['featuredRooms' => Room::where('is_active', true)->where('operational_status', 'available')->withAvg('approvedReviews', 'rating')->withCount('approvedReviews')->orderBy('price_per_night')->take(6)->get(), 'availabilityRooms' => Room::where('is_active', true)->where('operational_status', 'available')->orderBy('name')->get()]))->name('home');
 Route::get('/rooms', [RoomController::class, 'index'])->name('rooms.index');
 Route::get('/rooms/{room:slug}', [RoomController::class, 'show'])->name('rooms.show');
 Route::get('/rooms/{room:slug}/availability', [BookingController::class, 'availability'])->name('rooms.availability');
@@ -31,6 +31,7 @@ Route::get('/bookings/{booking}/confirmation', [BookingController::class, 'confi
 Route::middleware('auth')->group(function () {
     Route::get('/bookings', [BookingController::class, 'index'])->name('bookings.index');
     Route::patch('/bookings/{booking}/cancel', [BookingController::class, 'cancel'])->name('bookings.cancel');
+    Route::post('/bookings/{booking}/review', [BookingController::class, 'submitReview'])->name('bookings.review');
 });
 
 Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
@@ -45,4 +46,5 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::post('/bookings/{booking}/check-in', [AdminController::class, 'updateBooking'])->name('bookings.check-in');
     Route::post('/bookings/{booking}/check-out', [AdminController::class, 'updateBooking'])->name('bookings.check-out');
     Route::get('/bookings/{booking}/payment-proof', [AdminController::class, 'paymentProof'])->name('bookings.payment-proof');
+    Route::patch('/reviews/{review}', [AdminController::class, 'updateReview'])->name('reviews.update');
 });
