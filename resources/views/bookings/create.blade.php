@@ -107,8 +107,8 @@
 <script>
 document.addEventListener('DOMContentLoaded', () => {
     const closeOpenPickers = (except = null) => document.querySelectorAll('.clean-select-menu, #hourly-calendar, #hourly-time-menu').forEach(menu => { if (menu !== except) menu.hidden = true; });
-    const hourlyBlockedRanges = @json($blockedRanges);
-    const hourlyBlockedSlots = @json($hourlyBlockedSlots);
+    let hourlyBlockedRanges = @json($blockedRanges);
+    let hourlyBlockedSlots = @json($hourlyBlockedSlots);
     const paymentChoice = document.querySelector('.clean-select input[name="payment_method"]'); if (paymentChoice) { paymentChoice.closest('label')?.classList.add('payment-choice'); paymentChoice.name = 'payment_method_display'; }
     document.querySelectorAll('.clean-select').forEach(field => { const input = field.querySelector('input[type="hidden"]'), trigger = field.querySelector('[data-select-trigger]'), menu = field.querySelector('.clean-select-menu'); if (!trigger || !menu || !input) return; const select = value => { const option = menu.querySelector(`[data-select-value="${value}"]`); input.value = value; trigger.textContent = option?.textContent ?? value; menu.querySelectorAll('.clean-select-option').forEach(button => button.classList.toggle('selected', button.dataset.selectValue === value)); }; select(input.value); trigger.addEventListener('click', () => { const opening = menu.hidden; closeOpenPickers(menu); menu.hidden = !opening; }); menu.querySelectorAll('.clean-select-option').forEach(button => button.addEventListener('click', () => { select(button.dataset.selectValue); menu.hidden = true; input.dispatchEvent(new Event('change')); })); });
     const hourlyHours = document.getElementById('hourly-hours');
@@ -127,7 +127,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const prettyTime = time => new Date(`2000-01-01T${time}`).toLocaleTimeString('en-PH', { hour: 'numeric', hour12: true });
         const syncTimeOptions = () => { const selectedDate = value.value, duration = Number(hourlyHours.value); timeMenu.querySelectorAll('[data-time]').forEach(button => { const start = new Date(`${selectedDate}T${button.dataset.time}:00`), end = new Date(start.getTime() + duration * 60 * 60 * 1000), booked = hourlyBlockedSlots.some(slot => start < new Date(slot.end) && end > new Date(slot.start)); button.disabled = booked; button.title = booked ? 'Unavailable — already booked' : ''; button.classList.toggle('booked', booked); button.classList.toggle('selected', !booked && button.dataset.time === timeValue.value); }); };
         hourlyHours.addEventListener('change', syncTimeOptions);
-        timeTrigger.textContent = prettyTime(timeValue.value); timeTrigger.addEventListener('click', () => { const opening = timeMenu.hidden; closeOpenPickers(timeMenu); timeMenu.hidden = !opening; if (opening) syncTimeOptions(); }); timeMenu.querySelectorAll('[data-time]').forEach(button => button.addEventListener('click', () => { timeValue.value = button.dataset.time; timeTrigger.textContent = prettyTime(timeValue.value); syncTimeOptions(); timeMenu.hidden = true; })); return;
+        timeTrigger.textContent = prettyTime(timeValue.value); timeTrigger.addEventListener('click', () => { const opening = timeMenu.hidden; closeOpenPickers(timeMenu); timeMenu.hidden = !opening; if (opening) syncTimeOptions(); }); timeMenu.querySelectorAll('[data-time]').forEach(button => button.addEventListener('click', () => { timeValue.value = button.dataset.time; timeTrigger.textContent = prettyTime(timeValue.value); syncTimeOptions(); timeMenu.hidden = true; })); const refreshHourlyAvailability = async () => { try { const response = await fetch(@json(route('rooms.availability', $room)), { headers: { Accept: 'application/json' }, cache: 'no-store' }); if (!response.ok) return; const data = await response.json(); hourlyBlockedRanges = data.ranges ?? []; hourlyBlockedSlots = data.slots ?? []; if (hourlyBlockedRanges.some(range => value.value >= range.start && value.value < range.end)) { value.value = ''; trigger.textContent = 'Choose date'; } if (!picker.hidden) renderHourlyCalendar(); syncTimeOptions(); if (timeMenu.querySelector(`[data-time="${timeValue.value}"]`)?.disabled) { timeValue.value = ''; timeTrigger.textContent = 'Choose time'; } } catch (error) { /* Keep the current availability if the connection is unavailable. */ } }; setInterval(refreshHourlyAvailability, 15000); document.addEventListener('visibilitychange', () => { if (!document.hidden) refreshHourlyAvailability(); }); return;
     }
     const ranges = @json($blockedRanges);
     const checkIn = document.getElementById('check-in');
@@ -188,7 +188,7 @@ document.addEventListener('DOMContentLoaded', () => {
             render();
         } catch (error) { /* Keep the last known availability if the connection is unavailable. */ }
     };
-    setInterval(refreshAvailability, 30000);
+    setInterval(refreshAvailability, 15000);
     document.addEventListener('visibilitychange', () => { if (!document.hidden) refreshAvailability(); });
     refreshInputs(); render();
 });

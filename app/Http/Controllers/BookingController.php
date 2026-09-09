@@ -30,7 +30,7 @@ class BookingController extends Controller
 
     public function availability(Room $room)
     {
-        return response()->json(['ranges' => $this->blockedRanges($room)->values()]);
+        return response()->json(['ranges' => $this->blockedRanges($room)->values(), 'slots' => $this->hourlyBlockedSlots($room)->values()]);
     }
 
     private function blockedRanges(Room $room)

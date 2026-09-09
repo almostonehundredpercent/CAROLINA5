@@ -219,7 +219,8 @@ class AdminController extends Controller
 
     private function roomsWithDisplayStatus()
     {
-        $today = now()->startOfDay();
+        $now = now();
+        $today = $now->copy()->startOfDay();
 
         return Room::where('is_active', true)->with(['bookings' => fn ($query) => $query
             ->with('user')
@@ -228,9 +229,11 @@ class AdminController extends Controller
             ->orderBy('check_in')])
             ->orderBy('name')
             ->get()
-            ->map(function (Room $room) use ($today) {
-                $currentBooking = $room->bookings->first(fn (Booking $booking) => $booking->check_in->lte($today) && $booking->check_out->gt($today));
-                $upcomingBooking = $room->bookings->first(fn (Booking $booking) => $booking->check_in->gt($today));
+            ->map(function (Room $room) use ($now) {
+                $startsAt = fn (Booking $booking) => $booking->check_in_at ?? $booking->check_in->copy()->startOfDay();
+                $endsAt = fn (Booking $booking) => $booking->check_out_at ?? $booking->check_out->copy()->startOfDay();
+                $currentBooking = $room->bookings->first(fn (Booking $booking) => $startsAt($booking)->lte($now) && $endsAt($booking)->gt($now));
+                $upcomingBooking = $room->bookings->first(fn (Booking $booking) => $startsAt($booking)->gt($now));
                 $room->display_booking = $currentBooking ?? $upcomingBooking;
                 $room->display_status = in_array($room->operational_status, ['cleaning', 'maintenance'], true)
                     ? $room->operational_status
