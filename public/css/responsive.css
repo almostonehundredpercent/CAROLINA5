@@ -11,6 +11,9 @@
 .nav nav > a:not(.nav-button) { padding: 10px 0; color: var(--ink); }
 .nav nav > a:not(.nav-button):hover { color: var(--gold); }
 .nav-button { padding: 12px 21px; border-radius: 9px; font-weight: 700; box-shadow: 0 4px 10px rgba(201, 121, 0, .18); }
+.theme-toggle { display: inline-flex; align-items: center; gap: 7px; margin-left: auto; padding: 9px 12px; border: 1px solid var(--line); border-radius: 8px; background: transparent; color: var(--ink); font: 700 .84rem 'DM Sans', sans-serif; cursor: pointer; }
+.theme-toggle svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linejoin: round; }
+.theme-toggle:hover { border-color: var(--gold); color: var(--gold); }
 
 /* Keep the footer at the bottom when a page has little content. */
 body { min-height: 100vh; display: flex; flex-direction: column; }
@@ -30,6 +33,8 @@ footer { flex-shrink: 0; }
     .nav .brand { font-size: 1.2rem; }
     .nav .brand-logo { width: 46px; height: 46px; }
     .nav .brand small { font-size: 9px; }
+    .theme-toggle { margin-left: auto; padding: 9px; }
+    .theme-toggle span { display: none; }
     .menu-toggle { width: 44px; height: 44px; display: grid; place-content: center; gap: 5px; margin-left: auto; padding: 0; border: 1px solid var(--line); border-radius: 8px; background: #fff; color: var(--ink); cursor: pointer; }
     .menu-toggle span:not(.sr-only) { display: block; width: 20px; height: 2px; border-radius: 99px; background: currentColor; transition: transform .18s ease, opacity .18s ease; }
     .menu-toggle[aria-expanded="true"] span:nth-of-type(2) { transform: translateY(7px) rotate(45deg); }
@@ -74,6 +79,18 @@ footer { flex-shrink: 0; }
 }
 
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+
+/* Dark mode uses the same warm Carolina palette with more comfortable contrast. */
+.dark-mode { --ink: #f7ede0; --paper: #181411; --sand: #29211b; --muted: #c9baaa; --line: #4b3b30; }
+.dark-mode body, .dark-mode .nav, .dark-mode input, .dark-mode select, .dark-mode textarea, .dark-mode .room-card, .dark-mode table, .dark-mode .auth-card, .dark-mode .booking-summary { background: var(--paper); color: var(--ink); }
+.dark-mode .nav { border-bottom-color: var(--line); box-shadow: 0 2px 15px rgba(0, 0, 0, .28); }
+.dark-mode .nav nav, .dark-mode .menu-toggle { background: #211a15; border-color: var(--line); color: var(--ink); }
+.dark-mode .nav nav > a:not(.nav-button) { color: var(--ink); }
+.dark-mode .nav nav > a:not(.nav-button):hover { background: #32271f; }
+.dark-mode .theme-toggle { color: var(--ink); }
+.dark-mode .search-card, .dark-mode .filter-bar, .dark-mode .booking-form, .dark-mode .page-hero, .dark-mode .facts span, .dark-mode .amenities span, .dark-mode .stats div, .dark-mode .empty-state { background: var(--sand); }
+.dark-mode .room-card, .dark-mode .booking-row, .dark-mode .confirmation-card, .dark-mode .booking-summary, .dark-mode th, .dark-mode td { border-color: var(--line); }
+.dark-mode p, .dark-mode .booking-row small, .dark-mode td small { color: var(--muted); }
 
 @media (max-width: 430px) {
     body { font-size: 15px; }

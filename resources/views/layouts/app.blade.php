@@ -7,6 +7,11 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+    <script>
+        if (localStorage.getItem('carolina-theme') === 'dark' || (!localStorage.getItem('carolina-theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark-mode');
+        }
+    </script>
     <link rel="stylesheet" href="{{ asset('css/site.css') }}">
     <link rel="stylesheet" href="{{ asset('css/responsive.css') }}">
 </head>
@@ -15,6 +20,10 @@
         <a class="brand" href="{{ route('home') }}">
             <img class="brand-logo" src="{{ asset('images/carolina-logo.jpg') }}" alt="Carolina logo"><span>Carolina <small>TRANSIENT & AIRBNB</small></span>
         </a>
+        <button class="theme-toggle" type="button" aria-label="Enable dark mode" aria-pressed="false">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.6 15.3A8.3 8.3 0 0 1 8.7 3.4 8.4 8.4 0 1 0 20.6 15.3Z"/></svg>
+            <span>Dark</span>
+        </button>
         <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="primary-navigation">
             <span class="sr-only">Open navigation menu</span>
             <span></span><span></span><span></span>
@@ -86,6 +95,21 @@
         document.addEventListener('DOMContentLoaded', () => {
             const toggle = document.querySelector('.menu-toggle');
             const navigation = document.querySelector('#primary-navigation');
+            const themeToggle = document.querySelector('.theme-toggle');
+            const setThemeToggle = () => {
+                const dark = document.documentElement.classList.contains('dark-mode');
+                themeToggle?.setAttribute('aria-pressed', String(dark));
+                themeToggle?.setAttribute('aria-label', dark ? 'Enable light mode' : 'Enable dark mode');
+                if (themeToggle) themeToggle.querySelector('span').textContent = dark ? 'Light' : 'Dark';
+            };
+
+            setThemeToggle();
+            themeToggle?.addEventListener('click', () => {
+                document.documentElement.classList.toggle('dark-mode');
+                localStorage.setItem('carolina-theme', document.documentElement.classList.contains('dark-mode') ? 'dark' : 'light');
+                setThemeToggle();
+            });
+
             if (!toggle || !navigation) return;
 
             toggle.addEventListener('click', () => {
