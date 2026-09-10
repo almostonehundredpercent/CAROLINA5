@@ -311,3 +311,9 @@ footer { flex-shrink: 0; }
     .benefits .section-heading { margin-bottom: 20px; }
     .site-footer .footer-content { padding-top: 14px; padding-bottom: 10px; }
 }
+
+/* Keep receipt actions together instead of creating two disconnected mobile rows. */
+@media (max-width: 430px) {
+    .receipt-actions { grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; margin:18px auto 0; max-width:360px; }
+    .receipt-actions .button { width:100%; min-height:44px; padding:9px 7px; font-size:.82rem; line-height:1.2; }
+}
