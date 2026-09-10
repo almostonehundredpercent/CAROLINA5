@@ -23,6 +23,9 @@
         @if($booking->add_ons)<p class="receipt-note"><strong>Add-ons:</strong> {{ collect($booking->add_ons)->pluck('label')->join(', ') }}</p>@endif
         <p class="receipt-note">Please keep your reference number. Carolina will review your reservation and contact you with any next steps.</p>
     </section>
-    <button class="button light" type="button" onclick="window.print()">Print / save receipt</button>
+    <div class="receipt-actions">
+        <a class="button button-outline" href="{{ route('home') }}">Back to home</a>
+        <button class="button light" type="button" onclick="window.print()">Print / save receipt</button>
+    </div>
 </section>
 @endsection

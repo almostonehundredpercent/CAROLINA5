@@ -97,6 +97,8 @@ footer { flex-shrink: 0; }
 .dark-mode .theme-toggle { color: var(--ink); }
 .facts span, .amenities span { display: inline-flex; align-items: center; gap: 6px; }
 .detail-icon { width: 16px; height: 16px; flex: 0 0 auto; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.receipt-actions { display: flex; justify-content: center; flex-wrap: wrap; gap: 10px; }
+.receipt-actions .button { justify-content: center; }
 .dark-mode .search-card, .dark-mode .filter-bar, .dark-mode .booking-form, .dark-mode .page-hero, .dark-mode .facts span, .dark-mode .amenities span, .dark-mode .stats div, .dark-mode .empty-state { background: var(--sand); }
 .dark-mode .room-card, .dark-mode .booking-row, .dark-mode .confirmation-card, .dark-mode .booking-summary, .dark-mode th, .dark-mode td { border-color: var(--line); }
 .dark-mode p, .dark-mode .booking-row small, .dark-mode td small { color: var(--muted); }
