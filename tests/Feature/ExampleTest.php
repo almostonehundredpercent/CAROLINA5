@@ -20,6 +20,13 @@ test('the public home page loads with a Carolina title', function () {
     $this->get('/')->assertOk()->assertSee('Carolina');
 });
 
+test('an administrator can sign in with a fresh session', function () {
+    $admin = User::factory()->create(['is_admin' => true, 'password' => 'password']);
+    $this->post(route('login.submit'), ['email' => $admin->email, 'password' => 'password'])
+        ->assertRedirect(route('admin.dashboard'));
+    $this->assertAuthenticatedAs($admin);
+});
+
 test('a reservation request stores exact times without blocking availability until confirmed', function () {
     Mail::fake();
     $room = testRoom();
