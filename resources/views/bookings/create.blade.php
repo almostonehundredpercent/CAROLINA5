@@ -40,7 +40,6 @@
                 @csrf
                 <input type="hidden" name="checkout_type" value="{{ $isGuest ? 'guest' : 'account' }}">
                 <input type="hidden" name="booking_type" value="{{ $bookingMode === 'hourly' ? 'hourly' : 'dates' }}">
-                <input type="hidden" name="payment_method" value="cash">
                 @if(!$room->rental_hours)
                 <section class="booking-type-selector" aria-label="Choose booking type">
                     <span class="booking-type-label">Choose your stay type</span>
@@ -83,7 +82,6 @@
                     </label>
                 @endif
 
-                <label class="clean-select">Remaining balance payment<input name="payment_method" type="hidden" value="{{ old('payment_method', 'gcash') }}"><button type="button" class="clean-select-trigger" data-select-trigger>GCash at property</button><section class="clean-select-menu" hidden><button type="button" class="clean-select-option" data-select-value="gcash">GCash at property</button><button type="button" class="clean-select-option" data-select-value="cash">Pay at property (cash)</button></section></label>
                 <label>Special request<textarea name="special_request" rows="3">{{ old('special_request') }}</textarea></label>
                 <button class="button">Continue to receipt</button>
             </form>
@@ -109,7 +107,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const closeOpenPickers = (except = null) => document.querySelectorAll('.clean-select-menu, #hourly-calendar, #hourly-time-menu').forEach(menu => { if (menu !== except) menu.hidden = true; });
     let hourlyBlockedRanges = @json($blockedRanges);
     let hourlyBlockedSlots = @json($hourlyBlockedSlots);
-    const paymentChoice = document.querySelector('.clean-select input[name="payment_method"]'); if (paymentChoice) { paymentChoice.closest('label')?.classList.add('payment-choice'); paymentChoice.name = 'payment_method_display'; }
     document.querySelectorAll('.clean-select').forEach(field => { const input = field.querySelector('input[type="hidden"]'), trigger = field.querySelector('[data-select-trigger]'), menu = field.querySelector('.clean-select-menu'); if (!trigger || !menu || !input) return; const select = value => { const option = menu.querySelector(`[data-select-value="${value}"]`); input.value = value; trigger.textContent = option?.textContent ?? value; menu.querySelectorAll('.clean-select-option').forEach(button => button.classList.toggle('selected', button.dataset.selectValue === value)); }; select(input.value); trigger.addEventListener('click', () => { const opening = menu.hidden; closeOpenPickers(menu); menu.hidden = !opening; }); menu.querySelectorAll('.clean-select-option').forEach(button => button.addEventListener('click', () => { select(button.dataset.selectValue); menu.hidden = true; input.dispatchEvent(new Event('change')); })); });
     const hourlyHours = document.getElementById('hourly-hours');
     if (hourlyHours) {

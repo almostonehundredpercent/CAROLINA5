@@ -77,7 +77,7 @@ class BookingController extends Controller
         if ($request->filled('guest_phone')) {
             $request->merge(['guest_phone' => preg_replace('/[\s()\-]/', '', (string) $request->input('guest_phone'))]);
         }
-        $rules = ['booking_type' => 'required|in:dates,hourly', 'guests' => 'required|integer|min:1|max:' . $room->guests, 'payment_method' => 'required|in:gcash,cash', 'special_request' => 'nullable|string|max:500', 'checkout_type' => 'required|in:guest,account', 'add_ons' => 'nullable|array', 'add_ons.*' => 'in:' . implode(',', array_keys(self::ADD_ONS))];
+        $rules = ['booking_type' => 'required|in:dates,hourly', 'guests' => 'required|integer|min:1|max:' . $room->guests, 'special_request' => 'nullable|string|max:500', 'checkout_type' => 'required|in:guest,account', 'add_ons' => 'nullable|array', 'add_ons.*' => 'in:' . implode(',', array_keys(self::ADD_ONS))];
         if ($request->input('booking_type') === 'hourly') $rules += ['hourly_date' => 'required|date|after_or_equal:today', 'check_in_time' => 'required|date_format:H:i', 'hours' => 'required|integer|in:' . ($room->rental_hours ? implode(',', array_unique([$room->rental_hours, 48, 72, 96, 120, 168])) : '3,12,24,48,72,96,120,168')];
         else $rules += ['check_in' => 'required|date|after_or_equal:today', 'check_out' => 'required|date|after:check_in'];
         if ($request->input('checkout_type') === 'guest') $rules += ['guest_name' => 'required|string|max:255', 'guest_email' => 'required|email:rfc,dns|max:255', 'guest_phone' => ['required', 'regex:/^(?:\\+63|63|0)9\\d{9}$/'], 'billing_street' => 'required|string|max:255', 'billing_city' => 'required|string|max:100', 'billing_province' => 'required|string|max:100', 'billing_postal_code' => 'required|regex:/^\\d{4}$/', 'billing_verified' => 'accepted'];
@@ -99,8 +99,12 @@ class BookingController extends Controller
         $total += collect($selectedAddOns)->sum('price');
         unset($data['add_ons']);
         $guestData = $data['checkout_type'] === 'guest' ? ['guest_name' => $data['guest_name'], 'guest_email' => $data['guest_email'], 'guest_phone' => $data['guest_phone'], 'billing_street' => $data['billing_street'], 'billing_city' => $data['billing_city'], 'billing_province' => $data['billing_province'], 'billing_postal_code' => $data['billing_postal_code'], 'billing_verified_at' => now()] : [];
-        $booking = Booking::create($data + $guestData + ['user_id' => $request->user()?->id, 'room_id' => $room->id, 'nights' => $nights, 'total_amount' => $total, 'add_ons' => $selectedAddOns, 'deposit_amount' => 0, 'deposit_status' => 'not_required', 'deposit_due_at' => null, 'status' => 'pending']);
-        $this->log($booking, $request->user()?->id, 'booking_created', 'Booking created and awaiting staff confirmation.');
+        $booking = Booking::create($data + $guestData + ['user_id' => $request->user()?->id, 'room_id' => $room->id, 'nights' => $nights, 'total_amount' => $total, 'add_ons' => $selectedAddOns, 'deposit_amount' => 0, 'deposit_status' => 'not_required', 'deposit_due_at' => null, 'payment_method' => 'cash', 'status' => 'pending']);
+        try {
+            $this->log($booking, $request->user()?->id, 'booking_created', 'Booking created and awaiting staff confirmation.');
+        } catch (\Throwable $exception) {
+            report($exception);
+        }
         $request->session()->put('guest_booking_reference', $booking->reference);
         $email = $booking->guest_email ?? $request->user()?->email;
         if ($email) {
