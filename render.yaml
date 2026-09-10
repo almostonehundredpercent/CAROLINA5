@@ -9,6 +9,8 @@ services:
         value: production
       - key: APP_DEBUG
         value: "false"
+      - key: LOG_CHANNEL
+        value: stderr
       - key: APP_KEY
         sync: false
       - key: APP_URL
