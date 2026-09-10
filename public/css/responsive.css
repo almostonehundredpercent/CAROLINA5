@@ -14,6 +14,7 @@
 .theme-toggle { display: inline-flex; align-items: center; gap: 7px; padding: 9px 12px; border: 1px solid var(--line); border-radius: 8px; background: transparent; color: var(--ink); font: 700 .84rem 'DM Sans', sans-serif; cursor: pointer; }
 .theme-toggle svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linejoin: round; }
 .theme-toggle:hover { border-color: var(--gold); color: var(--gold); }
+.nav-theme-toggle { margin-left: -12px; white-space: nowrap; }
 
 /* Keep the footer at the bottom when a page has little content. */
 body { min-height: 100vh; display: flex; flex-direction: column; }
@@ -45,6 +46,7 @@ footer { flex-shrink: 0; }
     .nav nav > a:not(.nav-button):hover { background: var(--sand); }
     .nav nav form { padding: 0; }
     .nav nav .nav-button { width: 100%; justify-content: center; padding: 12px 15px; }
+    .nav nav .nav-theme-toggle { width: 100%; margin: 0; padding: 12px 13px; justify-content: flex-start; }
     body.menu-open { overflow: hidden; }
     .hero { min-height: 470px; padding: 58px 7%; }
     .hero-copy h1 { font-size: clamp(2.6rem, 13vw, 4rem); }
@@ -196,8 +198,6 @@ footer { flex-shrink: 0; }
 .site-footer .footer-bottom { border-top: 1px solid rgba(255, 232, 190, .75); padding: 22px 6%; display: flex; justify-content: space-between; align-items: center; gap: 24px; }
 .site-footer .footer-bottom small, .site-footer .footer-bottom a { color: #fff4df; font-size: .94rem; }
 .site-footer .footer-bottom-actions { display: flex; align-items: center; gap: 24px; }
-.site-footer .footer-theme-toggle { border-color: rgba(255, 232, 190, .75); color: #fff4df; border-radius: 999px; padding: 8px 13px; }
-.site-footer .footer-theme-toggle:hover { border-color: #ffe8bb; background: rgba(255, 232, 190, .13); color: #fff; }
 
 /* What we offer */
 .benefits.section { max-width: none; padding: 78px 8%; background: var(--sand); color: var(--ink); }
@@ -242,8 +242,6 @@ footer { flex-shrink: 0; }
     .site-footer .footer-bottom small { font-size: .68rem; }
     .site-footer .footer-bottom-actions { width: 100%; gap: 10px; flex-wrap: wrap; }
     .site-footer .footer-bottom-actions a { font-size: .69rem; }
-    .site-footer .footer-theme-toggle { padding: 6px 9px; font-size: .69rem; }
-    .site-footer .footer-theme-toggle svg { width: 14px; height: 14px; }
     .benefits.section { padding: 48px 7%; }
     .benefits .section-heading { margin-bottom: 27px; }
     .benefits .benefit-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; overflow: visible; padding: 2px 0 0; }

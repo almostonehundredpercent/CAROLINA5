@@ -30,6 +30,10 @@
             <a href="{{ route('bookings.lookup') }}">Find booking</a>
             <a href="{{ route('home') }}#about">About</a>
             <a href="#contact">Contact</a>
+            <button class="theme-toggle nav-theme-toggle" type="button" aria-label="Enable dark mode" aria-pressed="false">
+                <svg viewBox="0 0 24 24" aria-hidden="true"></svg>
+                <span>Dark mode</span>
+            </button>
 
             @auth
                 <a href="{{ route('bookings.index') }}">My bookings</a>
@@ -86,10 +90,6 @@
         <div class="footer-bottom">
             <small>&copy; {{ date('Y') }} Carolina Transient & Airbnb. All rights reserved.</small>
             <div class="footer-bottom-actions">
-                <button class="theme-toggle footer-theme-toggle" type="button" aria-label="Enable dark mode" aria-pressed="false">
-                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.6 15.3A8.3 8.3 0 0 1 8.7 3.4 8.4 8.4 0 1 0 20.6 15.3Z"/></svg>
-                    <span>Dark mode</span>
-                </button>
                 <a href="#">Privacy Policy</a><a href="#">Terms of Service</a>
             </div>
         </div>
@@ -103,7 +103,12 @@
                 const dark = document.documentElement.classList.contains('dark-mode');
                 themeToggle?.setAttribute('aria-pressed', String(dark));
                 themeToggle?.setAttribute('aria-label', dark ? 'Enable light mode' : 'Enable dark mode');
-                if (themeToggle) themeToggle.querySelector('span').textContent = dark ? 'Light mode' : 'Dark mode';
+                if (themeToggle) {
+                    themeToggle.querySelector('span').textContent = dark ? 'Light mode' : 'Dark mode';
+                    themeToggle.querySelector('svg').innerHTML = dark
+                        ? '<circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"></path>'
+                        : '<path d="M20.6 15.3A8.3 8.3 0 0 1 8.7 3.4 8.4 8.4 0 1 0 20.6 15.3Z"></path>';
+                }
             };
 
             setThemeToggle();
