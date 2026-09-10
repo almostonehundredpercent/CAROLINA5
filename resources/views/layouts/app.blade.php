@@ -30,21 +30,24 @@
             <a href="{{ route('bookings.lookup') }}">Find booking</a>
             <a href="{{ route('home') }}#about">About</a>
             <a href="#contact">Contact</a>
-            <button class="theme-toggle nav-theme-toggle" type="button" aria-label="Enable dark mode" aria-pressed="false">
-                <svg viewBox="0 0 24 24" aria-hidden="true"></svg>
-                <span>Dark mode</span>
-            </button>
-
             @auth
                 <a href="{{ route('bookings.index') }}">My bookings</a>
                 @if(auth()->user()->is_admin)
                     <a href="{{ route('admin.dashboard') }}">Admin</a>
                 @endif
+                <button class="theme-toggle nav-theme-toggle" type="button" aria-label="Enable dark mode" aria-pressed="false">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"></svg>
+                    <span>Dark mode</span>
+                </button>
                 <form method="POST" action="{{ route('logout') }}">
                     @csrf
                     <button class="nav-button" type="submit">Sign out</button>
                 </form>
             @else
+                <button class="theme-toggle nav-theme-toggle" type="button" aria-label="Enable dark mode" aria-pressed="false">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"></svg>
+                    <span>Dark mode</span>
+                </button>
                 <a class="nav-button" href="{{ route('login') }}">Sign in</a>
             @endauth
         </nav>
