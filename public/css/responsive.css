@@ -317,3 +317,14 @@ footer { flex-shrink: 0; }
     .receipt-actions { grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; margin:18px auto 0; max-width:360px; }
     .receipt-actions .button { width:100%; min-height:44px; padding:9px 7px; font-size:.82rem; line-height:1.2; }
 }
+
+/* Receipt surfaces must use the same palette as the rest of dark mode. */
+.dark-mode .receipt-summary { background:#211a15; border-color:#4b3930; }
+.dark-mode .receipt-summary-grid > div { background:#30251f; }
+.dark-mode .receipt-summary-grid small,
+.dark-mode .receipt-note { color:#ddc9b6; }
+.dark-mode .receipt-summary-grid b { color:#fff7ee; }
+.dark-mode .receipt-status { background:#4a3419; color:#ffe1a5; }
+.dark-mode .receipt-actions .button.light { background:#fff7ee; color:#63320f; }
+.dark-mode .receipt-actions .button.button-outline { border-color:#e7a034; color:#f4b64c; }
+.dark-mode .receipt-actions .button.button-outline:hover { background:#e7a034; color:#211a15; }
