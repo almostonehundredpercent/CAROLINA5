@@ -98,7 +98,7 @@
             <strong>₱{{ number_format($room->price_per_night) }} <small>{{ $room->rate_label }}</small></strong>
         @endif
         <hr>
-        <small>{{ $bookingMode === 'hourly' ? 'Choose your stay length and see the adjusted total before continuing.' : 'Final total is calculated from your dates.' }} No online payment is required—your receipt will show the balance payable at the property.</small>
+        <small>{{ $bookingMode === 'hourly' ? 'Choose your stay length and see the adjusted total before continuing.' : 'Final total is calculated from your dates.' }} No payment is required at this stage—your receipt will record the reservation.</small>
     </aside>
 </section>
 @if(auth()->check() || $isGuest)
