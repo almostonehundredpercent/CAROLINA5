@@ -15,18 +15,23 @@ class Booking extends Model
     public function activityLogs() { return $this->hasMany(ActivityLog::class); }
     public function review() { return $this->hasOne(Review::class); }
 
-    /** Reservations block inventory only while awaiting a timely staff decision. */
+    /** Only staff-confirmed stays block inventory; requests are a queue, not a promise. */
     public function scopeBlocking($query)
     {
-        return $query->where(function ($query) {
-            $query->where('status', 'confirmed')
-                ->orWhere(fn ($pending) => $pending->where('status', 'pending')->where('hold_expires_at', '>', now()));
-        });
+        return $query->where('status', 'confirmed');
     }
 
     public static function releaseExpiredHolds(): void
     {
         static::where('status', 'pending')->whereNotNull('hold_expires_at')->where('hold_expires_at', '<=', now())
             ->update(['status' => 'cancelled']);
+    }
+
+    public function scopeOverlapping($query, $startsAt, $endsAt)
+    {
+        return $query->where(function ($query) use ($startsAt, $endsAt) {
+            $query->where(fn ($timed) => $timed->whereNotNull('check_in_at')->where('check_in_at', '<', $endsAt)->where('check_out_at', '>', $startsAt))
+                ->orWhere(fn ($legacy) => $legacy->whereNull('check_in_at')->where('check_in', '<', $endsAt->toDateString())->where('check_out', '>', $startsAt->toDateString()));
+        });
     }
 }

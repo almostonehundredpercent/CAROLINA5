@@ -7,6 +7,7 @@ use App\Mail\BookingUpdate;
 use App\Models\ActivityLog;
 use App\Models\Booking;
 use App\Models\Room;
+use App\Models\RoomBlock;
 use App\Models\Review;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -15,15 +16,9 @@ use Illuminate\Support\Facades\DB;
 
 class BookingController extends Controller
 {
-    private const ADD_ONS = ['breakfast' => ['label' => 'Breakfast for two', 'price' => 250], 'early_check_in' => ['label' => 'Early check-in', 'price' => 200], 'late_check_out' => ['label' => 'Late check-out', 'price' => 200], 'extra_mattress' => ['label' => 'Extra mattress', 'price' => 300]];
     public function create(Request $request, Room $room)
     {
-        Room::releaseExpiredOperationalBlocks();
-        Booking::releaseExpiredHolds();
-        $room->refresh();
-        if (! $room->is_active || $room->operational_status !== 'available') {
-            return redirect()->route('rooms.index')->withErrors(['room' => "{$room->name} is currently {$room->operational_status} and cannot be booked right now."]);
-        }
+        if (! $room->is_active) abort(404);
         $blockedRanges = $this->blockedRanges($room);
 
         return view('bookings.create', [
@@ -32,15 +27,11 @@ class BookingController extends Controller
             'bookingMode' => $room->rental_hours ? 'hourly' : $request->string('mode', 'dates')->value(),
             'blockedRanges' => $blockedRanges,
             'hourlyBlockedSlots' => $this->hourlyBlockedSlots($room),
-            'addOns' => self::ADD_ONS,
         ]);
     }
 
     public function availability(Room $room)
     {
-        Booking::releaseExpiredHolds();
-        Room::releaseExpiredOperationalBlocks();
-        $room->refresh();
         return response()->json(['ranges' => $this->blockedRanges($room)->values(), 'slots' => $this->hourlyBlockedSlots($room)->values()]);
     }
 
@@ -55,16 +46,14 @@ class BookingController extends Controller
                 'start' => $booking->check_in->toDateString(),
                 'end' => $booking->check_out->toDateString(),
             ]);
-        if (in_array($room->operational_status, ['cleaning', 'maintenance'], true) && $room->operational_until?->isFuture()) {
-            $ranges->push(['start' => now()->toDateString(), 'end' => $room->operational_until->copy()->addDay()->toDateString()]);
-        }
+        $room->blocks()->where('ends_at', '>', now())->get()->each(fn (RoomBlock $block) => $ranges->push(['start' => $block->starts_at->toDateString(), 'end' => $block->ends_at->copy()->addDay()->toDateString()]));
         return $ranges;
 
     }
 
     private function hourlyBlockedSlots(Room $room)
     {
-        return $room->bookings()
+        $slots = $room->bookings()
             ->blocking()
             ->where('check_out', '>', now()->startOfDay())
             ->orderBy('check_in')
@@ -75,51 +64,39 @@ class BookingController extends Controller
 
                 return ['start' => $start->toIso8601String(), 'end' => $end->toIso8601String()];
             });
+        $room->blocks()->where('ends_at', '>', now())->get()->each(fn (RoomBlock $block) => $slots->push(['start' => $block->starts_at->toIso8601String(), 'end' => $block->ends_at->toIso8601String()]));
+        return $slots;
     }
 
     public function store(Request $request, Room $room)
     {
-        Room::releaseExpiredOperationalBlocks();
-        Booking::releaseExpiredHolds();
-        $room->refresh();
-        if (! $room->is_active || $room->operational_status !== 'available') {
-            return redirect()->route('rooms.index')->withErrors(['room' => "{$room->name} is currently {$room->operational_status} and cannot be booked right now."]);
-        }
+        if (! $room->is_active) abort(404);
         if ($request->filled('guest_phone')) {
             $request->merge(['guest_phone' => preg_replace('/[\s()\-]/', '', (string) $request->input('guest_phone'))]);
         }
-        $rules = ['booking_type' => 'required|in:dates,hourly', 'guests' => 'required|integer|min:1|max:' . $room->guests, 'special_request' => 'nullable|string|max:500', 'checkout_type' => 'required|in:guest,account', 'add_ons' => 'nullable|array', 'add_ons.*' => 'in:' . implode(',', array_keys(self::ADD_ONS))];
+        $rules = ['booking_type' => 'required|in:dates,hourly', 'guests' => 'required|integer|min:1|max:' . $room->guests, 'special_request' => 'nullable|string|max:500', 'checkout_type' => 'required|in:guest,account'];
         if ($request->input('booking_type') === 'hourly') $rules += ['hourly_date' => 'required|date|after_or_equal:today', 'check_in_time' => 'required|date_format:H:i', 'hours' => 'required|integer|in:' . ($room->rental_hours ? implode(',', array_unique([$room->rental_hours, 48, 72, 96, 120, 168])) : '3,12,24,48,72,96,120,168')];
         else $rules += ['check_in' => 'required|date|after_or_equal:today', 'check_out' => 'required|date|after:check_in'];
-        if ($request->input('checkout_type') === 'guest') $rules += ['guest_name' => 'required|string|max:255', 'guest_email' => 'required|email:rfc,dns|max:255', 'guest_phone' => ['required', 'regex:/^(?:\\+63|63|0)9\\d{9}$/'], 'terms_accepted' => 'accepted'];
+        if ($request->input('checkout_type') === 'guest') $rules += ['guest_name' => 'required|string|max:255', 'guest_email' => 'required|email:rfc|max:255', 'guest_phone' => ['required', 'regex:/^(?:\\+63|63|0)9\\d{9}$/'], 'terms_accepted' => 'accepted'];
         $data = $request->validate($rules);
         if ($data['checkout_type'] === 'account' && ! $request->user()) return redirect()->route('login')->with('success', 'Please sign in to use account checkout.');
         if ($data['booking_type'] === 'hourly') {
             $checkInAt = Carbon::parse($data['hourly_date'] . ' ' . $data['check_in_time']);
             $checkOutAt = $checkInAt->copy()->addHours((int) $data['hours']);
-            $hourlyEndDate = $checkOutAt->isStartOfDay() ? $checkOutAt->toDateString() : $checkOutAt->copy()->addDay()->toDateString();
             $nights = max(1, (int) ceil($data['hours'] / 24));
             $total = $room->rental_hours
                 ? round($room->price_per_night * match ((int) $data['hours']) { 48 => 2, 72 => 3, 96 => 4, 120 => 5, 168 => 7, default => 1 }, 2)
                 : round(($room->price_per_night / 24) * $data['hours'], 2);
             $data['check_in'] = $checkInAt->toDateString(); $data['check_out'] = $checkOutAt->toDateString(); $data['check_in_at'] = $checkInAt; $data['check_out_at'] = $checkOutAt;
         } else { $checkInAt = Carbon::parse($data['check_in'])->startOfDay(); $checkOutAt = Carbon::parse($data['check_out'])->startOfDay(); $nights = $checkInAt->diffInDays($checkOutAt); $total = $nights * $room->price_per_night; $data['check_in_at'] = $checkInAt; $data['check_out_at'] = $checkOutAt; }
-        $selectedAddOns = collect($data['add_ons'] ?? [])->map(fn (string $key) => ['key' => $key] + self::ADD_ONS[$key])->values()->all();
-        $total += collect($selectedAddOns)->sum('price');
-        unset($data['add_ons']);
         $guestData = $data['checkout_type'] === 'guest' ? ['guest_name' => $data['guest_name'], 'guest_email' => $data['guest_email'], 'guest_phone' => $data['guest_phone']] : [];
-        $booking = DB::transaction(function () use ($room, $data, $guestData, $request, $nights, $total, $selectedAddOns, $checkInAt, $checkOutAt) {
+        $booking = DB::transaction(function () use ($room, $data, $guestData, $request, $nights, $total, $checkInAt, $checkOutAt) {
             $lockedRoom = Room::whereKey($room->id)->lockForUpdate()->firstOrFail();
-            Room::releaseExpiredOperationalBlocks();
-            Booking::releaseExpiredHolds();
-            $lockedRoom->refresh();
-            abort_if(! $lockedRoom->is_active || $lockedRoom->operational_status !== 'available', 422, 'This room is temporarily unavailable.');
-            $taken = $lockedRoom->bookings()->blocking()->where(function ($query) use ($checkInAt, $checkOutAt) {
-                $query->whereNotNull('check_in_at')->where('check_in_at', '<', $checkOutAt)->where('check_out_at', '>', $checkInAt)
-                    ->orWhere(fn ($legacy) => $legacy->whereNull('check_in_at')->where('check_in', '<', $checkOutAt->toDateString())->where('check_out', '>', $checkInAt->toDateString()));
-            })->exists();
+            abort_if(! $lockedRoom->is_active, 422, 'This room is unavailable.');
+            $taken = $lockedRoom->bookings()->blocking()->overlapping($checkInAt, $checkOutAt)->exists()
+                || $lockedRoom->blocks()->overlapping($checkInAt, $checkOutAt)->exists();
             abort_if($taken, 422, 'Those dates or hours are no longer available for this room.');
-            return Booking::create($data + $guestData + ['user_id' => $request->user()?->id, 'room_id' => $lockedRoom->id, 'nights' => $nights, 'total_amount' => $total, 'add_ons' => $selectedAddOns, 'hold_expires_at' => now()->addMinutes(15), 'payment_method' => 'cash', 'status' => 'pending']);
+            return Booking::create($data + $guestData + ['user_id' => $request->user()?->id, 'room_id' => $lockedRoom->id, 'nights' => $nights, 'total_amount' => $total, 'add_ons' => [], 'hold_expires_at' => null, 'payment_method' => 'cash', 'status' => 'pending']);
         });
         try {
             $this->log($booking, $request->user()?->id, 'booking_created', 'Booking created and awaiting staff confirmation.');
@@ -135,7 +112,7 @@ class BookingController extends Controller
                 report($exception);
             }
         }
-        return redirect()->route('bookings.receipt', $booking)->with('success', 'Reservation request recorded. Staff has 15 minutes to review it before the temporary room hold expires.');
+        return redirect()->route('bookings.receipt', $booking)->with('success', 'Reservation request recorded. Carolina will confirm availability before your stay is final.');
     }
 
     public function index(Request $request) { return view('bookings.index', ['bookings' => $request->user()->bookings()->with(['room', 'review'])->latest()->get()]); }
@@ -178,7 +155,6 @@ class BookingController extends Controller
     public function cancelGuest(Request $request, Booking $booking)
     {
         $data = $request->validate(['email' => 'required|email', 'reference' => 'required|string']);
-        Booking::releaseExpiredHolds();
         abort_unless(
             $booking->user_id === null
                 && strcasecmp($booking->reference, trim($data['reference'])) === 0
@@ -198,7 +174,7 @@ class BookingController extends Controller
         abort_if($booking->status !== 'confirmed' || ! $booking->checked_in_at || $booking->checked_out_at, 422, 'Extensions are available only for checked-in, confirmed guests.');
         $end = $booking->check_out_at ?? $booking->check_out->copy()->startOfDay();
         $newEnd = $end->copy()->addHours((int) $data['hours']);
-        $conflict = Booking::where('room_id', $booking->room_id)->whereKeyNot($booking->id)->whereIn('status', ['pending', 'confirmed'])->where(function ($query) use ($end, $newEnd) { $query->where(fn ($hourly) => $hourly->whereNotNull('check_in_at')->where('check_in_at', '<', $newEnd)->where('check_out_at', '>', $end))->orWhere(fn ($dates) => $dates->whereNull('check_in_at')->where('check_in', '<', $newEnd->copy()->addDay()->toDateString())->where('check_out', '>', $end->toDateString())); })->exists();
+        $conflict = Booking::where('room_id', $booking->room_id)->whereKeyNot($booking->id)->blocking()->overlapping($end, $newEnd)->exists() || RoomBlock::where('room_id', $booking->room_id)->overlapping($end, $newEnd)->exists();
         if ($conflict) return back()->withErrors(['hours' => 'The room is not available for that extension length.']);
         $baseHours = $booking->room->rental_hours ?: 24;
         $extra = round($booking->room->price_per_night * ($data['hours'] / $baseHours), 2);
@@ -234,6 +210,11 @@ class BookingController extends Controller
     private function emailUpdate(Booking $booking, string $subject, string $message): void
     {
         $email = $booking->guest_email ?? $booking->user?->email;
-        if ($email) Mail::to($email)->send(new BookingUpdate($booking, $subject, $message));
+        if (! $email) return;
+        try {
+            Mail::to($email)->send(new BookingUpdate($booking, $subject, $message));
+        } catch (\Throwable $exception) {
+            report($exception);
+        }
     }
 }

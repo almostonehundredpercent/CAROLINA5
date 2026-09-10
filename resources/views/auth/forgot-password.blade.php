@@ -1,0 +1,3 @@
+@extends('layouts.app')
+@section('title','Reset password | Carolina')
+@section('content')<section class="auth-page"><form class="auth-card" method="POST" action="{{ route('password.email') }}">@csrf<span class="eyebrow">ACCOUNT RECOVERY</span><h1>Reset your password.</h1><p>Enter your account email and we will send a secure reset link.</p><label>Email address<input name="email" type="email" value="{{ old('email') }}" required autofocus></label><button class="button">Email reset link</button><p class="auth-switch"><a href="{{ route('login') }}">Back to sign in</a></p></form></section>@endsection

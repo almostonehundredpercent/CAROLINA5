@@ -10,14 +10,15 @@ class RoomController extends Controller
 {
     public function index(Request $request)
     {
-        Booking::releaseExpiredHolds();
-        Room::releaseExpiredOperationalBlocks();
-        $rooms = Room::where('is_active', true)->where('operational_status', 'available')
+        $rooms = Room::where('is_active', true)
             ->withAvg('approvedReviews', 'rating')->withCount('approvedReviews');
         $checkIn = $request->date('check_in');
         $checkOut = $request->date('check_out');
         if ($checkIn && $checkOut && $checkOut->gt($checkIn)) {
-            $rooms->whereDoesntHave('bookings', fn ($query) => $query->blocking()->where('check_in_at', '<', $checkOut->copy()->startOfDay())->where('check_out_at', '>', $checkIn->copy()->startOfDay()));
+            $startsAt = $checkIn->copy()->startOfDay();
+            $endsAt = $checkOut->copy()->startOfDay();
+            $rooms->whereDoesntHave('bookings', fn ($query) => $query->blocking()->overlapping($startsAt, $endsAt))
+                ->whereDoesntHave('blocks', fn ($query) => $query->overlapping($startsAt, $endsAt));
         }
         if ($request->filled('guests')) $rooms->where('guests', '>=', (int) $request->guests);
         return view('rooms.index', [

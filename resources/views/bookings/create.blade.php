@@ -94,7 +94,7 @@
             <strong>₱{{ number_format($room->price_per_night) }} <small>{{ $room->rate_label }}</small></strong>
         @endif
         <hr>
-        <small>{{ $bookingMode === 'hourly' ? 'Choose your stay length and see the adjusted total before continuing.' : 'Final total is calculated from your dates.' }} This creates a 15-minute reservation request for staff to confirm. No payment is collected online.</small>
+        <small>{{ $bookingMode === 'hourly' ? 'Choose your stay length and see the adjusted total before continuing.' : 'Final total is calculated from your dates.' }} This sends a request for staff to confirm. No payment is collected online.</small>
     </aside>
 </section>
 @if(auth()->check() || $isGuest)

@@ -3,7 +3,8 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{{ config('app.name', 'Carolina') }}</title>
+    <title>@yield('title', 'Carolina Transient & Airbnb | Tabaco City')</title>
+    <meta name="description" content="Reserve short and overnight stays with Carolina Transient & Airbnb in Tabaco City, Albay.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">

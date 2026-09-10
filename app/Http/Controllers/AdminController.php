@@ -5,12 +5,15 @@ namespace App\Http\Controllers;
 use App\Models\Booking;
 use App\Models\ActivityLog;
 use App\Models\Room;
+use App\Models\RoomBlock;
 use App\Models\Review;
 use App\Mail\BookingUpdate;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class AdminController extends Controller
 {
@@ -50,14 +53,26 @@ class AdminController extends Controller
         if ($action === 'check_out') {
             abort_if(! $booking->checked_in_at || $booking->checked_out_at, 422, 'This guest is not currently checked in.');
             $booking->update(['checked_out_at' => now()]);
-            $booking->room->update(['operational_status' => 'cleaning']);
+            RoomBlock::create(['room_id' => $booking->room_id, 'status' => 'cleaning', 'starts_at' => now(), 'ends_at' => now()->addHour(), 'notes' => 'Automatic cleaning period after check-out.', 'created_by' => $request->user()->id]);
             $this->log($booking, $request->user()->id, 'checked_out', 'Guest checked out; room moved to cleaning.');
             $this->email($booking->fresh('room'), 'Thank you for staying with Carolina', 'You have been checked out. Thank you for choosing Carolina.');
-            return back()->with('success', 'Guest checked out. The room is now on the cleaning board.');
+            return back()->with('success', 'Guest checked out. A one-hour cleaning block is now active.');
         }
 
         $status = $request->validate(['status' => 'required|in:pending,confirmed,cancelled'])['status'];
-        $booking->update(['status' => $status, 'hold_expires_at' => $status === 'pending' ? now()->addMinutes(15) : null]);
+        if ($status === 'confirmed') {
+            DB::transaction(function () use ($booking) {
+                $lockedRoom = Room::whereKey($booking->room_id)->lockForUpdate()->firstOrFail();
+                $startsAt = $booking->check_in_at ?? $booking->check_in->copy()->startOfDay();
+                $endsAt = $booking->check_out_at ?? $booking->check_out->copy()->startOfDay();
+                $conflict = $lockedRoom->bookings()->whereKeyNot($booking->id)->blocking()->overlapping($startsAt, $endsAt)->exists()
+                    || $lockedRoom->blocks()->overlapping($startsAt, $endsAt)->exists();
+                if ($conflict) throw ValidationException::withMessages(['status' => 'This room is no longer available for the requested stay.']);
+                $booking->update(['status' => 'confirmed', 'hold_expires_at' => null]);
+            });
+        } else {
+            $booking->update(['status' => $status, 'hold_expires_at' => null]);
+        }
         $this->log($booking, $request->user()->id, 'booking_' . $status, 'Booking status changed to ' . $status . '.');
         $this->email($booking->fresh('room'), 'Your Carolina booking was updated', 'Your booking status is now ' . $status . '.');
         return back()->with('success', 'Booking status updated.');
@@ -70,7 +85,6 @@ class AdminController extends Controller
         // are currently unavailable for operational reasons are excluded here.
         $rooms = Room::query()
             ->where('is_active', true)
-            ->where('operational_status', 'available')
             ->orderBy('name')
             ->get();
 
@@ -85,26 +99,24 @@ class AdminController extends Controller
             'guest_name' => 'required|string|max:255',
             'guest_email' => 'nullable|email|max:255',
             'guest_phone' => 'required|string|max:30',
-            'guests' => 'required|integer|min:1|max:20',
+            'guests' => 'required|integer|min:1',
             'check_in' => 'required|date|after_or_equal:today',
             'check_out' => 'required|date|after:check_in',
-            'payment_method' => 'required|in:gcash,cash',
+            'check_in_time' => 'nullable|date_format:H:i',
+            'check_out_time' => 'nullable|date_format:H:i',
         ]);
 
-        $room = Room::findOrFail($data['room_id']);
-        abort_if($room->operational_status !== 'available', 422, 'This room is not available for walk-ins.');
-
-        $conflict = Booking::where('room_id', $room->id)
-            ->blocking()
-            ->where('check_in', '<', $data['check_out'])
-            ->where('check_out', '>', $data['check_in'])
-            ->exists();
-        if ($conflict) {
-            return back()->withInput()->withErrors(['room_id' => 'That room is already reserved for the selected dates.']);
-        }
-
-        $nights = Carbon::parse($data['check_in'])->diffInDays(Carbon::parse($data['check_out']));
-        Booking::create([
+        $checkInAt = Carbon::parse($data['check_in'] . ' ' . ($data['check_in_time'] ?? '12:00'));
+        $checkOutAt = Carbon::parse($data['check_out'] . ' ' . ($data['check_out_time'] ?? '12:00'));
+        if ($checkOutAt->lte($checkInAt)) return back()->withInput()->withErrors(['check_out_time' => 'Check-out must be after check-in.']);
+        $nights = max(1, (int) ceil($checkInAt->diffInHours($checkOutAt) / 24));
+        $booking = DB::transaction(function () use ($data, $checkInAt, $checkOutAt, $nights, $request) {
+            $room = Room::whereKey($data['room_id'])->lockForUpdate()->firstOrFail();
+            if ($data['guests'] > $room->guests) throw ValidationException::withMessages(['guests' => "{$room->name} accommodates up to {$room->guests} guests."]);
+            $conflict = $room->bookings()->blocking()->overlapping($checkInAt, $checkOutAt)->exists()
+                || $room->blocks()->overlapping($checkInAt, $checkOutAt)->exists();
+            if ($conflict) throw ValidationException::withMessages(['room_id' => 'That room is unavailable for the selected stay.']);
+            return Booking::create([
             'user_id' => null,
             'room_id' => $room->id,
             'guest_name' => $data['guest_name'],
@@ -115,15 +127,18 @@ class AdminController extends Controller
             'billing_province' => 'Albay',
             'billing_postal_code' => '4511',
             'billing_verified_at' => now(),
-            'check_in' => $data['check_in'],
-            'check_out' => $data['check_out'],
+            'check_in' => $checkInAt->toDateString(),
+            'check_out' => $checkOutAt->toDateString(),
+            'check_in_at' => $checkInAt,
+            'check_out_at' => $checkOutAt,
             'guests' => $data['guests'],
             'nights' => $nights,
             'total_amount' => $room->price_per_night * $nights,
             'status' => 'confirmed',
-            'payment_method' => $data['payment_method'],
+            'payment_method' => 'cash',
             'special_request' => 'Walk-in booking created by admin.',
-        ]);
+            ]);
+        });
 
         return redirect()->route('admin.bookings')->with('success', 'Walk-in booking confirmed.');
     }
@@ -230,16 +245,17 @@ class AdminController extends Controller
     {
         $data = $request->validate([
             'operational_status' => 'required|in:available,cleaning,maintenance',
-            'operational_until' => 'nullable|date|after:now',
+            'operational_starts_at' => 'nullable|date',
+            'operational_until' => 'nullable|date|after:operational_starts_at',
+            'notes' => 'nullable|string|max:255',
         ]);
-        if ($data['operational_status'] !== 'available' && empty($data['operational_until'])) {
-            return back()->withErrors(['operational_until' => 'Set when this cleaning or maintenance block ends.']);
+        if ($data['operational_status'] === 'available') {
+            $room->blocks()->where('ends_at', '>', now())->where('starts_at', '<=', now())->delete();
+            return back()->with('success', 'Active room blocks cleared.');
         }
-        $room->update([
-            'operational_status' => $data['operational_status'],
-            'operational_until' => $data['operational_status'] === 'available' ? null : $data['operational_until'],
-        ]);
-        return back()->with('success', $data['operational_status'] === 'available' ? 'Room is available now.' : 'Room block saved and will end automatically at the selected time.');
+        if (empty($data['operational_starts_at']) || empty($data['operational_until'])) return back()->withErrors(['operational_until' => 'Set both a start and end time for this room block.']);
+        RoomBlock::create(['room_id' => $room->id, 'status' => $data['operational_status'], 'starts_at' => $data['operational_starts_at'], 'ends_at' => $data['operational_until'], 'notes' => $data['notes'] ?? null, 'created_by' => $request->user()->id]);
+        return back()->with('success', 'Scheduled room block saved.');
     }
 
     private function roomsWithDisplayStatus()
@@ -251,7 +267,7 @@ class AdminController extends Controller
             ->with('user')
             ->blocking()
             ->where('check_out', '>', $today)
-            ->orderBy('check_in')])
+            ->orderBy('check_in'), 'blocks' => fn ($query) => $query->where('ends_at', '>', $now)->orderBy('starts_at')])
             ->orderBy('name')
             ->get()
             ->map(function (Room $room) use ($now) {
@@ -259,10 +275,11 @@ class AdminController extends Controller
                 $endsAt = fn (Booking $booking) => $booking->check_out_at ?? $booking->check_out->copy()->startOfDay();
                 $currentBooking = $room->bookings->first(fn (Booking $booking) => $startsAt($booking)->lte($now) && $endsAt($booking)->gt($now));
                 $upcomingBooking = $room->bookings->first(fn (Booking $booking) => $startsAt($booking)->gt($now));
+                $currentBlock = $room->blocks->first(fn (RoomBlock $block) => $block->starts_at->lte($now) && $block->ends_at->gt($now));
+                $upcomingBlock = $room->blocks->first(fn (RoomBlock $block) => $block->starts_at->gt($now));
                 $room->display_booking = $currentBooking ?? $upcomingBooking;
-                $room->display_status = in_array($room->operational_status, ['cleaning', 'maintenance'], true)
-                    ? $room->operational_status
-                    : ($currentBooking ? 'occupied' : ($upcomingBooking ? 'reserved' : 'available'));
+                $room->display_block = $currentBlock ?? $upcomingBlock;
+                $room->display_status = $currentBlock?->status ?? ($currentBooking ? 'occupied' : ($upcomingBooking ? 'reserved' : 'available'));
 
                 return $room;
             });
@@ -270,8 +287,7 @@ class AdminController extends Controller
 
     private function refreshInventory(): void
     {
-        Booking::releaseExpiredHolds();
-        Room::releaseExpiredOperationalBlocks();
+        RoomBlock::where('ends_at', '<=', now())->delete();
     }
 
     private function log(Booking $booking, ?int $userId, string $event, string $description): void
@@ -282,7 +298,12 @@ class AdminController extends Controller
     private function email(Booking $booking, string $subject, string $message): void
     {
         $email = $booking->guest_email ?? $booking->user?->email;
-        if ($email) Mail::to($email)->send(new BookingUpdate($booking, $subject, $message));
+        if (! $email) return;
+        try {
+            Mail::to($email)->send(new BookingUpdate($booking, $subject, $message));
+        } catch (\Throwable $exception) {
+            report($exception);
+        }
     }
 
     private function bookingChartData(string $period): array
