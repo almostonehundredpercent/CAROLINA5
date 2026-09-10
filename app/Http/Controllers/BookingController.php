@@ -85,7 +85,7 @@ class BookingController extends Controller
         if ($data['checkout_type'] === 'account' && ! $request->user()) return redirect()->route('login')->with('success', 'Please sign in to use account checkout.');
         if ($data['booking_type'] === 'hourly') {
             $checkInAt = Carbon::parse($data['hourly_date'] . ' ' . $data['check_in_time']);
-            $checkOutAt = $checkInAt->copy()->addHours($data['hours']);
+            $checkOutAt = $checkInAt->copy()->addHours((int) $data['hours']);
             $hourlyEndDate = $checkOutAt->isStartOfDay() ? $checkOutAt->toDateString() : $checkOutAt->copy()->addDay()->toDateString();
             $taken = $room->bookings()->whereIn('status', ['pending', 'confirmed'])->where(function ($query) use ($checkInAt, $checkOutAt, $hourlyEndDate) { $query->where(fn ($hourly) => $hourly->whereNotNull('check_in_at')->where('check_in_at', '<', $checkOutAt)->where('check_out_at', '>', $checkInAt))->orWhere(fn ($dates) => $dates->whereNull('check_in_at')->where('check_in', '<', $hourlyEndDate)->where('check_out', '>', $checkInAt->toDateString())); })->exists();
             $nights = max(1, (int) ceil($data['hours'] / 24));
@@ -210,7 +210,7 @@ class BookingController extends Controller
         abort_unless($booking->user_id === null && strcasecmp($booking->reference, trim($data['reference'])) === 0 && strcasecmp((string) $booking->guest_email, trim($data['email'])) === 0, 403);
         abort_if($booking->status === 'cancelled' || $booking->checked_out_at, 422, 'This booking can no longer be extended.');
         $end = $booking->check_out_at ?? $booking->check_out->copy()->startOfDay();
-        $newEnd = $end->copy()->addHours($data['hours']);
+        $newEnd = $end->copy()->addHours((int) $data['hours']);
         $conflict = Booking::where('room_id', $booking->room_id)->whereKeyNot($booking->id)->whereIn('status', ['pending', 'confirmed'])->where(function ($query) use ($end, $newEnd) { $query->where(fn ($hourly) => $hourly->whereNotNull('check_in_at')->where('check_in_at', '<', $newEnd)->where('check_out_at', '>', $end))->orWhere(fn ($dates) => $dates->whereNull('check_in_at')->where('check_in', '<', $newEnd->copy()->addDay()->toDateString())->where('check_out', '>', $end->toDateString())); })->exists();
         if ($conflict) return back()->withErrors(['hours' => 'The room is not available for that extension length.']);
         $baseHours = $booking->room->rental_hours ?: 24;
