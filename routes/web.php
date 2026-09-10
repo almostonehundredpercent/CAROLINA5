@@ -7,26 +7,31 @@ use App\Http\Controllers\RoomController;
 use App\Models\Room;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', fn () => view('home', ['featuredRooms' => Room::where('is_active', true)->where('operational_status', 'available')->withAvg('approvedReviews', 'rating')->withCount('approvedReviews')->orderBy('price_per_night')->take(6)->get(), 'availabilityRooms' => Room::where('is_active', true)->where('operational_status', 'available')->orderBy('name')->get()]))->name('home');
+Route::get('/', function () {
+    \App\Models\Booking::releaseExpiredHolds();
+    Room::releaseExpiredOperationalBlocks();
+    return view('home', ['featuredRooms' => Room::where('is_active', true)->where('operational_status', 'available')->withAvg('approvedReviews', 'rating')->withCount('approvedReviews')->orderBy('price_per_night')->take(6)->get(), 'availabilityRooms' => Room::where('is_active', true)->orderBy('name')->get()]);
+})->name('home');
+Route::view('/privacy', 'legal.privacy')->name('privacy');
+Route::view('/terms', 'legal.terms')->name('terms');
 Route::get('/rooms', [RoomController::class, 'index'])->name('rooms.index');
 Route::get('/rooms/{room:slug}', [RoomController::class, 'show'])->name('rooms.show');
 Route::get('/rooms/{room:slug}/availability', [BookingController::class, 'availability'])->name('rooms.availability');
 Route::get('/booking-lookup', [BookingController::class, 'lookupForm'])->name('bookings.lookup');
-Route::post('/booking-lookup', [BookingController::class, 'lookup'])->name('bookings.lookup.submit');
-Route::patch('/booking-lookup/{booking}/cancel', [BookingController::class, 'cancelGuest'])->name('bookings.lookup.cancel');
-Route::patch('/booking-lookup/{booking}/extend', [BookingController::class, 'extendGuest'])->name('bookings.lookup.extend');
+Route::post('/booking-lookup', [BookingController::class, 'lookup'])->middleware('throttle:5,1')->name('bookings.lookup.submit');
+Route::patch('/booking-lookup/{booking}/cancel', [BookingController::class, 'cancelGuest'])->middleware('throttle:5,1')->name('bookings.lookup.cancel');
+Route::patch('/booking-lookup/{booking}/extend', [BookingController::class, 'extendGuest'])->middleware('throttle:5,1')->name('bookings.lookup.extend');
 
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
 Route::get('/login/form', [AuthController::class, 'showLoginForm'])->name('login.form');
-Route::post('/login', [AuthController::class, 'login'])->name('login.submit');
+Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:5,1')->name('login.submit');
 Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
-Route::post('/register', [AuthController::class, 'register'])->name('register.submit');
+Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:5,1')->name('register.submit');
 Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth')->name('logout');
 
 Route::get('/rooms/{room:slug}/book', [BookingController::class, 'create'])->name('bookings.create');
 Route::post('/rooms/{room:slug}/book', [BookingController::class, 'store'])->middleware('throttle:10,1')->name('bookings.store');
 Route::get('/bookings/{booking}/receipt', [BookingController::class, 'receipt'])->name('bookings.receipt');
-Route::post('/bookings/{booking}/deposit', [BookingController::class, 'submitDeposit'])->middleware('throttle:5,1')->name('bookings.deposit.submit');
 Route::get('/bookings/{booking}/confirmation', [BookingController::class, 'confirmation'])->name('bookings.confirmation');
 Route::middleware('auth')->group(function () {
     Route::get('/bookings', [BookingController::class, 'index'])->name('bookings.index');
@@ -45,6 +50,5 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::patch('/bookings/{booking}', [AdminController::class, 'updateBooking'])->name('bookings.update');
     Route::post('/bookings/{booking}/check-in', [AdminController::class, 'updateBooking'])->name('bookings.check-in');
     Route::post('/bookings/{booking}/check-out', [AdminController::class, 'updateBooking'])->name('bookings.check-out');
-    Route::get('/bookings/{booking}/payment-proof', [AdminController::class, 'paymentProof'])->name('bookings.payment-proof');
     Route::patch('/reviews/{review}', [AdminController::class, 'updateReview'])->name('reviews.update');
 });

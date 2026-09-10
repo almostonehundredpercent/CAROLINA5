@@ -29,4 +29,11 @@ class Room extends Model
     }
     public function bookings() { return $this->hasMany(Booking::class); }
     public function approvedReviews() { return $this->hasMany(Review::class)->where('status', 'approved'); }
+
+    public static function releaseExpiredOperationalBlocks(): void
+    {
+        static::whereIn('operational_status', ['cleaning', 'maintenance'])
+            ->whereNotNull('operational_until')->where('operational_until', '<=', now())
+            ->update(['operational_status' => 'available', 'operational_until' => null]);
+    }
 }

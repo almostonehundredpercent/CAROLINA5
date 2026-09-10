@@ -1,0 +1,6 @@
+@extends('layouts.app')
+
+@section('content')
+<section class="page-hero"><span class="eyebrow">CAROLINA POLICIES</span><h1>Reservation terms</h1><p>Clear expectations before you reserve.</p></section>
+<section class="section compact"><article class="legal-copy"><h2>Reservation requests</h2><p>A reservation request temporarily holds a room for 15 minutes while Carolina reviews it. It is not confirmed until staff changes its status to confirmed.</p><h2>Check-in, cancellation, and no-shows</h2><p>Online cancellation is available until the day before check-in. For same-day changes, late arrivals, no-shows, or extensions, contact Carolina directly so staff can confirm what is possible.</p><h2>Payment</h2><p>No online payment is collected through this website at this time. Any payment arrangement is confirmed directly by Carolina.</p><h2>House rules</h2><p>Guests must provide accurate contact information, observe the room capacity, and follow property rules communicated by staff. Carolina may cancel requests made with inaccurate details or where the room is no longer safely available.</p></article></section>
+@endsection

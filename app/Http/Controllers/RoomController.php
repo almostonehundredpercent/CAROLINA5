@@ -3,18 +3,21 @@
 namespace App\Http\Controllers;
 
 use App\Models\Room;
+use App\Models\Booking;
 use Illuminate\Http\Request;
 
 class RoomController extends Controller
 {
     public function index(Request $request)
     {
+        Booking::releaseExpiredHolds();
+        Room::releaseExpiredOperationalBlocks();
         $rooms = Room::where('is_active', true)->where('operational_status', 'available')
             ->withAvg('approvedReviews', 'rating')->withCount('approvedReviews');
         $checkIn = $request->date('check_in');
         $checkOut = $request->date('check_out');
         if ($checkIn && $checkOut && $checkOut->gt($checkIn)) {
-            $rooms->whereDoesntHave('bookings', fn ($query) => $query->whereIn('status', ['pending', 'confirmed'])->where('check_in', '<', $checkOut)->where('check_out', '>', $checkIn));
+            $rooms->whereDoesntHave('bookings', fn ($query) => $query->blocking()->where('check_in_at', '<', $checkOut->copy()->startOfDay())->where('check_out_at', '>', $checkIn->copy()->startOfDay()));
         }
         if ($request->filled('guests')) $rooms->where('guests', '>=', (int) $request->guests);
         return view('rooms.index', [

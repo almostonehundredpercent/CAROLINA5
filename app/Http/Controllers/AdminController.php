@@ -10,14 +10,13 @@ use App\Mail\BookingUpdate;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Mail;
 
 class AdminController extends Controller
 {
     public function index()
     {
-        $this->expireOutstandingDeposits();
+        $this->refreshInventory();
         $recentBookings = Booking::with(['user', 'room'])->latest()->take(8)->get();
         $chartStart = now()->subDays(6)->startOfDay();
         $bookingsByDay = Booking::where('created_at', '>=', $chartStart)
@@ -41,7 +40,8 @@ class AdminController extends Controller
         $action = $request->input('action');
 
         if ($action === 'check_in') {
-            abort_if($booking->status === 'cancelled' || $booking->checked_out_at, 422, 'This booking cannot be checked in.');
+            abort_if($booking->status !== 'confirmed' || $booking->checked_out_at, 422, 'Only confirmed bookings can be checked in.');
+            abort_if($booking->check_in_at && $booking->check_in_at->isFuture(), 422, 'This guest cannot be checked in before the scheduled arrival time.');
             $booking->update(['checked_in_at' => now(), 'status' => 'confirmed']);
             $this->log($booking, $request->user()->id, 'checked_in', 'Guest checked in by staff.');
             $this->email($booking->fresh('room'), 'Welcome to Carolina', 'You have been checked in. We hope you enjoy your stay.');
@@ -56,43 +56,16 @@ class AdminController extends Controller
             return back()->with('success', 'Guest checked out. The room is now on the cleaning board.');
         }
 
-        if ($action === 'verify_deposit') {
-            abort_unless($booking->deposit_status === 'submitted' && $booking->payment_proof_data, 422, 'A deposit proof must be submitted before verification.');
-            $booking->update([
-                'status' => 'confirmed',
-                'deposit_status' => 'verified',
-                'deposit_verified_at' => now(),
-                'deposit_verified_by' => $request->user()->id,
-            ]);
-            return back()->with('success', 'Deposit verified and booking confirmed.');
-        }
-
-        if ($action === 'reject_deposit') {
-            abort_unless($booking->deposit_status === 'submitted', 422, 'There is no submitted deposit to return.');
-            $booking->update(['deposit_status' => 'awaiting_deposit', 'payment_reference' => null, 'payment_proof_data' => null, 'payment_proof_mime' => null, 'deposit_submitted_at' => null, 'deposit_due_at' => now()->addMinutes(30)]);
-            return back()->with('success', 'Deposit proof returned. The guest can submit a new payment reference and proof.');
-        }
-
         $status = $request->validate(['status' => 'required|in:pending,confirmed,cancelled'])['status'];
-        if ($status === 'confirmed' && ! in_array($booking->deposit_status, ['verified', 'not_required'], true)) {
-            return back()->withErrors(['status' => 'Verify the submitted GCash deposit before confirming this booking.']);
-        }
-        $booking->update(['status' => $status]);
+        $booking->update(['status' => $status, 'hold_expires_at' => $status === 'pending' ? now()->addMinutes(15) : null]);
         $this->log($booking, $request->user()->id, 'booking_' . $status, 'Booking status changed to ' . $status . '.');
         $this->email($booking->fresh('room'), 'Your Carolina booking was updated', 'Your booking status is now ' . $status . '.');
         return back()->with('success', 'Booking status updated.');
     }
 
-    public function paymentProof(Booking $booking)
-    {
-        abort_unless($booking->payment_proof_data, 404);
-        $content = base64_decode(Crypt::decryptString($booking->payment_proof_data), true);
-        abort_if($content === false, 404);
-        return response($content, 200, ['Content-Type' => $booking->payment_proof_mime ?: 'application/octet-stream', 'Content-Disposition' => 'inline; filename="payment-proof-' . $booking->reference . '"']);
-    }
-
     public function walkInForm()
     {
+        $this->refreshInventory();
         // Future reservations are handled by the date calendar. Only rooms that
         // are currently unavailable for operational reasons are excluded here.
         $rooms = Room::query()
@@ -106,6 +79,7 @@ class AdminController extends Controller
 
     public function storeWalkIn(Request $request)
     {
+        $this->refreshInventory();
         $data = $request->validate([
             'room_id' => 'required|exists:rooms,id',
             'guest_name' => 'required|string|max:255',
@@ -121,7 +95,7 @@ class AdminController extends Controller
         abort_if($room->operational_status !== 'available', 422, 'This room is not available for walk-ins.');
 
         $conflict = Booking::where('room_id', $room->id)
-            ->whereIn('status', ['pending', 'confirmed'])
+            ->blocking()
             ->where('check_in', '<', $data['check_out'])
             ->where('check_out', '>', $data['check_in'])
             ->exists();
@@ -156,7 +130,7 @@ class AdminController extends Controller
 
     public function rooms()
     {
-        $this->expireOutstandingDeposits();
+        $this->refreshInventory();
         $rooms = $this->roomsWithDisplayStatus();
 
         return view('admin.rooms', compact('rooms'));
@@ -164,7 +138,7 @@ class AdminController extends Controller
 
     public function bookings(Request $request)
     {
-        $this->expireOutstandingDeposits();
+        $this->refreshInventory();
         $period = $request->string('period', 'daily')->value();
         abort_unless(in_array($period, ['daily', 'weekly', 'monthly', 'yearly'], true), 404);
 
@@ -181,7 +155,7 @@ class AdminController extends Controller
             'maintenanceRooms' => $rooms->where('display_status', 'maintenance')->count(),
             'newCustomers' => Booking::with(['user', 'room'])->latest()->take(5)->get(),
             'individualBookings' => Booking::with(['user', 'room'])->latest()->paginate(15, ['*'], 'booking_page'),
-            'arrivalsToday' => Booking::with('room')->whereIn('status', ['pending', 'confirmed'])->whereDate('check_in', today())->whereNull('checked_in_at')->get(),
+            'arrivalsToday' => Booking::with('room')->where('status', 'confirmed')->whereDate('check_in', today())->whereNull('checked_in_at')->where('check_in_at', '<=', now())->get(),
             'departuresToday' => Booking::with('room')->whereNotNull('checked_in_at')->whereNull('checked_out_at')->whereDate('check_out', '<=', today())->get(),
             'recentActivity' => ActivityLog::with(['booking.room', 'user'])->latest()->take(8)->get(),
             'pendingReviews' => Review::with(['booking.room', 'user'])->where('status', 'pending')->latest()->take(10)->get(),
@@ -204,7 +178,7 @@ class AdminController extends Controller
 
     public function reports(Request $request)
     {
-        $this->expireOutstandingDeposits();
+        $this->refreshInventory();
         $period = $request->string('period', 'daily')->value();
         $metric = $request->string('metric', 'earnings')->value();
         abort_unless(in_array($period, ['daily', 'weekly', 'monthly', 'yearly'], true), 404);
@@ -254,8 +228,18 @@ class AdminController extends Controller
 
     public function updateRoomStatus(Request $request, Room $room)
     {
-        $room->update($request->validate(['operational_status' => 'required|in:available,cleaning,maintenance']));
-        return back()->with('success', 'Room operational status updated.');
+        $data = $request->validate([
+            'operational_status' => 'required|in:available,cleaning,maintenance',
+            'operational_until' => 'nullable|date|after:now',
+        ]);
+        if ($data['operational_status'] !== 'available' && empty($data['operational_until'])) {
+            return back()->withErrors(['operational_until' => 'Set when this cleaning or maintenance block ends.']);
+        }
+        $room->update([
+            'operational_status' => $data['operational_status'],
+            'operational_until' => $data['operational_status'] === 'available' ? null : $data['operational_until'],
+        ]);
+        return back()->with('success', $data['operational_status'] === 'available' ? 'Room is available now.' : 'Room block saved and will end automatically at the selected time.');
     }
 
     private function roomsWithDisplayStatus()
@@ -265,7 +249,7 @@ class AdminController extends Controller
 
         return Room::where('is_active', true)->with(['bookings' => fn ($query) => $query
             ->with('user')
-            ->whereIn('status', ['pending', 'confirmed'])
+            ->blocking()
             ->where('check_out', '>', $today)
             ->orderBy('check_in')])
             ->orderBy('name')
@@ -284,13 +268,10 @@ class AdminController extends Controller
             });
     }
 
-    private function expireOutstandingDeposits(): void
+    private function refreshInventory(): void
     {
-        Booking::where('status', 'pending')
-            ->where('deposit_status', 'awaiting_deposit')
-            ->whereNotNull('deposit_due_at')
-            ->where('deposit_due_at', '<=', now())
-            ->update(['status' => 'cancelled', 'deposit_status' => 'expired']);
+        Booking::releaseExpiredHolds();
+        Room::releaseExpiredOperationalBlocks();
     }
 
     private function log(Booking $booking, ?int $userId, string $event, string $description): void

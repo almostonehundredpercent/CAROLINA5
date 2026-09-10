@@ -68,17 +68,13 @@
 
                 @if($isGuest)
                     <hr>
-                    <h3>Guest and billing information</h3>
+                    <h3>Guest contact information</h3>
                     <label>Full name<input name="guest_name" value="{{ old('guest_name') }}" required></label>
                     <label>Email address<input type="email" name="guest_email" value="{{ old('guest_email') }}" required></label>
                     <label>Philippine phone number<input type="tel" name="guest_phone" value="{{ old('guest_phone') }}" placeholder="09169907895" pattern="[0-9+() -]+" title="Use 09169907895, 639169907895, or +63 916-990-7895" required></label>
-                    <label>Street address<input name="billing_street" value="{{ old('billing_street') }}" required></label>
-                    <label>City<input name="billing_city" value="{{ old('billing_city') }}" required></label>
-                    <label>Province<input name="billing_province" value="{{ old('billing_province') }}" required></label>
-                    <label>Postal code<input name="billing_postal_code" value="{{ old('billing_postal_code') }}" inputmode="numeric" pattern="[0-9]{4}" required></label>
                     <label class="checkbox">
-                        <input name="billing_verified" type="checkbox" value="1" @checked(old('billing_verified')) required>
-                        <span><strong>Confirm billing details</strong><small>I confirm that my billing contact and address are correct.</small></span>
+                        <input name="terms_accepted" type="checkbox" value="1" @checked(old('terms_accepted')) required>
+                        <span><strong>Accept reservation terms</strong><small>I understand this is a reservation request, subject to staff confirmation. <a href="{{ route('terms') }}" target="_blank">Read terms</a>.</small></span>
                     </label>
                 @endif
 
@@ -98,7 +94,7 @@
             <strong>₱{{ number_format($room->price_per_night) }} <small>{{ $room->rate_label }}</small></strong>
         @endif
         <hr>
-        <small>{{ $bookingMode === 'hourly' ? 'Choose your stay length and see the adjusted total before continuing.' : 'Final total is calculated from your dates.' }} No payment is required at this stage—your receipt will record the reservation.</small>
+        <small>{{ $bookingMode === 'hourly' ? 'Choose your stay length and see the adjusted total before continuing.' : 'Final total is calculated from your dates.' }} This creates a 15-minute reservation request for staff to confirm. No payment is collected online.</small>
     </aside>
 </section>
 @if(auth()->check() || $isGuest)

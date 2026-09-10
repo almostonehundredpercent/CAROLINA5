@@ -93,7 +93,7 @@
         <div class="footer-bottom">
             <small>&copy; {{ date('Y') }} Carolina Transient & Airbnb. All rights reserved.</small>
             <div class="footer-bottom-actions">
-                <a href="#">Privacy Policy</a><a href="#">Terms of Service</a>
+                <a href="{{ route('privacy') }}">Privacy Policy</a><a href="{{ route('terms') }}">Terms of Service</a>
             </div>
         </div>
     </footer>
