@@ -270,7 +270,7 @@ class AdminController extends Controller
     {
         abort_unless($request->user()->isAdmin(), 403, 'Only administrators can manage staff roles.');
 
-        return view('admin.staff', ['staff' => \App\Models\User::where('is_admin', true)->orWhereIn('staff_role', ['front_desk', 'housekeeping', 'viewer'])->orderBy('name')->get()]);
+        return view('admin.staff', ['staff' => \App\Models\User::orderByDesc('is_admin')->orderBy('name')->get()]);
     }
 
     public function updateStaffRole(Request $request, \App\Models\User $user)
