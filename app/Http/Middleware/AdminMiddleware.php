@@ -21,8 +21,8 @@ class AdminMiddleware
         }
 
         // Check if user is an admin
-        if (!auth()->user()->is_admin) {
-            return redirect('/home')->with('error', 'You do not have access to the admin panel');
+        if (!auth()->user()->hasStaffAccess()) {
+            return redirect('/')->with('error', 'You do not have staff access to the admin panel.');
         }
 
         return $next($request);

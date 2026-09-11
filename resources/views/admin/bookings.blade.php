@@ -12,6 +12,9 @@
         .booking-note { color: var(--muted); font-size: 12px; margin: 5px 0; }
         .hold-expiry { display: block; color: #9d6100; font-size: 11px; margin-top: 5px; }
         .status-select { cursor: pointer; }
+        .booking-filters { display:flex; flex-wrap:wrap; gap:8px; margin:0 0 16px; }
+        .booking-filters input, .booking-filters select { border:1px solid var(--line); border-radius:7px; padding:9px; font:inherit; }
+        .booking-filters button { border:0; border-radius:7px; padding:9px 13px; background:var(--orange); color:#fff; font-weight:700; cursor:pointer; }
     </style>
 </head>
 <body>
@@ -64,6 +67,19 @@
                     <span class="pill">{{ $individualBookings->total() }} total</span>
                 </div>
 
+                <form class="booking-filters" method="GET" aria-label="Filter bookings">
+                    <input name="search" value="{{ request('search') }}" placeholder="Guest name, email, or reference">
+                    <select name="status">
+                        <option value="">All statuses</option>
+                        @foreach(['pending', 'confirmed', 'cancelled'] as $filterStatus)
+                            <option value="{{ $filterStatus }}" @selected(request('status') === $filterStatus)>{{ ucfirst($filterStatus) }}</option>
+                        @endforeach
+                    </select>
+                    <input type="date" name="arrival" value="{{ request('arrival') }}" aria-label="Arrival or departure date">
+                    <button type="submit">Filter</button>
+                    @if(request()->hasAny(['search', 'status', 'arrival']))<a href="{{ route('admin.bookings') }}">Clear</a>@endif
+                </form>
+
                 <div class="admin-table-wrap">
                     <table>
                         <thead>
@@ -101,7 +117,7 @@
                                             @endif
 
                                             @if($booking->status === 'confirmed' && ! $booking->checked_in_at && (! $booking->check_in_at || $booking->check_in_at->lte(now())))
-                                                <form method="POST" action="{{ route('admin.bookings.check-in', $booking) }}">
+                                                <form method="POST" action="{{ route('admin.bookings.check-in', $booking) }}" onsubmit="return confirm('Check this guest in now?')">
                                                     @csrf
                                                     <input type="hidden" name="action" value="check_in">
                                                     <button class="status-select confirmed" type="submit">Check in</button>
@@ -109,14 +125,14 @@
                                             @endif
 
                                             @if($booking->checked_in_at && ! $booking->checked_out_at)
-                                                <form method="POST" action="{{ route('admin.bookings.check-out', $booking) }}">
+                                                <form method="POST" action="{{ route('admin.bookings.check-out', $booking) }}" onsubmit="return confirm('Check this guest out and start cleaning?')">
                                                     @csrf
                                                     <input type="hidden" name="action" value="check_out">
                                                     <button class="status-select" type="submit">Check out</button>
                                                 </form>
                                             @endif
 
-                                            @if($booking->status !== 'cancelled')
+                                            @if($booking->status !== 'cancelled' && ! ($booking->checked_in_at && ! $booking->checked_out_at))
                                                 <form method="POST" action="{{ route('admin.bookings.update', $booking) }}" onsubmit="return confirm('Cancel this booking?')">
                                                     @csrf
                                                     @method('PATCH')

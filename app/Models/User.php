@@ -21,6 +21,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'email',
         'password',
         'is_admin',
+        'staff_role',
     ];
 
     /**
@@ -53,6 +54,21 @@ class User extends Authenticatable implements MustVerifyEmail
     public function isAdmin(): bool
     {
         return $this->is_admin ?? false;
+    }
+
+    public function hasStaffAccess(): bool
+    {
+        return $this->isAdmin() || in_array($this->staff_role, ['front_desk', 'housekeeping', 'viewer'], true);
+    }
+
+    public function canManageBookings(): bool
+    {
+        return $this->isAdmin() || $this->staff_role === 'front_desk';
+    }
+
+    public function canManageRooms(): bool
+    {
+        return $this->isAdmin() || in_array($this->staff_role, ['front_desk', 'housekeeping'], true);
     }
 
     public function bookings()

@@ -32,6 +32,12 @@ class AdminController extends Controller
             'confirmedCount' => Booking::where('status', 'confirmed')->count(),
             'roomCount' => Room::where('is_active', true)->count(),
             'revenue' => Booking::where('status', 'confirmed')->sum('total_amount'),
+            'alerts' => [
+                'arrivals' => Booking::where('status', 'confirmed')->whereNull('checked_in_at')->where('check_in_at', '<=', now())->count(),
+                'departures' => Booking::whereNotNull('checked_in_at')->whereNull('checked_out_at')->where('check_out_at', '<=', now())->count(),
+                'pending' => Booking::where('status', 'pending')->count(),
+                'roomBlocks' => RoomBlock::where('starts_at', '<=', now()->addDay())->where('ends_at', '>', now())->count(),
+            ],
             'bookings' => $recentBookings,
             'chartLabels' => collect(range(0, 6))->map(fn ($day) => now()->subDays(6 - $day)->format('D')),
             'chartValues' => collect(range(0, 6))->map(fn ($day) => $bookingsByDay->get(now()->subDays(6 - $day)->toDateString(), collect())->count()),
@@ -40,6 +46,7 @@ class AdminController extends Controller
 
     public function updateBooking(Request $request, Booking $booking)
     {
+        abort_unless($request->user()->canManageBookings(), 403, 'Your staff role cannot manage bookings.');
         $action = $request->input('action');
 
         if ($action === 'check_in') {
@@ -59,7 +66,8 @@ class AdminController extends Controller
             return back()->with('success', 'Guest checked out. A one-hour cleaning block is now active.');
         }
 
-        $status = $request->validate(['status' => 'required|in:pending,confirmed,cancelled'])['status'];
+        $status = $request->validate(['status' => 'required|in:pending,confirmed,cancelled', 'staff_note' => 'nullable|string|max:500'])['status'];
+        abort_if($status === 'cancelled' && $booking->checked_in_at && ! $booking->checked_out_at, 422, 'Check out the guest before cancelling their booking.');
         if ($status === 'confirmed') {
             DB::transaction(function () use ($booking) {
                 $lockedRoom = Room::whereKey($booking->room_id)->lockForUpdate()->firstOrFail();
@@ -73,7 +81,9 @@ class AdminController extends Controller
         } else {
             $booking->update(['status' => $status, 'hold_expires_at' => null]);
         }
-        $this->log($booking, $request->user()->id, 'booking_' . $status, 'Booking status changed to ' . $status . '.');
+        $note = trim((string) $request->input('staff_note'));
+        if ($note !== '') $booking->update(['staff_notes' => trim(($booking->staff_notes ? $booking->staff_notes . "\n" : '') . now()->format('Y-m-d H:i') . ' · ' . $request->user()->name . ': ' . $note)]);
+        $this->log($booking, $request->user()->id, 'booking_' . $status, 'Booking status changed to ' . $status . ($note ? '. Note: ' . $note : '.'));
         $this->email($booking->fresh('room'), 'Your Carolina booking was updated', 'Your booking status is now ' . $status . '.');
         return back()->with('success', 'Booking status updated.');
     }
@@ -93,6 +103,7 @@ class AdminController extends Controller
 
     public function storeWalkIn(Request $request)
     {
+        abort_unless($request->user()->canManageBookings(), 403, 'Your staff role cannot create walk-ins.');
         $this->refreshInventory();
         $data = $request->validate([
             'room_id' => 'required|exists:rooms,id',
@@ -160,6 +171,19 @@ class AdminController extends Controller
         [$chartLabels, $chartValues] = $this->bookingChartData($period);
         $rooms = $this->roomsWithDisplayStatus();
 
+        $bookingQuery = Booking::with(['user', 'room'])->latest();
+        if ($request->filled('status')) $bookingQuery->where('status', $request->string('status')->value());
+        if ($request->filled('arrival')) {
+            $arrival = $request->string('arrival')->value();
+            $bookingQuery->where(function ($query) use ($arrival) {
+                $query->whereDate('check_in', $arrival)->orWhereDate('check_out', $arrival);
+            });
+        }
+        if ($request->filled('search')) {
+            $search = '%' . $request->string('search')->value() . '%';
+            $bookingQuery->where(fn ($query) => $query->where('reference', 'like', $search)->orWhere('guest_name', 'like', $search)->orWhere('guest_email', 'like', $search));
+        }
+
         return view('admin.bookings', [
             'period' => $period,
             'chartLabels' => $chartLabels,
@@ -169,7 +193,7 @@ class AdminController extends Controller
             'availableRooms' => $rooms->where('display_status', 'available')->count(),
             'maintenanceRooms' => $rooms->where('display_status', 'maintenance')->count(),
             'newCustomers' => Booking::with(['user', 'room'])->latest()->take(5)->get(),
-            'individualBookings' => Booking::with(['user', 'room'])->latest()->paginate(15, ['*'], 'booking_page'),
+            'individualBookings' => $bookingQuery->paginate(15, ['*'], 'booking_page')->withQueryString(),
             'arrivalsToday' => Booking::with('room')->where('status', 'confirmed')->whereDate('check_in', today())->whereNull('checked_in_at')->where('check_in_at', '<=', now())->get(),
             'departuresToday' => Booking::with('room')->whereNotNull('checked_in_at')->whereNull('checked_out_at')->whereDate('check_out', '<=', today())->get(),
             'recentActivity' => ActivityLog::with(['booking.room', 'user'])->latest()->take(8)->get(),
@@ -180,6 +204,7 @@ class AdminController extends Controller
 
     public function updateReview(Request $request, Review $review)
     {
+        abort_unless($request->user()->canManageBookings(), 403, 'Your staff role cannot moderate reviews.');
         $data = $request->validate(['status' => 'required|in:approved,hidden']);
         $review->update([
             'status' => $data['status'],
@@ -243,19 +268,30 @@ class AdminController extends Controller
 
     public function updateRoomStatus(Request $request, Room $room)
     {
+        abort_unless($request->user()->canManageRooms(), 403, 'Your staff role cannot manage room operations.');
         $data = $request->validate([
             'operational_status' => 'required|in:available,cleaning,maintenance',
             'operational_starts_at' => 'nullable|date',
             'operational_until' => 'nullable|date|after:operational_starts_at',
             'notes' => 'nullable|string|max:255',
+            'force_override' => 'nullable|boolean',
         ]);
         if ($data['operational_status'] === 'available') {
             $room->blocks()->where('ends_at', '>', now())->where('starts_at', '<=', now())->delete();
             return back()->with('success', 'Active room blocks cleared.');
         }
         if (empty($data['operational_starts_at']) || empty($data['operational_until'])) return back()->withErrors(['operational_until' => 'Set both a start and end time for this room block.']);
-        RoomBlock::create(['room_id' => $room->id, 'status' => $data['operational_status'], 'starts_at' => $data['operational_starts_at'], 'ends_at' => $data['operational_until'], 'notes' => $data['notes'] ?? null, 'created_by' => $request->user()->id]);
-        return back()->with('success', 'Scheduled room block saved.');
+        $startsAt = Carbon::parse($data['operational_starts_at']);
+        $endsAt = Carbon::parse($data['operational_until']);
+        $overlap = $room->bookings()->blocking()->overlapping($startsAt, $endsAt)->exists();
+        $override = (bool) ($data['force_override'] ?? false);
+        if ($overlap && (! $override || ! $request->user()->isAdmin())) {
+            return back()->withErrors(['operational_until' => 'This operation overlaps a confirmed stay. Choose another time, or have an administrator record an override.']);
+        }
+        $notes = $data['notes'] ?? null;
+        if ($overlap && $override) $notes = trim(($notes ? $notes . ' · ' : '') . 'Manager override by ' . $request->user()->name);
+        RoomBlock::create(['room_id' => $room->id, 'status' => $data['operational_status'], 'starts_at' => $startsAt, 'ends_at' => $endsAt, 'notes' => $notes, 'created_by' => $request->user()->id]);
+        return back()->with('success', $overlap ? 'Scheduled room block saved with manager override.' : 'Scheduled room block saved.');
     }
 
     private function roomsWithDisplayStatus()

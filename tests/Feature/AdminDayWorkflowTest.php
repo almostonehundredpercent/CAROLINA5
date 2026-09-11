@@ -83,10 +83,20 @@ test('staff can complete a busy-day booking workflow without creating conflicts'
         ->assertRedirect();
     expect($arrival->fresh()->checked_in_at)->not->toBeNull();
 
+    $this->patch(route('admin.bookings.update', $arrival), ['status' => 'cancelled'])
+        ->assertStatus(422);
+    expect($arrival->fresh()->status)->toBe('confirmed');
+
     $this->post(route('admin.bookings.check-out', $arrival), ['action' => 'check_out'])
         ->assertRedirect();
     expect($arrival->fresh()->checked_out_at)->not->toBeNull();
     expect(RoomBlock::where('room_id', $activeRoom->id)->where('status', 'cleaning')->exists())->toBeTrue();
+
+    $this->patch(route('admin.rooms.status', $freeRoom), [
+        'operational_status' => 'maintenance',
+        'operational_starts_at' => now()->addDays(2)->startOfHour()->toDateTimeString(),
+        'operational_until' => now()->addDays(2)->addHour()->startOfHour()->toDateTimeString(),
+    ])->assertSessionHasErrors('operational_until');
 
     $this->patch(route('admin.rooms.status', $freeRoom), [
         'operational_status' => 'maintenance',
