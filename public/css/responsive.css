@@ -128,6 +128,7 @@ footer { flex-shrink: 0; }
 .rooms-choice-menu[hidden] { display:none !important; }
 .rooms-choice-menu button { border:0; border-radius:5px; padding:9px 10px; background:transparent; color:var(--ink); font:600 .82rem 'DM Sans'; text-align:left; white-space:nowrap; cursor:pointer; }
 .rooms-choice-menu button:hover { background:#fff0d8; color:var(--deep); }
+.rooms-choice-divider { margin:3px 4px 1px; padding-top:7px; border-top:1px solid var(--line); color:var(--muted); font-size:.68rem; font-weight:700; letter-spacing:.6px; text-transform:uppercase; }
 .rooms-time-field { position: relative; min-width: 145px; display: grid; gap: 4px; padding: 8px 11px; border: 1px solid var(--line); border-radius: 6px; background: var(--paper); color: var(--muted); font-size: .72rem; font-weight: 700; }
 .rooms-time-field > button { display:flex; justify-content:space-between; align-items:center; border:0; padding:0; background:transparent; color:var(--ink); font:inherit; font-size:.92rem; font-weight:700; cursor:pointer; }
 .rooms-time-field > button::after { content:'⌄'; color:var(--gold); font-size:1rem; }

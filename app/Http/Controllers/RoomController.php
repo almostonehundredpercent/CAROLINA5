@@ -17,8 +17,8 @@ class RoomController extends Controller
         $stay = $request->string('stay', 'day')->value();
         $checkInTime = $request->string('check_in_time', '12:00')->value();
         $hours = $stay === 'day' ? 24 : (int) $stay;
-        if ($checkIn && in_array($hours, [3, 6, 12, 24], true)) {
-            $startsAt = Carbon::parse($checkIn->toDateString() . ' ' . ($stay === 'day' ? '12:00' : $checkInTime));
+        if ($checkIn && in_array($hours, [3, 6, 12, 24, 48, 72, 96, 120, 168], true)) {
+            $startsAt = Carbon::parse($checkIn->toDateString() . ' ' . $checkInTime);
             $endsAt = $startsAt->copy()->addHours($hours);
             $rooms->whereDoesntHave('bookings', fn ($query) => $query->blocking()->overlapping($startsAt, $endsAt))
                 ->whereDoesntHave('blocks', fn ($query) => $query->overlapping($startsAt, $endsAt));
