@@ -266,6 +266,23 @@ class AdminController extends Controller
         ]);
     }
 
+    public function staff(Request $request)
+    {
+        abort_unless($request->user()->isAdmin(), 403, 'Only administrators can manage staff roles.');
+
+        return view('admin.staff', ['staff' => \App\Models\User::where('is_admin', true)->orWhereIn('staff_role', ['front_desk', 'housekeeping', 'viewer'])->orderBy('name')->get()]);
+    }
+
+    public function updateStaffRole(Request $request, \App\Models\User $user)
+    {
+        abort_unless($request->user()->isAdmin(), 403, 'Only administrators can manage staff roles.');
+        abort_if($user->id === $request->user()->id && $request->input('staff_role') !== 'admin', 422, 'You cannot remove your own administrator access.');
+        $role = $request->validate(['staff_role' => 'required|in:admin,front_desk,housekeeping,viewer,guest'])['staff_role'];
+        $user->update(['staff_role' => $role, 'is_admin' => $role === 'admin']);
+
+        return back()->with('success', $user->name . "'s staff role was updated.");
+    }
+
     public function updateRoomStatus(Request $request, Room $room)
     {
         abort_unless($request->user()->canManageRooms(), 403, 'Your staff role cannot manage room operations.');
