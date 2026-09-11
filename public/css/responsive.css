@@ -121,8 +121,12 @@ footer { flex-shrink: 0; }
 .rooms-date-trigger { min-width: 0; flex: 1; display: grid; gap: 5px; padding: 10px 13px; border: 1px solid var(--line); border-radius: 6px; background: var(--paper); color: var(--ink); text-align: left; font: inherit; cursor: pointer; }
 .rooms-date-trigger span { color: var(--muted); font-size: .72rem; font-weight: 700; }
 .rooms-date-trigger b { font-size: .93rem; }
-.rooms-time-field { min-width: 145px; display: grid; gap: 4px; padding: 8px 11px; border: 1px solid var(--line); border-radius: 6px; background: var(--paper); color: var(--muted); font-size: .72rem; font-weight: 700; }
-.rooms-time-field input { border: 0; padding: 0; background: transparent; color: var(--ink); font: inherit; font-size: .9rem; }
+.rooms-time-field { position: relative; min-width: 145px; display: grid; gap: 4px; padding: 8px 11px; border: 1px solid var(--line); border-radius: 6px; background: var(--paper); color: var(--muted); font-size: .72rem; font-weight: 700; }
+.rooms-time-field > button { display:flex; justify-content:space-between; align-items:center; border:0; padding:0; background:transparent; color:var(--ink); font:inherit; font-size:.92rem; font-weight:700; cursor:pointer; }
+.rooms-time-field > button::after { content:'⌄'; color:var(--gold); font-size:1rem; }
+.rooms-time-menu { position:absolute; z-index:6; top:calc(100% + 8px); left:0; width:220px; max-height:245px; overflow:auto; padding:8px; border:1px solid var(--line); border-radius:8px; background:var(--paper); box-shadow:0 15px 35px rgba(45,37,31,.18); display:grid; grid-template-columns:repeat(3,1fr); gap:5px; }
+.rooms-time-menu button { border:0; border-radius:5px; padding:8px 4px; background:transparent; color:var(--ink); font:600 .78rem 'DM Sans'; cursor:pointer; }
+.rooms-time-menu button:hover { background:#fff0d8; color:var(--deep); }
 .rooms-date-trigger:hover, .rooms-date-trigger[aria-expanded="true"] { border-color: var(--gold); }
 .rooms-search-calendar { position: absolute; z-index: 4; top: calc(100% + 10px); left: 0; width: min(100%, 500px); padding: 18px; border: 1px solid var(--line); border-radius: 10px; background: var(--paper); box-shadow: 0 18px 40px rgba(45, 37, 31, .16); }
 .rooms-calendar-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 13px; }
@@ -140,7 +144,7 @@ footer { flex-shrink: 0; }
 .rooms-calendar-day.selected.range { background: #f7d59d; color: #78400a; }
 .rooms-calendar-note { margin: 13px 0 0; color: var(--muted); font-size: .8rem; }
 .dark-mode .rooms-date-trigger, .dark-mode .rooms-search-calendar, .dark-mode .rooms-calendar-head button { background: #211a15; border-color: var(--line); color: var(--ink); }
-.dark-mode .rooms-time-field, .dark-mode .rooms-time-field input { background: #211a15; border-color: var(--line); color: var(--ink); }
+.dark-mode .rooms-time-field, .dark-mode .rooms-time-menu { background: #211a15; border-color: var(--line); color: var(--ink); }
 .dark-mode .rooms-calendar-day:hover:not([disabled]) { background: #3a2c22; }
 .dark-mode .rooms-calendar-day.selected.range { background: #5d431e; color: #ffe7ad; }
 
