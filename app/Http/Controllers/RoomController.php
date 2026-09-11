@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Room;
 use App\Models\Booking;
 use Illuminate\Http\Request;
+use Carbon\Carbon;
 
 class RoomController extends Controller
 {
@@ -13,17 +14,19 @@ class RoomController extends Controller
         $rooms = Room::where('is_active', true)
             ->withAvg('approvedReviews', 'rating')->withCount('approvedReviews');
         $checkIn = $request->date('check_in');
-        $checkOut = $request->date('check_out');
-        if ($checkIn && $checkOut && $checkOut->gt($checkIn)) {
-            $startsAt = $checkIn->copy()->startOfDay();
-            $endsAt = $checkOut->copy()->startOfDay();
+        $stay = $request->string('stay', 'day')->value();
+        $checkInTime = $request->string('check_in_time', '12:00')->value();
+        $hours = $stay === 'day' ? 24 : (int) $stay;
+        if ($checkIn && in_array($hours, [3, 6, 12, 24], true)) {
+            $startsAt = Carbon::parse($checkIn->toDateString() . ' ' . ($stay === 'day' ? '12:00' : $checkInTime));
+            $endsAt = $startsAt->copy()->addHours($hours);
             $rooms->whereDoesntHave('bookings', fn ($query) => $query->blocking()->overlapping($startsAt, $endsAt))
                 ->whereDoesntHave('blocks', fn ($query) => $query->overlapping($startsAt, $endsAt));
         }
         if ($request->filled('guests')) $rooms->where('guests', '>=', (int) $request->guests);
         return view('rooms.index', [
             'rooms' => $rooms->orderBy('price_per_night')->get(),
-            'filters' => $request->only('check_in', 'check_out', 'guests'),
+            'filters' => $request->only('check_in', 'stay', 'check_in_time', 'guests'),
         ]);
     }
 
