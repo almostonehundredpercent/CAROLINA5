@@ -31,9 +31,9 @@ test('a reservation request stores exact times without blocking availability unt
     Mail::fake();
     $room = testRoom();
     $checkIn = now()->addDays(3)->startOfDay();
-    $this->post(route('bookings.store', $room), ['checkout_type' => 'guest', 'booking_type' => 'dates', 'check_in' => $checkIn->toDateString(), 'check_out' => $checkIn->copy()->addDays(2)->toDateString(), 'guests' => 2, 'guest_name' => 'Test Guest', 'guest_email' => 'guest@example.com', 'guest_phone' => '09171234567', 'terms_accepted' => '1'])->assertRedirect()->assertSessionHasNoErrors();
+    $this->post(route('bookings.store', $room), ['checkout_type' => 'guest', 'booking_type' => 'dates', 'check_in' => $checkIn->toDateString(), 'check_out' => $checkIn->copy()->addDays(2)->toDateString(), 'guests' => 2, 'children_count' => 1, 'pets_count' => 1, 'guest_name' => 'Test Guest', 'guest_email' => 'guest@example.com', 'guest_phone' => '09171234567', 'terms_accepted' => '1'])->assertRedirect()->assertSessionHasNoErrors();
     $booking = Booking::firstOrFail();
-    expect($booking->status)->toBe('pending')->and($booking->hold_expires_at)->toBeNull()->and($booking->check_in_at->toDateString())->toBe($checkIn->toDateString());
+    expect($booking->status)->toBe('pending')->and($booking->hold_expires_at)->toBeNull()->and($booking->check_in_at->toDateString())->toBe($checkIn->toDateString())->and($booking->children_count)->toBe(1)->and($booking->pets_count)->toBe(1);
     $this->get(route('rooms.index', ['check_in' => $checkIn->toDateString(), 'check_out' => $checkIn->copy()->addDay()->toDateString()]))->assertOk()->assertSee('Test Room');
 });
 

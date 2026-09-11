@@ -92,6 +92,9 @@
                                         <b>{{ $booking->guest_name ?? $booking->user?->name ?? 'Guest' }}</b>
                                         <small>{{ $booking->guest_email ?? $booking->user?->email ?? 'No email' }}</small>
                                         <small>{{ $booking->guest_phone ?? 'No phone' }}</small>
+                                        @if($booking->children_count || $booking->pets_count)
+                                            <small>{{ $booking->children_count ? $booking->children_count . ' child' . ($booking->children_count > 1 ? 'ren' : '') : 'No children' }} · {{ $booking->pets_count ? $booking->pets_count . ' pet' . ($booking->pets_count > 1 ? 's' : '') : 'No pets' }}</small>
+                                        @endif
                                     </td>
                                     <td><code>{{ $booking->reference }}</code></td>
                                     <td>
