@@ -58,7 +58,7 @@
 <div class="admin-shell">
     <aside class="admin-sidebar">
         <a class="admin-brand" href="{{ route('home') }}"><span>c</span><b>Carolina</b><small>TRANSIENT & AIRBNB</small></a>
-        <nav class="admin-nav"><a href="{{ route('admin.dashboard') }}">Dashboard</a><a class="active" href="{{ route('admin.rooms') }}">Rooms</a><a href="{{ route('admin.bookings') }}">Bookings</a><a href="{{ route('admin.walk-ins.create') }}">Walk-ins</a><a href="{{ route('admin.reports') }}">Reports</a></nav>
+        <nav class="admin-nav"><a href="{{ route('admin.dashboard') }}">Dashboard</a><a class="active" href="{{ route('admin.rooms') }}">Rooms</a><a href="{{ route('admin.bookings') }}">Bookings</a><a href="{{ route('admin.walk-ins.create') }}">Walk-ins</a><a href="{{ route('admin.reports') }}">Reports</a><a href="{{ route('admin.activity') }}">Activity log</a>@if(auth()->user()->isAdmin())<a href="{{ route('admin.staff') }}">Staff access</a>@endif</nav>
         <form method="POST" action="{{ route('logout') }}" class="admin-logout">@csrf<button class="logout-button" type="submit">Log out</button></form>
     </aside>
     <main class="admin-main">

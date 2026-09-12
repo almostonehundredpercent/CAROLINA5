@@ -27,6 +27,8 @@
                 <a class="active" href="{{ route('admin.bookings') }}">Bookings</a>
                 <a href="{{ route('admin.walk-ins.create') }}">Walk-ins</a>
                 <a href="{{ route('admin.reports') }}">Reports</a>
+                <a href="{{ route('admin.activity') }}">Activity log</a>
+                @if(auth()->user()->isAdmin())<a href="{{ route('admin.staff') }}">Staff access</a>@endif
             </nav>
             <form method="POST" action="{{ route('logout') }}" class="admin-logout">
                 @csrf
