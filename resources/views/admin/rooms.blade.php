@@ -56,11 +56,7 @@
 </head>
 <body>
 <div class="admin-shell">
-    <aside class="admin-sidebar">
-        <a class="admin-brand" href="{{ route('home') }}"><span>c</span><b>Carolina</b><small>TRANSIENT & AIRBNB</small></a>
-        <nav class="admin-nav"><a href="{{ route('admin.dashboard') }}"><i>▦</i>Dashboard</a><a class="active" href="{{ route('admin.rooms') }}"><i>⌂</i>Rooms</a><a href="{{ route('admin.bookings') }}"><i>▤</i>Bookings</a><a href="{{ route('admin.walk-ins.create') }}"><i>+</i>Walk-ins</a><a href="{{ route('admin.reports') }}"><i>⌁</i>Reports</a><a href="{{ route('admin.activity') }}"><i>◷</i>Activity log</a>@if(auth()->user()->isAdmin())<a href="{{ route('admin.staff') }}"><i>♙</i>Staff access</a>@endif</nav>
-        <form method="POST" action="{{ route('logout') }}" class="admin-logout">@csrf<button class="logout-button" type="submit">Log out</button></form>
-    </aside>
+    @include('admin.partials.sidebar')
     <main class="admin-main">
         <header class="admin-topbar room-operations-header"><div><p class="admin-kicker">PROPERTY MANAGEMENT</p><h1>Room operations</h1><p class="admin-subtitle">See occupancy, upcoming stays, and operational work in one place.</p></div>@if(auth()->user()->isAdmin())<div class="room-operations-actions"><a class="room-create-button" href="{{ route('admin.rooms.create') }}">Add room</a></div>@endif</header>
         @if(session('success'))<div class="admin-flash">{{ session('success') }}</div>@endif

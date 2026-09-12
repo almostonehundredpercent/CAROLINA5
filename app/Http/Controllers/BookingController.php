@@ -8,6 +8,7 @@ use App\Models\ActivityLog;
 use App\Models\Booking;
 use App\Models\Room;
 use App\Models\RoomBlock;
+use App\Models\GuestRestriction;
 use App\Models\Review;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -85,6 +86,10 @@ class BookingController extends Controller
         else $rules += ['check_in' => 'required|date|after_or_equal:today', 'check_out' => 'required|date|after:check_in'];
         if ($request->input('checkout_type') === 'guest') $rules += ['guest_name' => 'required|string|max:255', 'guest_email' => 'required|email:rfc|max:255', 'guest_phone' => ['required', 'regex:/^(?:\\+63|63|0)9\\d{9}$/'], 'terms_accepted' => 'accepted'];
         $data = $request->validate($rules);
+        $restrictionEmail = $data['checkout_type'] === 'guest' ? ($data['guest_email'] ?? null) : $request->user()?->email;
+        $restrictionPhone = $data['checkout_type'] === 'guest' ? ($data['guest_phone'] ?? null) : null;
+        $guestKey = $restrictionEmail ? 'email:' . strtolower(trim($restrictionEmail)) : 'phone:' . preg_replace('/\D+/', '', (string) $restrictionPhone);
+        abort_if(GuestRestriction::where('guest_key', $guestKey)->whereNull('removed_at')->exists(), 422, 'This reservation cannot be accepted online. Please contact Carolina directly.');
         $existing = Booking::where('submission_token', $data['submission_token'])->first();
         if ($existing) return redirect()->route('bookings.receipt', $existing)->with('success', 'Your reservation request was already received.');
         if ($data['checkout_type'] === 'account' && ! $request->user()) return redirect()->route('login')->with('success', 'Please sign in to use account checkout.');

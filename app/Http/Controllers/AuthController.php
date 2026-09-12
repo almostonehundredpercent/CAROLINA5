@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
 use Illuminate\Auth\Events\PasswordReset;
+use App\Support\AdminPermissions;
 
 class AuthController extends Controller
 {
@@ -44,11 +45,7 @@ class AuthController extends Controller
         auth()->login($user);
         $request->session()->regenerate();
 
-        if ($user->is_admin) {
-            return redirect()->route('admin.dashboard');
-        }
-
-        return redirect()->route('home');
+        return redirect()->route(AdminPermissions::landingRoute($user));
     }
 
     public function register(Request $request)

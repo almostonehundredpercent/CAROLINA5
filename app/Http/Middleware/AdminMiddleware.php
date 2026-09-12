@@ -21,9 +21,7 @@ class AdminMiddleware
         }
 
         // Check if user is an admin
-        if (!auth()->user()->hasStaffAccess()) {
-            return redirect('/')->with('error', 'You do not have staff access to the admin panel.');
-        }
+        abort_unless(auth()->user()->hasStaffAccess(), 403, 'You do not have staff access to the admin panel.');
 
         return $next($request);
     }

@@ -11,20 +11,7 @@
 </head>
 <body>
 <div class="admin-shell">
-    <aside class="admin-sidebar">
-        <a class="admin-brand" href="{{ route('home') }}"><img src="{{ asset('images/carolina-logo.jpg') }}" alt="Carolina logo"><b>Carolina</b><small>TRANSIENT & AIRBNB</small></a>
-        <nav class="admin-nav">
-            <a class="active" href="{{ route('admin.dashboard') }}"><i>▦</i> Dashboard</a>
-            <a href="{{ route('admin.rooms') }}"><i>⌂</i> Rooms</a>
-            <a href="{{ route('admin.bookings') }}"><i>▤</i> Bookings</a>
-            <a href="{{ route('admin.walk-ins.create') }}"><i>＋</i> Walk-ins</a>
-            <a href="{{ route('admin.reports') }}"><i>⌁</i> Reports</a>
-            <a href="{{ route('admin.activity') }}"><i>◷</i> Activity log</a>
-            @if(auth()->user()->isAdmin())<a href="{{ route('admin.staff') }}"><i>♙</i> Staff access</a>@endif
-        </nav>
-        <a href="{{ route('home') }}" class="admin-home" style="position:absolute;bottom:84px;left:16px;right:16px;border:1px solid rgba(255,255,255,.85);border-radius:8px;padding:12px 13px;color:#fff;text-decoration:none;font:600 14px 'DM Sans',sans-serif;display:flex;gap:12px;align-items:center;"><i>⌂</i> Go to home page</a>
-        <form method="POST" action="{{ route('logout') }}" class="admin-logout">@csrf<button class="logout-button" type="submit"><i>⎋</i> Log out</button></form>
-    </aside>
+    @include('admin.partials.sidebar')
     <main class="admin-main">
         <header class="admin-topbar"><div><p class="admin-kicker">OVERVIEW</p><h1>Dashboard</h1></div><div class="admin-user"><span class="avatar">{{ strtoupper(substr(auth()->user()->name, 0, 1)) }}</span><div><b>{{ auth()->user()->name }}</b><small>Administrator</small></div></div></header>
         @if(session('success'))<div class="admin-flash">{{ session('success') }}</div>@endif

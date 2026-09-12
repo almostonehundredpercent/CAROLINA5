@@ -8,6 +8,8 @@ use App\Models\Room;
 use App\Models\RoomBlock;
 use App\Models\Review;
 use App\Models\Payment;
+use App\Models\GuestNote;
+use App\Models\GuestRestriction;
 use App\Mail\BookingUpdate;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
@@ -20,11 +22,17 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Database\QueryException;
+use Illuminate\Pagination\LengthAwarePaginator;
+use App\Support\AdminPermissions;
 
 class AdminController extends Controller
 {
     public function index()
     {
+        if (AdminPermissions::role(request()->user()) === 'viewer') {
+            $rooms = $this->roomsWithDisplayStatus();
+            return view('admin.viewer-dashboard', compact('rooms'));
+        }
         try {
         try {
             $this->refreshInventory();
@@ -42,6 +50,7 @@ class AdminController extends Controller
             ->groupBy(fn (Booking $booking) => $booking->created_at->toDateString());
 
         return view('admin.admin_dashboard', [
+            'viewer' => AdminPermissions::role(request()->user()) === 'viewer',
             'bookingCount' => Booking::count(),
             'pendingCount' => Booking::where('status', 'pending')->count(),
             'confirmedCount' => Booking::where('status', 'confirmed')->count(),
@@ -83,6 +92,7 @@ class AdminController extends Controller
             $roomCount = Room::where('is_active', true)->count();
 
             return view('admin.admin_dashboard', [
+                'viewer' => AdminPermissions::role(request()->user()) === 'viewer',
                 'bookingCount' => $bookingCount,
                 'pendingCount' => $pendingCount,
                 'confirmedCount' => $confirmedCount,
@@ -163,7 +173,7 @@ class AdminController extends Controller
         ]);
         abort_if($booking->status === 'cancelled' && $data['payment_status'] === 'paid', 422, 'A cancelled booking cannot be marked paid.');
         $before = $booking->only(['payment_status', 'payment_method', 'paid_at']);
-        $paidAt = $data['payment_status'] === 'paid' ? now() : null;
+        $paidAt = in_array($data['payment_status'], ['paid', 'refunded'], true) ? now() : null;
         Payment::create(['booking_id' => $booking->id, 'amount' => $booking->total_amount, 'method' => $data['payment_method'], 'status' => $data['payment_status'], 'paid_at' => $paidAt, 'recorded_by' => $request->user()->id, 'notes' => 'Manual staff payment record.']);
         $booking->update($data + ['paid_at' => $paidAt]);
         $this->log($booking->fresh(), $request->user()->id, 'payment_' . $data['payment_status'], 'Payment status recorded as ' . $data['payment_status'] . '.', $before, $booking->fresh()->only(['payment_status', 'payment_method', 'paid_at']));
@@ -181,6 +191,16 @@ class AdminController extends Controller
             ->get();
 
         return view('admin.walk_in', compact('rooms'));
+    }
+
+    public function frontdesk()
+    {
+        $today = today();
+        return view('admin.frontdesk', [
+            'arrivals' => Booking::with(['user', 'room'])->where('status', 'confirmed')->whereDate('check_in', $today)->whereNull('checked_in_at')->get(),
+            'activeStays' => Booking::with(['user', 'room'])->whereNotNull('checked_in_at')->whereNull('checked_out_at')->get(),
+            'departures' => Booking::with(['user', 'room'])->whereNotNull('checked_in_at')->whereNull('checked_out_at')->whereDate('check_out', '<=', $today)->get(),
+        ]);
     }
 
     public function storeWalkIn(Request $request)
@@ -240,6 +260,10 @@ class AdminController extends Controller
     {
         $this->refreshInventory();
         $rooms = $this->roomsWithDisplayStatus();
+
+        if (! AdminPermissions::allows(request()->user(), 'bookings')) {
+            return view('admin.room-board', compact('rooms'));
+        }
 
         return view('admin.rooms', compact('rooms'));
     }
@@ -322,6 +346,92 @@ class AdminController extends Controller
         ]);
     }
 
+    public function showBooking(Request $request, Booking $booking)
+    {
+        $booking->load(['user', 'room', 'payments.recordedBy', 'activityLogs.user']);
+        $paid = (float) $booking->payments->where('status', 'paid')->sum('amount');
+        $refunded = (float) $booking->payments->where('status', 'refunded')->sum('amount');
+        return view('admin.booking-show', compact('booking', 'paid', 'refunded'));
+    }
+
+    public function exportBookings(Request $request)
+    {
+        $query = Booking::with(['user', 'room'])->latest();
+        if ($request->filled('status')) $query->where('status', $request->string('status')->value());
+        if ($request->filled('arrival')) $query->whereDate('check_in', $request->string('arrival')->value());
+        if ($request->filled('search')) {
+            $search = '%' . $request->string('search')->value() . '%';
+            $query->where(fn ($builder) => $builder->where('reference', 'like', $search)->orWhere('guest_name', 'like', $search)->orWhere('guest_email', 'like', $search));
+        }
+        $filename = 'carolina-bookings-' . now()->format('Y-m-d') . '.csv';
+        $this->audit($request->user()->id, 'booking_exported', 'Booking CSV exported.', $request->user(), [], ['filters' => $request->only(['status', 'arrival', 'search'])]);
+        return response()->streamDownload(function () use ($query) {
+            $out = fopen('php://output', 'w');
+            fputcsv($out, ['Reference', 'Guest', 'Email', 'Phone', 'Room', 'Check-in', 'Check-out', 'Status', 'Payment status', 'Total']);
+            $query->chunkById(200, function ($bookings) use ($out) {
+                foreach ($bookings as $booking) fputcsv($out, array_map(fn ($value) => $this->csvValue($value), [
+                    $booking->reference, $booking->guest_name ?? $booking->user?->name, $booking->guest_email ?? $booking->user?->email, $booking->guest_phone,
+                    $booking->room?->name, $booking->check_in_at?->toIso8601String() ?? $booking->check_in->toDateString(), $booking->check_out_at?->toIso8601String() ?? $booking->check_out->toDateString(),
+                    $booking->status, $booking->payment_status, $booking->total_amount,
+                ]));
+            });
+            fclose($out);
+        }, $filename, ['Content-Type' => 'text/csv; charset=UTF-8']);
+    }
+
+    public function guests(Request $request)
+    {
+        $search = strtolower(trim((string) $request->input('search')));
+        $groups = Booking::with('user')->latest()->get()->groupBy(fn (Booking $booking) => $this->guestKey($booking))->map(function ($bookings, $key) {
+            $latest = $bookings->sortByDesc('created_at')->first();
+            return (object) ['key' => $key, 'token' => $this->guestToken($key), 'name' => $latest->guest_name ?? $latest->user?->name ?? 'Guest', 'email' => $latest->guest_email ?? $latest->user?->email, 'phone' => $latest->guest_phone, 'bookings' => $bookings->count(), 'latest' => $latest];
+        })->values();
+        if ($search !== '') $groups = $groups->filter(fn ($guest) => str_contains(strtolower($guest->name . ' ' . $guest->email . ' ' . $guest->phone), $search))->values();
+        $page = LengthAwarePaginator::resolveCurrentPage();
+        $perPage = 15;
+        $guests = new LengthAwarePaginator($groups->forPage($page, $perPage)->values(), $groups->count(), $perPage, $page, ['path' => route('admin.guests'), 'query' => $request->query()]);
+        return view('admin.guests', compact('guests'));
+    }
+
+    public function showGuest(Request $request, string $guest)
+    {
+        $key = $this->guestKeyFromToken($guest);
+        $bookings = Booking::with(['user', 'room', 'payments'])->latest()->get()->filter(fn (Booking $booking) => $this->guestKey($booking) === $key)->values();
+        abort_if($bookings->isEmpty(), 404);
+        $latest = $bookings->first();
+        $notes = GuestNote::with('author')->where('guest_key', $key)->latest()->get();
+        $restriction = GuestRestriction::with('createdBy')->where('guest_key', $key)->whereNull('removed_at')->first();
+        return view('admin.guest-show', ['guestKey' => $key, 'guestToken' => $guest, 'guest' => $latest, 'bookings' => $bookings, 'notes' => $notes, 'restriction' => $restriction]);
+    }
+
+    public function storeGuestNote(Request $request, string $guest)
+    {
+        $key = $this->guestKeyFromToken($guest);
+        $data = $request->validate(['content' => 'required|string|max:2000']);
+        $note = GuestNote::create(['guest_key' => $key, 'author_id' => $request->user()->id, 'content' => trim($data['content'])]);
+        $this->audit($request->user()->id, 'guest_note_added', 'Guest note added.', $note, [], ['guest_key' => $key]);
+        return back()->with('success', 'Guest note saved.');
+    }
+
+    public function updateGuestRestriction(Request $request, string $guest)
+    {
+        $key = $this->guestKeyFromToken($guest);
+        $data = $request->validate(['action' => 'required|in:restrict,remove', 'reason' => 'nullable|string|max:500']);
+        $restriction = GuestRestriction::firstOrNew(['guest_key' => $key]);
+        if ($data['action'] === 'restrict') {
+            $reason = trim((string) ($data['reason'] ?? ''));
+            if ($reason === '') return back()->withErrors(['reason' => 'Provide an internal reason for this booking restriction.']);
+            $restriction->fill(['reason' => $reason, 'created_by' => $request->user()->id, 'removed_at' => null, 'removed_by' => null])->save();
+            $this->audit($request->user()->id, 'guest_restriction_added', 'Guest booking restriction added.', $restriction, [], ['guest_key' => $key]);
+            return back()->with('success', 'Guest booking restriction added.');
+        }
+        if ($restriction->exists) {
+            $restriction->update(['removed_at' => now(), 'removed_by' => $request->user()->id]);
+            $this->audit($request->user()->id, 'guest_restriction_removed', 'Guest booking restriction removed.', $restriction, [], ['guest_key' => $key]);
+        }
+        return back()->with('success', 'Guest booking restriction removed.');
+    }
+
     public function updateReview(Request $request, Review $review)
     {
         abort_unless($request->user()->canManageBookings(), 403, 'Your staff role cannot moderate reviews.');
@@ -340,9 +450,10 @@ class AdminController extends Controller
     {
         $this->refreshInventory();
         $period = $request->string('period', 'daily')->value();
-        $metric = $request->string('metric', 'earnings')->value();
+        $metric = $request->string('metric', 'payments')->value();
+        if ($metric === 'earnings') $metric = 'payments'; // retain old shared links without retaining misleading wording
         abort_unless(in_array($period, ['daily', 'weekly', 'monthly', 'yearly', 'custom'], true), 404);
-        abort_unless(in_array($metric, ['earnings', 'bookings', 'guests'], true), 404);
+        abort_unless(in_array($metric, ['payments', 'bookings', 'guests'], true), 404);
 
         $range = $request->validate(['from' => 'nullable|date', 'to' => 'nullable|date|after_or_equal:from']);
         if ($period === 'custom') {
@@ -360,14 +471,18 @@ class AdminController extends Controller
             $bookings = Booking::with(['user', 'room'])->where('created_at', '>=', $dates->first())->get();
             $grouped = $bookings->groupBy(fn (Booking $booking) => $this->reportKey($booking->created_at, $period));
         }
-        $values = $keys->map(function (string $key) use ($grouped, $metric) {
+        $paymentStart = $period === 'custom' ? $from : $dates->first();
+        $paymentEnd = $period === 'custom' ? $to : now()->endOfDay();
+        $paymentGroups = Payment::whereIn('status', ['paid', 'refunded'])->whereBetween('paid_at', [$paymentStart, $paymentEnd])->get()
+            ->groupBy(fn (Payment $payment) => $period === 'custom' ? $payment->paid_at->toDateString() : $this->reportKey($payment->paid_at, $period));
+        $values = $keys->map(function (string $key) use ($grouped, $paymentGroups, $metric) {
             $items = $grouped->get($key, collect());
             return match ($metric) {
-                'earnings' => (float) $items->where('status', 'confirmed')->sum('total_amount'),
+                'payments' => (float) $paymentGroups->get($key, collect())->sum(fn (Payment $payment) => $payment->status === 'refunded' ? -$payment->amount : $payment->amount),
                 default => $items->count(),
             };
         });
-        $titles = ['earnings' => ['Total earnings', 'Revenue'], 'bookings' => ['Total bookings', 'Bookings'], 'guests' => ['Guest bookings', 'Bookings']];
+        $titles = ['payments' => ['Payments collected', 'Net collected payments'], 'bookings' => ['Total bookings', 'Bookings'], 'guests' => ['Guest bookings', 'Bookings']];
         $rooms = $metric === 'bookings' ? $this->roomsWithDisplayStatus() : collect();
         $guestBookings = $metric === 'guests' ? Booking::with('user')->get() : collect();
         $guestGroups = $metric === 'guests' ? $guestBookings->groupBy(fn (Booking $booking) => $this->guestKey($booking)) : collect();
@@ -395,6 +510,12 @@ class AdminController extends Controller
                 'returning' => $guestGroups->filter(fn ($bookings) => $bookings->count() > 1)->count(),
                 'averageStay' => round((float) ($guestBookings->avg('nights') ?? 0), 1),
             ] : null,
+            'financialMetrics' => [
+                'bookedValue' => (float) $bookings->where('status', '!=', 'cancelled')->sum('total_amount'),
+                'confirmedValue' => (float) $bookings->where('status', 'confirmed')->sum('total_amount'),
+                'paidRevenue' => (float) $paymentGroups->flatten()->where('status', 'paid')->sum('amount'),
+                'refunds' => (float) $paymentGroups->flatten()->where('status', 'refunded')->sum('amount'),
+            ],
         ]);
     }
 
@@ -633,7 +754,28 @@ class AdminController extends Controller
 
     private function guestKey(Booking $booking): string
     {
-        return strtolower($booking->guest_email ?? $booking->user?->email ?? 'booking-' . $booking->id);
+        $email = strtolower(trim((string) ($booking->guest_email ?? $booking->user?->email)));
+        if ($email !== '') return 'email:' . $email;
+        $phone = preg_replace('/\D+/', '', (string) $booking->guest_phone);
+        return $phone !== '' ? 'phone:' . $phone : 'booking:' . $booking->id;
+    }
+
+    private function csvValue(mixed $value): string
+    {
+        $value = (string) $value;
+        return preg_match('/^[=+\-@]/', $value) ? "'" . $value : $value;
+    }
+
+    private function guestToken(string $key): string
+    {
+        return rtrim(strtr(base64_encode($key), '+/', '-_'), '=');
+    }
+
+    private function guestKeyFromToken(string $token): string
+    {
+        $key = base64_decode(strtr($token, '-_', '+/'), true);
+        abort_unless($key && preg_match('/^(email|phone|booking):/', $key), 404);
+        return $key;
     }
 
     public function logout(Request $request)
