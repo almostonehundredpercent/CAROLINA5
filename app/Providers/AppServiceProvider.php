@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use Illuminate\Support\Facades\URL;
+use Illuminate\Pagination\Paginator;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -20,6 +21,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // The application does not load Tailwind. Use Bootstrap-compatible
+        // pagination markup so the shared admin stylesheet can style it.
+        Paginator::useBootstrapFive();
+
         if ($this->app->environment('production')) {
             URL::forceScheme('https');
             if (! $this->app->runningInConsole()) {
