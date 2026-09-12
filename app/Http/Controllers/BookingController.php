@@ -13,6 +13,8 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
+use Illuminate\Database\QueryException;
 
 class BookingController extends Controller
 {
@@ -21,12 +23,16 @@ class BookingController extends Controller
         if (! $room->is_active) abort(404);
         $blockedRanges = $this->blockedRanges($room);
 
+        $key = 'booking-submission:' . $room->id;
+        $submissionToken = $request->session()->get($key) ?: (string) Str::uuid();
+        $request->session()->put($key, $submissionToken);
         return view('bookings.create', [
             'room' => $room,
             'isGuest' => $request->boolean('guest'),
             'bookingMode' => $room->rental_hours ? 'hourly' : $request->string('mode', 'dates')->value(),
             'blockedRanges' => $blockedRanges,
             'hourlyBlockedSlots' => $this->hourlyBlockedSlots($room),
+            'submissionToken' => $submissionToken,
         ]);
     }
 
@@ -74,11 +80,13 @@ class BookingController extends Controller
         if ($request->filled('guest_phone')) {
             $request->merge(['guest_phone' => preg_replace('/[\s()\-]/', '', (string) $request->input('guest_phone'))]);
         }
-        $rules = ['booking_type' => 'required|in:dates,hourly', 'guests' => 'required|integer|min:1|max:' . $room->guests, 'children_count' => 'nullable|integer|min:0|max:10|lte:guests', 'pets_count' => 'nullable|integer|min:0|max:5', 'special_request' => 'nullable|string|max:500', 'checkout_type' => 'required|in:guest,account'];
+        $rules = ['booking_type' => 'required|in:dates,hourly', 'guests' => 'required|integer|min:1|max:' . $room->guests, 'children_count' => 'nullable|integer|min:0|max:10|lte:guests', 'pets_count' => 'nullable|integer|min:0|max:5', 'special_request' => 'nullable|string|max:500', 'checkout_type' => 'required|in:guest,account', 'submission_token' => 'required|uuid', 'terms_accepted' => 'accepted'];
         if ($request->input('booking_type') === 'hourly') $rules += ['hourly_date' => 'required|date|after_or_equal:today', 'check_in_time' => ['required', 'date_format:H:i', 'regex:/^(0[6-9]|1[0-9]|2[0-3]):00$/'], 'hours' => 'required|integer|in:' . ($room->rental_hours ? implode(',', array_unique([$room->rental_hours, 48, 72, 96, 120, 168])) : '3,12,24,48,72,96,120,168')];
         else $rules += ['check_in' => 'required|date|after_or_equal:today', 'check_out' => 'required|date|after:check_in'];
         if ($request->input('checkout_type') === 'guest') $rules += ['guest_name' => 'required|string|max:255', 'guest_email' => 'required|email:rfc|max:255', 'guest_phone' => ['required', 'regex:/^(?:\\+63|63|0)9\\d{9}$/'], 'terms_accepted' => 'accepted'];
         $data = $request->validate($rules);
+        $existing = Booking::where('submission_token', $data['submission_token'])->first();
+        if ($existing) return redirect()->route('bookings.receipt', $existing)->with('success', 'Your reservation request was already received.');
         if ($data['checkout_type'] === 'account' && ! $request->user()) return redirect()->route('login')->with('success', 'Please sign in to use account checkout.');
         if ($data['booking_type'] === 'hourly') {
             $checkInAt = Carbon::parse($data['hourly_date'] . ' ' . $data['check_in_time']);
@@ -90,6 +98,7 @@ class BookingController extends Controller
             $data['check_in'] = $checkInAt->toDateString(); $data['check_out'] = $checkOutAt->toDateString(); $data['check_in_at'] = $checkInAt; $data['check_out_at'] = $checkOutAt;
         } else { $checkInAt = Carbon::parse($data['check_in'])->startOfDay(); $checkOutAt = Carbon::parse($data['check_out'])->startOfDay(); $nights = $checkInAt->diffInDays($checkOutAt); $total = $nights * $room->price_per_night; $data['check_in_at'] = $checkInAt; $data['check_out_at'] = $checkOutAt; }
         $guestData = $data['checkout_type'] === 'guest' ? ['guest_name' => $data['guest_name'], 'guest_email' => $data['guest_email'], 'guest_phone' => $data['guest_phone']] : [];
+        try {
         $booking = DB::transaction(function () use ($room, $data, $guestData, $request, $nights, $total, $checkInAt, $checkOutAt) {
             $lockedRoom = Room::whereKey($room->id)->lockForUpdate()->firstOrFail();
             abort_if(! $lockedRoom->is_active, 422, 'This room is unavailable.');
@@ -98,6 +107,12 @@ class BookingController extends Controller
             abort_if($taken, 422, 'Those dates or hours are no longer available for this room.');
             return Booking::create($data + $guestData + ['user_id' => $request->user()?->id, 'room_id' => $lockedRoom->id, 'nights' => $nights, 'total_amount' => $total, 'add_ons' => [], 'hold_expires_at' => null, 'payment_method' => 'cash', 'status' => 'pending']);
         });
+        } catch (QueryException $exception) {
+            $booking = Booking::where('submission_token', $data['submission_token'])->first();
+            if (! $booking) throw $exception;
+            return redirect()->route('bookings.receipt', $booking)->with('success', 'Your reservation request was already received.');
+        }
+        $request->session()->forget('booking-submission:' . $room->id);
         try {
             $this->log($booking, $request->user()?->id, 'booking_created', 'Booking created and awaiting staff confirmation.');
         } catch (\Throwable $exception) {

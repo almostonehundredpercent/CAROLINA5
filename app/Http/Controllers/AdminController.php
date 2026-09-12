@@ -7,6 +7,7 @@ use App\Models\ActivityLog;
 use App\Models\Room;
 use App\Models\RoomBlock;
 use App\Models\Review;
+use App\Models\Payment;
 use App\Mail\BookingUpdate;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
@@ -35,8 +36,8 @@ class AdminController extends Controller
             'pendingCount' => Booking::where('status', 'pending')->count(),
             'confirmedCount' => Booking::where('status', 'confirmed')->count(),
             'roomCount' => $rooms->count(),
-            'revenue' => Booking::where('payment_status', 'paid')->sum('total_amount'),
-            'paymentPending' => Booking::where('status', '!=', 'cancelled')->where('payment_status', 'pending')->count(),
+            'revenue' => Payment::where('status', 'paid')->sum('amount'),
+            'paymentPending' => Booking::where('status', '!=', 'cancelled')->whereDoesntHave('payments', fn ($query) => $query->where('status', 'paid'))->count(),
             'checkedInCount' => Booking::whereNotNull('checked_in_at')->whereNull('checked_out_at')->count(),
             'checkedOutCount' => Booking::whereNotNull('checked_out_at')->count(),
             'cancelledCount' => Booking::where('status', 'cancelled')->count(),
@@ -119,7 +120,9 @@ class AdminController extends Controller
         ]);
         abort_if($booking->status === 'cancelled' && $data['payment_status'] === 'paid', 422, 'A cancelled booking cannot be marked paid.');
         $before = $booking->only(['payment_status', 'payment_method', 'paid_at']);
-        $booking->update($data + ['paid_at' => $data['payment_status'] === 'paid' ? now() : null]);
+        $paidAt = $data['payment_status'] === 'paid' ? now() : null;
+        Payment::create(['booking_id' => $booking->id, 'amount' => $booking->total_amount, 'method' => $data['payment_method'], 'status' => $data['payment_status'], 'paid_at' => $paidAt, 'recorded_by' => $request->user()->id, 'notes' => 'Manual staff payment record.']);
+        $booking->update($data + ['paid_at' => $paidAt]);
         $this->log($booking->fresh(), $request->user()->id, 'payment_' . $data['payment_status'], 'Payment status recorded as ' . $data['payment_status'] . '.', $before, $booking->fresh()->only(['payment_status', 'payment_method', 'paid_at']));
         return back()->with('success', 'Payment record updated.');
     }
@@ -230,6 +233,7 @@ class AdminController extends Controller
     public function archiveRoom(Request $request, Room $room)
     {
         abort_unless($request->user()->isAdmin(), 403, 'Only administrators can archive rooms.');
+        abort_if($room->bookings()->blocking()->where('check_out_at', '>', now())->exists(), 422, 'This room has future or active confirmed stays and cannot be archived yet.');
         $room->update(['is_active' => false]);
         $this->audit($request->user()->id, 'room_archived', 'Room archived without deleting booking history.', $room, ['is_active' => true], ['is_active' => false]);
         return back()->with('success', 'Room archived. Historical reservations were kept.');
@@ -413,7 +417,7 @@ class AdminController extends Controller
         $data = $request->validate([
             'name' => 'required|string|max:255', 'slug' => $slugRule, 'room_type' => 'required|string|max:100',
             'description' => 'required|string|max:3000', 'beds' => 'required|integer|min:1|max:20', 'guests' => 'required|integer|min:1|max:30',
-            'price_per_night' => 'required|numeric|min:0|max:999999', 'rental_hours' => 'nullable|integer|in:3,6,12,22,24',
+            'price_per_night' => 'required|numeric|min:0|max:999999', 'rental_hours' => 'nullable|integer|in:3,6,12,22,24', 'default_check_in_time' => 'nullable|date_format:H:i',
             'amenities' => 'nullable|string|max:1200', 'image_url' => 'nullable|url|max:2048', 'image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:5120',
             'is_active' => 'nullable|boolean', 'remove_image' => 'nullable|boolean',
         ]);
@@ -457,7 +461,7 @@ class AdminController extends Controller
 
     private function refreshInventory(): void
     {
-        RoomBlock::where('ends_at', '<=', now())->delete();
+        RoomBlock::whereNull('completed_at')->where('ends_at', '<=', now())->update(['completed_at' => now()]);
     }
 
     private function log(Booking $booking, ?int $userId, string $event, string $description, array $before = [], array $after = []): void

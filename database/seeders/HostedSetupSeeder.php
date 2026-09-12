@@ -13,7 +13,7 @@ class HostedSetupSeeder extends Seeder
      */
     public function run(): void
     {
-        $this->call(RoomSeeder::class);
+        if (\App\Models\Room::query()->doesntExist()) $this->call(RoomSeeder::class);
 
         $email = env('ADMIN_EMAIL');
         $password = env('ADMIN_PASSWORD');

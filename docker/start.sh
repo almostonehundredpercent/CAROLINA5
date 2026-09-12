@@ -1,7 +1,9 @@
 #!/usr/bin/env sh
 set -eu
 
-php artisan migrate --force
+if [ "${RUN_MIGRATIONS:-true}" = "true" ]; then
+    php artisan migrate --force
+fi
 
 if [ "${RUN_INITIAL_SEED:-false}" = "true" ]; then
     php artisan db:seed --class=HostedSetupSeeder --force
