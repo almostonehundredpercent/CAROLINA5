@@ -52,6 +52,38 @@
         .room-empty { grid-column: 1 / -1; padding: 42px 20px; text-align: center; color: var(--muted); }
         @media (max-width: 1050px) { .room-summary { grid-template-columns: repeat(2, 1fr); }.room-card-grid { grid-template-columns: 1fr; } }
         @media (max-width: 700px) { .room-operations-header { display: block; }.room-operations-actions { justify-content: flex-start; margin-top: 14px; }.room-summary { gap: 9px; }.room-summary-card { min-height: 77px; padding: 13px; }.room-summary-card strong { font-size: 23px; }.room-card-grid { gap: 12px; }.room-card-main { padding: 17px 15px 14px 20px; }.room-card-title { font-size: 18px; }.room-card-schedule { gap: 8px; margin-top: 14px; }.schedule-item { min-height: 71px; padding: 10px; }.room-manage summary { padding: 13px 15px 13px 20px; }.room-operation-form { padding: 0 15px 16px 20px; }.operation-form-grid { grid-template-columns: 1fr; }.operation-field.full { grid-column: auto; }.operation-footer { align-items: flex-start; flex-direction: column; }.operation-save { width: 100%; }.override-note { max-width: none; } }
+
+        /* A quieter, scan-first room workspace. */
+        .room-operations-header { align-items: center; padding: 4px 0 18px; border-bottom: 1px solid var(--line); }
+        .room-operations-header .admin-kicker { color: var(--orange-dark); }
+        .room-operations-header h1 { font-size: clamp(28px, 3vw, 34px); }
+        .room-operations-actions { margin-left: auto; }
+        .room-create-button { min-height: 42px; padding: 0 17px; border: 1px solid #c86d00; border-radius: 9px; box-shadow: 0 4px 10px rgba(207,120,0,.16); }
+        .room-summary { gap: 10px; margin: 18px 0 14px; }
+        .room-summary-card { position: relative; min-height: 78px; padding: 13px 15px 12px 20px; overflow: hidden; border-radius: 10px; background: #fff; box-shadow: none; }
+        .room-summary-card::before { content: ''; position: absolute; inset: 0 auto 0 0; width: 4px; background: #c9c2b8; }
+        .room-summary-card.available::before { background: var(--available); }.room-summary-card.reserved::before { background: var(--reserved); }.room-summary-card.occupied::before { background: var(--occupied); }.room-summary-card.unavailable::before { background: var(--maintenance); }
+        .room-summary-card small { font-size: 10px; letter-spacing: .075em; }.room-summary-card strong { margin-top: 5px; font-size: 25px; }
+        .room-operations-note { margin: 0 0 14px; padding: 10px 13px; border: 0; border-radius: 8px; background: #f6f2ec; color: #665d53; }
+        .room-operations-note b { color: #3b342d; }
+        .room-card-grid { gap: 14px; }
+        .room-card { border-radius: 12px; box-shadow: none; transition: border-color .18s ease, box-shadow .18s ease; }
+        .room-card:hover { border-color: #d7c9b8; box-shadow: 0 7px 20px rgba(46,35,22,.06); }
+        .room-card::before { width: 4px; }
+        .room-card-main { padding: 17px 18px 14px 22px; }
+        .room-card-title { font-family: var(--admin-font); font-size: 18px; letter-spacing: -.02em; }
+        .room-card-meta { margin-top: 5px; }.room-card-rate { margin-top: 5px; color: var(--orange-dark); }
+        .room-status { padding: 5px 8px; font-size: 10px; }
+        .room-card-schedule { gap: 8px; margin-top: 14px; }
+        .schedule-item { min-height: 64px; padding: 10px 11px; border-radius: 8px; border-color: #eee8df; background: #faf9f7; }
+        .schedule-item small { margin-bottom: 4px; font-size: 9px; }.schedule-item b { font-size: 12px; }.schedule-item span { font-size: 10px; }
+        .schedule-item.empty { min-height: 55px; border-style: dashed; background: transparent; }.schedule-item.empty b { font-size: 11px; }
+        .room-card-actions { margin-top: 13px; gap: 7px; }.room-action-link,.room-archive-button { min-height: 33px; padding: 0 10px; border-radius: 6px; font-family: var(--admin-font); }
+        .room-action-link:hover { border-color: var(--orange); color: var(--orange-dark); background: #fff8ed; }
+        .room-manage { background: #fbfaf8; }.room-manage summary { padding: 12px 18px 12px 22px; color: #4b4034; font-size: 12px; }.room-manage summary::after { width: 21px; height: 21px; color: var(--orange-dark); }
+        .room-manage[open] { background: #fffaf2; }.room-manage[open] summary { color: var(--orange-dark); }
+        .room-operation-form { padding: 0 18px 18px 22px; }.operation-field select,.operation-field input { min-height: 38px; }.operation-save { min-height: 38px; border-radius: 7px; }
+        @media (max-width: 700px) { .room-operations-header { padding-bottom: 15px; }.room-operations-actions { margin-left: 0; }.room-create-button { width: 100%; }.room-summary { margin-top: 14px; }.room-summary-card { min-height: 70px; padding: 11px 12px 10px 17px; }.room-card-main { padding: 15px 14px 13px 19px; }.room-card-schedule { grid-template-columns: 1fr; }.schedule-item.empty { min-height: 50px; }.room-manage summary { padding: 12px 14px 12px 19px; }.room-operation-form { padding: 0 14px 16px 19px; } }
     </style>
 </head>
 <body>
