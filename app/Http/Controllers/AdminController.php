@@ -24,6 +24,7 @@ use Illuminate\Validation\ValidationException;
 use Illuminate\Database\QueryException;
 use Illuminate\Pagination\LengthAwarePaginator;
 use App\Support\AdminPermissions;
+use App\Support\FinancialSummary;
 
 class AdminController extends Controller
 {
@@ -349,9 +350,8 @@ class AdminController extends Controller
     public function showBooking(Request $request, Booking $booking)
     {
         $booking->load(['user', 'room', 'payments.recordedBy', 'activityLogs.user']);
-        $paid = (float) $booking->payments->where('status', 'paid')->sum('amount');
-        $refunded = (float) $booking->payments->where('status', 'refunded')->sum('amount');
-        return view('admin.booking-show', compact('booking', 'paid', 'refunded'));
+        $financial = FinancialSummary::forBooking($booking);
+        return view('admin.booking-show', compact('booking', 'financial'));
     }
 
     public function exportBookings(Request $request)
@@ -510,12 +510,10 @@ class AdminController extends Controller
                 'returning' => $guestGroups->filter(fn ($bookings) => $bookings->count() > 1)->count(),
                 'averageStay' => round((float) ($guestBookings->avg('nights') ?? 0), 1),
             ] : null,
-            'financialMetrics' => [
-                'bookedValue' => (float) $bookings->where('status', '!=', 'cancelled')->sum('total_amount'),
-                'confirmedValue' => (float) $bookings->where('status', 'confirmed')->sum('total_amount'),
-                'paidRevenue' => (float) $paymentGroups->flatten()->where('status', 'paid')->sum('amount'),
-                'refunds' => (float) $paymentGroups->flatten()->where('status', 'refunded')->sum('amount'),
-            ],
+            'financialMetrics' => array_merge(
+                FinancialSummary::forBookings($bookings),
+                ['period_ledger' => FinancialSummary::forPayments($paymentGroups->flatten())]
+            ),
         ]);
     }
 
@@ -637,8 +635,9 @@ class AdminController extends Controller
     private function paymentDashboardMetrics(): array
     {
         try {
+            $ledger = FinancialSummary::forPayments(Payment::whereIn('status', ['paid', 'refunded'])->get());
             return [
-                Payment::where('status', 'paid')->sum('amount'),
+                $ledger['net_collected'],
                 Booking::where('status', '!=', 'cancelled')
                     ->whereDoesntHave('payments', fn ($query) => $query->where('status', 'paid'))
                     ->count(),

@@ -19,7 +19,10 @@ final class AdminPermissions
         'payments' => ['admin', 'front_desk'],
         'reviews' => ['admin', 'front_desk'],
         'rooms' => ['admin', 'front_desk', 'housekeeping', 'viewer'],
-        'room_operations' => ['admin', 'housekeeping'],
+        // Front desk needs to mark a room ready, cleaning, or under
+        // maintenance as part of an arrival/departure workflow. They cannot
+        // edit the room catalogue or staff accounts.
+        'room_operations' => ['admin', 'front_desk', 'housekeeping'],
         'reports' => ['admin'],
         'activity' => ['admin'],
         'staff' => ['admin'],

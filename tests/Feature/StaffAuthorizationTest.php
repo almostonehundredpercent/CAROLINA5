@@ -45,14 +45,14 @@ test('role boundaries are enforced on direct administrative URLs', function () {
     $this->get(route('admin.dashboard'))->assertRedirect(route('login'));
 });
 
-test('only housekeeping and administrators can change room operations', function () {
+test('only operational staff can change room operations', function () {
     $room = Room::create(['name' => 'Authorization room', 'slug' => 'authorization-room', 'room_type' => 'Test', 'description' => 'Test room.', 'beds' => 1, 'guests' => 2, 'price_per_night' => 500, 'is_active' => true]);
     $frontDesk = staffAccount('front_desk');
     $viewer = staffAccount('viewer');
     $housekeeping = staffAccount('housekeeping');
 
     $payload = ['operational_status' => 'cleaning', 'operational_starts_at' => now()->addHour()->toDateTimeString(), 'operational_until' => now()->addHours(2)->toDateTimeString()];
-    $this->actingAs($frontDesk)->patch(route('admin.rooms.status', $room), $payload)->assertForbidden();
+    $this->actingAs($frontDesk)->patch(route('admin.rooms.status', $room), $payload)->assertRedirect();
     $this->actingAs($viewer)->patch(route('admin.rooms.status', $room), $payload)->assertForbidden();
     $this->actingAs($housekeeping)->patch(route('admin.rooms.status', $room), $payload)->assertRedirect();
 });
