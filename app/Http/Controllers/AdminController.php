@@ -546,10 +546,22 @@ class AdminController extends Controller
     public function updateRoomStatus(Request $request, Room $room)
     {
         abort_unless($request->user()->canManageRooms(), 403, 'Your staff role cannot manage room operations.');
+        // The operations screen submits date and time separately so staff can schedule
+        // without wrestling with a browser-specific combined date/time control.
+        if (! $request->filled('operational_starts_at') && $request->filled('operational_start_date') && $request->filled('operational_start_time')) {
+            $request->merge(['operational_starts_at' => $request->input('operational_start_date') . ' ' . $request->input('operational_start_time')]);
+        }
+        if (! $request->filled('operational_until') && $request->filled('operational_end_date') && $request->filled('operational_end_time')) {
+            $request->merge(['operational_until' => $request->input('operational_end_date') . ' ' . $request->input('operational_end_time')]);
+        }
         $data = $request->validate([
             'operational_status' => 'required|in:available,cleaning,maintenance',
             'operational_starts_at' => 'nullable|date',
             'operational_until' => 'nullable|date|after:operational_starts_at',
+            'operational_start_date' => 'nullable|date',
+            'operational_end_date' => 'nullable|date',
+            'operational_start_time' => 'nullable|date_format:H:i',
+            'operational_end_time' => 'nullable|date_format:H:i',
             'notes' => 'nullable|string|max:255',
             'force_override' => 'nullable|boolean',
         ]);
