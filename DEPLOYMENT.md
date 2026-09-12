@@ -31,7 +31,7 @@ The initial deployment creates the room catalogue and this administrator. It doe
 
 1. When Render finishes, open the web service and copy its public URL.
 2. Add that URL as `APP_URL` in the service's Environment settings (including `https://`).
-3. Change `RUN_INITIAL_SEED` to `false` and redeploy once. This prevents the initial setup task from running on later deployments.
+3. Change `RUN_INITIAL_SEED` to `false` and redeploy once. This prevents the initial setup task from running on later deployments. For optional staff acceptance testing, add `TEST_HOUSEKEEPING_EMAIL` / `TEST_HOUSEKEEPING_PASSWORD` and `TEST_VIEWER_EMAIL` / `TEST_VIEWER_PASSWORD`, seed once, then clear the passwords and switch the seed setting back off.
 4. Sign in at `/login` using the administrator email and password you chose.
 
 ## 4. Test the public site

@@ -37,14 +37,19 @@ class HostedSetupSeeder extends Seeder
         // Optional, deployment-only staff account for acceptance testing.
         // Its email and password live exclusively in the host environment;
         // leaving either setting blank means no account is created.
-        $testEmail = env('TEST_STAFF_EMAIL');
-        $testPassword = env('TEST_STAFF_PASSWORD');
-        $testRole = env('TEST_STAFF_ROLE', 'front_desk');
-        if ($testEmail && $testPassword && in_array($testRole, ['front_desk', 'housekeeping', 'viewer'], true)) {
+        $testAccounts = [
+            [env('TEST_STAFF_EMAIL'), env('TEST_STAFF_PASSWORD'), env('TEST_STAFF_ROLE', 'front_desk'), env('TEST_STAFF_NAME', 'Carolina Test Staff')],
+            [env('TEST_HOUSEKEEPING_EMAIL'), env('TEST_HOUSEKEEPING_PASSWORD'), 'housekeeping', env('TEST_HOUSEKEEPING_NAME', 'Carolina Test Housekeeping')],
+            [env('TEST_VIEWER_EMAIL'), env('TEST_VIEWER_PASSWORD'), 'viewer', env('TEST_VIEWER_NAME', 'Carolina Test Viewer')],
+        ];
+
+        foreach ($testAccounts as [$testEmail, $testPassword, $testRole, $testName]) {
+            if (! $testEmail || ! $testPassword || ! in_array($testRole, ['front_desk', 'housekeeping', 'viewer'], true)) continue;
+
             User::updateOrCreate(
                 ['email' => $testEmail],
                 [
-                    'name' => env('TEST_STAFF_NAME', 'Carolina Test Staff'),
+                    'name' => $testName,
                     'password' => Hash::make($testPassword),
                     'is_admin' => false,
                     'staff_role' => $testRole,
