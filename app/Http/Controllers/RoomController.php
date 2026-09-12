@@ -15,7 +15,7 @@ class RoomController extends Controller
             ->withAvg('approvedReviews', 'rating')->withCount('approvedReviews');
         $checkIn = $request->date('check_in');
         $stay = $request->string('stay', 'day')->value();
-        $checkInTime = $request->string('check_in_time', '12:00')->value();
+        $checkInTime = preg_match('/^(0[6-9]|1[0-9]|2[0-3]):00$/', $request->string('check_in_time', '12:00')->value()) ? $request->string('check_in_time')->value() : '12:00';
         $hours = $stay === 'month' ? null : ($stay === 'day' ? 24 : (int) $stay);
         if ($checkIn && ($stay === 'month' || in_array($hours, [3, 6, 12, 24, 48, 72, 96, 120, 168], true))) {
             $startsAt = Carbon::parse($checkIn->toDateString() . ' ' . $checkInTime);

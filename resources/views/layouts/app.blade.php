@@ -5,6 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>@yield('title', 'Carolina Transient & Airbnb | Tabaco City')</title>
     <meta name="description" content="Reserve short and overnight stays with Carolina Transient & Airbnb in Tabaco City, Albay.">
+    <link rel="canonical" href="{{ url()->current() }}">
+    <meta property="og:type" content="website"><meta property="og:title" content="@yield('title', 'Carolina Transient & Airbnb | Tabaco City')"><meta property="og:description" content="Reserve short and overnight stays in Tabaco City, Albay."><meta property="og:url" content="{{ url()->current() }}"><meta property="og:image" content="{{ asset('images/carolina-logo.jpg') }}">
+    <meta name="twitter:card" content="summary_large_image">
+    <script type="application/ld+json">{!! json_encode(['@context' => 'https://schema.org', '@type' => 'LodgingBusiness', 'name' => 'Carolina Transient & Airbnb', 'url' => url('/'), 'address' => ['@type' => 'PostalAddress', 'addressLocality' => 'Tabaco City', 'addressRegion' => 'Albay', 'addressCountry' => 'PH'] ], JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE) !!}</script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
@@ -83,6 +87,7 @@
                 <p><span aria-hidden="true">⌖</span> Tabaco City, Albay</p>
                 <a href="{{ route('bookings.lookup') }}"><span aria-hidden="true">⌕</span> Find your booking</a>
                 <a href="https://www.facebook.com/profile.php?id=61556306344437" target="_blank" rel="noopener noreferrer"><span aria-hidden="true">●</span> Facebook</a>
+                <x-contact-card class="footer-contact-help" />
             </section>
 
             <section class="footer-column footer-follow">

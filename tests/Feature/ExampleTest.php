@@ -37,6 +37,12 @@ test('a reservation request stores exact times without blocking availability unt
     $this->get(route('rooms.index', ['check_in' => $checkIn->toDateString(), 'check_out' => $checkIn->copy()->addDay()->toDateString()]))->assertOk()->assertSee('Test Room');
 });
 
+test('hourly reservations only accept advertised arrival hours', function () {
+    $room = testRoom();
+    $this->post(route('bookings.store', $room), ['checkout_type' => 'guest', 'booking_type' => 'hourly', 'hourly_date' => now()->addDay()->toDateString(), 'check_in_time' => '03:00', 'hours' => 3, 'guests' => 1, 'guest_name' => 'Test Guest', 'guest_email' => 'guest@example.com', 'guest_phone' => '09171234567', 'terms_accepted' => '1'])
+        ->assertSessionHasErrors('check_in_time');
+});
+
 test('confirmed bookings and scheduled room blocks both prevent an overlap', function () {
     $room = testRoom();
     $start = now()->addDays(4)->setTime(10, 0);

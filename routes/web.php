@@ -10,6 +10,10 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', function () {
     return view('home', ['featuredRooms' => Room::where('is_active', true)->withAvg('approvedReviews', 'rating')->withCount('approvedReviews')->orderBy('price_per_night')->take(6)->get(), 'availabilityRooms' => Room::where('is_active', true)->orderBy('name')->get()]);
 })->name('home');
+Route::get('/sitemap.xml', function () {
+    $urls = collect([route('home'), route('rooms.index'), route('bookings.lookup'), route('privacy'), route('terms')])->merge(Room::where('is_active', true)->pluck('slug')->map(fn ($slug) => route('rooms.show', $slug)));
+    return response()->view('sitemap', compact('urls'))->header('Content-Type', 'application/xml');
+})->name('sitemap');
 Route::get('/health', function () { \Illuminate\Support\Facades\DB::select('select 1'); return response()->json(['status' => 'ok']); })->name('health');
 Route::view('/privacy', 'legal.privacy')->name('privacy');
 Route::view('/terms', 'legal.terms')->name('terms');

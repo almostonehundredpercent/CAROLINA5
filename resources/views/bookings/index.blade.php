@@ -5,7 +5,7 @@
 @forelse($bookings as $booking)
     <article class="booking-row">
         <img src="{{ $booking->room->image_url }}" alt="{{ $booking->room->name }}">
-        <div><span class="status {{ $booking->status }}">{{ ucfirst($booking->status) }}</span><h3>{{ $booking->room->name }}</h3><p>{{ $booking->check_in->format('M j, Y') }} - {{ $booking->check_out->format('M j, Y') }} · {{ $booking->nights }} nights · {{ $booking->guests }} guests</p><small>Reference: {{ $booking->reference }}</small></div>
+        <div><span class="status {{ $booking->status }}">{{ ucfirst($booking->status) }}</span><h3>{{ $booking->room->name }}</h3><p>{{ $booking->check_in->format('M j, Y') }} - {{ $booking->check_out->format('M j, Y') }} · {{ $booking->nights }} {{ Str::plural('night', $booking->nights) }} · {{ $booking->guests }} {{ Str::plural('guest', $booking->guests) }}</p><small>Reference: {{ $booking->reference }}</small></div>
         <div><strong>₱{{ number_format($booking->total_amount) }}</strong><a class="text-link" href="{{ route('bookings.confirmation', $booking) }}">View details</a>@if($booking->status !== 'cancelled' && $booking->check_in->isFuture())<form method="POST" action="{{ route('bookings.cancel', $booking) }}">@csrf @method('PATCH')<button class="link-danger">Cancel</button></form>@endif</div>
         @if($booking->checked_out_at)
             <div class="booking-review-area">
