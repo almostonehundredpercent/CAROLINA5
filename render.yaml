@@ -34,7 +34,7 @@ services:
       - key: QUEUE_CONNECTION
         value: database
       - key: RUN_INITIAL_SEED
-        value: "false"
+        value: "true"
       - key: RUN_MIGRATIONS
         value: "true"
       - key: ADMIN_NAME
@@ -50,6 +50,14 @@ services:
       - key: TEST_STAFF_PASSWORD
         sync: false
       - key: TEST_STAFF_ROLE
+        sync: false
+      - key: TEST_HOUSEKEEPING_EMAIL
+        sync: false
+      - key: TEST_HOUSEKEEPING_PASSWORD
+        sync: false
+      - key: TEST_VIEWER_EMAIL
+        sync: false
+      - key: TEST_VIEWER_PASSWORD
         sync: false
       - key: MAIL_MAILER
         value: log
