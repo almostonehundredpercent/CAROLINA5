@@ -3,6 +3,7 @@
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Support\Facades\Log;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -25,6 +26,12 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        // Render streams stderr to its application-log view. Keep the public
+        // error page generic, but retain the exception details for operators.
+        $exceptions->report(function (\Throwable $exception): void {
+            Log::error('Unhandled application exception.', [
+                'exception' => $exception,
+            ]);
+        });
     })
     ->create();
