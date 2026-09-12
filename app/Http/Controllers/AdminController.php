@@ -15,15 +15,24 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Database\QueryException;
 
 class AdminController extends Controller
 {
     public function index()
     {
-        $this->refreshInventory();
+        try {
+            $this->refreshInventory();
+        } catch (QueryException $exception) {
+            // Existing inventory is still shown below; only the automatic
+            // completion marker is deferred until the database is updated.
+            Log::warning('Room-block completion refresh skipped.', ['exception' => $exception]);
+        }
+        [$revenue, $paymentPending] = $this->paymentDashboardMetrics();
         $recentBookings = Booking::with(['user', 'room'])->latest()->take(8)->get();
         $rooms = $this->roomsWithDisplayStatus();
         $chartStart = now()->subDays(6)->startOfDay();
@@ -36,8 +45,8 @@ class AdminController extends Controller
             'pendingCount' => Booking::where('status', 'pending')->count(),
             'confirmedCount' => Booking::where('status', 'confirmed')->count(),
             'roomCount' => $rooms->count(),
-            'revenue' => Payment::where('status', 'paid')->sum('amount'),
-            'paymentPending' => Booking::where('status', '!=', 'cancelled')->whereDoesntHave('payments', fn ($query) => $query->where('status', 'paid'))->count(),
+            'revenue' => $revenue,
+            'paymentPending' => $paymentPending,
             'checkedInCount' => Booking::whereNotNull('checked_in_at')->whereNull('checked_out_at')->count(),
             'checkedOutCount' => Booking::whereNotNull('checked_out_at')->count(),
             'cancelledCount' => Booking::where('status', 'cancelled')->count(),
@@ -462,6 +471,33 @@ class AdminController extends Controller
     private function refreshInventory(): void
     {
         RoomBlock::whereNull('completed_at')->where('ends_at', '<=', now())->update(['completed_at' => now()]);
+    }
+
+    /**
+     * The payment ledger was introduced after live reservations already
+     * existed. A dashboard should never become unavailable while an older
+     * database is catching up, so retain the legacy booking fields as a
+     * read-only fallback for its summary cards.
+     */
+    private function paymentDashboardMetrics(): array
+    {
+        try {
+            return [
+                Payment::where('status', 'paid')->sum('amount'),
+                Booking::where('status', '!=', 'cancelled')
+                    ->whereDoesntHave('payments', fn ($query) => $query->where('status', 'paid'))
+                    ->count(),
+            ];
+        } catch (QueryException $exception) {
+            Log::warning('Payment ledger unavailable for dashboard; using legacy payment fields.', [
+                'exception' => $exception,
+            ]);
+
+            return [
+                Booking::where('payment_status', 'paid')->sum('total_amount'),
+                Booking::where('status', '!=', 'cancelled')->where('payment_status', '!=', 'paid')->count(),
+            ];
+        }
     }
 
     private function log(Booking $booking, ?int $userId, string $event, string $description, array $before = [], array $after = []): void
