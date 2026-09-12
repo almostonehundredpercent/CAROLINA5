@@ -33,5 +33,24 @@ class HostedSetupSeeder extends Seeder
                 'email_verified_at' => now(),
             ]
         );
+
+        // Optional, deployment-only staff account for acceptance testing.
+        // Its email and password live exclusively in the host environment;
+        // leaving either setting blank means no account is created.
+        $testEmail = env('TEST_STAFF_EMAIL');
+        $testPassword = env('TEST_STAFF_PASSWORD');
+        $testRole = env('TEST_STAFF_ROLE', 'front_desk');
+        if ($testEmail && $testPassword && in_array($testRole, ['front_desk', 'housekeeping', 'viewer'], true)) {
+            User::updateOrCreate(
+                ['email' => $testEmail],
+                [
+                    'name' => env('TEST_STAFF_NAME', 'Carolina Test Staff'),
+                    'password' => Hash::make($testPassword),
+                    'is_admin' => false,
+                    'staff_role' => $testRole,
+                    'email_verified_at' => now(),
+                ]
+            );
+        }
     }
 }

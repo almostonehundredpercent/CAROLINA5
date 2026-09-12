@@ -43,6 +43,14 @@ services:
         sync: false
       - key: ADMIN_PASSWORD
         sync: false
+      - key: TEST_STAFF_NAME
+        sync: false
+      - key: TEST_STAFF_EMAIL
+        sync: false
+      - key: TEST_STAFF_PASSWORD
+        sync: false
+      - key: TEST_STAFF_ROLE
+        sync: false
       - key: MAIL_MAILER
         value: log
 
