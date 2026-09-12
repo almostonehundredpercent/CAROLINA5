@@ -14,6 +14,9 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        $this->call([UserSeeder::class, RoomSeeder::class]);
+        // Room data is safe to seed locally. User accounts must be created
+        // through registration or the explicitly configured hosted setup
+        // seeder; never ship predictable login credentials.
+        $this->call([RoomSeeder::class]);
     }
 }

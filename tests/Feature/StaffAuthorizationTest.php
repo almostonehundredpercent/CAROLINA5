@@ -35,6 +35,7 @@ test('role boundaries are enforced on direct administrative URLs', function () {
     $this->actingAs($admin)->get(route('admin.reports'))->assertOk();
     $this->actingAs($frontDesk)->get(route('admin.bookings'))->assertOk();
     $this->actingAs($frontDesk)->get(route('admin.reports'))->assertForbidden();
+    $this->actingAs($frontDesk)->patch('/admin/guests/not-a-guest/restriction', ['action' => 'remove'])->assertForbidden();
     $this->actingAs($housekeeping)->get(route('admin.rooms'))->assertOk();
     $this->actingAs($housekeeping)->get(route('admin.bookings'))->assertForbidden();
     $this->actingAs($viewer)->get(route('admin.dashboard'))->assertOk();
