@@ -61,6 +61,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::get('/walk-ins', [AdminController::class, 'walkInForm'])->name('walk-ins.create');
     Route::post('/walk-ins', [AdminController::class, 'storeWalkIn'])->name('walk-ins.store');
     Route::get('/reports', [AdminController::class, 'reports'])->name('reports');
+    Route::get('/activity', [AdminController::class, 'activity'])->name('activity');
     Route::get('/staff', [AdminController::class, 'staff'])->name('staff');
     Route::patch('/staff/{user}/role', [AdminController::class, 'updateStaffRole'])->name('staff.role');
     Route::patch('/rooms/{room}/status', [AdminController::class, 'updateRoomStatus'])->name('rooms.status');

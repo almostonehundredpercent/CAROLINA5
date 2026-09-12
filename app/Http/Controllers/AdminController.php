@@ -9,6 +9,7 @@ use App\Models\RoomBlock;
 use App\Models\Review;
 use App\Mail\BookingUpdate;
 use Carbon\Carbon;
+use Carbon\CarbonPeriod;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
@@ -293,14 +294,25 @@ class AdminController extends Controller
         $this->refreshInventory();
         $period = $request->string('period', 'daily')->value();
         $metric = $request->string('metric', 'earnings')->value();
-        abort_unless(in_array($period, ['daily', 'weekly', 'monthly', 'yearly'], true), 404);
+        abort_unless(in_array($period, ['daily', 'weekly', 'monthly', 'yearly', 'custom'], true), 404);
         abort_unless(in_array($metric, ['earnings', 'bookings', 'guests'], true), 404);
 
-        [$dates, $keys, $labels] = $this->reportPeriods($period);
-        $bookings = Booking::with(['user', 'room'])
-            ->where('created_at', '>=', $dates->first())
-            ->get();
-        $grouped = $bookings->groupBy(fn (Booking $booking) => $this->reportKey($booking->created_at, $period));
+        $range = $request->validate(['from' => 'nullable|date', 'to' => 'nullable|date|after_or_equal:from']);
+        if ($period === 'custom') {
+            abort_unless(! empty($range['from']) && ! empty($range['to']), 422, 'Choose both dates for a custom report.');
+            $from = Carbon::parse($range['from'])->startOfDay();
+            $to = Carbon::parse($range['to'])->endOfDay();
+            abort_if($from->diffInDays($to) > 92, 422, 'Custom reports are limited to 93 days.');
+            $dates = collect(CarbonPeriod::create($from, '1 day', $to))->map(fn (Carbon $date) => $date->copy());
+            $keys = $dates->map(fn (Carbon $date) => $date->toDateString());
+            $labels = $dates->map(fn (Carbon $date) => $date->format('M j'));
+            $bookings = Booking::with(['user', 'room'])->whereBetween('created_at', [$from, $to])->get();
+            $grouped = $bookings->groupBy(fn (Booking $booking) => $booking->created_at->toDateString());
+        } else {
+            [$dates, $keys, $labels] = $this->reportPeriods($period);
+            $bookings = Booking::with(['user', 'room'])->where('created_at', '>=', $dates->first())->get();
+            $grouped = $bookings->groupBy(fn (Booking $booking) => $this->reportKey($booking->created_at, $period));
+        }
         $values = $keys->map(function (string $key) use ($grouped, $metric) {
             $items = $grouped->get($key, collect());
             return match ($metric) {
@@ -316,6 +328,7 @@ class AdminController extends Controller
         return view('admin.reports', [
             'metric' => $metric,
             'period' => $period,
+            'range' => $range,
             'metricTitle' => $titles[$metric][0],
             'chartTitle' => $titles[$metric][1],
             'total' => $values->sum(),
@@ -335,6 +348,13 @@ class AdminController extends Controller
                 'returning' => $guestGroups->filter(fn ($bookings) => $bookings->count() > 1)->count(),
                 'averageStay' => round((float) ($guestBookings->avg('nights') ?? 0), 1),
             ] : null,
+        ]);
+    }
+
+    public function activity(Request $request)
+    {
+        return view('admin.activity', [
+            'logs' => ActivityLog::with(['booking.room', 'user'])->latest()->paginate(30)->withQueryString(),
         ]);
     }
 

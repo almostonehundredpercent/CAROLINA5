@@ -19,6 +19,7 @@
             <a href="{{ route('admin.bookings') }}"><i>▤</i> Bookings</a>
             <a href="{{ route('admin.walk-ins.create') }}"><i>＋</i> Walk-ins</a>
             <a href="{{ route('admin.reports') }}"><i>⌁</i> Reports</a>
+            <a href="{{ route('admin.activity') }}"><i>◷</i> Activity log</a>
             @if(auth()->user()->isAdmin())<a href="{{ route('admin.staff') }}"><i>♙</i> Staff access</a>@endif
         </nav>
         <a href="{{ route('home') }}" class="admin-home" style="position:absolute;bottom:84px;left:16px;right:16px;border:1px solid rgba(255,255,255,.85);border-radius:8px;padding:12px 13px;color:#fff;text-decoration:none;font:600 14px 'DM Sans',sans-serif;display:flex;gap:12px;align-items:center;"><i>⌂</i> Go to home page</a>
