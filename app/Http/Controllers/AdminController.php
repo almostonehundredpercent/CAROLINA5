@@ -26,6 +26,7 @@ class AdminController extends Controller
     public function index()
     {
         try {
+        try {
             $this->refreshInventory();
         } catch (QueryException $exception) {
             // Existing inventory is still shown below; only the automatic
@@ -68,6 +69,39 @@ class AdminController extends Controller
             'chartValues' => collect(range(0, 6))->map(fn ($day) => $bookingsByDay->get(now()->subDays(6 - $day)->toDateString(), collect())->count()),
             'recommendations' => $this->operationalRecommendations($rooms),
         ]);
+        } catch (\Throwable $exception) {
+            // The dashboard is an operational overview. A non-essential
+            // summary query must never lock staff out of the admin area.
+            Log::error('Admin dashboard summary failed; rendering safe fallback.', [
+                'exception' => $exception,
+            ]);
+
+            $bookingCount = Booking::count();
+            $pendingCount = Booking::where('status', 'pending')->count();
+            $confirmedCount = Booking::where('status', 'confirmed')->count();
+            $cancelledCount = Booking::where('status', 'cancelled')->count();
+            $roomCount = Room::where('is_active', true)->count();
+
+            return view('admin.admin_dashboard', [
+                'bookingCount' => $bookingCount,
+                'pendingCount' => $pendingCount,
+                'confirmedCount' => $confirmedCount,
+                'roomCount' => $roomCount,
+                'revenue' => Booking::where('payment_status', 'paid')->sum('total_amount'),
+                'paymentPending' => Booking::where('status', '!=', 'cancelled')->where('payment_status', '!=', 'paid')->count(),
+                'checkedInCount' => 0,
+                'checkedOutCount' => 0,
+                'cancelledCount' => $cancelledCount,
+                'roomsByStatus' => ['available' => $roomCount, 'occupied' => 0, 'maintenance' => 0],
+                'alerts' => ['arrivals' => 0, 'departures' => 0, 'pending' => $pendingCount, 'roomBlocks' => 0],
+                'bookings' => Booking::with(['user', 'room'])->latest()->take(8)->get(),
+                'recentActivity' => collect(),
+                'topRooms' => collect(),
+                'chartLabels' => collect(range(0, 6))->map(fn ($day) => now()->subDays(6 - $day)->format('D')),
+                'chartValues' => collect(array_fill(0, 7, 0)),
+                'recommendations' => collect(['The dashboard is showing core booking data while a non-essential operational summary is restored.']),
+            ]);
+        }
     }
 
     public function updateBooking(Request $request, Booking $booking)
