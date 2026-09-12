@@ -34,7 +34,7 @@ services:
       - key: QUEUE_CONNECTION
         value: database
       - key: RUN_INITIAL_SEED
-        value: "true"
+        value: "false"
       - key: RUN_MIGRATIONS
         value: "true"
       - key: ADMIN_NAME
