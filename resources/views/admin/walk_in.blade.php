@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Walk-in booking · Carolina</title><link rel="stylesheet" href="{{ asset('css/admin.css') }}"><style>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Walk-in booking · Carolina</title><link rel="stylesheet" href="{{ asset('css/admin.css') }}?v={{ filemtime(public_path('css/admin.css')) }}"><style>
 .walkin-card{max-width:820px}.walkin-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.walkin-grid label{display:grid;gap:7px;font-size:12px;font-weight:700;color:var(--muted)}.walkin-grid input,.walkin-grid select{border:1px solid var(--line);border-radius:7px;padding:11px;background:#fff;color:var(--ink);font:inherit}.walkin-grid .full{grid-column:1/-1}.walkin-help{margin:0;color:var(--muted);font-size:13px}.walkin-submit{border:0;border-radius:7px;padding:13px;background:var(--orange);color:#fff;font:700 14px system-ui;cursor:pointer}@media(max-width:680px){.walkin-grid{grid-template-columns:1fr}}
 </style></head>
 <body><div class="admin-shell">@include('admin.partials.sidebar')
