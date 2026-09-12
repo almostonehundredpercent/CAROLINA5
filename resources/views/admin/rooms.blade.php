@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Room operations · Carolina</title>
-    <link rel="stylesheet" href="{{ asset('css/admin.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/admin.css') }}?v={{ filemtime(public_path('css/admin.css')) }}">
     <style>
         .room-operations-header { align-items: flex-start; gap: 18px; }
         .room-operations-actions { display: flex; gap: 10px; flex-wrap: wrap; justify-content: flex-end; }
