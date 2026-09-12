@@ -86,6 +86,8 @@ footer { flex-shrink: 0; }
 .contact-card { display:grid; gap:6px; padding:13px; border:1px solid var(--line); border-radius:8px; background:var(--sand); color:var(--ink); font-size:.83rem; line-height:1.4; }
 .contact-card a { color:var(--deep); font-weight:700; text-decoration:underline; }
 .booking-contact-help { margin-top:2px; }
+.native-booking-fallback { display:grid; gap:12px; padding:14px; border:1px solid var(--line); border-radius:8px; background:var(--paper); }
+.native-booking-fallback label { display:grid; gap:6px; }
 .footer-contact-help { width:100%; margin-top:6px; background:rgba(255,255,255,.1); border-color:rgba(255,232,190,.45); color:#fff4df; }
 .footer-contact-help a { color:#fff4df; }
 @media (min-width:801px) and (max-width:980px) { .nav nav { gap:14px; font-size:.82rem; } .nav .brand { font-size:1.15rem; } }

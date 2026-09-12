@@ -65,6 +65,19 @@
                     <p class="calendar-note" id="calendar-note" aria-live="polite"></p>
                 </section>
                 @endif
+                <noscript>
+                    <section class="native-booking-fallback" aria-label="Booking details without JavaScript">
+                        <strong>Choose your stay details</strong>
+                        @if($bookingMode === 'hourly')
+                            <label>Duration<select name="hours">@foreach(array_unique([$room->rental_hours ?: 3, 48, 72, 96, 120, 168]) as $hours)<option value="{{ $hours }}">{{ $hours < 24 ? $hours . ' hours' : ($hours / 24) . ' days' }}</option>@endforeach</select></label>
+                            <label>Check-in date<input type="date" name="hourly_date" min="{{ now()->toDateString() }}" value="{{ old('hourly_date', now()->toDateString()) }}" required></label>
+                            <label>Check-in time<input type="time" name="check_in_time" min="06:00" max="23:00" step="3600" value="{{ old('check_in_time', '06:00') }}" required></label>
+                        @else
+                            <label>Check-in date<input type="date" name="check_in" min="{{ now()->toDateString() }}" value="{{ old('check_in') }}" required></label>
+                            <label>Check-out date<input type="date" name="check_out" min="{{ now()->addDay()->toDateString() }}" value="{{ old('check_out') }}" required></label>
+                        @endif
+                    </section>
+                </noscript>
                 <section class="stay-party-details" aria-labelledby="guest-details-title">
                     <strong id="guest-details-title">Guest details</strong>
                     <small>Total guests includes children and must stay within this room's {{ $room->guests }}-guest limit.</small>
