@@ -104,12 +104,21 @@
                                     <td>₱{{ number_format($booking->total_amount, 2) }}</td>
                                     <td>
                                         <span class="mini-status {{ $booking->status }}">{{ ucfirst($booking->status) }}</span>
+                                        <small>Payment: {{ ucfirst($booking->payment_status ?? 'pending') }} · {{ strtoupper($booking->payment_method ?? 'cash') }}</small>
                                         @if($booking->status === 'pending')
                                             <span class="hold-expiry">Needs staff review</span>
                                         @endif
                                     </td>
                                     <td>
                                         <div class="booking-actions">
+                                            @if($booking->status !== 'cancelled')
+                                                <form method="POST" action="{{ route('admin.bookings.payment', $booking) }}" onsubmit="return confirm('Update this payment record?')">
+                                                    @csrf @method('PATCH')
+                                                    <input type="hidden" name="payment_method" value="{{ in_array($booking->payment_method, ['cash', 'gcash']) ? $booking->payment_method : 'cash' }}">
+                                                    <input type="hidden" name="payment_status" value="{{ $booking->payment_status === 'paid' ? 'pending' : 'paid' }}">
+                                                    <button class="status-select {{ $booking->payment_status === 'paid' ? 'confirmed' : '' }}" type="submit">{{ $booking->payment_status === 'paid' ? 'Mark unpaid' : 'Mark paid' }}</button>
+                                                </form>
+                                            @endif
                                             @if($booking->status === 'pending')
                                                 <form method="POST" action="{{ route('admin.bookings.update', $booking) }}">
                                                     @csrf

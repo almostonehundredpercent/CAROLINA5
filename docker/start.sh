@@ -8,4 +8,5 @@ if [ "${RUN_INITIAL_SEED:-false}" = "true" ]; then
 fi
 
 php artisan config:cache
+php artisan storage:link --relative --force >/dev/null 2>&1 || true
 exec php -S 0.0.0.0:"${PORT:-8000}" -t public docker/router.php

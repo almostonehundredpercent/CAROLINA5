@@ -52,6 +52,11 @@ Route::middleware('auth')->group(function () {
 Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/dashboard', [AdminController::class, 'index'])->name('dashboard');
     Route::get('/rooms', [AdminController::class, 'rooms'])->name('rooms');
+    Route::get('/rooms/create', [AdminController::class, 'createRoom'])->name('rooms.create');
+    Route::post('/rooms', [AdminController::class, 'storeRoom'])->name('rooms.store');
+    Route::get('/rooms/{room}/edit', [AdminController::class, 'editRoom'])->name('rooms.edit');
+    Route::patch('/rooms/{room}', [AdminController::class, 'updateRoom'])->name('rooms.update');
+    Route::delete('/rooms/{room}', [AdminController::class, 'archiveRoom'])->name('rooms.archive');
     Route::get('/bookings', [AdminController::class, 'bookings'])->name('bookings');
     Route::get('/walk-ins', [AdminController::class, 'walkInForm'])->name('walk-ins.create');
     Route::post('/walk-ins', [AdminController::class, 'storeWalkIn'])->name('walk-ins.store');
@@ -60,6 +65,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::patch('/staff/{user}/role', [AdminController::class, 'updateStaffRole'])->name('staff.role');
     Route::patch('/rooms/{room}/status', [AdminController::class, 'updateRoomStatus'])->name('rooms.status');
     Route::patch('/bookings/{booking}', [AdminController::class, 'updateBooking'])->name('bookings.update');
+    Route::patch('/bookings/{booking}/payment', [AdminController::class, 'updatePayment'])->name('bookings.payment');
     Route::post('/bookings/{booking}/check-in', [AdminController::class, 'updateBooking'])->name('bookings.check-in');
     Route::post('/bookings/{booking}/check-out', [AdminController::class, 'updateBooking'])->name('bookings.check-out');
     Route::patch('/reviews/{review}', [AdminController::class, 'updateReview'])->name('reviews.update');

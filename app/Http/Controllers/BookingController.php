@@ -190,7 +190,7 @@ class BookingController extends Controller
     {
         abort_if($booking->status === 'cancelled', 422, 'This booking has already been cancelled.');
         abort_if($booking->check_in->isToday() || $booking->check_in->isPast(), 422, 'This reservation can no longer be cancelled online after check-in day begins.');
-        $booking->update(['status' => 'cancelled']);
+        $booking->update(['status' => 'cancelled', 'cancelled_at' => now(), 'cancellation_reason' => 'Cancelled by guest.']);
         $this->log($booking, null, 'booking_cancelled', 'Booking cancelled by guest.');
         $this->emailUpdate($booking, 'Your Carolina booking was cancelled', 'Your reservation has been cancelled and the room is available again.');
     }
