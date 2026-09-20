@@ -1,2 +1,97 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Room board · Carolina</title><link rel="stylesheet" href="{{ asset('css/admin.css') }}?v={{ filemtime(public_path('css/admin.css')) }}"><style>.room-board{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}.room-board article{border:1px solid var(--line);border-radius:10px;padding:16px;background:#fff}.room-board p{margin:8px 0;color:var(--muted)}@media(max-width:900px){.room-board{grid-template-columns:repeat(2,1fr)}}@media(max-width:600px){.room-board{grid-template-columns:1fr}}</style></head><body><div class="admin-shell">@include('admin.partials.sidebar')<main class="admin-main"><header class="admin-topbar"><div><p class="admin-kicker">ROOM OPERATIONS</p><h1>Room board</h1><p class="admin-subtitle">Guest personal and payment information is intentionally hidden for this role.</p></div></header>@include('admin.partials.flash')<section class="room-board">@forelse($rooms as $room)<article><span class="room-status {{ $room->display_status }}">{{ ucfirst($room->display_status) }}</span><h2>{{ $room->name }}</h2><p>{{ $room->room_type }} · Up to {{ $room->guests }} guests</p>@if($room->display_block)<p><b>{{ ucfirst($room->display_block->status) }}</b><br>{{ $room->display_block->starts_at->format('M j, g:i A') }} – {{ $room->display_block->ends_at->format('M j, g:i A') }}</p>@elseif($room->display_booking)<p><b>Guest stay scheduled</b><br>{{ $room->display_booking->check_in_at?->format('M j, g:i A') }} – {{ $room->display_booking->check_out_at?->format('M j, g:i A') }}</p>@else<p>Ready for operation.</p>@endif
-@if(\App\Support\AdminPermissions::allows(auth()->user(), 'room_operations'))<details class="room-manage"><summary>Schedule cleaning or maintenance</summary><form method="POST" action="{{ route('admin.rooms.status',$room) }}" class="room-operation-form">@csrf @method('PATCH')<div class="operation-form-grid"><div class="operation-field"><label for="status-{{ $room->id }}">Operation</label><select id="status-{{ $room->id }}" name="operational_status"><option value="cleaning">Cleaning</option><option value="maintenance">Maintenance</option><option value="available">Clear active block</option></select></div><div class="operation-field"><label for="start-{{ $room->id }}">Starts</label><input id="start-{{ $room->id }}" name="operational_starts_at" type="datetime-local" value="{{ now()->format('Y-m-d\TH:i') }}"></div><div class="operation-field"><label for="end-{{ $room->id }}">Ends</label><input id="end-{{ $room->id }}" name="operational_until" type="datetime-local" value="{{ now()->addHour()->format('Y-m-d\TH:i') }}"></div></div><button class="operation-save" type="submit">Save operation</button></form></details>@endif</article>@empty<p>No active rooms are configured.</p>@endforelse</section></main></div></body></html>
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Housekeeping · Carolina</title>
+    <link rel="stylesheet" href="{{ asset('css/admin.css') }}?v={{ filemtime(public_path('css/admin.css')) }}">
+</head>
+<body>
+<div class="admin-shell">
+    @include('admin.partials.sidebar')
+    <main class="admin-main">
+        <header class="admin-topbar housekeeping-header">
+            <div>
+                <p class="admin-kicker">HOUSEKEEPING</p>
+                <h1>Room readiness</h1>
+                <p class="admin-subtitle">Choose a room, start a task, and mark it ready when finished.</p>
+            </div>
+            <div class="housekeeping-counts" aria-label="Room status summary">
+                <span><b>{{ $rooms->where('display_status', 'available')->count() }}</b> ready</span>
+                <span><b>{{ $rooms->whereIn('display_status', ['cleaning', 'maintenance'])->count() }}</b> in progress</span>
+            </div>
+        </header>
+
+        @include('admin.partials.flash')
+
+        <section class="room-board" aria-label="Room housekeeping board">
+            @forelse($rooms as $room)
+                @php($isInProgress = in_array($room->display_status, ['cleaning', 'maintenance'], true))
+                <article class="housekeeping-card {{ $room->display_status }}">
+                    <div class="housekeeping-card-top">
+                        <span class="room-status {{ $room->display_status }}">{{ ucfirst($room->display_status) }}</span>
+                        <span class="housekeeping-capacity">Up to {{ $room->guests }} guests</span>
+                    </div>
+                    <h2>{{ $room->name }}</h2>
+                    <p class="housekeeping-room-type">{{ $room->room_type }}</p>
+
+                    <div class="housekeeping-state">
+                        @if($room->display_block)
+                            <b>{{ ucfirst($room->display_block->status) }} scheduled</b>
+                            <span>{{ $room->display_block->starts_at->format('M j, g:i A') }} – {{ $room->display_block->ends_at->format('g:i A') }}</span>
+                        @elseif($room->display_booking)
+                            <b>Guest stay in progress</b>
+                            <span>Unavailable until {{ $room->display_booking->check_out_at?->format('M j, g:i A') ?? 'check-out' }}</span>
+                        @else
+                            <b>Ready for the next guest</b>
+                            <span>No cleaning or maintenance task is scheduled.</span>
+                        @endif
+                    </div>
+
+                    @if(\App\Support\AdminPermissions::allows(auth()->user(), 'room_operations'))
+                        <div class="housekeeping-actions">
+                            @if($isInProgress)
+                                <form method="POST" action="{{ route('admin.rooms.status', $room) }}" onsubmit="return confirm('Mark this room ready for the next guest?')">
+                                    @csrf @method('PATCH')
+                                    <input type="hidden" name="operational_status" value="available">
+                                    <button class="housekeeping-button ready" type="submit">Mark room ready</button>
+                                </form>
+                            @elseif(! $room->display_booking)
+                                <form method="POST" action="{{ route('admin.rooms.status', $room) }}" onsubmit="return confirm('Start a one-hour cleaning task now?')">
+                                    @csrf @method('PATCH')
+                                    <input type="hidden" name="operational_status" value="cleaning">
+                                    <input type="hidden" name="operational_starts_at" value="{{ now()->format('Y-m-d H:i') }}">
+                                    <input type="hidden" name="operational_until" value="{{ now()->addHour()->format('Y-m-d H:i') }}">
+                                    <button class="housekeeping-button" type="submit">Start cleaning</button>
+                                </form>
+                            @endif
+                        </div>
+
+                        <details class="housekeeping-plan">
+                            <summary>{{ $isInProgress ? 'Change or extend task' : 'Plan a task for later' }} <span aria-hidden="true">⌄</span></summary>
+                            <form method="POST" action="{{ route('admin.rooms.status', $room) }}" class="housekeeping-form">
+                                @csrf @method('PATCH')
+                                <div class="housekeeping-choice" role="group" aria-label="Task type">
+                                    <label><input type="radio" name="operational_status" value="cleaning" checked> Cleaning</label>
+                                    <label><input type="radio" name="operational_status" value="maintenance"> Maintenance</label>
+                                </div>
+                                <div class="housekeeping-form-grid">
+                                    <label>Start date<input name="operational_start_date" type="date" value="{{ now()->toDateString() }}" required></label>
+                                    <label>Start time<input name="operational_start_time" type="time" value="{{ now()->format('H:i') }}" required></label>
+                                    <label>Finish date<input name="operational_end_date" type="date" value="{{ now()->toDateString() }}" required></label>
+                                    <label>Finish time<input name="operational_end_time" type="time" value="{{ now()->addHour()->format('H:i') }}" required></label>
+                                </div>
+                                <label class="housekeeping-note">Note <input name="notes" maxlength="255" placeholder="Optional note for the next shift"></label>
+                                <button class="housekeeping-button secondary" type="submit">Save task</button>
+                            </form>
+                        </details>
+                    @endif
+                </article>
+            @empty
+                <p class="empty-copy">No active rooms are configured.</p>
+            @endforelse
+        </section>
+    </main>
+</div>
+</body>
+</html>
