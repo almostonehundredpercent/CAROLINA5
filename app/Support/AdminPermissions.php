@@ -42,8 +42,10 @@ final class AdminPermissions
     public static function landingRoute(User $user): string
     {
         return match (self::role($user)) {
-            'admin', 'viewer' => 'admin.dashboard',
-            'front_desk' => 'admin.frontdesk',
+            // Start people where their shift begins. The overview remains
+            // available, but daily work should not be hidden behind it.
+            'admin', 'front_desk' => 'admin.frontdesk',
+            'viewer' => 'admin.dashboard',
             'housekeeping' => 'admin.rooms',
             default => 'home',
         };
@@ -52,14 +54,14 @@ final class AdminPermissions
     public static function navigation(User $user): array
     {
         return [
-            ['label' => 'Dashboard', 'route' => 'admin.dashboard', 'icon' => '▦', 'ability' => 'dashboard'],
-            ['label' => 'Today', 'route' => 'admin.frontdesk', 'icon' => '◷', 'ability' => 'frontdesk'],
-            ['label' => 'Bookings', 'route' => 'admin.bookings', 'icon' => '▤', 'ability' => 'bookings'],
-            ['label' => 'Guests', 'route' => 'admin.guests', 'icon' => '♙', 'ability' => 'guests'],
-            ['label' => 'Rooms', 'route' => 'admin.rooms', 'icon' => '⌂', 'ability' => 'rooms'],
-            ['label' => 'Reports', 'route' => 'admin.reports', 'icon' => '⌁', 'ability' => 'reports'],
-            ['label' => 'Activity log', 'route' => 'admin.activity', 'icon' => '◷', 'ability' => 'activity'],
-            ['label' => 'Staff access', 'route' => 'admin.staff', 'icon' => '♙', 'ability' => 'staff'],
+            ['label' => 'Today', 'route' => 'admin.frontdesk', 'icon' => '◷', 'ability' => 'frontdesk', 'group' => 'primary'],
+            ['label' => 'Bookings', 'route' => 'admin.bookings', 'icon' => '▤', 'ability' => 'bookings', 'group' => 'primary'],
+            ['label' => 'Rooms', 'route' => 'admin.rooms', 'icon' => '⌂', 'ability' => 'rooms', 'group' => 'primary'],
+            ['label' => 'Guests', 'route' => 'admin.guests', 'icon' => '♙', 'ability' => 'guests', 'group' => 'primary'],
+            ['label' => 'Overview', 'route' => 'admin.dashboard', 'icon' => '▦', 'ability' => 'dashboard', 'group' => 'more'],
+            ['label' => 'Reports', 'route' => 'admin.reports', 'icon' => '⌁', 'ability' => 'reports', 'group' => 'more'],
+            ['label' => 'Activity log', 'route' => 'admin.activity', 'icon' => '◷', 'ability' => 'activity', 'group' => 'more'],
+            ['label' => 'Staff access', 'route' => 'admin.staff', 'icon' => '♙', 'ability' => 'staff', 'group' => 'more'],
         ];
     }
 }

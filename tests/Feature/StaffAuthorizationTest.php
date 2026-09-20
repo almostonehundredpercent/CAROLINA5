@@ -18,7 +18,7 @@ test('each role is sent to its authorized landing page after login', function (s
     $this->post(route('login.submit'), ['email' => $user->email, 'password' => 'secure-password'])
         ->assertRedirect(route($route));
 })->with([
-    'administrator' => ['admin', 'admin.dashboard'],
+    'administrator' => ['admin', 'admin.frontdesk'],
     'front desk' => ['front_desk', 'admin.frontdesk'],
     'housekeeping' => ['housekeeping', 'admin.rooms'],
     'viewer' => ['viewer', 'admin.dashboard'],

@@ -23,7 +23,7 @@ test('the public home page loads with a Carolina title', function () {
 test('an administrator can sign in with a fresh session', function () {
     $admin = User::factory()->create(['is_admin' => true, 'password' => 'password']);
     $this->post(route('login.submit'), ['email' => $admin->email, 'password' => 'password'])
-        ->assertRedirect(route('admin.dashboard'));
+        ->assertRedirect(route('admin.frontdesk'));
     $this->assertAuthenticatedAs($admin);
 });
 
