@@ -112,6 +112,13 @@
     </main>
 </div>
 <script>
+const closeHousekeepingPickers = (except = null) => {
+    document.querySelectorAll('.housekeeping-calendar, .housekeeping-time-menu').forEach((menu) => {
+        if (menu === except) return;
+        menu.hidden = true;
+        menu.parentElement.querySelector('.housekeeping-date-trigger, .housekeeping-time-trigger')?.setAttribute('aria-expanded', 'false');
+    });
+};
 document.querySelectorAll('[data-date-picker]').forEach((picker) => {
     const input = picker.querySelector('input');
     const trigger = picker.querySelector('.housekeeping-date-trigger');
@@ -134,7 +141,7 @@ document.querySelectorAll('[data-date-picker]').forEach((picker) => {
         calendar.innerHTML = `<div class="calendar-head"><button type="button" data-month="-1" aria-label="Previous month">‹</button><b>${new Intl.DateTimeFormat('en-PH', { month: 'long', year: 'numeric' }).format(cursor)}</b><button type="button" data-month="1" aria-label="Next month">›</button></div><div class="calendar-week">${['S','M','T','W','T','F','S'].map(day => `<span>${day}</span>`).join('')}</div><div class="calendar-days">${days}</div><button type="button" class="calendar-today">Today</button>`;
     };
     const close = () => { calendar.hidden = true; trigger.setAttribute('aria-expanded', 'false'); };
-    trigger.addEventListener('click', () => { calendar.hidden = !calendar.hidden; trigger.setAttribute('aria-expanded', String(!calendar.hidden)); if (!calendar.hidden) render(); });
+    trigger.addEventListener('click', () => { const opening = calendar.hidden; closeHousekeepingPickers(calendar); calendar.hidden = !opening; trigger.setAttribute('aria-expanded', String(opening)); if (opening) render(); });
     calendar.addEventListener('click', (event) => {
         const monthButton = event.target.closest('[data-month]');
         if (monthButton) { cursor = new Date(cursor.getFullYear(), cursor.getMonth() + Number(monthButton.dataset.month), 1); render(); return; }
@@ -149,7 +156,7 @@ document.querySelectorAll('[data-time-picker]').forEach((picker) => {
     const trigger = picker.querySelector('.housekeeping-time-trigger');
     const menu = picker.querySelector('.housekeeping-time-menu');
     const close = () => { menu.hidden = true; trigger.setAttribute('aria-expanded', 'false'); };
-    trigger.addEventListener('click', () => { menu.hidden = !menu.hidden; trigger.setAttribute('aria-expanded', String(!menu.hidden)); });
+    trigger.addEventListener('click', () => { const opening = menu.hidden; closeHousekeepingPickers(menu); menu.hidden = !opening; trigger.setAttribute('aria-expanded', String(opening)); });
     menu.addEventListener('click', (event) => {
         const option = event.target.closest('[data-time]');
         if (!option) return;
@@ -160,6 +167,7 @@ document.querySelectorAll('[data-time-picker]').forEach((picker) => {
     });
     document.addEventListener('click', (event) => { if (!picker.contains(event.target)) close(); });
 });
+document.addEventListener('keydown', (event) => { if (event.key === 'Escape') closeHousekeepingPickers(); });
 </script>
 </body>
 </html>
