@@ -84,8 +84,20 @@
                                             <div class="housekeeping-calendar" hidden></div>
                                         </span>
                                     </label>
-                                    <label class="housekeeping-hour">Start hour<select name="operational_start_time" required>@foreach($workHours as $value => $label)<option value="{{ $value }}" @selected($value === '08:00')>{{ $label }}</option>@endforeach</select></label>
-                                    <label class="housekeeping-hour">Finish hour<select name="operational_end_time" required>@foreach($workHours as $value => $label)<option value="{{ $value }}" @selected($value === '17:00')>{{ $label }}</option>@endforeach</select></label>
+                                    <label class="housekeeping-hour">Start hour
+                                        <span class="housekeeping-time-picker" data-time-picker>
+                                            <input name="operational_start_time" type="hidden" value="08:00">
+                                            <button class="housekeeping-time-trigger" type="button" aria-expanded="false"><span>8 AM</span><b aria-hidden="true">⌄</b></button>
+                                            <span class="housekeeping-time-menu" hidden role="listbox" aria-label="Start hour">@foreach($workHours as $value => $label)<button type="button" data-time="{{ $value }}" class="{{ $value === '08:00' ? 'selected' : '' }}" role="option" aria-selected="{{ $value === '08:00' ? 'true' : 'false' }}">{{ $label }}</button>@endforeach</span>
+                                        </span>
+                                    </label>
+                                    <label class="housekeeping-hour">Finish hour
+                                        <span class="housekeeping-time-picker" data-time-picker>
+                                            <input name="operational_end_time" type="hidden" value="17:00">
+                                            <button class="housekeeping-time-trigger" type="button" aria-expanded="false"><span>5 PM</span><b aria-hidden="true">⌄</b></button>
+                                            <span class="housekeeping-time-menu" hidden role="listbox" aria-label="Finish hour">@foreach($workHours as $value => $label)<button type="button" data-time="{{ $value }}" class="{{ $value === '17:00' ? 'selected' : '' }}" role="option" aria-selected="{{ $value === '17:00' ? 'true' : 'false' }}">{{ $label }}</button>@endforeach</span>
+                                        </span>
+                                    </label>
                                 </div>
                                 <label class="housekeeping-note">Note <input name="notes" maxlength="255" placeholder="Optional note for the next shift"></label>
                                 <button class="housekeeping-button secondary" type="submit">Save one-day task</button>
@@ -129,6 +141,22 @@ document.querySelectorAll('[data-date-picker]').forEach((picker) => {
         if (event.target.closest('.calendar-today')) { cursor = new Date(); input.value = formatValue(cursor); trigger.firstElementChild.textContent = label(cursor); close(); return; }
         const dayButton = event.target.closest('[data-date]');
         if (dayButton) { const date = new Date(dayButton.dataset.date + 'T12:00:00'); input.value = dayButton.dataset.date; trigger.firstElementChild.textContent = label(date); close(); }
+    });
+    document.addEventListener('click', (event) => { if (!picker.contains(event.target)) close(); });
+});
+document.querySelectorAll('[data-time-picker]').forEach((picker) => {
+    const input = picker.querySelector('input');
+    const trigger = picker.querySelector('.housekeeping-time-trigger');
+    const menu = picker.querySelector('.housekeeping-time-menu');
+    const close = () => { menu.hidden = true; trigger.setAttribute('aria-expanded', 'false'); };
+    trigger.addEventListener('click', () => { menu.hidden = !menu.hidden; trigger.setAttribute('aria-expanded', String(!menu.hidden)); });
+    menu.addEventListener('click', (event) => {
+        const option = event.target.closest('[data-time]');
+        if (!option) return;
+        input.value = option.dataset.time;
+        trigger.firstElementChild.textContent = option.textContent;
+        menu.querySelectorAll('[data-time]').forEach((item) => { const selected = item === option; item.classList.toggle('selected', selected); item.setAttribute('aria-selected', String(selected)); });
+        close();
     });
     document.addEventListener('click', (event) => { if (!picker.contains(event.target)) close(); });
 });
