@@ -20,8 +20,13 @@
     <link rel="stylesheet" href="{{ asset('css/site.css') }}">
     <link rel="stylesheet" href="{{ asset('css/password-toggle.css') }}">
     <link rel="stylesheet" href="{{ asset('css/responsive.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/loading.css') }}?v={{ filemtime(public_path('css/loading.css')) }}">
 </head>
 <body>
+    <div class="page-loader" id="page-loader" role="status" aria-live="polite" aria-label="Loading">
+        <div class="page-loader-card"><div class="loader-mark" aria-hidden="true"></div><b id="page-loader-title">Preparing your stay</b><p id="page-loader-message">Just a moment…</p></div>
+    </div>
+    <div class="network-loader" id="network-loader" role="status" aria-live="polite"><span class="network-loader-dots" aria-hidden="true"><i></i><i></i><i></i></span><span>Updating availability</span></div>
     <header class="nav">
         <a class="brand" href="{{ route('home') }}">
             <img class="brand-logo" src="{{ asset('images/carolina-logo.jpg') }}" alt="Carolina logo"><span>Carolina <small>TRANSIENT & AIRBNB</small></span>
@@ -104,6 +109,40 @@
         </div>
     </footer>
     <script>
+        (() => {
+            const loader = document.getElementById('page-loader');
+            const title = document.getElementById('page-loader-title');
+            const message = document.getElementById('page-loader-message');
+            const network = document.getElementById('network-loader');
+            let networkRequests = 0;
+            let networkTimer;
+            const show = (heading = 'Preparing your stay', detail = 'Just a moment…') => { title.textContent = heading; message.textContent = detail; loader.classList.add('is-visible'); };
+            const hide = () => loader.classList.remove('is-visible');
+            window.CarolinaLoading = { show, hide };
+            document.addEventListener('click', (event) => {
+                const link = event.target.closest('a[href]');
+                if (!link || link.target === '_blank' || link.hasAttribute('download') || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+                const destination = new URL(link.href, window.location.href);
+                if (destination.origin !== window.location.origin || destination.href === window.location.href || destination.hash && destination.pathname === window.location.pathname) return;
+                show('Opening your next step', 'Getting everything ready…');
+            });
+            document.addEventListener('submit', (event) => {
+                const form = event.target;
+                if (!(form instanceof HTMLFormElement) || form.dataset.noLoading !== undefined) return;
+                const submitter = event.submitter;
+                const copy = submitter?.dataset.loadingText || (form.matches('.booking-form form') ? 'Saving your reservation…' : 'Saving your changes…');
+                show('Please wait', copy);
+            });
+            const originalFetch = window.fetch.bind(window);
+            window.fetch = (...args) => {
+                networkRequests += 1;
+                clearTimeout(networkTimer);
+                networkTimer = setTimeout(() => { if (networkRequests) network.classList.add('is-visible'); }, 220);
+                return originalFetch(...args).finally(() => { networkRequests = Math.max(0, networkRequests - 1); if (!networkRequests) { clearTimeout(networkTimer); network.classList.remove('is-visible'); } });
+            };
+            window.addEventListener('pageshow', hide);
+        })();
+
         document.addEventListener('DOMContentLoaded', () => {
             const toggle = document.querySelector('.menu-toggle');
             const navigation = document.querySelector('#primary-navigation');
