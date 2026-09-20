@@ -77,7 +77,13 @@
                                     <label><input type="radio" name="operational_status" value="maintenance"> Maintenance</label>
                                 </div>
                                 <div class="housekeeping-form-grid one-day">
-                                    <label class="housekeeping-date">Work date<input name="operational_date" type="date" value="{{ now()->toDateString() }}" required></label>
+                                    <label class="housekeeping-date">Work date
+                                        <span class="housekeeping-date-picker" data-date-picker>
+                                            <input name="operational_date" type="hidden" value="{{ now()->toDateString() }}">
+                                            <button class="housekeeping-date-trigger" type="button" aria-expanded="false"><span>{{ now()->format('D, M j') }}</span><b aria-hidden="true">⌄</b></button>
+                                            <div class="housekeeping-calendar" hidden></div>
+                                        </span>
+                                    </label>
                                     <label>Start hour<select name="operational_start_time" required>@foreach($workHours as $value => $label)<option value="{{ $value }}" @selected($value === '08:00')>{{ $label }}</option>@endforeach</select></label>
                                     <label>Finish hour<select name="operational_end_time" required>@foreach($workHours as $value => $label)<option value="{{ $value }}" @selected($value === '17:00')>{{ $label }}</option>@endforeach</select></label>
                                 </div>
@@ -93,5 +99,39 @@
         </section>
     </main>
 </div>
+<script>
+document.querySelectorAll('[data-date-picker]').forEach((picker) => {
+    const input = picker.querySelector('input');
+    const trigger = picker.querySelector('.housekeeping-date-trigger');
+    const calendar = picker.querySelector('.housekeeping-calendar');
+    let cursor = new Date(input.value + 'T12:00:00');
+    const formatValue = (date) => date.toISOString().slice(0, 10);
+    const label = (date) => new Intl.DateTimeFormat('en-PH', { weekday: 'short', month: 'short', day: 'numeric' }).format(date);
+    const render = () => {
+        const year = cursor.getFullYear(), month = cursor.getMonth();
+        const first = new Date(year, month, 1), last = new Date(year, month + 1, 0);
+        const selected = input.value;
+        const leading = first.getDay();
+        let days = '';
+        for (let blank = 0; blank < leading; blank++) days += '<span></span>';
+        for (let day = 1; day <= last.getDate(); day++) {
+            const date = new Date(year, month, day, 12);
+            const value = formatValue(date);
+            days += `<button type="button" class="${value === selected ? 'selected' : ''}" data-date="${value}" aria-label="${label(date)}">${day}</button>`;
+        }
+        calendar.innerHTML = `<div class="calendar-head"><button type="button" data-month="-1" aria-label="Previous month">‹</button><b>${new Intl.DateTimeFormat('en-PH', { month: 'long', year: 'numeric' }).format(cursor)}</b><button type="button" data-month="1" aria-label="Next month">›</button></div><div class="calendar-week">${['S','M','T','W','T','F','S'].map(day => `<span>${day}</span>`).join('')}</div><div class="calendar-days">${days}</div><button type="button" class="calendar-today">Today</button>`;
+    };
+    const close = () => { calendar.hidden = true; trigger.setAttribute('aria-expanded', 'false'); };
+    trigger.addEventListener('click', () => { calendar.hidden = !calendar.hidden; trigger.setAttribute('aria-expanded', String(!calendar.hidden)); if (!calendar.hidden) render(); });
+    calendar.addEventListener('click', (event) => {
+        const monthButton = event.target.closest('[data-month]');
+        if (monthButton) { cursor = new Date(cursor.getFullYear(), cursor.getMonth() + Number(monthButton.dataset.month), 1); render(); return; }
+        if (event.target.closest('.calendar-today')) { cursor = new Date(); input.value = formatValue(cursor); trigger.firstElementChild.textContent = label(cursor); close(); return; }
+        const dayButton = event.target.closest('[data-date]');
+        if (dayButton) { const date = new Date(dayButton.dataset.date + 'T12:00:00'); input.value = dayButton.dataset.date; trigger.firstElementChild.textContent = label(date); close(); }
+    });
+    document.addEventListener('click', (event) => { if (!picker.contains(event.target)) close(); });
+});
+</script>
 </body>
 </html>
