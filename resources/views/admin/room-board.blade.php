@@ -84,8 +84,8 @@
                                             <div class="housekeeping-calendar" hidden></div>
                                         </span>
                                     </label>
-                                    <label>Start hour<select name="operational_start_time" required>@foreach($workHours as $value => $label)<option value="{{ $value }}" @selected($value === '08:00')>{{ $label }}</option>@endforeach</select></label>
-                                    <label>Finish hour<select name="operational_end_time" required>@foreach($workHours as $value => $label)<option value="{{ $value }}" @selected($value === '17:00')>{{ $label }}</option>@endforeach</select></label>
+                                    <label class="housekeeping-hour">Start hour<select name="operational_start_time" required>@foreach($workHours as $value => $label)<option value="{{ $value }}" @selected($value === '08:00')>{{ $label }}</option>@endforeach</select></label>
+                                    <label class="housekeeping-hour">Finish hour<select name="operational_end_time" required>@foreach($workHours as $value => $label)<option value="{{ $value }}" @selected($value === '17:00')>{{ $label }}</option>@endforeach</select></label>
                                 </div>
                                 <label class="housekeeping-note">Note <input name="notes" maxlength="255" placeholder="Optional note for the next shift"></label>
                                 <button class="housekeeping-button secondary" type="submit">Save one-day task</button>
