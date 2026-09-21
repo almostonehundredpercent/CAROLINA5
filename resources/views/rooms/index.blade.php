@@ -1,7 +1,10 @@
 @extends('layouts.app')
+@push('late-styles')
+<link rel="stylesheet" href="{{ asset('css/rooms-premium.css') }}?v={{ filemtime(public_path('css/rooms-premium.css')) }}">
+@endpush
 @section('content')
-<section class="page-hero"><span class="eyebrow">CAROLINA ROOMS</span><h1>Find the room that fits your stay.</h1><p>Choose one arrival date and the length of your stay. We calculate the end time for you.</p></section>
-<section class="section compact">
+<section class="page-hero rooms-hero"><div><span class="eyebrow">CAROLINA ROOMS</span><h1>Find a stay that feels right.</h1><p>Start with your arrival date, choose how long you’ll stay, and we’ll take care of the timing.</p></div></section>
+<section class="section compact rooms-results">
     <form class="filter-bar rooms-search" method="GET">
         <input id="rooms-check-in" type="hidden" name="check_in" value="{{ $filters['check_in'] ?? '' }}">
         <button class="rooms-date-trigger" id="rooms-check-in-trigger" type="button" aria-expanded="false"><span>Check-in date</span><b>Choose date</b></button>
@@ -23,7 +26,7 @@
     </form>
 
     <p class="result-count">{{ $rooms->count() }} room{{ $rooms->count() === 1 ? '' : 's' }} available</p>
-    <div class="room-grid">@forelse($rooms as $room)<article class="room-card"><img src="{{ $room->image_url }}" alt="{{ $room->name }}" @if($loop->index > 2) loading="lazy" @endif><div class="room-card-body"><span>{{ $room->room_type }} · {{ $room->beds }} bed{{ $room->beds > 1 ? 's' : '' }} · {{ $room->guests }} guests</span><h3>{{ $room->name }}</h3>@if($room->approved_reviews_count)<small class="card-rating">★ {{ number_format($room->approved_reviews_avg_rating, 1) }} · {{ $room->approved_reviews_count }} {{ Str::plural('review', $room->approved_reviews_count) }}</small>@endif<p>{{ Str::limit($room->description, 86) }}</p><strong>₱{{ number_format($room->price_per_night) }} <small>{{ $room->rate_label }}</small></strong><a class="button small" href="{{ route('rooms.show', $room) }}">Select room</a></div></article>@empty<div class="empty-state"><h2>No rooms found</h2><p>Try another date, stay length, or smaller group.</p><a class="text-link" href="{{ route('rooms.index') }}">Clear search</a></div>@endforelse</div>
+    <div class="room-grid">@forelse($rooms as $room)<article class="room-card rooms-card"><img src="{{ $room->image_url }}" alt="{{ $room->name }}" @if($loop->index > 2) loading="lazy" @endif><div class="room-card-body"><span>{{ $room->room_type }} · {{ $room->beds }} bed{{ $room->beds > 1 ? 's' : '' }} · {{ $room->guests }} guests</span><h3>{{ $room->name }}</h3>@if($room->approved_reviews_count)<small class="card-rating">★ {{ number_format($room->approved_reviews_avg_rating, 1) }} · {{ $room->approved_reviews_count }} {{ Str::plural('review', $room->approved_reviews_count) }}</small>@endif<p>{{ Str::limit($room->description, 86) }}</p><div class="rooms-card-footer"><strong>₱{{ number_format($room->price_per_night) }} <small>{{ $room->rate_label }}</small></strong><a class="button small" href="{{ route('rooms.show', $room) }}">View room <span aria-hidden="true">→</span></a></div></div></article>@empty<div class="empty-state"><h2>No rooms found</h2><p>Try another date, stay length, or smaller group.</p><a class="text-link" href="{{ route('rooms.index') }}">Clear search</a></div>@endforelse</div>
 </section>
 <script>
 document.addEventListener('DOMContentLoaded', () => {
