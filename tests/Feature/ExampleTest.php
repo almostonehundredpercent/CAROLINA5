@@ -5,6 +5,8 @@ use App\Models\Room;
 use App\Models\RoomBlock;
 use App\Models\User;
 use Illuminate\Support\Facades\Mail;
+use App\Mail\BookingConfirmation;
+use App\Mail\NewBookingRequest;
 
 function testRoom(): Room
 {
@@ -29,6 +31,7 @@ test('an administrator can sign in with a fresh session', function () {
 
 test('a reservation request stores exact times without blocking availability until confirmed', function () {
     Mail::fake();
+    config()->set('mail.notifications.address', 'staff@example.com');
     $room = testRoom();
     $checkIn = now()->addDays(3)->startOfDay();
     $payload = ['checkout_type' => 'guest', 'booking_type' => 'dates', 'check_in' => $checkIn->toDateString(), 'check_out' => $checkIn->copy()->addDays(2)->toDateString(), 'guests' => 2, 'children_count' => 1, 'pets_count' => 1, 'guest_name' => 'Test Guest', 'guest_email' => 'guest@example.com', 'guest_phone' => '09171234567', 'terms_accepted' => '1', 'submission_token' => (string) \Illuminate\Support\Str::uuid()];
@@ -37,6 +40,8 @@ test('a reservation request stores exact times without blocking availability unt
     expect($booking->status)->toBe('pending')->and($booking->hold_expires_at)->toBeNull()->and($booking->check_in_at->toDateString())->toBe($checkIn->toDateString())->and($booking->children_count)->toBe(1)->and($booking->pets_count)->toBe(1);
     $this->post(route('bookings.store', $room), $payload)->assertRedirect();
     expect(Booking::count())->toBe(1);
+    Mail::assertSent(BookingConfirmation::class, fn ($mail) => $mail->hasTo('guest@example.com'));
+    Mail::assertSent(NewBookingRequest::class, fn ($mail) => $mail->hasTo('staff@example.com'));
     $this->get(route('rooms.index', ['check_in' => $checkIn->toDateString(), 'check_out' => $checkIn->copy()->addDay()->toDateString()]))->assertOk()->assertSee('Test Room');
 });
 

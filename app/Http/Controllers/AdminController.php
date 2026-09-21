@@ -178,6 +178,7 @@ class AdminController extends Controller
         Payment::create(['booking_id' => $booking->id, 'amount' => $booking->total_amount, 'method' => $data['payment_method'], 'status' => $data['payment_status'], 'paid_at' => $paidAt, 'recorded_by' => $request->user()->id, 'notes' => 'Manual staff payment record.']);
         $booking->update($data + ['paid_at' => $paidAt]);
         $this->log($booking->fresh(), $request->user()->id, 'payment_' . $data['payment_status'], 'Payment status recorded as ' . $data['payment_status'] . '.', $before, $booking->fresh()->only(['payment_status', 'payment_method', 'paid_at']));
+        $this->email($booking->fresh('room'), 'Payment update for your Carolina booking', 'Your payment status is now ' . $data['payment_status'] . '.');
         return back()->with('success', 'Payment record updated.');
     }
 

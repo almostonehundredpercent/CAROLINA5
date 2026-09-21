@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Mail\BookingConfirmation;
 use App\Mail\BookingUpdate;
+use App\Mail\NewBookingRequest;
 use App\Models\ActivityLog;
 use App\Models\Booking;
 use App\Models\Room;
@@ -128,6 +129,14 @@ class BookingController extends Controller
         if ($email) {
             try {
                 Mail::to($email)->send(new BookingConfirmation($booking));
+            } catch (\Throwable $exception) {
+                report($exception);
+            }
+        }
+        $staffEmail = config('mail.notifications.address');
+        if (filter_var($staffEmail, FILTER_VALIDATE_EMAIL) && strcasecmp((string) $staffEmail, (string) $email) !== 0) {
+            try {
+                Mail::to($staffEmail)->send(new NewBookingRequest($booking));
             } catch (\Throwable $exception) {
                 report($exception);
             }
