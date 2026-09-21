@@ -16,6 +16,39 @@
         .room-manage { border-top:1px solid var(--room-stroke); background:#fbfbfc; }.room-manage summary { display:flex; align-items:center; justify-content:space-between; padding:16px 22px; color:#0066cc; font:600 13px var(--admin-font); cursor:pointer; list-style:none; }.room-manage summary::-webkit-details-marker { display:none; }.room-manage summary::after { content:'›'; color:#6e6e73; font-size:23px; font-weight:300; transition:transform .2s ease; }.room-manage[open] summary::after { transform:rotate(90deg); }.room-manage[open] { background:#f5f9ff; }
         .room-operation-form { padding:0 22px 22px; }.operation-form-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }.operation-field { display:grid; gap:6px; }.operation-field.full { grid-column:1 / -1; }.operation-field label { color:var(--room-secondary); font-size:11px; font-weight:600; text-transform:none; }.operation-field select,.operation-field input { width:100%; min-height:40px; padding:8px 10px; border:1px solid #d1d1d6; border-radius:10px; background:#fff; color:var(--room-text); font:500 13px var(--admin-font); }.operation-time-panel { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:15px 0; }.operation-moment { padding:14px; border:1px solid var(--room-stroke); border-radius:14px; background:#fff; }.operation-moment-title { margin:0 0 10px; color:var(--room-text); font:650 13px var(--admin-font); }.operation-moment-fields { display:grid; grid-template-columns:minmax(0,1.18fr) minmax(100px,.82fr); gap:8px; }.operation-moment input,.operation-moment select { width:100%; min-height:40px; padding:8px 9px; border:1px solid #d1d1d6; border-radius:10px; background:#fff; color:var(--room-text); font:500 13px var(--admin-font); }.schedule-timer { display:flex; align-items:center; justify-content:space-between; gap:16px; margin:15px 0; padding:14px 15px; border-radius:14px; background:#f5f9ff; }.schedule-timer-label { color:var(--room-secondary); font-size:12px; }.schedule-timer-value { margin-top:3px; color:var(--room-text); font:700 18px/1.2 var(--admin-font); letter-spacing:-.025em; }.duration-presets { display:flex; flex-wrap:wrap; gap:6px; justify-content:flex-end; }.duration-button { min-height:32px; padding:0 11px; border:1px solid #d1d1d6; border-radius:980px; background:#fff; color:var(--room-text); font:600 11px var(--admin-font); cursor:pointer; }.duration-button:hover,.duration-button.is-selected { border-color:var(--room-blue); background:var(--room-blue); color:#fff; }.operation-help { margin:11px 0 0; color:var(--room-secondary); font-size:12px; line-height:1.45; }.operation-footer { display:flex; align-items:center; justify-content:space-between; gap:14px; margin-top:16px; }.override-note { display:flex; gap:7px; max-width:260px; color:#86510b; font-size:11px; line-height:1.35; }.override-note input { margin:2px 0 0; }.operation-save { min-height:38px; padding:0 14px; border:0; border-radius:980px; background:var(--room-blue); color:#fff; font:600 12px var(--admin-font); cursor:pointer; }.operation-save:hover { background:#0077ed; }.room-empty { grid-column:1 / -1; padding:52px 20px; border-radius:20px; background:#fff; text-align:center; color:var(--room-secondary); }
         @media (max-width:1050px) { .room-summary { grid-template-columns:repeat(2,1fr); }.room-card-grid { grid-template-columns:1fr; } } @media (max-width:700px) { .room-operations-header { display:block; padding-bottom:22px; }.room-operations-actions { margin-top:18px; }.room-create-button { width:100%; }.room-summary { gap:10px; margin-bottom:20px; }.room-summary-card { min-height:92px; padding:15px; border-radius:16px; }.room-summary-card strong { font-size:28px; }.room-operations-note { align-items:flex-start; }.room-card { border-radius:17px; }.room-card-main { padding:18px; }.room-card-title { font-size:18px; }.room-card-schedule { grid-template-columns:1fr; margin-top:18px; }.schedule-item { min-height:76px; }.room-manage summary { padding:14px 18px; }.room-operation-form { padding:0 18px 18px; }.operation-form-grid,.operation-time-panel { grid-template-columns:1fr; }.operation-field.full { grid-column:auto; }.operation-moment-fields { grid-template-columns:1fr; }.schedule-timer { align-items:flex-start; flex-direction:column; }.duration-presets { justify-content:flex-start; }.operation-footer { align-items:stretch; flex-direction:column; }.operation-save { width:100%; } }
+        /* Final phone pass: room cards are read first, then expanded only when work is needed. */
+        @media (max-width:700px) {
+            .room-operations-header { padding:4px 0 20px; }
+            .room-operations-header h1 { font-size:30px; }
+            .room-operations-header .admin-subtitle { font-size:14px; line-height:1.45; }
+            .room-summary-card { min-height:96px; padding:16px; }
+            .room-summary-card small { font-size:12px; }
+            .room-summary-card strong { font-size:29px; }
+            .room-operations-note { padding:14px; font-size:13px; }
+            .room-card-main { padding:18px; }
+            .room-card-top { align-items:flex-start; flex-direction:column; gap:7px; }
+            .room-status { font-size:15px!important; }
+            .room-card-title { font-size:20px; }
+            .room-card-meta,.room-card-rate { font-size:14px; }
+            .schedule-item { min-height:78px; padding:14px; }
+            .schedule-item small { font-size:12px; }
+            .schedule-item b { font-size:14px; }
+            .schedule-item span { font-size:12px; }
+            .room-card-actions { gap:9px; }
+            .room-action-link,.room-archive-button { min-height:42px; padding:0 14px; font-size:13px; }
+            .room-manage summary { min-height:54px; padding:15px 18px; font-size:14px; }
+            .room-operation-form { padding:0 18px 20px; }
+            .operation-field label,.operation-moment-title { font-size:13px; }
+            .operation-moment { padding:14px; }
+            .operation-moment input,.operation-moment select,.operation-field select,.operation-field input { min-height:48px; font-size:15px; }
+            .schedule-timer { gap:12px; padding:15px; }
+            .schedule-timer-value { font-size:20px; }
+            .duration-presets { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); width:100%; }
+            .duration-button { min-height:40px; padding:0 8px; font-size:12px; }
+            .operation-help { font-size:13px; }
+            .override-note { max-width:none; font-size:12px; }
+            .operation-save { min-height:46px; font-size:14px; }
+        }
     </style>
 </head>
 <body>
