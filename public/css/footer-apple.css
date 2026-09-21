@@ -49,9 +49,13 @@
     .site-footer .footer-brand p { margin: 17px 0 18px; }
     .site-footer .footer-bottom { padding: 18px 22px 23px; flex-direction: column; align-items: flex-start; }
 }
-@media (max-width: 430px) {
-    .site-footer .footer-content { grid-template-columns: 1fr; gap: 30px; padding: 38px 20px 31px; }
+@media (max-width: 620px) {
+    /* One calm reading column is more usable than squeezing contact actions beside links. */
+    .site-footer .footer-content { grid-template-columns: 1fr; gap: 27px; padding: 34px 20px 29px; }
+    .site-footer .footer-brand { grid-column:auto; }
     .site-footer .brand-logo { width: 52px; height: 52px; }
-    .site-footer .footer-column { gap: 10px; }
+    .site-footer .footer-column { width:100%; gap: 10px; }
+    .site-footer .footer-social { width:100%; justify-content:center; padding:11px 12px; }
     .site-footer .footer-bottom { padding: 17px 20px 21px; gap: 11px; }
+    .site-footer .footer-bottom-actions { flex-wrap:wrap; gap:11px 16px; }
 }
