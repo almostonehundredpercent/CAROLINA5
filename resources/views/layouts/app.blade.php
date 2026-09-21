@@ -22,6 +22,7 @@
     <link rel="stylesheet" href="{{ asset('css/responsive.css') }}">
     <link rel="stylesheet" href="{{ asset('css/loading.css') }}?v={{ filemtime(public_path('css/loading.css')) }}">
     <link rel="stylesheet" href="{{ asset('css/footer-apple.css') }}?v={{ filemtime(public_path('css/footer-apple.css')) }}">
+    @stack('styles')
 </head>
 <body>
     <div class="page-loader" id="page-loader" role="status" aria-live="polite" aria-label="Loading">
@@ -73,6 +74,7 @@
 
         @yield('content')
     </main>
+    @stack('late-styles')
     @php($footerContact = \App\Models\BusinessContact::current())
     <footer id="contact" class="site-footer">
         <div class="footer-content">
