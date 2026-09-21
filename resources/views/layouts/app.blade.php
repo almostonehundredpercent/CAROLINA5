@@ -21,6 +21,7 @@
     <link rel="stylesheet" href="{{ asset('css/password-toggle.css') }}">
     <link rel="stylesheet" href="{{ asset('css/responsive.css') }}">
     <link rel="stylesheet" href="{{ asset('css/loading.css') }}?v={{ filemtime(public_path('css/loading.css')) }}">
+    <link rel="stylesheet" href="{{ asset('css/footer-apple.css') }}?v={{ filemtime(public_path('css/footer-apple.css')) }}">
 </head>
 <body>
     <div class="page-loader" id="page-loader" role="status" aria-live="polite" aria-label="Loading">
@@ -72,37 +73,32 @@
 
         @yield('content')
     </main>
+    @php($footerContact = \App\Models\BusinessContact::current())
     <footer id="contact" class="site-footer">
         <div class="footer-content">
             <section class="footer-brand">
                 <a class="brand" href="{{ route('home') }}"><img class="brand-logo" src="{{ asset('images/carolina-logo.jpg') }}" alt="Carolina logo"><span>Carolina <small>TRANSIENT & AIRBNB</small></span></a>
-                <p>Comfortable stays in the heart of Tabaco City.</p>
+                <p>A thoughtful, comfortable stay in the heart of Tabaco City.</p>
+                <a class="footer-primary-action" href="{{ route('rooms.index') }}">Explore rooms <span aria-hidden="true">→</span></a>
             </section>
 
-            <section class="footer-column footer-quick">
-                <h2>Quick links</h2>
+            <nav class="footer-column footer-quick" aria-label="Footer navigation">
+                <h2>Explore</h2>
                 <a href="{{ route('rooms.index') }}">Rooms</a>
                 <a href="{{ route('bookings.lookup') }}">Find booking</a>
                 <a href="{{ route('home') }}#about">About</a>
-                <a href="#contact">Contact</a>
-            </section>
+            </nav>
 
             <section class="footer-column footer-contact">
-                <h2>Contact</h2>
-                <p><span aria-hidden="true">⌖</span> Tabaco City, Albay</p>
-                <a href="{{ route('bookings.lookup') }}"><span aria-hidden="true">⌕</span> Find your booking</a>
-                <a href="https://www.facebook.com/profile.php?id=61556306344437" target="_blank" rel="noopener noreferrer"><span aria-hidden="true">●</span> Facebook</a>
-                <x-contact-card class="footer-contact-help" />
-            </section>
-
-            <section class="footer-column footer-follow">
-                <h2>Follow us</h2>
-                <a class="social-link" href="https://www.facebook.com/profile.php?id=61556306344437" target="_blank" rel="noopener noreferrer" aria-label="Follow Carolina Transient & Airbnb on Facebook">f</a>
-                <p>Stay connected<br>for updates!</p>
+                <h2>Get in touch</h2>
+                <p class="footer-location"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s7-5.1 7-12a7 7 0 1 0-14 0c0 6.9 7 12 7 12Z"></path><circle cx="12" cy="9" r="2.25"></circle></svg>Tabaco City, Albay</p>
+                @if($footerContact?->phone)<a href="tel:{{ preg_replace('/[^+0-9]/', '', $footerContact->phone) }}">{{ $footerContact->phone }}</a>@endif
+                @if($footerContact?->email)<a href="mailto:{{ $footerContact->email }}">{{ $footerContact->email }}</a>@endif
+                <a class="footer-social" href="{{ $footerContact?->facebook_url ?: 'https://www.facebook.com/profile.php?id=61556306344437' }}" target="_blank" rel="noopener noreferrer"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 8h3V4.4c-.5-.1-1.8-.2-3.3-.2-3.4 0-5.7 2.1-5.7 5.9V13H4.3v4h3.8v5h4.7v-5h3.7l.6-4h-4.3v-2.5c0-1.2.3-2.5 2.2-2.5Z"></path></svg><span>Message us on Facebook</span></a>
             </section>
         </div>
         <div class="footer-bottom">
-            <small>&copy; {{ date('Y') }} Carolina Transient & Airbnb. All rights reserved.</small>
+            <small>&copy; {{ date('Y') }} Carolina Transient & Airbnb</small>
             <div class="footer-bottom-actions">
                 <a href="{{ route('privacy') }}">Privacy Policy</a><a href="{{ route('terms') }}">Terms of Service</a>
             </div>
