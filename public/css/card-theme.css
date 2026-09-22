@@ -1,0 +1,59 @@
+/* Shared public-card surface: the Carolina black-and-brown signature in every mode. */
+:is(.room-card, .auth-card, .booking-summary, .booking-row, .confirmation-card, .portal-card, .receipt-card, .receipt-summary, .public-review, .guest-portal .confirmation-card) {
+    border-color: rgba(131, 91, 53, .62);
+    background: linear-gradient(145deg, #302219 0%, #211813 58%, #17120f 100%);
+    color: #fff7ec;
+    box-shadow: 0 14px 30px rgba(37, 22, 11, .16);
+}
+
+:is(.room-card, .booking-row, .public-review) {
+    transition: transform .22s ease, box-shadow .22s ease, border-color .22s ease;
+}
+
+:is(.room-card, .booking-row, .public-review):hover {
+    border-color: rgba(240, 170, 73, .72);
+    box-shadow: 0 19px 38px rgba(37, 22, 11, .25);
+}
+
+:is(.room-card, .booking-row) h3,
+:is(.auth-card, .booking-summary, .booking-row, .confirmation-card, .portal-card, .receipt-card, .receipt-summary, .public-review) h1,
+:is(.auth-card, .booking-summary, .booking-row, .confirmation-card, .portal-card, .receipt-card, .receipt-summary, .public-review) h2,
+:is(.auth-card, .booking-summary, .booking-row, .confirmation-card, .portal-card, .receipt-card, .receipt-summary, .public-review) b,
+:is(.auth-card, .booking-summary, .booking-row, .confirmation-card, .portal-card, .receipt-card, .receipt-summary, .public-review) strong { color: #fff8ef; }
+
+:is(.room-card, .booking-row, .confirmation-card, .portal-card, .receipt-card, .receipt-summary, .public-review) p,
+:is(.room-card, .booking-row, .confirmation-card, .portal-card, .receipt-card, .receipt-summary, .public-review) small { color: #d7c5b4; }
+
+.room-card .room-card-body > span,
+.room-card .card-rating,
+.room-card-footer strong,
+.booking-row .status,
+.public-review .review-stars { color: #f2b55c; }
+
+.room-card .room-card-body > p,
+.home-room-carousel .room-card-body p { color: #d7c5b4; }
+.room-card .room-card-body a { color: #f2b55c; }
+.room-card-footer strong small { color: #d7c5b4; }
+.room-card .button.small { border: 1px solid rgba(247, 190, 102, .56); background: linear-gradient(135deg, #e9981e, #bd6304); color: #fffaf2; }
+
+.auth-card label,
+.portal-card label { color: #f6e9dc; }
+.auth-card p,
+.portal-card p { color: #d7c5b4; }
+.auth-card input,
+.portal-card input,
+.portal-card select { border-color: rgba(233, 210, 184, .34); background: #fffaf3; color: #2b211a; }
+
+.confirmation-card > div,
+.receipt-summary-grid > div { border-color: rgba(238, 210, 174, .14); background: rgba(255, 249, 240, .065); }
+.public-review { border-color: rgba(131, 91, 53, .62); }
+
+.dark-mode :is(.room-card, .auth-card, .booking-summary, .booking-row, .confirmation-card, .portal-card, .receipt-card, .receipt-summary, .public-review, .guest-portal .confirmation-card) {
+    border-color: rgba(149, 103, 58, .56);
+    background: linear-gradient(145deg, #2c2018 0%, #1d1612 62%, #120e0c 100%);
+    box-shadow: 0 14px 30px rgba(0, 0, 0, .3);
+}
+
+@media (max-width: 650px) {
+    :is(.room-card, .auth-card, .booking-summary, .booking-row, .confirmation-card, .portal-card, .receipt-card, .receipt-summary, .public-review, .guest-portal .confirmation-card) { border-radius: 15px; }
+}

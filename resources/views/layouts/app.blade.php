@@ -75,6 +75,7 @@
         @yield('content')
     </main>
     @stack('late-styles')
+    <link rel="stylesheet" href="{{ asset('css/card-theme.css') }}?v={{ filemtime(public_path('css/card-theme.css')) }}">
     @php($footerContact = \App\Models\BusinessContact::current())
     <footer id="contact" class="site-footer">
         <div class="footer-content">
