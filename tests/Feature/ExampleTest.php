@@ -5,8 +5,10 @@ use App\Models\Room;
 use App\Models\RoomBlock;
 use App\Models\User;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Notification;
 use App\Mail\BookingConfirmation;
 use App\Mail\NewBookingRequest;
+use Illuminate\Auth\Notifications\VerifyEmail;
 
 function testRoom(): Room
 {
@@ -27,6 +29,20 @@ test('an administrator can sign in with a fresh session', function () {
     $this->post(route('login.submit'), ['email' => $admin->email, 'password' => 'password'])
         ->assertRedirect(route('admin.frontdesk'));
     $this->assertAuthenticatedAs($admin);
+});
+
+test('a new account receives an email verification notification', function () {
+    Notification::fake();
+
+    $this->post(route('register.submit'), [
+        'name' => 'New Carolina Guest',
+        'email' => 'new.guest@example.com',
+        'password' => 'password123',
+        'password_confirmation' => 'password123',
+    ])->assertRedirect(route('verification.notice'));
+
+    $user = User::where('email', 'new.guest@example.com')->firstOrFail();
+    Notification::assertSentTo($user, VerifyEmail::class);
 });
 
 test('a reservation request stores exact times without blocking availability until confirmed', function () {

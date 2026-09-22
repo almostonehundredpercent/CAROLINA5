@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
 use Illuminate\Auth\Events\PasswordReset;
+use Illuminate\Auth\Events\Registered;
 use App\Support\AdminPermissions;
 
 class AuthController extends Controller
@@ -63,10 +64,14 @@ class AuthController extends Controller
             'is_admin' => false,
         ]);
 
+        // Laravel's registered event sends the signed verification email through
+        // the configured mail provider, confirming the newly created account.
+        event(new Registered($user));
+
         auth()->login($user);
         $request->session()->regenerate();
 
-        return redirect()->route('home');
+        return redirect()->route('verification.notice')->with('success', 'Your account is ready. We sent a verification link to your email address.');
     }
 
     public function logout(Request $request)
