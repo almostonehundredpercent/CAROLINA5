@@ -5,6 +5,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BookingController;
 use App\Http\Controllers\RoomController;
 use App\Models\Room;
+use App\Http\Controllers\StayController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -21,6 +22,8 @@ Route::get('/rooms', [RoomController::class, 'index'])->name('rooms.index');
 Route::get('/rooms/{room:slug}', [RoomController::class, 'show'])->name('rooms.show');
 Route::get('/rooms/{room:slug}/availability', [BookingController::class, 'availability'])->name('rooms.availability');
 Route::get('/booking-lookup', [BookingController::class, 'lookupForm'])->name('bookings.lookup');
+Route::get('/stay/{booking}', [StayController::class, 'show'])->middleware(['signed', 'throttle:60,1'])->name('stay.show');
+Route::post('/stay/{booking}/arrival', [StayController::class, 'arrival'])->middleware(['signed', 'throttle:10,1'])->name('stay.arrival');
 Route::post('/booking-lookup', [BookingController::class, 'lookup'])->middleware('throttle:5,1')->name('bookings.lookup.submit');
 Route::patch('/booking-lookup/{booking}/cancel', [BookingController::class, 'cancelGuest'])->middleware('throttle:5,1')->name('bookings.lookup.cancel');
 Route::patch('/booking-lookup/{booking}/extend', [BookingController::class, 'extendGuest'])->middleware('throttle:5,1')->name('bookings.lookup.extend');
@@ -50,6 +53,10 @@ Route::middleware('auth')->group(function () {
 });
 
 Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
+    Route::get('/arrivals', [StayController::class, 'board'])->middleware('admin.permission:frontdesk')->name('arrivals');
+    Route::patch('/arrivals/{booking}', [StayController::class, 'readiness'])->middleware('admin.permission:frontdesk')->name('arrivals.update');
+    Route::post('/stay-notices', [StayController::class, 'notice'])->middleware('admin.permission:frontdesk')->name('stay-notices.store');
+    Route::patch('/stay-notices/{notice}/resolve', [StayController::class, 'resolve'])->middleware('admin.permission:frontdesk')->name('stay-notices.resolve');
     Route::get('/dashboard', [AdminController::class, 'index'])->middleware('admin.permission:dashboard')->name('dashboard');
     Route::get('/today', [AdminController::class, 'frontdesk'])->middleware('admin.permission:frontdesk')->name('frontdesk');
     Route::get('/rooms', [AdminController::class, 'rooms'])->middleware('admin.permission:rooms')->name('rooms');

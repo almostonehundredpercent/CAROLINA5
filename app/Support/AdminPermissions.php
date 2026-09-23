@@ -55,6 +55,7 @@ final class AdminPermissions
     {
         return [
             ['label' => 'Today', 'route' => 'admin.frontdesk', 'icon' => '◷', 'ability' => 'frontdesk', 'group' => 'primary'],
+            ['label' => 'Arrivals', 'route' => 'admin.arrivals', 'icon' => '↗', 'ability' => 'frontdesk', 'group' => 'primary'],
             ['label' => 'Bookings', 'route' => 'admin.bookings', 'icon' => '▤', 'ability' => 'bookings', 'group' => 'primary'],
             ['label' => 'Rooms', 'route' => 'admin.rooms', 'icon' => '⌂', 'ability' => 'rooms', 'group' => 'primary'],
             ['label' => 'Guests', 'route' => 'admin.guests', 'icon' => '♙', 'ability' => 'guests', 'group' => 'primary'],
