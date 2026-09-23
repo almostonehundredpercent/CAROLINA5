@@ -26,10 +26,29 @@ class Booking extends Model
         return $this->status;
     }
 
-    /** Only staff-confirmed stays block inventory; requests are a queue, not a promise. */
+    /** Submitted requests reserve inventory until staff confirms or cancels them. */
     public function scopeBlocking($query)
     {
-        return $query->where('status', 'confirmed');
+        return $query->whereIn('status', ['pending', 'confirmed'])->whereNull('checked_out_at');
+    }
+
+    public function save(array $options = [])
+    {
+        if (!in_array($this->status, ['pending', 'confirmed'], true) || $this->checked_out_at
+            || ($this->exists && !$this->isDirty(['room_id', 'status', 'check_in', 'check_out', 'check_in_at', 'check_out_at', 'checked_out_at']))) {
+            return parent::save($options);
+        }
+        return \Illuminate\Support\Facades\DB::transaction(function () use ($options) {
+            $room = Room::whereKey($this->room_id)->lockForUpdate()->firstOrFail();
+            $start = $this->check_in_at ?? $this->check_in->copy()->startOfDay();
+            $end = $this->check_out_at ?? $this->check_out->copy()->startOfDay();
+            $query = $room->bookings()->blocking()->overlapping($start, $end);
+            if ($this->exists) $query->whereKeyNot($this->id);
+            if ($query->exists() || $room->blocks()->overlapping($start, $end)->exists()) {
+                throw \Illuminate\Validation\ValidationException::withMessages(['availability' => 'This room is reserved during part of your stay. Please choose another date or time.']);
+            }
+            return parent::save($options);
+        });
     }
 
     public static function releaseExpiredHolds(): void

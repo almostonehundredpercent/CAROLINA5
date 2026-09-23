@@ -105,7 +105,8 @@
 
                 <label>Special request<textarea name="special_request" rows="3">{{ old('special_request') }}</textarea></label>
                 <x-contact-card class="booking-contact-help" />
-                <button class="button">Continue to receipt</button>
+                <div id="booking-availability-status" role="status" aria-live="polite" style="padding:14px;border:1px solid var(--line);border-radius:10px;background:var(--paper);color:var(--ink)">Choose your stay dates to check availability. Pending reservations also reserve their time slot.</div>
+                <button class="button" id="booking-submit">Continue to receipt</button>
             </form>
         @endif
     </div>
@@ -214,4 +215,47 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 </script>
 @endif
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const submit = document.getElementById('booking-submit');
+    if (!submit) return;
+    const form = submit.form, status = document.getElementById('booking-availability-status');
+    let sequence = 0, allowed = false, timer;
+    const check = async () => {
+        const run = ++sequence;
+        const data = new FormData(form);
+        let start, end;
+        if (data.get('booking_type') === 'hourly') {
+            if (!data.get('hourly_date') || !data.get('check_in_time')) return false;
+            start = `${data.get('hourly_date')}T${data.get('check_in_time')}:00+08:00`;
+            end = new Date(new Date(start).getTime() + Number(data.get('hours')) * 3600000).toISOString();
+        } else {
+            if (!data.get('check_in') || !data.get('check_out')) return false;
+            start = `${data.get('check_in')}T00:00:00+08:00`; end = `${data.get('check_out')}T00:00:00+08:00`;
+        }
+        status.textContent = 'Checking your selected stay…';
+        try {
+            const url = new URL(@json(route('rooms.availability', $room)));
+            url.searchParams.set('start', start); url.searchParams.set('end', end);
+            const response = await fetch(url, {headers:{Accept:'application/json'},cache:'no-store'});
+            if (!response.ok) throw new Error('Availability unavailable');
+            const result = await response.json();
+            if (run !== sequence) return false;
+            status.textContent = result.available ? '✓ Available now. We will reserve this time when you submit.' : 'This stay overlaps an existing reservation or room operation. Choose another date or time.';
+            return result.available;
+        } catch (error) {
+            if (run === sequence) status.textContent = 'We could not refresh availability. Please try again.';
+            return false;
+        }
+    };
+    form.addEventListener('click', event => { if (event.target.closest('#booking-submit')) return; clearTimeout(timer); timer = setTimeout(check, 100); });
+    form.addEventListener('change', check);
+    form.addEventListener('submit', async event => {
+        if (allowed) return;
+        event.preventDefault(); event.stopImmediatePropagation(); clearTimeout(timer); submit.disabled = true;
+        if (await check()) { allowed = true; submit.disabled = false; form.requestSubmit(submit); }
+        else { submit.disabled = false; status.scrollIntoView({block:'center',behavior:'smooth'}); }
+    }, true);
+});
+</script>
 @endsection

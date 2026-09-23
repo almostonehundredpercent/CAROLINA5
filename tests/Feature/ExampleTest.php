@@ -45,7 +45,7 @@ test('a new account receives an email verification notification', function () {
     Notification::assertSentTo($user, VerifyEmail::class);
 });
 
-test('a reservation request stores exact times without blocking availability until confirmed', function () {
+test('a reservation request reserves its times and queues booking emails', function () {
     Mail::fake();
     config()->set('mail.notifications.address', 'staff@example.com');
     $room = testRoom();
@@ -56,9 +56,13 @@ test('a reservation request stores exact times without blocking availability unt
     expect($booking->status)->toBe('pending')->and($booking->hold_expires_at)->toBeNull()->and($booking->check_in_at->toDateString())->toBe($checkIn->toDateString())->and($booking->children_count)->toBe(1)->and($booking->pets_count)->toBe(1);
     $this->post(route('bookings.store', $room), $payload)->assertRedirect();
     expect(Booking::count())->toBe(1);
-    Mail::assertSent(BookingConfirmation::class, fn ($mail) => $mail->hasTo('guest@example.com'));
-    Mail::assertSent(NewBookingRequest::class, fn ($mail) => $mail->hasTo('staff@example.com'));
-    $this->get(route('rooms.index', ['check_in' => $checkIn->toDateString(), 'check_out' => $checkIn->copy()->addDay()->toDateString()]))->assertOk()->assertSee('Test Room');
+    Mail::assertQueued(BookingConfirmation::class, fn ($mail) => $mail->hasTo('guest@example.com'));
+    Mail::assertQueued(NewBookingRequest::class, fn ($mail) => $mail->hasTo('staff@example.com'));
+    $this->get(route('rooms.index', ['check_in' => $checkIn->toDateString(), 'check_out' => $checkIn->copy()->addDay()->toDateString()]))->assertOk()->assertSee('No rooms found');
+    $payload['submission_token'] = (string) \Illuminate\Support\Str::uuid();
+    $this->post(route('bookings.store', $room), $payload)->assertSessionHasErrors('availability');
+    expect(Booking::count())->toBe(1);
+    $this->get(route('rooms.availability', ['room'=>$room, 'start'=>$checkIn->toIso8601String(), 'end'=>$checkIn->copy()->addDay()->toIso8601String()]))->assertJson(['available'=>false]);
 });
 
 test('hourly reservations only accept advertised arrival hours', function () {

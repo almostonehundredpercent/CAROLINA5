@@ -38,8 +38,16 @@ class BookingController extends Controller
         ]);
     }
 
-    public function availability(Room $room)
+    public function availability(Request $request, Room $room)
     {
+        if ($request->filled('start')) {
+            $data = $request->validate(['start' => 'required|date', 'end' => 'required|date|after:start']);
+            $start = Carbon::parse($data['start']);
+            $end = Carbon::parse($data['end']);
+            $available = $room->is_active && !$room->bookings()->blocking()->overlapping($start, $end)->exists()
+                && !$room->blocks()->overlapping($start, $end)->exists();
+            return response()->json(['available' => $available])->header('Cache-Control', 'no-store');
+        }
         return response()->json(['ranges' => $this->blockedRanges($room)->values(), 'slots' => $this->hourlyBlockedSlots($room)->values()]);
     }
 
@@ -110,7 +118,7 @@ class BookingController extends Controller
             abort_if(! $lockedRoom->is_active, 422, 'This room is unavailable.');
             $taken = $lockedRoom->bookings()->blocking()->overlapping($checkInAt, $checkOutAt)->exists()
                 || $lockedRoom->blocks()->overlapping($checkInAt, $checkOutAt)->exists();
-            abort_if($taken, 422, 'Those dates or hours are no longer available for this room.');
+            if ($taken) throw \Illuminate\Validation\ValidationException::withMessages(['availability' => 'Those dates or hours are reserved. Please choose another time.']);
             return Booking::create($data + $guestData + ['user_id' => $request->user()?->id, 'room_id' => $lockedRoom->id, 'nights' => $nights, 'total_amount' => $total, 'add_ons' => [], 'hold_expires_at' => null, 'payment_method' => 'cash', 'status' => 'pending']);
         });
         } catch (QueryException $exception) {
@@ -128,7 +136,7 @@ class BookingController extends Controller
         $email = $booking->guest_email ?? $request->user()?->email;
         if ($email) {
             try {
-                Mail::to($email)->send(new BookingConfirmation($booking));
+                Mail::to($email)->queue((new BookingConfirmation($booking))->onConnection('database')->onQueue('mail'));
             } catch (\Throwable $exception) {
                 report($exception);
             }
@@ -136,7 +144,7 @@ class BookingController extends Controller
         $staffEmail = config('mail.notifications.address');
         if (filter_var($staffEmail, FILTER_VALIDATE_EMAIL) && strcasecmp((string) $staffEmail, (string) $email) !== 0) {
             try {
-                Mail::to($staffEmail)->send(new NewBookingRequest($booking));
+                Mail::to($staffEmail)->queue((new NewBookingRequest($booking))->onConnection('database')->onQueue('mail'));
             } catch (\Throwable $exception) {
                 report($exception);
             }
