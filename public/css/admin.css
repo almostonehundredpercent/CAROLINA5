@@ -88,3 +88,134 @@ body,.admin-nav a,.admin-home,.admin-logout button,.status-select,.pagination .p
   .metric-grid,.booking-stat-grid{grid-template-columns:1fr!important}
   .admin-topbar h1{font-size:25px!important}
 }
+
+/* Staff workspace refresh — a deliberately quiet, direct interface.
+   This final layer replaces the old orange dashboard language with a
+   high-clarity system that keeps attention on the work, not the chrome. */
+:root{
+  --orange:#0071e3;
+  --orange-dark:#0066cc;
+  --ink:#1d1d1f;
+  --muted:#6e6e73;
+  --paper:#f5f5f7;
+  --line:#e5e5ea;
+  --white:#fff;
+  --admin-font:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",sans-serif;
+}
+body{background:var(--paper);color:var(--ink);font-family:var(--admin-font)!important;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+.admin-shell{background:var(--paper)}
+.admin-sidebar{
+  width:248px!important;
+  padding:24px 14px 16px!important;
+  background:rgba(255,255,255,.92)!important;
+  color:var(--ink)!important;
+  border-right:1px solid var(--line);
+  box-shadow:none!important;
+}
+.admin-brand{color:var(--ink)!important;margin:0 8px 28px!important;font-family:var(--admin-font)!important;font-size:20px!important;font-weight:750!important;letter-spacing:-.035em}
+.admin-brand small{color:var(--muted)!important;font-family:var(--admin-font)!important;font-size:8px!important;letter-spacing:.12em!important}
+.admin-brand img,.admin-sidebar .admin-brand span{border-color:#fff!important;box-shadow:0 3px 10px rgba(0,0,0,.12)}
+.admin-nav{gap:3px!important}
+.admin-nav::before{content:"WORKSPACE";display:block;margin:0 12px 7px;color:#86868b;font-size:10px;font-weight:700;letter-spacing:.09em}
+.admin-nav a,.admin-nav a:focus,.admin-nav a:active{
+  min-height:42px!important;
+  padding:10px 12px!important;
+  border:1px solid transparent!important;
+  border-radius:10px!important;
+  background:transparent!important;
+  color:#424245!important;
+  font-size:14px!important;
+  font-weight:650!important;
+  transition:background .16s ease,color .16s ease,transform .16s ease!important;
+}
+.admin-nav a i{color:#86868b!important;font-size:16px!important}
+.admin-nav a:hover{background:#f5f5f7!important;color:var(--ink)!important}
+.admin-nav a:hover i{color:var(--orange-dark)!important}
+.admin-nav a.active,.admin-nav a.active:hover,.admin-nav a.active:focus,.admin-nav a.active:active{
+  border-color:#d9ecff!important;
+  background:#eaf4ff!important;
+  color:#0066cc!important;
+  box-shadow:none!important;
+}
+.admin-nav a.active i{color:#0066cc!important}
+.admin-more{margin-top:10px!important;border-top:1px solid var(--line)}
+.admin-more summary{margin-top:8px;padding:10px 12px!important;color:#424245!important;font-size:14px!important}
+.admin-more summary:hover,.admin-more summary:focus-visible{background:#f5f5f7!important;color:var(--ink)!important}
+.admin-more-links{padding:4px 0 0!important}
+.admin-more-links a{margin-left:0!important}
+.admin-sidebar>a.admin-home{
+  min-height:40px!important;
+  border:0!important;
+  border-radius:9px!important;
+  background:transparent!important;
+  color:#6e6e73!important;
+  font-weight:650!important;
+}
+.admin-sidebar>a.admin-home:hover{background:#f5f5f7!important;color:var(--ink)!important}
+.admin-logout{margin-top:5px!important}
+.admin-logout .logout-button{
+  min-height:40px!important;
+  border:1px solid var(--line)!important;
+  border-radius:10px!important;
+  background:#fff!important;
+  color:#424245!important;
+  box-shadow:none!important;
+  font-weight:650!important;
+}
+.admin-logout .logout-button:hover{border-color:#c7c7cc!important;background:#f5f5f7!important;color:var(--ink)!important;transform:none!important}
+.admin-main{max-width:1680px;padding:34px clamp(24px,4vw,64px) 48px!important}
+.admin-topbar{min-height:52px;margin-bottom:28px!important}
+.admin-topbar h1{font-family:var(--admin-font)!important;font-size:clamp(30px,3vw,38px)!important;font-weight:750!important;letter-spacing:-.045em!important}
+.admin-kicker{color:#86868b!important;font-size:10px!important;font-weight:700!important;letter-spacing:.1em!important}
+.admin-subtitle{max-width:650px;margin-top:8px!important;color:var(--muted)!important;font-size:14px!important;line-height:1.45}
+.admin-user{padding:6px 10px 6px 6px;border:1px solid var(--line);border-radius:999px;background:rgba(255,255,255,.8)}
+.avatar{width:34px!important;height:34px!important;background:#eaf4ff!important;color:#0066cc!important}
+.admin-user b{font-size:13px}.admin-user small{font-size:11px!important}
+.admin-flash{border:1px solid #b9e9cb;border-radius:12px;background:#f0fbf4!important;color:#167a3d!important;padding:13px 15px!important;box-shadow:0 1px 2px rgba(0,0,0,.03)}
+.panel,.room-summary-card,.room-card,.housekeeping-card,.today-item,.transaction-grid>div{
+  border:1px solid var(--line)!important;
+  border-radius:18px!important;
+  background:rgba(255,255,255,.96)!important;
+  box-shadow:0 1px 2px rgba(0,0,0,.02),0 10px 28px rgba(0,0,0,.025)!important;
+}
+.panel{padding:22px!important}.panel h2{font-family:var(--admin-font)!important;font-size:19px!important;font-weight:720!important;letter-spacing:-.025em!important}
+.panel-heading{margin-bottom:18px!important}
+.metric-grid,.booking-stat-grid,.report-booking-metrics{gap:14px!important}
+.metric-grid article,.booking-stat-grid article,.report-booking-metrics article{
+  min-height:142px;
+  padding:18px!important;
+  border:1px solid var(--line)!important;
+  border-radius:18px!important;
+  background:#fff!important;
+  color:var(--ink)!important;
+  box-shadow:0 1px 2px rgba(0,0,0,.02),0 8px 22px rgba(0,0,0,.025)!important;
+}
+.metric-grid article>span,.metric-grid em,.metric-grid article strong,.booking-stat-grid strong,.report-booking-metrics strong{color:var(--ink)!important}
+.metric-grid article>span{color:#0066cc!important}.metric-grid small,.booking-stat-grid small,.report-booking-metrics small{color:var(--muted)!important}.metric-grid em,.booking-stat-grid em,.report-booking-metrics em{color:#86868b!important}
+.metric-grid strong{font-size:30px!important;letter-spacing:-.04em}.booking-stat-grid strong,.report-booking-metrics strong{font-size:32px!important;letter-spacing:-.04em}
+.status-row{margin:16px 0!important}.status-row span{font-size:13px;font-weight:600!important}.status-row b{color:var(--ink)!important;font-size:14px}.status-row i{height:6px!important;background:#e9e9ed!important}.status-row i:after{background:#0071e3!important}
+.pill,.booking-count{border:1px solid #d9ecff;background:#eaf4ff!important;color:#0066cc!important;font-size:11px!important}
+.bar{background:linear-gradient(180deg,#77b9f7,#0071e3)!important;border-radius:6px 6px 0 0!important}.bar-item b{color:#0066cc!important}
+.booking-line{stroke:#0071e3!important}.booking-dot{stroke:#0071e3!important}.report-bars span{background:linear-gradient(180deg,#77b9f7,#0071e3)!important}
+.admin-table-wrap{border:1px solid var(--line);border-radius:13px;background:#fff}.admin-table-wrap table{min-width:700px}th{padding:13px 14px!important;background:#fafafa;color:#6e6e73!important;font-size:10px!important}td{padding:15px 14px!important;border-color:#eeeef0!important;color:#424245!important}tbody tr{transition:background .16s ease}tbody tr:hover{background:#fafcff}td b{color:var(--ink)!important;font-size:13px}td small{font-size:11px!important;color:var(--muted)!important}
+.status-select,.booking-actions .status-select,.today-actions .status-select,.detail-actions .status-select,.walkin-submit,.housekeeping-button,.operation-save{
+  display:inline-flex!important;align-items:center;justify-content:center;min-height:36px!important;
+  border:1px solid #d1d1d6!important;border-radius:9px!important;background:#fff!important;color:#0066cc!important;
+  font-weight:700!important;text-decoration:none!important;box-shadow:none!important;
+}
+button.status-select,.walkin-submit,.housekeeping-button,.operation-save{cursor:pointer}
+.status-select:hover,.booking-actions .status-select:hover,.today-actions .status-select:hover,.detail-actions .status-select:hover{border-color:#0071e3!important;background:#eaf4ff!important;color:#0066cc!important}
+.status-select.confirmed,.today-actions .confirmed{border-color:#0071e3!important;background:#0071e3!important;color:#fff!important}.status-select.cancelled{border-color:#f1c2bf!important;background:#fff5f4!important;color:#b42318!important}
+.booking-filters,.period-form{gap:10px!important;padding:12px!important;border:1px solid var(--line);border-radius:14px;background:#fafafa}.booking-filters input,.booking-filters select,.period-form select,.walkin-grid input,.walkin-grid select,.detail-card input,.detail-card select{
+  min-height:40px!important;border:1px solid #d2d2d7!important;border-radius:9px!important;background:#fff!important;color:var(--ink)!important;padding:9px 11px!important;font-size:13px!important;
+}
+.booking-filters input:focus,.booking-filters select:focus,.period-form select:focus,.walkin-grid input:focus,.walkin-grid select:focus{outline:3px solid #d9ecff;border-color:#0071e3!important}
+.booking-filters button,.walkin-submit{min-height:40px!important;border:1px solid #0071e3!important;border-radius:9px!important;background:#0071e3!important;color:#fff!important;padding:0 14px!important}.booking-filters button:hover,.walkin-submit:hover{background:#0077ed!important}
+.report-tabs{gap:4px!important;padding:5px!important;border:1px solid var(--line)!important;border-radius:12px!important;background:#ececf0!important}.report-tabs>a{border:0!important;border-radius:9px!important;color:#6e6e73!important}.report-tabs>a.active{margin:0!important;border:0!important;background:#fff!important;color:var(--ink)!important;box-shadow:0 1px 3px rgba(0,0,0,.1)}
+.report-period{margin:0 0 0 auto!important;border-color:#d1d1d6!important;border-radius:9px!important}.report-period button{min-width:30px;background:#fff!important;color:#6e6e73!important}.report-period button.active{background:#eaf4ff!important;color:#0066cc!important}
+.pagination{justify-content:center!important}.pagination .page-link{border-radius:9px!important}.pagination .active .page-link{border-color:#0071e3!important;background:#0071e3!important}
+.room-operations-note{border:1px solid #d9ecff!important;background:#f3f9ff!important;color:#23537a!important}.room-manage{background:#fafafa!important}.room-manage[open]{background:#f6faff!important}.room-manage summary{color:#0066cc!important}.room-create-button,.frontdesk-walkin{border-radius:10px!important;background:#0071e3!important;box-shadow:none!important}.room-create-button:hover,.frontdesk-walkin:hover{background:#0077ed!important}
+@media(max-width:700px){
+  .admin-sidebar{width:100%!important;padding:14px 16px 16px!important;border-right:0;border-bottom:1px solid var(--line)}
+  .admin-brand{margin:0!important}.admin-nav{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:7px!important}.admin-nav::before{grid-column:1/-1;margin:5px 2px 1px}.admin-nav>a{min-height:45px!important;border-color:var(--line)!important;background:#fff!important}.admin-nav>a.active{border-color:#d9ecff!important;background:#eaf4ff!important}.admin-more summary{border:1px solid var(--line)!important;background:#fff!important;color:#424245!important}.admin-more-links a{border:1px solid var(--line)!important;background:#fff!important}.admin-logout .logout-button{background:#fff!important;color:#424245!important}.admin-main{padding:22px 14px 36px!important}.admin-topbar{display:block!important;margin-bottom:20px!important}.admin-user{display:none!important}.admin-topbar h1{font-size:31px!important}.panel{padding:17px!important;border-radius:15px!important}.metric-grid article,.booking-stat-grid article,.report-booking-metrics article{min-height:118px;padding:15px!important;border-radius:15px!important}.metric-grid strong,.booking-stat-grid strong,.report-booking-metrics strong{font-size:27px!important}.booking-filters{align-items:stretch!important}.booking-filters input,.booking-filters select,.booking-filters button{width:100%!important}.admin-table-wrap{border-radius:12px}.today-item{border-radius:13px!important}
+}
