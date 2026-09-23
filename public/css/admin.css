@@ -83,6 +83,76 @@ body,.admin-nav a,.admin-home,.admin-logout button,.status-select,.pagination .p
   .housekeeping-calendar{max-width:288px!important;padding:13px!important}
   .housekeeping-time-menu{max-height:196px!important}
 }
+
+/* Carolina night glass — the staff workspace keeps its distinctive black and
+   brown identity while preserving the simpler information hierarchy above. */
+:root{
+  --orange:#e38a00;
+  --orange-dark:#ffb44d;
+  --ink:#fff8f1;
+  --muted:#cbbcaf;
+  --paper:#110e0c;
+  --line:rgba(255,220,182,.16);
+  --white:#241914;
+}
+body{
+  color:var(--ink)!important;
+  background:
+    radial-gradient(900px 540px at 96% -15%,rgba(139,74,20,.25),transparent 62%),
+    radial-gradient(680px 500px at -8% 102%,rgba(105,56,23,.20),transparent 62%),
+    #110e0c!important;
+}
+.admin-shell{background:transparent!important}
+.admin-sidebar{
+  background:linear-gradient(180deg,rgba(37,26,20,.94),rgba(17,14,12,.97))!important;
+  border-right-color:rgba(255,214,172,.14)!important;
+  box-shadow:18px 0 45px rgba(0,0,0,.16)!important;
+  backdrop-filter:blur(18px);
+}
+.admin-brand{color:#fff7ee!important}.admin-brand small{color:#e9a44a!important}.admin-brand img,.admin-sidebar .admin-brand span{box-shadow:0 5px 18px rgba(0,0,0,.38)!important}
+.admin-nav::before{color:#a99688!important}.admin-nav a,.admin-nav a:focus,.admin-nav a:active{color:#e6d8cc!important}.admin-nav a i{color:#d4aa72!important}
+.admin-nav a:hover{background:rgba(255,255,255,.075)!important;color:#fff8f1!important}.admin-nav a:hover i{color:#ffd18d!important}
+.admin-nav a.active,.admin-nav a.active:hover,.admin-nav a.active:focus,.admin-nav a.active:active{
+  border-color:rgba(255,181,84,.34)!important;
+  background:linear-gradient(135deg,rgba(145,80,25,.64),rgba(72,42,24,.72))!important;
+  color:#fff8f1!important;
+  box-shadow:inset 0 1px rgba(255,238,211,.1),0 5px 16px rgba(0,0,0,.17)!important;
+}
+.admin-nav a.active i{color:#ffc46b!important}.admin-more{border-top-color:rgba(255,214,172,.14)!important}.admin-more summary{color:#e6d8cc!important}.admin-more summary:hover,.admin-more summary:focus-visible{background:rgba(255,255,255,.075)!important;color:#fff8f1!important}
+.admin-sidebar>a.admin-home{color:#cdbcae!important}.admin-sidebar>a.admin-home:hover{background:rgba(255,255,255,.075)!important;color:#fff8f1!important}
+.admin-logout .logout-button{border-color:rgba(255,214,172,.22)!important;background:rgba(255,255,255,.045)!important;color:#eadbce!important}.admin-logout .logout-button:hover{border-color:rgba(255,191,104,.5)!important;background:rgba(128,69,26,.38)!important;color:#fff8f1!important}
+.admin-topbar h1{color:#fff8f1!important}.admin-kicker{color:#efaa4c!important}.admin-subtitle{color:#cbbcaf!important}.admin-user{border-color:rgba(255,220,182,.17)!important;background:rgba(51,35,27,.58)!important}.admin-user b{color:#fff8f1!important}.admin-user small{color:#cbbcaf!important}.avatar{background:rgba(199,112,23,.22)!important;color:#ffd08a!important}
+.admin-flash{border-color:rgba(112,213,150,.35)!important;background:rgba(26,95,54,.32)!important;color:#b4efcb!important}
+.panel,.room-summary-card,.room-card,.housekeeping-card,.today-item,.transaction-grid>div{
+  border-color:rgba(255,220,182,.16)!important;
+  background:linear-gradient(145deg,rgba(58,39,29,.89),rgba(32,23,19,.95))!important;
+  box-shadow:inset 0 1px rgba(255,241,221,.055),0 15px 36px rgba(0,0,0,.24)!important;
+}
+.panel h2,.room-card-title,.housekeeping-card h2,.today-item b,td b{color:#fff8f1!important}.admin-flash,.empty-copy{color:#cbbcaf!important}
+.metric-grid article,.booking-stat-grid article,.report-booking-metrics article{
+  border-color:rgba(255,220,182,.16)!important;
+  background:linear-gradient(145deg,rgba(67,44,30,.95),rgba(36,24,18,.96))!important;
+  color:#fff8f1!important;
+  box-shadow:inset 0 1px rgba(255,241,221,.055),0 13px 28px rgba(0,0,0,.2)!important;
+}
+.metric-grid article>span{color:#ffc269!important}.metric-grid article strong,.booking-stat-grid strong,.report-booking-metrics strong{color:#fff8f1!important}.metric-grid small,.booking-stat-grid small,.report-booking-metrics small,.metric-grid em,.booking-stat-grid em,.report-booking-metrics em{color:#cbbcaf!important}
+.status-row span,.status-row b{color:#f5e8dc!important}.status-row i{background:rgba(255,241,222,.12)!important}.status-row i:after{background:linear-gradient(90deg,#d87600,#ffbd5b)!important}
+.pill,.booking-count{border-color:rgba(255,185,92,.24)!important;background:rgba(159,85,18,.22)!important;color:#ffd08a!important}.bar{background:linear-gradient(180deg,#f9bd5b,#c86a00)!important}.bar-item b{color:#ffd08a!important}.booking-line{stroke:#ffae40!important}.booking-dot{fill:#2f2019!important;stroke:#ffae40!important}.report-bars span{background:linear-gradient(180deg,#f9bd5b,#c86a00)!important}
+.admin-table-wrap{border-color:rgba(255,220,182,.14)!important;background:rgba(19,14,12,.44)!important}th{background:rgba(14,11,10,.42)!important;color:#cbbcaf!important}td{border-color:rgba(255,220,182,.11)!important;color:#e6d8cc!important}td small{color:#cbbcaf!important}tbody tr:hover{background:rgba(255,255,255,.035)!important}
+.status-select,.booking-actions .status-select,.today-actions .status-select,.detail-actions .status-select,.walkin-submit,.housekeeping-button,.operation-save{
+  border-color:rgba(255,213,169,.23)!important;background:rgba(255,255,255,.055)!important;color:#ffe0b3!important;
+}
+.status-select:hover,.booking-actions .status-select:hover,.today-actions .status-select:hover,.detail-actions .status-select:hover{border-color:rgba(255,185,92,.6)!important;background:rgba(148,79,24,.35)!important;color:#fff5e9!important}
+.status-select.confirmed,.today-actions .confirmed,.walkin-submit,.housekeeping-button,.operation-save{border-color:#d87900!important;background:linear-gradient(135deg,#da8000,#a85100)!important;color:#fff!important}.status-select.cancelled{border-color:rgba(239,128,119,.38)!important;background:rgba(128,39,31,.28)!important;color:#ffc6bf!important}
+.booking-filters,.period-form{border-color:rgba(255,220,182,.14)!important;background:rgba(17,13,11,.4)!important}.booking-filters input,.booking-filters select,.period-form select,.walkin-grid input,.walkin-grid select,.detail-card input,.detail-card select{
+  border-color:rgba(255,220,182,.2)!important;background:rgba(16,12,10,.67)!important;color:#fff8f1!important;
+}
+.booking-filters input::placeholder{color:#a99688}.booking-filters input:focus,.booking-filters select:focus,.period-form select:focus,.walkin-grid input:focus,.walkin-grid select:focus{outline-color:rgba(255,177,71,.25)!important;border-color:#e58e17!important}.booking-filters button{border-color:#d87900!important;background:linear-gradient(135deg,#da8000,#a85100)!important}
+.report-tabs{border-color:rgba(255,220,182,.14)!important;background:rgba(21,16,14,.66)!important}.report-tabs>a{color:#cbbcaf!important}.report-tabs>a.active{background:linear-gradient(135deg,rgba(131,70,24,.86),rgba(77,43,24,.88))!important;color:#fff8f1!important;box-shadow:inset 0 1px rgba(255,238,211,.08)!important}.report-period{border-color:rgba(255,220,182,.2)!important}.report-period button{background:rgba(22,16,13,.78)!important;color:#cbbcaf!important;border-color:rgba(255,220,182,.14)!important}.report-period button.active{background:rgba(151,82,24,.58)!important;color:#fff0dd!important}
+.pagination .page-link{border-color:rgba(255,220,182,.18)!important;background:rgba(255,255,255,.05)!important;color:#eadbce!important}.pagination .page-link:hover{border-color:#e58e17!important;background:rgba(148,79,24,.35)!important;color:#fff!important}.pagination .active .page-link{border-color:#d87900!important;background:#c86a00!important}
+.room-operations-note{border-color:rgba(255,185,92,.24)!important;background:rgba(116,60,17,.27)!important;color:#f2d2a7!important}.room-operations-note b{color:#ffe4bf!important}.room-manage,.room-manage[open]{background:rgba(14,11,9,.32)!important;border-top-color:rgba(255,220,182,.14)!important}.room-manage summary{color:#ffc269!important}.room-create-button,.frontdesk-walkin{background:linear-gradient(135deg,#da8000,#a85100)!important;box-shadow:0 7px 18px rgba(0,0,0,.23)!important}.room-create-button:hover,.frontdesk-walkin:hover{background:linear-gradient(135deg,#ef9500,#bd5c00)!important}
+.schedule-item,.operation-moment,.schedule-timer,.housekeeping-state{border-color:rgba(255,220,182,.15)!important;background:rgba(17,13,11,.37)!important}.schedule-item.empty{background:rgba(255,255,255,.04)!important}.schedule-item small,.schedule-item span,.operation-field label,.operation-moment-title,.operation-help,.schedule-timer-label{color:#cbbcaf!important}.schedule-item b,.schedule-timer-value{color:#fff8f1!important}.operation-field select,.operation-field input,.operation-moment input,.operation-moment select{border-color:rgba(255,220,182,.2)!important;background:#211611!important;color:#fff8f1!important}
+@media(max-width:700px){.admin-sidebar{border-bottom-color:rgba(255,220,182,.14)!important;background:linear-gradient(180deg,rgba(37,26,20,.98),rgba(17,14,12,.98))!important}.admin-nav>a,.admin-more summary,.admin-more-links a{border-color:rgba(255,220,182,.14)!important;background:rgba(255,255,255,.045)!important;color:#eadbce!important}.admin-nav>a.active{border-color:rgba(255,181,84,.34)!important;background:linear-gradient(135deg,rgba(145,80,25,.64),rgba(72,42,24,.72))!important}.admin-logout .logout-button{background:rgba(255,255,255,.06)!important;color:#eadbce!important}}
 @media(max-width:380px){
   .admin-nav,.admin-more-links{grid-template-columns:1fr!important}
   .metric-grid,.booking-stat-grid{grid-template-columns:1fr!important}
