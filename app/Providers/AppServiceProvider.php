@@ -21,6 +21,16 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        \Illuminate\Support\Facades\Mail::extend('brevo', function () {
+            $key = (string) config('services.brevo.key');
+            if ($key === '') {
+                throw new \RuntimeException('BREVO_API_KEY is missing. Configure it in the hosting environment.');
+            }
+            return new \Symfony\Component\Mailer\Bridge\Brevo\Transport\BrevoApiTransport(
+                $key,
+                \Symfony\Component\HttpClient\HttpClient::create(['timeout' => 10, 'max_duration' => 15]),
+            );
+        });
         // The application does not load Tailwind. Use Bootstrap-compatible
         // pagination markup so the shared admin stylesheet can style it.
         Paginator::useBootstrapFive();
