@@ -16,7 +16,7 @@ class NewBookingRequest extends Mailable
     public function build(): self
     {
         return $this
-            ->subject('New reservation request · ' . $this->booking->reference)
+            ->subject('New reservation request · '.$this->booking->reference)
             ->view('emails.new-booking-request');
     }
 }

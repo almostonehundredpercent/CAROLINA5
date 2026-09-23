@@ -22,6 +22,7 @@ test('brevo sends Laravel mail through HTTPS with recipient and content intact',
         expect($payload['to'][0]['email'])->toBe('guest@example.com');
         expect($payload['subject'])->toBe('Carolina test');
         expect($payload['textContent'])->toBe('Verification delivery test');
+
         return new MockResponse('{"messageId":"test-message"}', ['http_code' => 201]);
     });
     $mailer = Mail::mailer('brevo');

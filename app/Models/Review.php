@@ -20,8 +20,23 @@ class Review extends Model
         return ['approved_at' => 'datetime'];
     }
 
-    public function booking() { return $this->belongsTo(Booking::class); }
-    public function room() { return $this->belongsTo(Room::class); }
-    public function user() { return $this->belongsTo(User::class); }
-    public function approvedBy() { return $this->belongsTo(User::class, 'approved_by'); }
+    public function booking()
+    {
+        return $this->belongsTo(Booking::class);
+    }
+
+    public function room()
+    {
+        return $this->belongsTo(Room::class);
+    }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    public function approvedBy()
+    {
+        return $this->belongsTo(User::class, 'approved_by');
+    }
 }

@@ -4,8 +4,11 @@ use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BookingController;
 use App\Http\Controllers\RoomController;
-use App\Models\Room;
 use App\Http\Controllers\StayController;
+use App\Models\Room;
+use Illuminate\Foundation\Auth\EmailVerificationRequest;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -13,9 +16,14 @@ Route::get('/', function () {
 })->name('home');
 Route::get('/sitemap.xml', function () {
     $urls = collect([route('home'), route('rooms.index'), route('bookings.lookup'), route('privacy'), route('terms')])->merge(Room::where('is_active', true)->pluck('slug')->map(fn ($slug) => route('rooms.show', $slug)));
+
     return response()->view('sitemap', compact('urls'))->header('Content-Type', 'application/xml');
 })->name('sitemap');
-Route::get('/health', function () { \Illuminate\Support\Facades\DB::select('select 1'); return response()->json(['status' => 'ok']); })->name('health');
+Route::get('/health', function () {
+    DB::select('select 1');
+
+    return response()->json(['status' => 'ok']);
+})->name('health');
 Route::view('/privacy', 'legal.privacy')->name('privacy');
 Route::view('/terms', 'legal.terms')->name('terms');
 Route::get('/rooms', [RoomController::class, 'index'])->name('rooms.index');
@@ -38,8 +46,20 @@ Route::post('/forgot-password', [AuthController::class, 'sendResetLink'])->middl
 Route::get('/reset-password/{token}', [AuthController::class, 'showResetPassword'])->middleware('guest')->name('password.reset');
 Route::post('/reset-password', [AuthController::class, 'resetPassword'])->middleware(['guest', 'throttle:5,1'])->name('password.update');
 Route::get('/email/verify', fn () => view('auth.verify-email'))->middleware('auth')->name('verification.notice');
-Route::get('/email/verify/{id}/{hash}', function (\Illuminate\Foundation\Auth\EmailVerificationRequest $request) { $request->fulfill(); return redirect()->route('home')->with('success', 'Your email address has been verified.'); })->middleware(['auth', 'signed', 'throttle:6,1'])->name('verification.verify');
-Route::post('/email/verification-notification', function (\Illuminate\Http\Request $request) { try { $request->user()->sendEmailVerificationNotification(); } catch (\Throwable $exception) { report($exception); } return back()->with('success', 'If mail is configured, a verification link has been sent.'); })->middleware(['auth', 'throttle:6,1'])->name('verification.send');
+Route::get('/email/verify/{id}/{hash}', function (EmailVerificationRequest $request) {
+    $request->fulfill();
+
+    return redirect()->route('home')->with('success', 'Your email address has been verified.');
+})->middleware(['auth', 'signed', 'throttle:6,1'])->name('verification.verify');
+Route::post('/email/verification-notification', function (Request $request) {
+    try {
+        $request->user()->sendEmailVerificationNotification();
+    } catch (Throwable $exception) {
+        report($exception);
+    }
+
+return back()->with('success', 'If mail is configured, a verification link has been sent.');
+})->middleware(['auth', 'throttle:6,1'])->name('verification.send');
 Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth')->name('logout');
 
 Route::get('/rooms/{room:slug}/book', [BookingController::class, 'create'])->name('bookings.create');

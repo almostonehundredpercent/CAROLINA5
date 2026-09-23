@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\Room;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
@@ -13,7 +14,9 @@ class HostedSetupSeeder extends Seeder
      */
     public function run(): void
     {
-        if (\App\Models\Room::query()->doesntExist()) $this->call(RoomSeeder::class);
+        if (Room::query()->doesntExist()) {
+            $this->call(RoomSeeder::class);
+        }
 
         $email = env('ADMIN_EMAIL');
         $password = env('ADMIN_PASSWORD');
@@ -44,7 +47,9 @@ class HostedSetupSeeder extends Seeder
         ];
 
         foreach ($testAccounts as [$testEmail, $testPassword, $testRole, $testName]) {
-            if (! $testEmail || ! $testPassword || ! in_array($testRole, ['front_desk', 'housekeeping', 'viewer'], true)) continue;
+            if (! $testEmail || ! $testPassword || ! in_array($testRole, ['front_desk', 'housekeeping', 'viewer'], true)) {
+                continue;
+            }
 
             User::updateOrCreate(
                 ['email' => $testEmail],

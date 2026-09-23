@@ -3,13 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Support\AdminPermissions;
+use Illuminate\Auth\Events\PasswordReset;
+use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
-use Illuminate\Auth\Events\PasswordReset;
-use Illuminate\Auth\Events\Registered;
-use App\Support\AdminPermissions;
 
 class AuthController extends Controller
 {
@@ -49,7 +49,7 @@ class AuthController extends Controller
 
         $user = User::where('email', $credentials['email'])->first();
 
-        if (!$user || !Hash::check($credentials['password'], $user->password)) {
+        if (! $user || ! Hash::check($credentials['password'], $user->password)) {
             return back()->withErrors([
                 'email' => 'That email and password do not match an account.',
             ])->onlyInput('email');
@@ -84,6 +84,7 @@ class AuthController extends Controller
             event(new Registered($user));
         } catch (\Throwable $exception) {
             report($exception);
+
             return redirect()->route('verification.notice')->withErrors([
                 'email' => 'Your account was created, but we could not schedule the verification email. Please use Send another verification link below. You do not need to register again.',
             ]);
@@ -116,6 +117,7 @@ class AuthController extends Controller
         } catch (\Throwable $exception) {
             report($exception);
         }
+
         return back()->with('success', 'If that address belongs to an account, a password reset link has been sent.');
     }
 
@@ -132,6 +134,7 @@ class AuthController extends Controller
             $user->forceFill(['password' => Hash::make($password), 'remember_token' => Str::random(60)])->save();
             event(new PasswordReset($user));
         });
+
         return $status === Password::PASSWORD_RESET
             ? redirect()->route('login')->with('success', 'Password reset. You can now sign in.')
             : back()->withErrors(['email' => __($status)]);

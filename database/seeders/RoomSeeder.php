@@ -1,8 +1,11 @@
 <?php
+
 namespace Database\Seeders;
+
 use App\Models\Room;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Str;
+
 class RoomSeeder extends Seeder
 {
     public function run(): void
@@ -18,7 +21,7 @@ class RoomSeeder extends Seeder
             Room::updateOrCreate(['slug' => Str::slug($name)], [
                 'name' => $name, 'room_type' => $type, 'beds' => $beds, 'guests' => $guests,
                 'price_per_night' => $price, 'rate_label' => $rateLabel, 'rental_hours' => $rentalHours,
-            'description' => $description, 'image_url' => $image, 'amenities' => $amenities, 'is_active' => true,
+                'description' => $description, 'image_url' => $image, 'amenities' => $amenities, 'is_active' => true,
             ]);
         }
     }

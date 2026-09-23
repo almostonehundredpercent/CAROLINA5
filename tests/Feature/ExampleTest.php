@@ -1,15 +1,18 @@
 <?php
 
+use App\Mail\BookingConfirmation;
+use App\Mail\NewBookingRequest;
 use App\Models\Booking;
 use App\Models\Room;
 use App\Models\RoomBlock;
 use App\Models\User;
+use App\Notifications\QueuedResetPassword;
+use App\Notifications\QueuedVerifyEmail;
+use Illuminate\Notifications\SendQueuedNotifications;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Notification;
-use App\Mail\BookingConfirmation;
-use App\Mail\NewBookingRequest;
-use App\Notifications\QueuedVerifyEmail;
-use App\Notifications\QueuedResetPassword;
+use Illuminate\Support\Facades\Queue;
+use Illuminate\Support\Str;
 
 function testRoom(): Room
 {
@@ -57,7 +60,7 @@ test('a new account receives an email verification notification', function () {
 });
 
 test('custom-domain email addresses are accepted consistently', function () {
-    \Illuminate\Support\Facades\Queue::fake();
+    Queue::fake();
     $email = 'DKJLVNSRSUNUWVKJMZ@KJKPC.NET';
 
     $this->post(route('register.submit'), [
@@ -69,12 +72,12 @@ test('custom-domain email addresses are accepted consistently', function () {
     expect($user->email)->toBe('dkjlvnsrsunuwvkjmz@kjkpc.net');
     $this->post(route('password.email'), ['email' => $email])->assertRedirect()->assertSessionHasNoErrors();
     $user->sendPasswordResetNotification('test-token');
-    \Illuminate\Support\Facades\Queue::assertPushed(\Illuminate\Notifications\SendQueuedNotifications::class,
+    Queue::assertPushed(SendQueuedNotifications::class,
         fn ($job) => $job->notification instanceof QueuedResetPassword);
 });
 
 test('an email copied with an escaped at sign is accepted', function () {
-    \Illuminate\Support\Facades\Queue::fake();
+    Queue::fake();
 
     $this->post(route('register.submit'), [
         'name' => 'Copied Address Guest',
@@ -87,18 +90,18 @@ test('an email copied with an escaped at sign is accepted', function () {
 });
 
 test('registration schedules email without contacting the mail server', function () {
-    \Illuminate\Support\Facades\Queue::fake();
+    Queue::fake();
     $this->post(route('register.submit'), [
         'name' => 'Queue Test', 'email' => 'queue@example.com',
         'password' => 'password123', 'password_confirmation' => 'password123',
     ])->assertRedirect(route('verification.notice'))->assertSessionHasNoErrors();
     $this->assertAuthenticated();
-    \Illuminate\Support\Facades\Queue::assertPushed(\Illuminate\Notifications\SendQueuedNotifications::class,
+    Queue::assertPushed(SendQueuedNotifications::class,
         fn ($job) => $job->connection === 'database' && $job->queue === 'mail');
 });
 
 test('registration remains usable when verification scheduling fails', function () {
-    Notification::shouldReceive('send')->once()->andThrow(new \RuntimeException('Queue unavailable'));
+    Notification::shouldReceive('send')->once()->andThrow(new RuntimeException('Queue unavailable'));
     $this->post(route('register.submit'), [
         'name' => 'Recovery Test', 'email' => 'recovery@example.com',
         'password' => 'password123', 'password_confirmation' => 'password123',
@@ -108,11 +111,11 @@ test('registration remains usable when verification scheduling fails', function 
 });
 
 test('password resets are queued for the mail worker', function () {
-    \Illuminate\Support\Facades\Queue::fake();
+    Queue::fake();
     $user = User::factory()->create(['email' => 'reset@example.com']);
     $this->post(route('password.email'), ['email' => $user->email])
         ->assertRedirect()->assertSessionHasNoErrors();
-    \Illuminate\Support\Facades\Queue::assertPushed(\Illuminate\Notifications\SendQueuedNotifications::class,
+    Queue::assertPushed(SendQueuedNotifications::class,
         fn ($job) => $job->connection === 'database' && $job->queue === 'mail'
             && $job->notification instanceof QueuedResetPassword);
 });
@@ -122,7 +125,7 @@ test('a reservation request reserves its times and queues booking emails', funct
     config()->set('mail.notifications.address', 'staff@example.com');
     $room = testRoom();
     $checkIn = now()->addDays(3)->startOfDay();
-    $payload = ['checkout_type' => 'guest', 'booking_type' => 'dates', 'check_in' => $checkIn->toDateString(), 'check_out' => $checkIn->copy()->addDays(2)->toDateString(), 'guests' => 2, 'children_count' => 1, 'pets_count' => 1, 'guest_name' => 'Test Guest', 'guest_email' => 'guest@example.com', 'guest_phone' => '09171234567', 'terms_accepted' => '1', 'submission_token' => (string) \Illuminate\Support\Str::uuid()];
+    $payload = ['checkout_type' => 'guest', 'booking_type' => 'dates', 'check_in' => $checkIn->toDateString(), 'check_out' => $checkIn->copy()->addDays(2)->toDateString(), 'guests' => 2, 'children_count' => 1, 'pets_count' => 1, 'guest_name' => 'Test Guest', 'guest_email' => 'guest@example.com', 'guest_phone' => '09171234567', 'terms_accepted' => '1', 'submission_token' => (string) Str::uuid()];
     $this->post(route('bookings.store', $room), $payload)->assertRedirect()->assertSessionHasNoErrors();
     $booking = Booking::firstOrFail();
     expect($booking->status)->toBe('pending')->and($booking->hold_expires_at)->toBeNull()->and($booking->check_in_at->toDateString())->toBe($checkIn->toDateString())->and($booking->children_count)->toBe(1)->and($booking->pets_count)->toBe(1);
@@ -131,10 +134,10 @@ test('a reservation request reserves its times and queues booking emails', funct
     Mail::assertQueued(BookingConfirmation::class, fn ($mail) => $mail->hasTo('guest@example.com'));
     Mail::assertQueued(NewBookingRequest::class, fn ($mail) => $mail->hasTo('staff@example.com'));
     $this->get(route('rooms.index', ['check_in' => $checkIn->toDateString(), 'check_out' => $checkIn->copy()->addDay()->toDateString()]))->assertOk()->assertSee('No rooms found');
-    $payload['submission_token'] = (string) \Illuminate\Support\Str::uuid();
+    $payload['submission_token'] = (string) Str::uuid();
     $this->post(route('bookings.store', $room), $payload)->assertSessionHasErrors('availability');
     expect(Booking::count())->toBe(1);
-    $this->get(route('rooms.availability', ['room'=>$room, 'start'=>$checkIn->toIso8601String(), 'end'=>$checkIn->copy()->addDay()->toIso8601String()]))->assertJson(['available'=>false]);
+    $this->get(route('rooms.availability', ['room' => $room, 'start' => $checkIn->toIso8601String(), 'end' => $checkIn->copy()->addDay()->toIso8601String()]))->assertJson(['available' => false]);
 });
 
 test('hourly reservations only accept advertised arrival hours', function () {

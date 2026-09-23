@@ -8,13 +8,13 @@ use App\Support\FinancialSummary;
 function financeBooking(string $status, int $amount): Booking
 {
     $room = Room::create([
-        'name' => 'Finance room ' . uniqid(), 'slug' => 'finance-' . uniqid(), 'room_type' => 'Test',
+        'name' => 'Finance room '.uniqid(), 'slug' => 'finance-'.uniqid(), 'room_type' => 'Test',
         'description' => 'Financial calculation test room.', 'beds' => 1, 'guests' => 2,
         'price_per_night' => $amount, 'is_active' => true,
     ]);
 
     return Booking::create([
-        'room_id' => $room->id, 'guest_name' => 'Finance guest', 'guest_email' => uniqid() . '@example.test',
+        'room_id' => $room->id, 'guest_name' => 'Finance guest', 'guest_email' => uniqid().'@example.test',
         'guest_phone' => '09171234567', 'check_in' => now()->addDay()->toDateString(),
         'check_out' => now()->addDays(2)->toDateString(), 'check_in_at' => now()->addDay()->startOfHour(),
         'check_out_at' => now()->addDays(2)->startOfHour(), 'guests' => 1, 'nights' => 1,

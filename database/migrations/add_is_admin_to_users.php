@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::table('users', function (Blueprint $table) {
             // Add is_admin column if it doesn't exist
-            if (!Schema::hasColumn('users', 'is_admin')) {
+            if (! Schema::hasColumn('users', 'is_admin')) {
                 $table->boolean('is_admin')->default(false)->after('email');
             }
         });

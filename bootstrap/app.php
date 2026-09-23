@@ -1,5 +1,9 @@
 <?php
 
+use App\Http\Middleware\AdminMiddleware;
+use App\Http\Middleware\PreventAuthenticatedPageCaching;
+use App\Http\Middleware\RequireAdminPermission;
+use App\Http\Middleware\SecurityHeaders;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -17,19 +21,19 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->trustProxies(at: '*');
 
         $middleware->alias([
-            'admin' => \App\Http\Middleware\AdminMiddleware::class,
-            'admin.permission' => \App\Http\Middleware\RequireAdminPermission::class,
+            'admin' => AdminMiddleware::class,
+            'admin.permission' => RequireAdminPermission::class,
         ]);
 
         $middleware->appendToGroup('web', [
-            \App\Http\Middleware\PreventAuthenticatedPageCaching::class,
-            \App\Http\Middleware\SecurityHeaders::class,
+            PreventAuthenticatedPageCaching::class,
+            SecurityHeaders::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         // Render streams stderr to its application-log view. Keep the public
         // error page generic, but retain the exception details for operators.
-        $exceptions->report(function (\Throwable $exception): void {
+        $exceptions->report(function (Throwable $exception): void {
             Log::error('Unhandled application exception.', [
                 'exception' => $exception,
             ]);

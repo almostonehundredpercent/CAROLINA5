@@ -2,10 +2,11 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration {
+return new class extends Migration
+{
     public function up(): void
     {
         Schema::table('rooms', function (Blueprint $table) {
@@ -42,7 +43,12 @@ return new class extends Migration {
             $table->dropForeign(['completed_by']);
             $table->dropColumn(['completed_at', 'completed_by']);
         });
-        Schema::table('bookings', function (Blueprint $table) { $table->dropUnique(['submission_token']); $table->dropColumn('submission_token'); });
-        Schema::table('rooms', function (Blueprint $table) { $table->dropColumn('default_check_in_time'); });
+        Schema::table('bookings', function (Blueprint $table) {
+            $table->dropUnique(['submission_token']);
+            $table->dropColumn('submission_token');
+        });
+        Schema::table('rooms', function (Blueprint $table) {
+            $table->dropColumn('default_check_in_time');
+        });
     }
 };
