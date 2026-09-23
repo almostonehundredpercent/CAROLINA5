@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Notification;
 use App\Mail\BookingConfirmation;
 use App\Mail\NewBookingRequest;
 use App\Notifications\QueuedVerifyEmail;
+use App\Notifications\QueuedResetPassword;
 
 function testRoom(): Room
 {
@@ -74,6 +75,16 @@ test('registration remains usable when verification scheduling fails', function 
     ])->assertRedirect(route('verification.notice'))->assertSessionHasErrors('email');
     $this->assertAuthenticated();
     expect(User::where('email', 'recovery@example.com')->count())->toBe(1);
+});
+
+test('password resets are queued for the mail worker', function () {
+    \Illuminate\Support\Facades\Queue::fake();
+    $user = User::factory()->create(['email' => 'reset@example.com']);
+    $this->post(route('password.email'), ['email' => $user->email])
+        ->assertRedirect()->assertSessionHasNoErrors();
+    \Illuminate\Support\Facades\Queue::assertPushed(\Illuminate\Notifications\SendQueuedNotifications::class,
+        fn ($job) => $job->connection === 'database' && $job->queue === 'mail'
+            && $job->notification instanceof QueuedResetPassword);
 });
 
 test('a reservation request reserves its times and queues booking emails', function () {
