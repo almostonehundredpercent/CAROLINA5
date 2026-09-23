@@ -64,14 +64,19 @@ class AuthController extends Controller
             'is_admin' => false,
         ]);
 
-        // Laravel's registered event sends the signed verification email through
-        // the configured mail provider, confirming the newly created account.
-        event(new Registered($user));
-
         auth()->login($user);
         $request->session()->regenerate();
 
-        return redirect()->route('verification.notice')->with('success', 'Your account is ready. We sent a verification link to your email address.');
+        try {
+            event(new Registered($user));
+        } catch (\Throwable $exception) {
+            report($exception);
+            return redirect()->route('verification.notice')->withErrors([
+                'email' => 'Your account was created, but we could not schedule the verification email. Please use Send another verification link below. You do not need to register again.',
+            ]);
+        }
+
+        return redirect()->route('verification.notice')->with('success', 'Your account is ready. Your verification email is queued for delivery. Please check your inbox and spam folder shortly.');
     }
 
     public function logout(Request $request)

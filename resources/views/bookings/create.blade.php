@@ -224,6 +224,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const check = async () => {
         const run = ++sequence;
         const data = new FormData(form);
+        status.textContent = 'Choose your stay dates to check availability. Pending reservations also reserve their time slot.';
         let start, end;
         if (data.get('booking_type') === 'hourly') {
             if (!data.get('hourly_date') || !data.get('check_in_time')) return false;
@@ -250,6 +251,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     form.addEventListener('click', event => { if (event.target.closest('#booking-submit')) return; clearTimeout(timer); timer = setTimeout(check, 100); });
     form.addEventListener('change', check);
+    check();
     form.addEventListener('submit', async event => {
         if (allowed) return;
         event.preventDefault(); event.stopImmediatePropagation(); clearTimeout(timer); submit.disabled = true;

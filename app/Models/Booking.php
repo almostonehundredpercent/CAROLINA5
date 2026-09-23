@@ -61,7 +61,7 @@ class Booking extends Model
     {
         return $query->where(function ($query) use ($startsAt, $endsAt) {
             $query->where(fn ($timed) => $timed->whereNotNull('check_in_at')->where('check_in_at', '<', $endsAt)->where('check_out_at', '>', $startsAt))
-                ->orWhere(fn ($legacy) => $legacy->whereNull('check_in_at')->where('check_in', '<', $endsAt->toDateString())->where('check_out', '>', $startsAt->toDateString()));
+                ->orWhere(fn ($legacy) => $legacy->whereNull('check_in_at')->whereDate('check_in', '<', $endsAt->copy()->ceilDay()->toDateString())->whereDate('check_out', '>', $startsAt->toDateString()));
         });
     }
 }

@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Notification;
 use App\Mail\BookingConfirmation;
 use App\Mail\NewBookingRequest;
-use Illuminate\Auth\Notifications\VerifyEmail;
+use App\Notifications\QueuedVerifyEmail;
 
 function testRoom(): Room
 {
@@ -22,6 +22,16 @@ function confirmedBooking(Room $room, $start, $end): Booking
 
 test('the public home page loads with a Carolina title', function () {
     $this->get('/')->assertOk()->assertSee('Carolina');
+});
+
+test('legacy date-only stays block hourly arrivals but allow checkout boundaries', function () {
+    $room = testRoom();
+    $day = now()->addDays(4)->startOfDay();
+    $booking = confirmedBooking($room, $day, $day->copy()->addDay());
+    $booking->update(['check_in_at' => null, 'check_out_at' => null]);
+    expect($room->bookings()->blocking()->overlapping($day->copy()->addHours(6), $day->copy()->addHours(12))->exists())->toBeTrue();
+    expect($room->bookings()->blocking()->overlapping($day->copy()->subDay(), $day)->exists())->toBeFalse();
+    expect($room->bookings()->blocking()->overlapping($day->copy()->addDay(), $day->copy()->addDays(2))->exists())->toBeFalse();
 });
 
 test('an administrator can sign in with a fresh session', function () {
@@ -42,7 +52,28 @@ test('a new account receives an email verification notification', function () {
     ])->assertRedirect(route('verification.notice'));
 
     $user = User::where('email', 'new.guest@example.com')->firstOrFail();
-    Notification::assertSentTo($user, VerifyEmail::class);
+    Notification::assertSentTo($user, QueuedVerifyEmail::class);
+});
+
+test('registration schedules email without contacting the mail server', function () {
+    \Illuminate\Support\Facades\Queue::fake();
+    $this->post(route('register.submit'), [
+        'name' => 'Queue Test', 'email' => 'queue@example.com',
+        'password' => 'password123', 'password_confirmation' => 'password123',
+    ])->assertRedirect(route('verification.notice'))->assertSessionHasNoErrors();
+    $this->assertAuthenticated();
+    \Illuminate\Support\Facades\Queue::assertPushed(\Illuminate\Notifications\SendQueuedNotifications::class,
+        fn ($job) => $job->connection === 'database' && $job->queue === 'mail');
+});
+
+test('registration remains usable when verification scheduling fails', function () {
+    Notification::shouldReceive('send')->once()->andThrow(new \RuntimeException('Queue unavailable'));
+    $this->post(route('register.submit'), [
+        'name' => 'Recovery Test', 'email' => 'recovery@example.com',
+        'password' => 'password123', 'password_confirmation' => 'password123',
+    ])->assertRedirect(route('verification.notice'))->assertSessionHasErrors('email');
+    $this->assertAuthenticated();
+    expect(User::where('email', 'recovery@example.com')->count())->toBe(1);
 });
 
 test('a reservation request reserves its times and queues booking emails', function () {
