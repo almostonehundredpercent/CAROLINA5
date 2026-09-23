@@ -176,6 +176,14 @@
                 });
             });
 
+            // Keep addresses copied from Markdown or chat apps usable. Those
+            // apps sometimes insert a literal backslash before the @ symbol.
+            document.querySelectorAll('input[type="email"]').forEach((input) => {
+                input.addEventListener('input', () => {
+                    if (input.value.includes('\\@')) input.value = input.value.replaceAll('\\@', '@');
+                });
+            });
+
             if (!toggle || !navigation) return;
 
             toggle.addEventListener('click', () => {

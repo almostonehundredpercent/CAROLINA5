@@ -16,7 +16,11 @@ class AuthController extends Controller
     private function normalizeEmail(Request $request): void
     {
         if ($request->filled('email')) {
-            $request->merge(['email' => strtolower(trim((string) $request->input('email')))]);
+            // A backslash before @ is commonly introduced when an address is
+            // copied from formatted text (for example, "name\\@domain.com").
+            // It is not part of the address, so remove it before validation.
+            $email = str_replace('\\@', '@', trim((string) $request->input('email')));
+            $request->merge(['email' => strtolower($email)]);
         }
     }
 
@@ -47,7 +51,7 @@ class AuthController extends Controller
 
         if (!$user || !Hash::check($credentials['password'], $user->password)) {
             return back()->withErrors([
-                'email' => 'Invalid email or password.',
+                'email' => 'That email and password do not match an account.',
             ])->onlyInput('email');
         }
 

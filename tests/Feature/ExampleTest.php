@@ -73,6 +73,19 @@ test('custom-domain email addresses are accepted consistently', function () {
         fn ($job) => $job->notification instanceof QueuedResetPassword);
 });
 
+test('an email copied with an escaped at sign is accepted', function () {
+    \Illuminate\Support\Facades\Queue::fake();
+
+    $this->post(route('register.submit'), [
+        'name' => 'Copied Address Guest',
+        'email' => 'dkjlvnsrsunuwvkjmz\\@kjkpc.net',
+        'password' => 'password123',
+        'password_confirmation' => 'password123',
+    ])->assertRedirect(route('verification.notice'))->assertSessionHasNoErrors();
+
+    $this->assertDatabaseHas('users', ['email' => 'dkjlvnsrsunuwvkjmz@kjkpc.net']);
+});
+
 test('registration schedules email without contacting the mail server', function () {
     \Illuminate\Support\Facades\Queue::fake();
     $this->post(route('register.submit'), [
