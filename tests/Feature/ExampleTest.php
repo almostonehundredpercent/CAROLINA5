@@ -56,6 +56,23 @@ test('a new account receives an email verification notification', function () {
     Notification::assertSentTo($user, QueuedVerifyEmail::class);
 });
 
+test('custom-domain email addresses are accepted consistently', function () {
+    \Illuminate\Support\Facades\Queue::fake();
+    $email = 'DKJLVNSRSUNUWVKJMZ@KJKPC.NET';
+
+    $this->post(route('register.submit'), [
+        'name' => 'Custom Domain Guest', 'email' => $email,
+        'password' => 'password123', 'password_confirmation' => 'password123',
+    ])->assertRedirect(route('verification.notice'))->assertSessionHasNoErrors();
+
+    $user = User::where('email', 'dkjlvnsrsunuwvkjmz@kjkpc.net')->firstOrFail();
+    expect($user->email)->toBe('dkjlvnsrsunuwvkjmz@kjkpc.net');
+    $this->post(route('password.email'), ['email' => $email])->assertRedirect()->assertSessionHasNoErrors();
+    $user->sendPasswordResetNotification('test-token');
+    \Illuminate\Support\Facades\Queue::assertPushed(\Illuminate\Notifications\SendQueuedNotifications::class,
+        fn ($job) => $job->notification instanceof QueuedResetPassword);
+});
+
 test('registration schedules email without contacting the mail server', function () {
     \Illuminate\Support\Facades\Queue::fake();
     $this->post(route('register.submit'), [

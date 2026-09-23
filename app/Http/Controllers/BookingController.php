@@ -87,6 +87,9 @@ class BookingController extends Controller
     public function store(Request $request, Room $room)
     {
         if (! $room->is_active) abort(404);
+        if ($request->filled('guest_email')) {
+            $request->merge(['guest_email' => strtolower(trim((string) $request->input('guest_email')))]);
+        }
         if ($request->filled('guest_phone')) {
             $request->merge(['guest_phone' => preg_replace('/[\s()\-]/', '', (string) $request->input('guest_phone'))]);
         }
@@ -191,7 +194,8 @@ class BookingController extends Controller
 
     public function cancelGuest(Request $request, Booking $booking)
     {
-        $data = $request->validate(['email' => 'required|email', 'reference' => 'required|string']);
+        if ($request->filled('email')) $request->merge(['email' => strtolower(trim((string) $request->input('email')))]);
+        $data = $request->validate(['email' => 'required|email:rfc|max:255', 'reference' => 'required|string']);
         abort_unless(
             $booking->user_id === null
                 && strcasecmp($booking->reference, trim($data['reference'])) === 0
@@ -206,7 +210,8 @@ class BookingController extends Controller
     }
     public function extendGuest(Request $request, Booking $booking)
     {
-        $data = $request->validate(['email' => 'required|email', 'reference' => 'required|string', 'hours' => 'required|integer|in:6,12,22,24,48,72,96,120,168']);
+        if ($request->filled('email')) $request->merge(['email' => strtolower(trim((string) $request->input('email')))]);
+        $data = $request->validate(['email' => 'required|email:rfc|max:255', 'reference' => 'required|string', 'hours' => 'required|integer|in:6,12,22,24,48,72,96,120,168']);
         abort_unless($booking->user_id === null && strcasecmp($booking->reference, trim($data['reference'])) === 0 && strcasecmp((string) $booking->guest_email, trim($data['email'])) === 0, 403);
         abort_if($booking->status !== 'confirmed' || ! $booking->checked_in_at || $booking->checked_out_at, 422, 'Extensions are available only for checked-in, confirmed guests.');
         $end = $booking->check_out_at ?? $booking->check_out->copy()->startOfDay();
@@ -221,7 +226,7 @@ class BookingController extends Controller
         return back()->with('success', 'Your stay was extended. Your updated receipt total is now available.');
     }
     public function lookupForm() { return view('bookings.lookup'); }
-    public function lookup(Request $request) { $data = $request->validate(['email' => 'required|email', 'reference' => 'required|string']); $booking = Booking::with('room')->where('reference', strtoupper(trim($data['reference'])))->where(function ($query) use ($data) { $query->where('guest_email', $data['email'])->orWhereHas('user', fn ($user) => $user->where('email', $data['email'])); })->first(); if (! $booking) return back()->withErrors(['reference' => 'No booking matches that email and reference code.']); $request->session()->put('guest_booking_reference', $booking->reference); return view('bookings.lookup-result', ['booking' => $booking, 'lookupEmail' => $data['email']]); }
+    public function lookup(Request $request) { if ($request->filled('email')) $request->merge(['email' => strtolower(trim((string) $request->input('email')))]); $data = $request->validate(['email' => 'required|email:rfc|max:255', 'reference' => 'required|string']); $booking = Booking::with('room')->where('reference', strtoupper(trim($data['reference'])))->where(function ($query) use ($data) { $query->where('guest_email', $data['email'])->orWhereHas('user', fn ($user) => $user->where('email', $data['email'])); })->first(); if (! $booking) return back()->withErrors(['reference' => 'No booking matches that email and reference code.']); $request->session()->put('guest_booking_reference', $booking->reference); return view('bookings.lookup-result', ['booking' => $booking, 'lookupEmail' => $data['email']]); }
 
     private function cancelBeforeCheckIn(Booking $booking): void
     {

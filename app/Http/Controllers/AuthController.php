@@ -13,6 +13,13 @@ use App\Support\AdminPermissions;
 
 class AuthController extends Controller
 {
+    private function normalizeEmail(Request $request): void
+    {
+        if ($request->filled('email')) {
+            $request->merge(['email' => strtolower(trim((string) $request->input('email')))]);
+        }
+    }
+
     public function showLogin()
     {
         return view('auth.login');
@@ -30,8 +37,9 @@ class AuthController extends Controller
 
     public function login(Request $request)
     {
+        $this->normalizeEmail($request);
         $credentials = $request->validate([
-            'email' => 'required|email',
+            'email' => 'required|email:rfc|max:255',
             'password' => 'required|min:6',
         ]);
 
@@ -51,9 +59,10 @@ class AuthController extends Controller
 
     public function register(Request $request)
     {
+        $this->normalizeEmail($request);
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email',
+            'email' => 'required|email:rfc|max:255|unique:users,email',
             'password' => 'required|min:8|confirmed',
         ]);
 
@@ -96,7 +105,8 @@ class AuthController extends Controller
 
     public function sendResetLink(Request $request)
     {
-        $request->validate(['email' => 'required|email']);
+        $this->normalizeEmail($request);
+        $request->validate(['email' => 'required|email:rfc|max:255']);
         try {
             Password::sendResetLink($request->only('email'));
         } catch (\Throwable $exception) {
@@ -112,7 +122,8 @@ class AuthController extends Controller
 
     public function resetPassword(Request $request)
     {
-        $data = $request->validate(['token' => 'required', 'email' => 'required|email', 'password' => 'required|min:8|confirmed']);
+        $this->normalizeEmail($request);
+        $data = $request->validate(['token' => 'required', 'email' => 'required|email:rfc|max:255', 'password' => 'required|min:8|confirmed']);
         $status = Password::reset($data, function (User $user, string $password) {
             $user->forceFill(['password' => Hash::make($password), 'remember_token' => Str::random(60)])->save();
             event(new PasswordReset($user));

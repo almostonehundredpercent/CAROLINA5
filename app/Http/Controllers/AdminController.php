@@ -212,7 +212,7 @@ class AdminController extends Controller
         $data = $request->validate([
             'room_id' => 'required|exists:rooms,id',
             'guest_name' => 'required|string|max:255',
-            'guest_email' => 'nullable|email|max:255',
+            'guest_email' => 'nullable|email:rfc|max:255',
             'guest_phone' => 'required|string|max:30',
             'guests' => 'required|integer|min:1',
             'check_in' => 'required|date|after_or_equal:today',
