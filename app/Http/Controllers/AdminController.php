@@ -194,6 +194,67 @@ class AdminController extends Controller
         return back()->with('success', 'Payment record updated.');
     }
 
+    /**
+     * Record a verified manual refund. This deliberately records the staff
+     * action; it does not claim to initiate a transfer through GCash or a bank.
+     */
+    public function refundPayment(Request $request, Booking $booking)
+    {
+        abort_unless($request->user()->canManageBookings(), 403, 'Your staff role cannot manage refunds.');
+
+        $data = $request->validate([
+            'amount' => ['required', 'numeric', 'min:0.01', 'max:999999.99'],
+            'reason' => ['required', 'string', 'min:3', 'max:500'],
+        ]);
+
+        $refund = DB::transaction(function () use ($booking, $data, $request) {
+            $lockedBooking = Booking::whereKey($booking->id)->lockForUpdate()->firstOrFail();
+            $payments = Payment::where('booking_id', $lockedBooking->id)->lockForUpdate()->get();
+            $paid = (float) $payments->where('status', 'paid')->sum('amount');
+            $alreadyRefunded = (float) $payments->where('status', 'refunded')->sum('amount');
+            $refundable = max(0.0, $paid - $alreadyRefunded);
+            $amount = round((float) $data['amount'], 2);
+
+            if ($refundable < 0.01) {
+                throw ValidationException::withMessages(['amount' => 'There is no recorded payment available to refund.']);
+            }
+
+            if ($amount > $refundable + 0.00001) {
+                throw ValidationException::withMessages(['amount' => 'The refund cannot exceed the remaining refundable amount of ₱'.number_format($refundable, 2).'.']);
+            }
+
+            $before = $lockedBooking->only(['payment_status', 'payment_method', 'paid_at']);
+            $fullyRefunded = abs($refundable - $amount) < 0.01;
+            $refund = Payment::create([
+                'booking_id' => $lockedBooking->id,
+                'amount' => $amount,
+                'method' => in_array($lockedBooking->payment_method, ['cash', 'gcash'], true) ? $lockedBooking->payment_method : 'cash',
+                'status' => 'refunded',
+                'reference' => 'REF-'.$lockedBooking->reference.'-'.now()->format('YmdHis'),
+                'notes' => 'Refund reason: '.trim($data['reason']),
+                'paid_at' => now(),
+                'recorded_by' => $request->user()->id,
+            ]);
+
+            $lockedBooking->update(['payment_status' => $fullyRefunded ? 'refunded' : 'paid']);
+            $this->log(
+                $lockedBooking->fresh(),
+                $request->user()->id,
+                'payment_refunded',
+                'Refund of ₱'.number_format($amount, 2).' recorded. Reason: '.trim($data['reason']),
+                $before,
+                ['refund_amount' => $amount, 'remaining_refundable' => max(0, $refundable - $amount), 'payment_status' => $fullyRefunded ? 'refunded' : 'paid']
+            );
+
+            return $refund;
+        });
+
+        $freshBooking = $booking->fresh('room');
+        $this->email($freshBooking, 'Refund recorded for your Carolina booking', 'A refund of ₱'.number_format((float) $refund->amount, 2).' has been recorded for booking '.$freshBooking->reference.'. Please contact Carolina if you have any questions.');
+
+        return back()->with('success', 'Refund of ₱'.number_format((float) $refund->amount, 2).' recorded and the guest was notified.');
+    }
+
     public function walkInForm()
     {
         $this->refreshInventory();
@@ -342,7 +403,7 @@ class AdminController extends Controller
         [$chartLabels, $chartValues] = $this->bookingChartData($period);
         $rooms = $this->roomsWithDisplayStatus();
 
-        $bookingQuery = Booking::with(['user', 'room'])->latest();
+        $bookingQuery = Booking::with(['user', 'room', 'payments'])->latest();
         if ($request->filled('status')) {
             $bookingQuery->where('status', $request->string('status')->value());
         }

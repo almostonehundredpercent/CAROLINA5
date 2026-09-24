@@ -15,6 +15,12 @@
         .booking-filters { display:flex; flex-wrap:wrap; gap:8px; margin:0 0 16px; }
         .booking-filters input, .booking-filters select { border:1px solid var(--line); border-radius:7px; padding:9px; font:inherit; }
         .booking-filters button { border:0; border-radius:7px; padding:9px 13px; background:var(--orange); color:#fff; font-weight:700; cursor:pointer; }
+        .refund-panel { margin-top:7px; min-width:245px; }
+        .refund-panel summary { color:var(--orange-dark); cursor:pointer; font-size:12px; font-weight:700; }
+        .refund-form { display:grid; grid-template-columns:1fr 1fr auto; gap:6px; margin-top:8px; padding:9px; border:1px solid var(--line); border-radius:9px; background:var(--paper); }
+        .refund-form label { display:grid; gap:3px; color:var(--muted); font-size:10px; font-weight:700; }
+        .refund-form input { min-width:0; padding:7px; border:1px solid var(--line); border-radius:6px; font:inherit; }
+        .refund-form button { align-self:end; min-height:33px; border:1px solid #c85b48; border-radius:7px; background:#fff4f1; color:#a23d2e; font-weight:700; cursor:pointer; }
     </style>
 </head>
 <body>
@@ -98,6 +104,7 @@
                                     </td>
                                     <td>
                                         <div class="booking-actions">
+                                            @php($refundableAmount = max(0, (float) $booking->payments->where('status', 'paid')->sum('amount') - (float) $booking->payments->where('status', 'refunded')->sum('amount')))
                                             @if($booking->status !== 'cancelled')
                                                 <form method="POST" action="{{ route('admin.bookings.payment', $booking) }}" onsubmit="return confirm('Update this payment record?')">
                                                     @csrf @method('PATCH')
@@ -138,6 +145,22 @@
                                                     <input type="hidden" name="status" value="cancelled">
                                                     <button class="status-select cancelled" type="submit">Cancel</button>
                                                 </form>
+                                            @endif
+
+                                            @if($refundableAmount > 0)
+                                                <details class="refund-panel">
+                                                    <summary>Record refund · ₱{{ number_format($refundableAmount, 2) }} available</summary>
+                                                    <form class="refund-form" method="POST" action="{{ route('admin.bookings.refunds.store', $booking) }}" onsubmit="return confirm('Record this refund? This only records the refund; complete any cash or GCash transfer separately.')">
+                                                        @csrf
+                                                        <label>Amount
+                                                            <input name="amount" type="number" min="0.01" max="{{ number_format($refundableAmount, 2, '.', '') }}" step="0.01" value="{{ number_format($refundableAmount, 2, '.', '') }}" required>
+                                                        </label>
+                                                        <label>Reason
+                                                            <input name="reason" maxlength="500" placeholder="e.g. cancelled stay" required>
+                                                        </label>
+                                                        <button type="submit">Record refund</button>
+                                                    </form>
+                                                </details>
                                             @endif
                                         </div>
                                     </td>

@@ -58,7 +58,7 @@ Route::post('/email/verification-notification', function (Request $request) {
         report($exception);
     }
 
-return back()->with('success', 'If mail is configured, a verification link has been sent.');
+    return back()->with('success', 'If mail is configured, a verification link has been sent.');
 })->middleware(['auth', 'throttle:6,1'])->name('verification.send');
 Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth')->name('logout');
 
@@ -101,6 +101,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::patch('/staff/{user}/role', [AdminController::class, 'updateStaffRole'])->middleware('admin.permission:staff')->name('staff.role');
     Route::patch('/bookings/{booking}', [AdminController::class, 'updateBooking'])->middleware('admin.permission:bookings')->name('bookings.update');
     Route::patch('/bookings/{booking}/payment', [AdminController::class, 'updatePayment'])->middleware('admin.permission:payments')->name('bookings.payment');
+    Route::post('/bookings/{booking}/refunds', [AdminController::class, 'refundPayment'])->middleware('admin.permission:payments')->name('bookings.refunds.store');
     Route::post('/bookings/{booking}/check-in', [AdminController::class, 'updateBooking'])->middleware('admin.permission:bookings')->name('bookings.check-in');
     Route::post('/bookings/{booking}/check-out', [AdminController::class, 'updateBooking'])->middleware('admin.permission:bookings')->name('bookings.check-out');
     Route::patch('/reviews/{review}', [AdminController::class, 'updateReview'])->middleware('admin.permission:reviews')->name('reviews.update');

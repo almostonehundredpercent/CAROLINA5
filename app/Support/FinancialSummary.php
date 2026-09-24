@@ -28,6 +28,15 @@ final class FinancialSummary
         ];
     }
 
+    /** Amount that can still be returned without exceeding recorded payments. */
+    public static function refundableAmount(Booking $booking): float
+    {
+        $payments = $booking->relationLoaded('payments') ? $booking->payments : $booking->payments()->get();
+
+        return max(0.0, (float) $payments->where('status', 'paid')->sum('amount')
+            - (float) $payments->where('status', 'refunded')->sum('amount'));
+    }
+
     /** @return array{paid: float, refunds: float, net_collected: float} */
     public static function forPayments(Collection $payments): array
     {
