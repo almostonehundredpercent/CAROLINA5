@@ -42,44 +42,9 @@
             margin-top: 10px;
         }
 
-        .metric-card--payments .metric-icon {
-            color: #a65000;
-            background: #ffead3;
-        }
-
-        .metric-card--bookings .metric-icon {
-            color: #38598f;
-            background: #e7eef9;
-        }
-
-        .metric-card--confirmed .metric-icon {
-            color: #247047;
-            background: #e1f2e8;
-        }
-
-        .metric-card--available .metric-icon {
-            color: #9a4336;
-            background: #fbe4de;
-        }
-
-        html.dark-mode .metric-card--payments .metric-icon {
-            color: #ffb56c;
-            background: #4a2b12;
-        }
-
-        html.dark-mode .metric-card--bookings .metric-icon {
-            color: #a9c7f6;
-            background: #243550;
-        }
-
-        html.dark-mode .metric-card--confirmed .metric-icon {
-            color: #8bd5aa;
-            background: #203f2e;
-        }
-
-        html.dark-mode .metric-card--available .metric-icon {
-            color: #f0a294;
-            background: #4d2923;
+        .metric-grid .metric-card .metric-icon {
+            color: #fff;
+            background: var(--orange);
         }
 
         @media (max-width: 700px) {
