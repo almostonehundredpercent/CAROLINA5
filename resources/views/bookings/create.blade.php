@@ -154,7 +154,58 @@ document.addEventListener('DOMContentLoaded', () => {
         timeMenu.append(timeAvailabilityNote);
         if (!/^(0[6-9]|1[0-9]|2[0-3]):00$/.test(timeValue.value)) timeValue.value = '06:00';
         const prettyTime = time => new Date(`2000-01-01T${time}`).toLocaleTimeString('en-PH', { hour: 'numeric', hour12: true });
-        const syncTimeOptions = () => { const selectedDate = value.value, duration = Number(hourlyHours.value); let blockedStarts = 0; timeMenu.querySelectorAll('[data-time]').forEach(button => { const booked = isTimeBooked(selectedDate, button.dataset.time, duration); button.disabled = booked; button.title = booked ? 'Unavailable — already booked for part of this stay' : ''; button.classList.toggle('booked', booked); button.classList.toggle('selected', !booked && button.dataset.time === timeValue.value); if (booked) blockedStarts++; }); const dayStart = new Date(`${selectedDate}T00:00:00`), dayEnd = new Date(dayStart); dayEnd.setDate(dayEnd.getDate() + 1); const bookedPeriods = hourlyBlockedSlots.filter(slot => new Date(slot.start) < dayEnd && new Date(slot.end) > dayStart).map(slot => { const start = new Date(Math.max(dayStart.getTime(), new Date(slot.start).getTime())), end = new Date(Math.min(dayEnd.getTime(), new Date(slot.end).getTime())); const allDay = start.getTime() === dayStart.getTime() && end.getTime() === dayEnd.getTime(); return allDay ? 'all day' : `${start.toLocaleTimeString('en-PH', {hour:'numeric', minute:'2-digit'})}–${end.toLocaleTimeString('en-PH', {hour:'numeric', minute:'2-digit'})}`; }); const dateLabel = dayStart.toLocaleDateString('en-PH', {month:'short', day:'numeric'}); timeAvailabilityNote.classList.toggle('booked', bookedPeriods.length > 0 || blockedStarts > 0); timeAvailabilityNote.innerHTML = ''; const heading = document.createElement('strong'); heading.textContent = bookedPeriods.length ? `Booked on ${dateLabel}` : blockedStarts ? `Unavailable starts on ${dateLabel}` : `Available on ${dateLabel}`; timeAvailabilityNote.append(heading); const summary = document.createElement('span'); summary.textContent = bookedPeriods.length ? `${bookedPeriods.join(' · ')} · ${blockedStarts} start ${blockedStarts === 1 ? 'time overlaps' : 'times overlap'} your ${duration}-hour stay.` : blockedStarts ? `${blockedStarts} start ${blockedStarts === 1 ? 'time is' : 'times are'} marked red because the stay overlaps an existing reservation.` : `No reservation overlaps the available ${duration}-hour start times. Red options indicate conflicts.`; timeAvailabilityNote.append(summary); if (!picker.hidden) renderHourlyCalendar(); };
+        const conflictingSlots = (date, time, duration) => {
+            const start = new Date(`${date}T${time}:00`);
+            const end = new Date(start.getTime() + duration * 60 * 60 * 1000);
+            return hourlyBlockedSlots.filter(slot => start < new Date(slot.end) && end > new Date(slot.start));
+        };
+        const describeSlot = slot => {
+            const start = new Date(slot.start), end = new Date(slot.end);
+            const startLabel = start.toLocaleString('en-PH', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+            const endLabel = end.toLocaleString('en-PH', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+            return `${startLabel}–${endLabel}`;
+        };
+        const syncTimeOptions = () => {
+            const selectedDate = value.value, duration = Number(hourlyHours.value);
+            let blockedStarts = 0;
+            timeMenu.querySelectorAll('[data-time]').forEach(button => {
+                const conflicts = conflictingSlots(selectedDate, button.dataset.time, duration);
+                const booked = conflicts.length > 0;
+                button.disabled = booked;
+                button.title = booked ? `Unavailable — overlaps ${conflicts.map(describeSlot).join('; ')}` : '';
+                button.setAttribute('aria-label', booked ? `${button.textContent.trim()}, unavailable; overlaps ${conflicts.map(describeSlot).join('; ')}` : button.textContent.trim());
+                button.classList.toggle('booked', booked);
+                button.classList.toggle('selected', !booked && button.dataset.time === timeValue.value);
+                if (booked) blockedStarts++;
+            });
+
+            const dayStart = new Date(`${selectedDate}T00:00:00`), dayEnd = new Date(dayStart);
+            dayEnd.setDate(dayEnd.getDate() + 1);
+            const bookedPeriods = hourlyBlockedSlots.filter(slot => new Date(slot.start) < dayEnd && new Date(slot.end) > dayStart);
+            const upcomingBookings = hourlyBlockedSlots.filter(slot => new Date(slot.start) >= dayEnd).sort((a, b) => new Date(a.start) - new Date(b.start)).slice(0, 3);
+            const dateLabel = dayStart.toLocaleDateString('en-PH', { month: 'short', day: 'numeric' });
+            timeAvailabilityNote.classList.toggle('booked', bookedPeriods.length > 0 || blockedStarts > 0 || upcomingBookings.length > 0);
+            timeAvailabilityNote.innerHTML = '';
+
+            const heading = document.createElement('strong');
+            heading.textContent = bookedPeriods.length ? `Booked on ${dateLabel}` : blockedStarts ? `Some check-in times conflict on ${dateLabel}` : `No conflict on ${dateLabel}`;
+            timeAvailabilityNote.append(heading);
+
+            const summary = document.createElement('span');
+            summary.textContent = bookedPeriods.length
+                ? `${bookedPeriods.map(describeSlot).join(' · ')} · ${blockedStarts} start ${blockedStarts === 1 ? 'time overlaps' : 'times overlap'} your ${duration}-hour stay.`
+                : blockedStarts
+                    ? `${blockedStarts} start ${blockedStarts === 1 ? 'time is' : 'times are'} marked red because the stay overlaps an existing reservation.`
+                    : `All ${candidateTimes.length} listed start times are available for this ${duration}-hour stay on ${dateLabel}.`;
+            timeAvailabilityNote.append(summary);
+
+            if (upcomingBookings.length) {
+                const next = document.createElement('span');
+                next.textContent = `Next booked: ${upcomingBookings.map(describeSlot).join(' · ')}`;
+                timeAvailabilityNote.append(next);
+            }
+            if (!picker.hidden) renderHourlyCalendar();
+        };
         hourlyHours.addEventListener('change', syncTimeOptions);
         timeTrigger.textContent = prettyTime(timeValue.value); timeTrigger.addEventListener('click', () => { const opening = timeMenu.hidden; closeOpenPickers(timeMenu); timeMenu.hidden = !opening; if (opening) { syncTimeOptions(); refreshHourlyAvailability(); } }); timeMenu.querySelectorAll('[data-time]').forEach(button => button.addEventListener('click', () => { timeValue.value = button.dataset.time; timeTrigger.textContent = prettyTime(timeValue.value); syncTimeOptions(); timeMenu.hidden = true; })); const refreshHourlyAvailability = async () => { try { const response = await fetch(@json(route('rooms.availability', $room)), { headers: { Accept: 'application/json' }, cache: 'no-store' }); if (!response.ok) return; const data = await response.json(); hourlyBlockedSlots = data.slots ?? []; if (value.value && !hasAvailableStartTime(value.value)) { value.value = ''; trigger.textContent = 'Choose date'; } if (!picker.hidden) renderHourlyCalendar(); syncTimeOptions(); if (timeMenu.querySelector(`[data-time="${timeValue.value}"]`)?.disabled) { timeValue.value = ''; timeTrigger.textContent = 'Choose time'; } } catch (error) { /* Keep the current availability if the connection is unavailable. */ } }; setInterval(refreshHourlyAvailability, 15000); document.addEventListener('visibilitychange', () => { if (!document.hidden) refreshHourlyAvailability(); }); return;
     }
