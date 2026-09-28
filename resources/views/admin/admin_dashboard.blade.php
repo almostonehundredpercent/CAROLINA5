@@ -8,6 +8,88 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ asset('css/admin.css') }}?v={{ filemtime(public_path('css/admin.css')) }}">
+    <style>
+        .metric-grid .metric-card {
+            min-height: 150px;
+            padding: 20px 78px 18px 20px;
+        }
+
+        .metric-grid .metric-card .metric-icon {
+            position: absolute;
+            top: 18px;
+            right: 18px;
+            display: grid;
+            width: 44px;
+            height: 44px;
+            place-items: center;
+            border-radius: 13px;
+            font-size: 20px;
+            font-weight: 800;
+            line-height: 1;
+        }
+
+        .metric-grid .metric-card small {
+            margin: 0 0 8px;
+        }
+
+        .metric-grid .metric-card em {
+            margin-top: 10px;
+        }
+
+        .metric-card--payments .metric-icon {
+            color: #a65000;
+            background: #ffead3;
+        }
+
+        .metric-card--bookings .metric-icon {
+            color: #38598f;
+            background: #e7eef9;
+        }
+
+        .metric-card--confirmed .metric-icon {
+            color: #247047;
+            background: #e1f2e8;
+        }
+
+        .metric-card--available .metric-icon {
+            color: #9a4336;
+            background: #fbe4de;
+        }
+
+        html.dark-mode .metric-card--payments .metric-icon {
+            color: #ffb56c;
+            background: #4a2b12;
+        }
+
+        html.dark-mode .metric-card--bookings .metric-icon {
+            color: #a9c7f6;
+            background: #243550;
+        }
+
+        html.dark-mode .metric-card--confirmed .metric-icon {
+            color: #8bd5aa;
+            background: #203f2e;
+        }
+
+        html.dark-mode .metric-card--available .metric-icon {
+            color: #f0a294;
+            background: #4d2923;
+        }
+
+        @media (max-width: 700px) {
+            .metric-grid .metric-card {
+                min-height: 132px;
+                padding: 16px 66px 16px 16px;
+            }
+
+            .metric-grid .metric-card .metric-icon {
+                top: 15px;
+                right: 15px;
+                width: 40px;
+                height: 40px;
+            }
+        }
+    </style>
 </head>
 <body>
 <div class="admin-shell">
@@ -16,10 +98,10 @@
         <header class="admin-topbar"><div><p class="admin-kicker">OVERVIEW</p><h1>Dashboard</h1></div><div class="admin-user"><span class="avatar">{{ strtoupper(substr(auth()->user()->name, 0, 1)) }}</span><div><b>{{ auth()->user()->name }}</b><small>Administrator</small></div></div></header>
         @if(session('success'))<div class="admin-flash">{{ session('success') }}</div>@endif
         <section class="metric-grid" id="rooms">
-            <article><span>₱</span><small>Payments recorded</small><strong>₱{{ number_format($revenue) }}</strong><em>Only staff-marked paid stays</em></article>
-            <article><span>▤</span><small>Total bookings</small><strong>{{ $bookingCount }}</strong><em>All reservations</em></article>
-            <article><span>✓</span><small>Confirmed</small><strong>{{ $confirmedCount }}</strong><em>Ready for arrival</em></article>
-            <article><span>⌂</span><small>Available rooms</small><strong>{{ $roomsByStatus['available'] }}</strong><em>{{ $roomCount }} active room{{ $roomCount === 1 ? '' : 's' }}</em></article>
+            <article class="metric-card metric-card--payments"><span class="metric-icon">₱</span><small>Payments recorded</small><strong>₱{{ number_format($revenue) }}</strong><em>Only staff-marked paid stays</em></article>
+            <article class="metric-card metric-card--bookings"><span class="metric-icon">▤</span><small>Total bookings</small><strong>{{ $bookingCount }}</strong><em>All reservations</em></article>
+            <article class="metric-card metric-card--confirmed"><span class="metric-icon">✓</span><small>Confirmed</small><strong>{{ $confirmedCount }}</strong><em>Ready for arrival</em></article>
+            <article class="metric-card metric-card--available"><span class="metric-icon">⌂</span><small>Available rooms</small><strong>{{ $roomsByStatus['available'] }}</strong><em>{{ $roomCount }} active room{{ $roomCount === 1 ? '' : 's' }}</em></article>
         </section>
         <section class="panel" style="margin-bottom:20px"><div class="panel-heading"><div><p class="admin-kicker">SHIFT ALERTS</p><h2>Needs attention</h2></div></div><div class="status-row"><span>Arrivals ready to check in</span><b>{{ $alerts['arrivals'] }}</b></div><div class="status-row"><span>Guests due for check-out</span><b>{{ $alerts['departures'] }}</b></div><div class="status-row"><span>Requests waiting for review</span><b>{{ $alerts['pending'] }}</b></div><div class="status-row"><span>Cleaning or maintenance in the next 24 hours</span><b>{{ $alerts['roomBlocks'] }}</b></div></section>
         <section class="dashboard-grid" style="margin-bottom:20px"><article class="panel status-panel"><div class="panel-heading"><div><p class="admin-kicker">LIVE INVENTORY</p><h2>Rooms today</h2></div></div><div class="status-row"><span>Occupied</span><b>{{ $roomsByStatus['occupied'] }}</b></div><div class="status-row"><span>Maintenance / cleaning</span><b>{{ $roomsByStatus['maintenance'] }}</b></div><div class="status-row"><span>Checked-in guests</span><b>{{ $checkedInCount }}</b></div><div class="status-row"><span>Checked-out stays</span><b>{{ $checkedOutCount }}</b></div></article><article class="panel status-panel"><div class="panel-heading"><div><p class="admin-kicker">PAYMENT & CANCELLATION</p><h2>Requires review</h2></div></div><div class="status-row"><span>Payment records pending</span><b>{{ $paymentPending }}</b></div><div class="status-row"><span>Cancelled reservations</span><b>{{ $cancelledCount }}</b></div><p class="empty-copy">Payment totals only include staff-recorded payments. This site does not claim online payment collection.</p></article></section>
