@@ -17,6 +17,7 @@ use Carbon\Carbon;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -248,10 +249,16 @@ class BookingController extends Controller
         abort_if($booking->status === 'cancelled', 422, 'Cancelled reservations cannot be paid online.');
         abort_if($booking->payment_status === 'paid', 422, 'This reservation has already been paid.');
 
+        $attemptId = (string) Str::uuid();
+
         try {
-            $session = $checkout->create($booking->loadMissing(['room', 'user']));
+            $session = $checkout->create($booking->loadMissing(['room', 'user']), $attemptId);
         } catch (\Throwable $exception) {
-            report($exception);
+            Log::warning('PayMongo checkout could not be started.', [
+                'attempt_id' => $attemptId,
+                'booking_id' => $booking->id,
+                'exception' => $exception::class,
+            ]);
 
             return back()->withErrors(['payment' => 'Online GCash checkout is unavailable right now. Please try again later.']);
         }

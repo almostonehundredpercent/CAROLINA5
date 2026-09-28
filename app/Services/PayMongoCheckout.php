@@ -4,45 +4,72 @@ namespace App\Services;
 
 use App\Models\Booking;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use RuntimeException;
+use Throwable;
 
 class PayMongoCheckout
 {
     private const BASE_URL = 'https://api.paymongo.com/v1';
 
     /** Create a hosted GCash checkout. Amounts are in centavos. */
-    public function create(Booking $booking): array
+    public function create(Booking $booking, ?string $attemptId = null): array
     {
         $secretKey = $this->secretKey();
-        $response = Http::acceptJson()
-            ->timeout(15)
-            ->withBasicAuth($secretKey, '')
-            ->post(self::BASE_URL.'/checkout_sessions', [
-                'data' => [
-                    'attributes' => [
-                        'billing' => array_filter([
-                            'name' => $booking->guest_name ?? $booking->user?->name,
-                            'email' => $booking->guest_email ?? $booking->user?->email,
-                            'phone' => $booking->guest_phone,
-                        ]),
-                        'cancel_url' => route('bookings.paymongo.return', ['booking' => $booking, 'outcome' => 'cancelled']),
-                        'success_url' => route('bookings.paymongo.return', ['booking' => $booking, 'outcome' => 'success']),
-                        'description' => 'Carolina reservation '.$booking->reference,
-                        'payment_method_types' => ['gcash'],
-                        'reference_number' => $booking->reference,
-                        'send_email_receipt' => false,
-                        'show_description' => true,
-                        'show_line_items' => true,
-                        'line_items' => [[
-                            'amount' => (int) round(((float) $booking->total_amount) * 100),
-                            'currency' => 'PHP',
-                            'description' => $booking->room?->name ?? 'Carolina stay',
-                            'name' => 'Carolina reservation',
-                            'quantity' => 1,
-                        ]],
+        $startedAt = hrtime(true);
+        Log::info('PayMongo checkout request started.', [
+            'attempt_id' => $attemptId,
+            'booking_id' => $booking->id,
+        ]);
+
+        try {
+            $response = Http::acceptJson()
+                ->connectTimeout(5)
+                ->timeout(15)
+                ->withBasicAuth($secretKey, '')
+                ->post(self::BASE_URL.'/checkout_sessions', [
+                    'data' => [
+                        'attributes' => [
+                            'billing' => array_filter([
+                                'name' => $booking->guest_name ?? $booking->user?->name,
+                                'email' => $booking->guest_email ?? $booking->user?->email,
+                                'phone' => $booking->guest_phone,
+                            ]),
+                            'cancel_url' => route('bookings.paymongo.return', ['booking' => $booking, 'outcome' => 'cancelled']),
+                            'success_url' => route('bookings.paymongo.return', ['booking' => $booking, 'outcome' => 'success']),
+                            'description' => 'Carolina reservation '.$booking->reference,
+                            'payment_method_types' => ['gcash'],
+                            'reference_number' => $booking->reference,
+                            'send_email_receipt' => false,
+                            'show_description' => true,
+                            'show_line_items' => true,
+                            'line_items' => [[
+                                'amount' => (int) round(((float) $booking->total_amount) * 100),
+                                'currency' => 'PHP',
+                                'description' => $booking->room?->name ?? 'Carolina stay',
+                                'name' => 'Carolina reservation',
+                                'quantity' => 1,
+                            ]],
+                        ],
                     ],
-                ],
+                ]);
+        } catch (Throwable $exception) {
+            Log::warning('PayMongo checkout request failed before a response.', [
+                'attempt_id' => $attemptId,
+                'booking_id' => $booking->id,
+                'duration_ms' => (int) round((hrtime(true) - $startedAt) / 1_000_000),
+                'exception' => $exception::class,
             ]);
+
+            throw $exception;
+        }
+
+        Log::info('PayMongo checkout response received.', [
+            'attempt_id' => $attemptId,
+            'booking_id' => $booking->id,
+            'duration_ms' => (int) round((hrtime(true) - $startedAt) / 1_000_000),
+            'http_status' => $response->status(),
+        ]);
 
         if ($response->failed()) {
             report(new RuntimeException('PayMongo checkout creation failed: '.$response->status()));
