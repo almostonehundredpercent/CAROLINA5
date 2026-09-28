@@ -26,7 +26,7 @@
     </form>
 
     <p class="result-count">{{ $rooms->count() }} room{{ $rooms->count() === 1 ? '' : 's' }} available</p>
-    <div class="room-grid">@forelse($rooms as $room)<article class="room-card rooms-card"><img src="{{ $room->image_url }}" alt="{{ $room->name }}" @if($loop->index > 2) loading="lazy" @endif><div class="room-card-body"><span>{{ $room->room_type }} · {{ $room->beds }} bed{{ $room->beds > 1 ? 's' : '' }} · {{ $room->guests }} guests</span><h3>{{ $room->name }}</h3>@if($room->approved_reviews_count)<small class="card-rating">★ {{ number_format($room->approved_reviews_avg_rating, 1) }} · {{ $room->approved_reviews_count }} {{ Str::plural('review', $room->approved_reviews_count) }}</small>@endif<p>{{ Str::limit($room->description, 86) }}</p><div class="rooms-card-footer"><strong>₱{{ number_format($room->price_per_night) }} <small>{{ $room->rate_label }}</small></strong><a class="button small" href="{{ route('rooms.show', $room) }}">View room <span aria-hidden="true">→</span></a></div></div></article>@empty<div class="empty-state"><h2>No rooms found</h2><p>Try another date, stay length, or smaller group.</p><a class="text-link" href="{{ route('rooms.index') }}">Clear search</a></div>@endforelse</div>
+    <div class="room-grid">@forelse($rooms as $room)<article class="room-card rooms-card"><img src="{{ $room->image_url }}" alt="{{ $room->name }}" @if($loop->index > 2) loading="lazy" @endif><div class="room-card-body"><span>{{ $room->room_type }} · {{ $room->beds }} bed{{ $room->beds > 1 ? 's' : '' }} · {{ $room->guests }} guests</span><h3>{{ $room->name }}</h3>@if($room->approved_reviews_count)<small class="card-rating">★ {{ number_format($room->approved_reviews_avg_rating, 1) }} · {{ $room->approved_reviews_count }} {{ Str::plural('review', $room->approved_reviews_count) }}</small>@endif<p>{{ Str::limit($room->description, 86) }}</p><section class="room-card-availability" data-availability-url="{{ route('rooms.availability', $room) }}"><button type="button" class="room-availability-toggle" aria-expanded="false"><span><b>Booked dates &amp; times</b><small>See this room’s unavailable schedule</small></span><span aria-hidden="true">＋</span></button><div class="room-availability-panel" hidden><div class="room-availability-calendar"><div class="room-availability-head"><button type="button" data-month-prev aria-label="Previous month">‹</button><b data-month-label></b><button type="button" data-month-next aria-label="Next month">›</button></div><div class="room-availability-week"><span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span></div><div class="room-availability-days" data-calendar-days></div></div><div class="room-availability-detail" aria-live="polite">Select a date to see booked hours.</div><p class="room-availability-legend"><i aria-hidden="true"></i> Unavailable</p></div></section><div class="rooms-card-footer"><strong>₱{{ number_format($room->price_per_night) }} <small>{{ $room->rate_label }}</small></strong><a class="button small" href="{{ route('rooms.show', $room) }}">View room <span aria-hidden="true">→</span></a></div></div></article>@empty<div class="empty-state"><h2>No rooms found</h2><p>Try another date, stay length, or smaller group.</p><a class="text-link" href="{{ route('rooms.index') }}">Clear search</a></div>@endforelse</div>
 </section>
 <script>
 document.addEventListener('DOMContentLoaded', () => {
@@ -40,7 +40,106 @@ document.addEventListener('DOMContentLoaded', () => {
     const render=()=>{days.innerHTML='';month.textContent=cursor.toLocaleDateString('en-PH',{month:'long',year:'numeric'});const first=new Date(cursor.getFullYear(),cursor.getMonth(),1),last=new Date(cursor.getFullYear(),cursor.getMonth()+1,0);for(let i=0;i<first.getDay();i++)days.insertAdjacentHTML('beforeend','<span class="rooms-calendar-blank"></span>');for(let n=1;n<=last.getDate();n++){const d=new Date(cursor.getFullYear(),cursor.getMonth(),n),v=iso(d);days.insertAdjacentHTML('beforeend',`<button type="button" class="rooms-calendar-day${v===checkIn.value?' selected start':''}${d<today?' past':''}" data-date="${v}" ${d<today?'disabled':''}>${n}</button>`)}days.querySelectorAll('.rooms-calendar-day:not([disabled])').forEach(b=>b.addEventListener('click',()=>{checkIn.value=b.dataset.date;calendar.hidden=true;trigger.setAttribute('aria-expanded','false');sync();render()}));};
     const closeMenus=()=>{[stayMenu,guestsMenu,timeMenu].forEach(menu=>menu.hidden=true);[stayTrigger,guestsTrigger,timeTrigger].forEach(button=>button.setAttribute('aria-expanded','false'))};
     const toggleMenu=(menu,button)=>{const opening=menu.hidden;closeMenus();menu.hidden=!opening;button.setAttribute('aria-expanded',String(opening))};
-    trigger.addEventListener('click',()=>{calendar.hidden=!calendar.hidden;trigger.setAttribute('aria-expanded',String(!calendar.hidden));render()});stayTrigger.addEventListener('click',event=>{event.stopPropagation();toggleMenu(stayMenu,stayTrigger)});guestsTrigger.addEventListener('click',event=>{event.stopPropagation();toggleMenu(guestsMenu,guestsTrigger)});stayMenu.querySelectorAll('[data-stay]').forEach(button=>button.addEventListener('click',event=>{event.stopPropagation();stay.value=button.dataset.stay;closeMenus();sync()}));guestsMenu.querySelectorAll('[data-guests]').forEach(button=>button.addEventListener('click',event=>{event.stopPropagation();guests.value=button.dataset.guests;closeMenus();sync()}));timeTrigger.addEventListener('click',event=>{event.stopPropagation();toggleMenu(timeMenu,timeTrigger)});timeMenu.querySelectorAll('[data-time]').forEach(button=>button.addEventListener('click',event=>{event.preventDefault();event.stopPropagation();timeValue.value=button.dataset.time;closeMenus();sync()}));document.getElementById('rooms-calendar-prev').addEventListener('click',()=>{const p=new Date(cursor.getFullYear(),cursor.getMonth()-1,1);if(p>=new Date(today.getFullYear(),today.getMonth(),1)){cursor=p;render()}});document.getElementById('rooms-calendar-next').addEventListener('click',()=>{cursor=new Date(cursor.getFullYear(),cursor.getMonth()+1,1);render()});document.addEventListener('click',event=>{if(!calendar.hidden&&!calendar.contains(event.target)&&!trigger.contains(event.target)){calendar.hidden=true;trigger.setAttribute('aria-expanded','false')}if(!stayChoice.contains(event.target)&&!guestsChoice.contains(event.target)&&!timeField.contains(event.target))closeMenus()});sync();
+    trigger.addEventListener('click',()=>{calendar.hidden=!calendar.hidden;trigger.setAttribute('aria-expanded',String(!calendar.hidden));render()});stayTrigger.addEventListener('click',event=>{event.stopPropagation();toggleMenu(stayMenu,stayTrigger)});guestsTrigger.addEventListener('click',event=>{event.stopPropagation();toggleMenu(guestsMenu,guestsTrigger)});stayMenu.querySelectorAll('[data-stay]').forEach(button=>button.addEventListener('click',event=>{event.stopPropagation();stay.value=button.dataset.stay;closeMenus();sync()}));guestsMenu.querySelectorAll('[data-guests]').forEach(button=>button.addEventListener('click',event=>{event.stopPropagation();event.stopPropagation();guests.value=button.dataset.guests;closeMenus();sync()}));timeTrigger.addEventListener('click',event=>{event.stopPropagation();toggleMenu(timeMenu,timeTrigger)});timeMenu.querySelectorAll('[data-time]').forEach(button=>button.addEventListener('click',event=>{event.preventDefault();event.stopPropagation();timeValue.value=button.dataset.time;closeMenus();sync()}));document.getElementById('rooms-calendar-prev').addEventListener('click',()=>{const p=new Date(cursor.getFullYear(),cursor.getMonth()-1,1);if(p>=new Date(today.getFullYear(),today.getMonth(),1)){cursor=p;render()}});document.getElementById('rooms-calendar-next').addEventListener('click',()=>{cursor=new Date(cursor.getFullYear(),cursor.getMonth()+1,1);render()});document.addEventListener('click',event=>{if(!calendar.hidden&&!calendar.contains(event.target)&&!trigger.contains(event.target)){calendar.hidden=true;trigger.setAttribute('aria-expanded','false')}if(!stayChoice.contains(event.target)&&!guestsChoice.contains(event.target)&&!timeField.contains(event.target))closeMenus()});sync();
+});
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const iso = date => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+    const labelDate = value => new Date(`${value}T00:00:00`).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' });
+    const labelTime = value => new Date(value).toLocaleTimeString('en-PH', { hour: 'numeric', minute: '2-digit' });
+
+    document.querySelectorAll('.room-card-availability').forEach(card => {
+        const toggle = card.querySelector('.room-availability-toggle');
+        const panel = card.querySelector('.room-availability-panel');
+        const days = card.querySelector('[data-calendar-days]');
+        const monthLabel = card.querySelector('[data-month-label]');
+        const detail = card.querySelector('.room-availability-detail');
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        let cursor = new Date(today.getFullYear(), today.getMonth(), 1);
+        let ranges = [], slots = [], loaded = false, selectedDate = '';
+        const forDate = value => {
+            const start = new Date(`${value}T00:00:00`);
+            const end = new Date(start);
+            end.setDate(end.getDate() + 1);
+            return slots.filter(slot => new Date(slot.start) < end && new Date(slot.end) > start);
+        };
+        const renderDetail = value => {
+            selectedDate = value;
+            const bookings = forDate(value);
+            detail.textContent = '';
+            const heading = document.createElement('strong');
+            heading.textContent = labelDate(value);
+            detail.append(heading);
+            if (!bookings.length) {
+                const free = document.createElement('span');
+                free.textContent = 'No booked time recorded for this date.';
+                detail.append(free);
+                return;
+            }
+            bookings.forEach(slot => {
+                const dateStart = new Date(`${value}T00:00:00`);
+                const dateEnd = new Date(dateStart);
+                dateEnd.setDate(dateEnd.getDate() + 1);
+                const slotStart = new Date(slot.start), slotEnd = new Date(slot.end);
+                const overlapStart = new Date(Math.max(dateStart.getTime(), slotStart.getTime()));
+                const overlapEnd = new Date(Math.min(dateEnd.getTime(), slotEnd.getTime()));
+                const allDay = overlapStart.getTime() === dateStart.getTime() && overlapEnd.getTime() === dateEnd.getTime();
+                const row = document.createElement('span');
+                row.className = 'room-availability-booked';
+                row.textContent = allDay ? 'Unavailable · all day' : `Unavailable · ${labelTime(overlapStart.toISOString())}–${labelTime(overlapEnd.toISOString())}`;
+                detail.append(row);
+            });
+        };
+        const render = () => {
+            days.innerHTML = '';
+            monthLabel.textContent = cursor.toLocaleDateString('en-PH', { month: 'long', year: 'numeric' });
+            const first = new Date(cursor.getFullYear(), cursor.getMonth(), 1);
+            const last = new Date(cursor.getFullYear(), cursor.getMonth() + 1, 0);
+            for (let blank = 0; blank < first.getDay(); blank++) days.insertAdjacentHTML('beforeend', '<span class="room-availability-blank"></span>');
+            for (let number = 1; number <= last.getDate(); number++) {
+                const date = new Date(cursor.getFullYear(), cursor.getMonth(), number);
+                const value = iso(date);
+                const booked = ranges.some(range => value >= range.start && value < range.end) || forDate(value).length > 0;
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.className = `room-availability-day${booked ? ' booked' : ''}${selectedDate === value ? ' selected' : ''}`;
+                button.textContent = String(number);
+                button.setAttribute('aria-label', `${labelDate(value)}${booked ? ', unavailable' : ', no booking recorded'}`);
+                if (booked) button.title = 'Unavailable — reservation or room operation recorded';
+                button.addEventListener('click', () => { renderDetail(value); render(); });
+                days.append(button);
+            }
+        };
+        const load = async () => {
+            if (loaded) return;
+            detail.textContent = 'Loading this room’s schedule…';
+            try {
+                const response = await fetch(card.dataset.availabilityUrl, { headers: { Accept: 'application/json' }, cache: 'no-store' });
+                if (!response.ok) throw new Error('Availability unavailable');
+                const data = await response.json();
+                ranges = Array.isArray(data.ranges) ? data.ranges : [];
+                slots = Array.isArray(data.slots) ? data.slots : [];
+                loaded = true;
+                render();
+                renderDetail(selectedDate || iso(today));
+            } catch (error) {
+                detail.textContent = 'This room’s availability could not be loaded. Please try again.';
+            }
+        };
+        toggle.addEventListener('click', () => {
+            panel.hidden = !panel.hidden;
+            toggle.setAttribute('aria-expanded', String(!panel.hidden));
+            toggle.lastElementChild.textContent = panel.hidden ? '＋' : '−';
+            if (!panel.hidden) load();
+        });
+        card.querySelector('[data-month-prev]').addEventListener('click', () => {
+            const previous = new Date(cursor.getFullYear(), cursor.getMonth() - 1, 1);
+            if (previous >= new Date(today.getFullYear(), today.getMonth(), 1)) { cursor = previous; render(); }
+        });
+        card.querySelector('[data-month-next]').addEventListener('click', () => { cursor = new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1); render(); });
+    });
 });
 </script>
 @endsection
