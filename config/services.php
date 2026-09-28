@@ -4,6 +4,12 @@ return [
 
     'brevo' => ['key' => env('BREVO_API_KEY')],
 
+    'paymongo' => [
+        'mode' => env('PAYMONGO_MODE', 'test'),
+        'public_key' => env('PAYMONGO_PUBLIC_KEY'),
+        'secret_key' => env('PAYMONGO_SECRET_KEY'),
+    ],
+
     /*
     |--------------------------------------------------------------------------
     | Third Party Services

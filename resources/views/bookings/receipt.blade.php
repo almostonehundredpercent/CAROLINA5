@@ -5,7 +5,7 @@
 <section class="confirmation receipt-page">
     <span class="eyebrow">REQUEST RECEIVED</span>
     <h1>Your reservation request is in.</h1>
-    <p>Carolina will check availability and contact you. No online payment is collected here.</p>
+    <p>Carolina will check availability and contact you. You may also complete a safe PayMongo GCash test payment for your presentation.</p>
 
     <div class="confirmation-card receipt-card">
         <div><small>Booking reference</small><b>{{ $booking->reference }}</b></div>
@@ -23,6 +23,15 @@
             <div><small>Next step</small><b>Staff confirmation</b></div>
         </div>
         <p class="receipt-note">Please keep your reference number. Carolina will review your reservation and contact you with any next steps.</p>
+        @if($booking->payment_status !== 'paid')
+            <form method="POST" action="{{ route('bookings.paymongo.start', $booking) }}" style="margin-top:16px">
+                @csrf
+                <button class="button" type="submit">Pay with GCash test mode <span aria-hidden="true">→</span></button>
+                <small style="display:block;margin-top:9px;color:var(--muted)">For thesis testing only. No real money is collected.</small>
+            </form>
+        @else
+            <p class="receipt-note" style="margin-top:16px"><strong>GCash test payment confirmed.</strong> Staff review is still required.</p>
+        @endif
     </section>
     <div class="receipt-actions">
         <a class="button" href="{{ \App\Http\Controllers\StayController::link($booking) }}">Your arrival page</a>
