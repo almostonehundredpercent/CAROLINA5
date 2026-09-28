@@ -43,8 +43,13 @@
         }
 
         .metric-grid .metric-card .metric-icon {
-            color: #fff;
+            color: #fff !important;
             background: var(--orange);
+        }
+
+        .metric-grid .metric-card .metric-icon svg,
+        .metric-grid .metric-card .metric-icon path {
+            fill: #fff !important;
         }
 
         @media (max-width: 700px) {
