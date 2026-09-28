@@ -28,6 +28,12 @@
             line-height: 1;
         }
 
+        .metric-grid .metric-card .metric-icon svg {
+            width: 24px;
+            height: 24px;
+            fill: currentColor;
+        }
+
         .metric-grid .metric-card small {
             margin: 0 0 8px;
         }
@@ -98,10 +104,10 @@
         <header class="admin-topbar"><div><p class="admin-kicker">OVERVIEW</p><h1>Dashboard</h1></div><div class="admin-user"><span class="avatar">{{ strtoupper(substr(auth()->user()->name, 0, 1)) }}</span><div><b>{{ auth()->user()->name }}</b><small>Administrator</small></div></div></header>
         @if(session('success'))<div class="admin-flash">{{ session('success') }}</div>@endif
         <section class="metric-grid" id="rooms">
-            <article class="metric-card metric-card--payments"><span class="metric-icon">₱</span><small>Payments recorded</small><strong>₱{{ number_format($revenue) }}</strong><em>Only staff-marked paid stays</em></article>
-            <article class="metric-card metric-card--bookings"><span class="metric-icon">▤</span><small>Total bookings</small><strong>{{ $bookingCount }}</strong><em>All reservations</em></article>
-            <article class="metric-card metric-card--confirmed"><span class="metric-icon">✓</span><small>Confirmed</small><strong>{{ $confirmedCount }}</strong><em>Ready for arrival</em></article>
-            <article class="metric-card metric-card--available"><span class="metric-icon">⌂</span><small>Available rooms</small><strong>{{ $roomsByStatus['available'] }}</strong><em>{{ $roomCount }} active room{{ $roomCount === 1 ? '' : 's' }}</em></article>
+            <article class="metric-card metric-card--payments"><span class="metric-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 6.5A3.5 3.5 0 0 1 6.5 3h10A2.5 2.5 0 0 1 19 5.5V7h1a2 2 0 0 1 2 2v8.5a3.5 3.5 0 0 1-3.5 3.5h-12A3.5 3.5 0 0 1 3 17.5v-11Zm16 3.5h-4a2 2 0 1 0 0 4h4v-4Zm-4 1.25a.75.75 0 1 1 0 1.5.75.75 0 0 1 0-1.5Z"/></svg></span><small>Payments recorded</small><strong>₱{{ number_format($revenue) }}</strong><em>Only staff-marked paid stays</em></article>
+            <article class="metric-card metric-card--bookings"><span class="metric-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8 2a2 2 0 0 0-2 2H5a3 3 0 0 0-3 3v12a3 3 0 0 0 3 3h14a3 3 0 0 0 3-3V7a3 3 0 0 0-3-3h-1a2 2 0 0 0-2-2H8Zm0 2h8v2H8V4Zm-2 6h2v2H6v-2Zm4 0h8v2h-8v-2Zm-4 4h2v2H6v-2Zm4 0h8v2h-8v-2Zm-4 4h2v2H6v-2Zm4 0h8v2h-8v-2Z"/></svg></span><small>Total bookings</small><strong>{{ $bookingCount }}</strong><em>All reservations</em></article>
+            <article class="metric-card metric-card--confirmed"><span class="metric-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path fill-rule="evenodd" d="M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20Zm4.78-12.88a1 1 0 0 0-1.56-1.24l-4.18 5.22-2.33-2.33a1 1 0 0 0-1.42 1.42l3.12 3.12a1 1 0 0 0 1.49-.08l4.88-6.11Z" clip-rule="evenodd"/></svg></span><small>Confirmed</small><strong>{{ $confirmedCount }}</strong><em>Ready for arrival</em></article>
+            <article class="metric-card metric-card--available"><span class="metric-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12.67 2.5a1 1 0 0 0-1.34 0l-9 8A1 1 0 0 0 3 12.25h1V20a2 2 0 0 0 2 2h4v-6h4v6h4a2 2 0 0 0 2-2v-7.75h1a1 1 0 0 0 .67-1.75l-9-8Z"/></svg></span><small>Available rooms</small><strong>{{ $roomsByStatus['available'] }}</strong><em>{{ $roomCount }} active room{{ $roomCount === 1 ? '' : 's' }}</em></article>
         </section>
         <section class="panel" style="margin-bottom:20px"><div class="panel-heading"><div><p class="admin-kicker">SHIFT ALERTS</p><h2>Needs attention</h2></div></div><div class="status-row"><span>Arrivals ready to check in</span><b>{{ $alerts['arrivals'] }}</b></div><div class="status-row"><span>Guests due for check-out</span><b>{{ $alerts['departures'] }}</b></div><div class="status-row"><span>Requests waiting for review</span><b>{{ $alerts['pending'] }}</b></div><div class="status-row"><span>Cleaning or maintenance in the next 24 hours</span><b>{{ $alerts['roomBlocks'] }}</b></div></section>
         <section class="dashboard-grid" style="margin-bottom:20px"><article class="panel status-panel"><div class="panel-heading"><div><p class="admin-kicker">LIVE INVENTORY</p><h2>Rooms today</h2></div></div><div class="status-row"><span>Occupied</span><b>{{ $roomsByStatus['occupied'] }}</b></div><div class="status-row"><span>Maintenance / cleaning</span><b>{{ $roomsByStatus['maintenance'] }}</b></div><div class="status-row"><span>Checked-in guests</span><b>{{ $checkedInCount }}</b></div><div class="status-row"><span>Checked-out stays</span><b>{{ $checkedOutCount }}</b></div></article><article class="panel status-panel"><div class="panel-heading"><div><p class="admin-kicker">PAYMENT & CANCELLATION</p><h2>Requires review</h2></div></div><div class="status-row"><span>Payment records pending</span><b>{{ $paymentPending }}</b></div><div class="status-row"><span>Cancelled reservations</span><b>{{ $cancelledCount }}</b></div><p class="empty-copy">Payment totals only include staff-recorded payments. This site does not claim online payment collection.</p></article></section>
