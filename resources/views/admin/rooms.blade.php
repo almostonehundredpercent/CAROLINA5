@@ -106,29 +106,47 @@
         <header class="admin-topbar room-operations-header"><div><p class="admin-kicker">PROPERTY MANAGEMENT</p><h1>Rooms</h1><p class="admin-subtitle">A live view of every room, stay, and task.</p></div>@if(auth()->user()->isAdmin())<div class="room-operations-actions"><a class="room-create-button" href="{{ route('admin.rooms.create') }}">Add room</a></div>@endif</header>
         @if(session('success'))<div class="admin-flash">{{ session('success') }}</div>@endif
         @if($errors->any())<div class="admin-flash" style="background:#fbe3e0;color:#a84336">{{ $errors->first() }}</div>@endif
-        <section class="room-summary" aria-label="Room status summary"><article class="room-summary-card available"><small>Available</small><strong>{{ $rooms->where('display_status', 'available')->count() }}</strong></article><article class="room-summary-card reserved"><small>Arriving soon</small><strong>{{ $rooms->where('display_status', 'reserved')->count() }}</strong></article><article class="room-summary-card not-available"><small>Not available</small><strong>{{ $rooms->whereNotIn('display_status', ['available', 'reserved'])->count() }}</strong></article></section>
+        @php
+            $availableRoomCount = $rooms->where('display_status', 'available')->count();
+            $arrivingRoomCount = $rooms->where('display_status', 'reserved')->count();
+            $notAvailableRoomCount = $rooms->count() - $availableRoomCount - $arrivingRoomCount;
+            $roomSlots = $rooms->sortBy('id')->values()->take(18);
+        @endphp
+        <section class="room-summary" aria-label="Room status summary"><article class="room-summary-card available"><small>Available</small><strong>{{ $availableRoomCount }}</strong></article><article class="room-summary-card reserved"><small>Arriving soon</small><strong>{{ $arrivingRoomCount }}</strong></article><article class="room-summary-card not-available"><small>Not available</small><strong>{{ $notAvailableRoomCount }}</strong></article></section>
         <p class="room-operations-note"><span aria-hidden="true">i</span><span><b>Availability is protected.</b> Cleaning and maintenance blocks stop online bookings while the work is scheduled.</span></p>
-        @php($roomsBySlot = $rooms->sortBy('id')->values()->take(18)->mapWithKeys(fn ($room, $index) => [$index + 1 => $room]))
         <section class="room-board-shell" aria-label="Room operations">
             <div class="room-board-legend" aria-label="Room color guide"><span><i class="available"></i>Available</span><span><i class="arriving"></i>Arriving soon</span><span><i class="not-available"></i>Not available</span></div>
             <div class="room-selector-grid">
                 @foreach(range(1, 18) as $slot)
                     @php
-                        $room = $roomsBySlot->get($slot);
-                        $boardStatus = ! $room ? 'unassigned' : ($room->display_status === 'available' ? 'available' : ($room->display_status === 'reserved' ? 'arriving' : 'not-available'));
-                        $boardLabel = match ($boardStatus) { 'available' => 'Available', 'arriving' => 'Arriving', 'not-available' => 'Unavailable', default => 'Empty' };
+                        $room = $roomSlots->get($slot - 1);
+                        $boardStatus = 'unassigned';
+                        $boardLabel = 'Empty';
+                        if ($room && $room->display_status === 'available') {
+                            $boardStatus = 'available';
+                            $boardLabel = 'Available';
+                        } elseif ($room && $room->display_status === 'reserved') {
+                            $boardStatus = 'arriving';
+                            $boardLabel = 'Arriving';
+                        } elseif ($room) {
+                            $boardStatus = 'not-available';
+                            $boardLabel = 'Unavailable';
+                        }
                     @endphp
                     <button class="room-slot {{ $boardStatus }}" type="button" @if($room)data-room-target="{{ $slot }}" aria-controls="room-detail-{{ $slot }}" aria-pressed="false"@else disabled aria-label="Room {{ $slot }} is not assigned"@endif>
                         <span class="room-slot-number">{{ $slot }}</span>
                         <span class="room-slot-state">{{ $boardLabel }}</span>
-                        <span class="room-slot-name">{{ $room?->name ?? 'No room assigned' }}</span>
+                        <span class="room-slot-name">{{ $room ? $room->name : 'No room assigned' }}</span>
                     </button>
                 @endforeach
             </div>
             <div class="room-detail-stage" id="room-detail-stage">
                 <div class="room-detail-placeholder"><strong>Select a room</strong><span>Click a numbered room above to view its stay, status, and management controls.</span></div>
                 @foreach(range(1, 18) as $slot)
-                    @if($room = $roomsBySlot->get($slot))
+                    @php
+                        $room = $roomSlots->get($slot - 1);
+                    @endphp
+                    @if($room)
                         @include('admin.partials.room-detail-card', ['room' => $room, 'slot' => $slot])
                     @endif
                 @endforeach
