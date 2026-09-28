@@ -49,6 +49,54 @@
             .override-note { max-width:none; font-size:12px; }
             .operation-save { min-height:46px; font-size:14px; }
         }
+        .room-summary { grid-template-columns:repeat(3,minmax(0,1fr)); }
+        .room-summary-card.not-available strong { color:#c72b20; }
+        .room-board-shell { display:grid; gap:20px; }
+        .room-board-legend { display:flex; flex-wrap:wrap; gap:10px 18px; color:var(--room-secondary); font-size:12px; }
+        .room-board-legend span { display:inline-flex; align-items:center; gap:7px; }
+        .room-board-legend i { width:12px; height:12px; border-radius:4px; box-shadow:inset 0 0 0 1px rgba(0,0,0,.08); }
+        .room-board-legend .available { background:#49a765; }
+        .room-board-legend .arriving { background:#5f73e8; }
+        .room-board-legend .not-available { background:#df554b; }
+        .room-selector-grid { display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); gap:12px; }
+        .room-slot { position:relative; display:grid; min-height:104px; padding:14px; overflow:hidden; border:0; border-radius:16px; color:#fff; text-align:left; cursor:pointer; box-shadow:0 8px 20px rgba(31,35,48,.09); transition:transform .17s ease,box-shadow .17s ease,outline-color .17s ease; }
+        .room-slot:hover { transform:translateY(-2px); box-shadow:0 12px 25px rgba(31,35,48,.14); }
+        .room-slot:focus-visible { outline:4px solid rgba(0,113,227,.25); outline-offset:3px; }
+        .room-slot[aria-pressed="true"] { outline:4px solid #1d1d1f; outline-offset:3px; }
+        .room-slot.available { background:linear-gradient(145deg,#329451,#52b66f); }
+        .room-slot.arriving { background:linear-gradient(145deg,#5266db,#7587f3); }
+        .room-slot.not-available { background:linear-gradient(145deg,#c93b32,#e8665d); }
+        .room-slot.unassigned { border:1px dashed #c9c9ce; background:#f1f1f3; color:#8a8a8f; box-shadow:none; cursor:default; }
+        .room-slot.unassigned:hover { transform:none; box-shadow:none; }
+        .room-slot-number { font:800 31px/1 var(--admin-font); letter-spacing:-.045em; }
+        .room-slot-name { align-self:end; display:-webkit-box; margin-top:12px; overflow:hidden; font:700 12px/1.25 var(--admin-font); -webkit-box-orient:vertical; -webkit-line-clamp:2; }
+        .room-slot-state { position:absolute; top:13px; right:13px; padding:4px 7px; border-radius:999px; background:rgba(255,255,255,.2); font:700 9px/1 var(--admin-font); letter-spacing:.05em; text-transform:uppercase; }
+        .room-slot.unassigned .room-slot-state { background:#e1e1e5; }
+        .room-detail-stage { min-height:190px; scroll-margin-top:20px; }
+        .room-detail-placeholder { display:grid; min-height:190px; place-content:center; gap:6px; padding:28px; border:1px dashed #c8c8cd; border-radius:20px; background:#fafafa; color:var(--room-secondary); text-align:center; }
+        .room-detail-placeholder[hidden] { display:none; }
+        .room-detail-placeholder strong { color:var(--room-text); font-size:18px; }
+        .room-detail-card { max-width:900px; margin:0 auto; border:1px solid var(--room-stroke); }
+        .room-detail-card[hidden] { display:none; }
+        .room-detail-heading { display:flex; align-items:center; justify-content:space-between; padding:12px 16px; color:#fff; }
+        .room-detail-card.available .room-detail-heading { background:#329451; }
+        .room-detail-card.reserved .room-detail-heading { background:#5266db; }
+        .room-detail-card.occupied .room-detail-heading,.room-detail-card.cleaning .room-detail-heading,.room-detail-card.maintenance .room-detail-heading { background:#c93b32; }
+        .room-detail-number { font:800 14px var(--admin-font); }
+        .room-detail-close { width:32px; height:32px; border:0; border-radius:50%; background:rgba(255,255,255,.2); color:#fff; font:400 25px/1 var(--admin-font); cursor:pointer; }
+        .room-detail-close:hover { background:rgba(255,255,255,.32); }
+        @media (max-width:1050px) { .room-selector-grid { grid-template-columns:repeat(4,minmax(0,1fr)); } }
+        @media (max-width:700px) {
+            .room-summary { grid-template-columns:repeat(3,minmax(0,1fr)); }
+            .room-summary-card { min-height:82px; padding:13px; }
+            .room-summary-card strong { font-size:25px; }
+            .room-selector-grid { grid-template-columns:repeat(3,minmax(0,1fr)); gap:9px; }
+            .room-slot { min-height:90px; padding:12px; border-radius:13px; }
+            .room-slot-number { font-size:27px; }
+            .room-slot-name { font-size:10px; }
+            .room-slot-state { top:10px; right:9px; padding:3px 5px; font-size:7px; }
+            .room-detail-card { border-radius:17px; }
+        }
     </style>
 </head>
 <body>
@@ -58,35 +106,56 @@
         <header class="admin-topbar room-operations-header"><div><p class="admin-kicker">PROPERTY MANAGEMENT</p><h1>Rooms</h1><p class="admin-subtitle">A live view of every room, stay, and task.</p></div>@if(auth()->user()->isAdmin())<div class="room-operations-actions"><a class="room-create-button" href="{{ route('admin.rooms.create') }}">Add room</a></div>@endif</header>
         @if(session('success'))<div class="admin-flash">{{ session('success') }}</div>@endif
         @if($errors->any())<div class="admin-flash" style="background:#fbe3e0;color:#a84336">{{ $errors->first() }}</div>@endif
-        <section class="room-summary" aria-label="Room status summary"><article class="room-summary-card available"><small>Available</small><strong>{{ $rooms->where('display_status', 'available')->count() }}</strong></article><article class="room-summary-card reserved"><small>Arriving soon</small><strong>{{ $rooms->where('display_status', 'reserved')->count() }}</strong></article><article class="room-summary-card occupied"><small>In house</small><strong>{{ $rooms->where('display_status', 'occupied')->count() }}</strong></article><article class="room-summary-card unavailable"><small>Needs attention</small><strong>{{ $rooms->whereIn('display_status', ['cleaning', 'maintenance'])->count() }}</strong></article></section>
+        <section class="room-summary" aria-label="Room status summary"><article class="room-summary-card available"><small>Available</small><strong>{{ $rooms->where('display_status', 'available')->count() }}</strong></article><article class="room-summary-card reserved"><small>Arriving soon</small><strong>{{ $rooms->where('display_status', 'reserved')->count() }}</strong></article><article class="room-summary-card not-available"><small>Not available</small><strong>{{ $rooms->whereNotIn('display_status', ['available', 'reserved'])->count() }}</strong></article></section>
         <p class="room-operations-note"><span aria-hidden="true">i</span><span><b>Availability is protected.</b> Cleaning and maintenance blocks stop online bookings while the work is scheduled.</span></p>
-        <section class="room-card-grid" aria-label="Room operations">
-            @forelse($rooms as $room)
-                @php
-                    $stay = $room->display_booking;
-                    $block = $room->display_block;
-                    $stayLabel = $stay ? ($stay->check_in_at?->lte(now()) && $stay->check_out_at?->gt(now()) ? 'Guest in house' : 'Next arrival') : 'Guest stay';
-                    $blockLabel = $block ? ($block->starts_at->lte(now()) ? 'Current task' : 'Next task') : 'Operations';
-                    $operationStart = now()->second(0)->minute(now()->minute >= 30 ? 30 : 0);
-                    if ($operationStart->lt(now())) $operationStart->addMinutes(30);
-                    $operationEnd = $operationStart->copy()->addHour();
-                    $timeOptions = range(0, 47);
-                @endphp
-                <article class="room-card {{ $room->display_status }}">
-                    <div class="room-card-main"><div class="room-card-top"><div><h2 class="room-card-title">{{ $room->name }}</h2><p class="room-card-meta">{{ $room->room_type }} · Sleeps {{ $room->guests }}</p><span class="room-card-rate">₱{{ number_format($room->price_per_night) }} {{ $room->rate_label }}</span></div><span class="room-status {{ $room->display_status }}">{{ ucfirst($room->display_status) }}</span></div>
-                        <div class="room-card-schedule"><div class="schedule-item {{ $stay ? '' : 'empty' }}"><small>{{ $stayLabel }}</small>@if($stay)<b>{{ $stay->guest_name ?? $stay->user?->name ?? 'Guest booking' }}</b><span>{{ $stay->check_in_at?->format('M j, g A') }} – {{ $stay->check_out_at?->format('M j, g A') }}</span>@else<b>No guest stay scheduled</b>@endif</div><div class="schedule-item {{ $block ? '' : 'empty' }}"><small>{{ $blockLabel }}</small>@if($block)<b>{{ ucfirst($block->status) }}</b><span>{{ $block->starts_at->format('M j, g A') }} – {{ $block->ends_at->format('M j, g A') }}</span>@else<b>No cleaning or maintenance planned</b>@endif</div></div>
-                        @if(auth()->user()->isAdmin())<div class="room-card-actions"><a class="room-action-link" href="{{ route('admin.rooms.edit', $room) }}">Edit details</a><form method="POST" action="{{ route('admin.rooms.archive',$room) }}" onsubmit="return confirm('Archive this room? Its booking history will be kept.')">@csrf @method('DELETE')<button class="room-archive-button" type="submit">Archive</button></form></div>@endif
-                    </div>
-                    <details class="room-manage"><summary>Manage cleaning or maintenance</summary><form method="POST" action="{{ route('admin.rooms.status',$room) }}" class="room-operation-form">@csrf @method('PATCH')<div class="operation-form-grid"><div class="operation-field full"><label for="status-{{ $room->id }}">Operation type</label><select id="status-{{ $room->id }}" name="operational_status"><option value="cleaning">Cleaning</option><option value="maintenance">Maintenance</option><option value="available">Clear an active block now</option></select></div></div><div class="operation-time-panel"><section class="operation-moment"><p class="operation-moment-title">Starts</p><div class="operation-moment-fields"><input id="start-date-{{ $room->id }}" name="operational_start_date" class="operation-start-date" type="date" min="{{ $operationStart->format('Y-m-d') }}" value="{{ $operationStart->format('Y-m-d') }}" aria-label="Operation start date"><select name="operational_start_time" class="operation-start-time" aria-label="Operation start time">@foreach($timeOptions as $minutes)@php($value = sprintf('%02d:%02d', intdiv($minutes, 2), $minutes % 2 ? 30 : 0))<option value="{{ $value }}" @selected($value === $operationStart->format('H:i'))>{{ \Carbon\Carbon::createFromFormat('H:i', $value)->format('g:i A') }}</option>@endforeach</select></div></section><section class="operation-moment"><p class="operation-moment-title">Ends</p><div class="operation-moment-fields"><input id="end-date-{{ $room->id }}" name="operational_end_date" class="operation-end-date" type="date" min="{{ $operationStart->format('Y-m-d') }}" value="{{ $operationEnd->format('Y-m-d') }}" aria-label="Operation end date"><select name="operational_end_time" class="operation-end-time" aria-label="Operation end time">@foreach($timeOptions as $minutes)@php($value = sprintf('%02d:%02d', intdiv($minutes, 2), $minutes % 2 ? 30 : 0))<option value="{{ $value }}" @selected($value === $operationEnd->format('H:i'))>{{ \Carbon\Carbon::createFromFormat('H:i', $value)->format('g:i A') }}</option>@endforeach</select></div></section></div><div class="schedule-timer" aria-live="polite"><div><div class="schedule-timer-label">Scheduled length</div><div class="schedule-timer-value">1 hour</div></div><div class="duration-presets" aria-label="Quick duration"><button type="button" class="duration-button is-selected" data-minutes="60">1 hr</button><button type="button" class="duration-button" data-minutes="120">2 hrs</button><button type="button" class="duration-button" data-minutes="240">4 hrs</button><button type="button" class="duration-button" data-minutes="480">8 hrs</button><button type="button" class="duration-button" data-minutes="1440">24 hrs</button></div></div><div class="operation-form-grid"><div class="operation-field full"><label for="note-{{ $room->id }}">Staff note (optional)</label><input id="note-{{ $room->id }}" name="notes" maxlength="255" placeholder="For example: deep clean after checkout"></div></div><p class="operation-help">Choose a quick duration to set a clean end time automatically, or adjust either date and time for a custom task.</p><div class="operation-footer">@if(auth()->user()->isAdmin())<label class="override-note"><input type="checkbox" name="force_override" value="1"> Manager override if this overlaps a confirmed stay.</label>@else<span class="override-note">Confirmed stays cannot be overridden by your role.</span>@endif<button class="operation-save" type="submit">Save task</button></div></form></details>
-                </article>
-            @empty
-                <div class="room-empty">No active rooms have been added yet.</div>
-            @endforelse
+        @php($roomsBySlot = $rooms->sortBy('id')->values()->take(18)->mapWithKeys(fn ($room, $index) => [$index + 1 => $room]))
+        <section class="room-board-shell" aria-label="Room operations">
+            <div class="room-board-legend" aria-label="Room color guide"><span><i class="available"></i>Available</span><span><i class="arriving"></i>Arriving soon</span><span><i class="not-available"></i>Not available</span></div>
+            <div class="room-selector-grid">
+                @foreach(range(1, 18) as $slot)
+                    @php
+                        $room = $roomsBySlot->get($slot);
+                        $boardStatus = ! $room ? 'unassigned' : ($room->display_status === 'available' ? 'available' : ($room->display_status === 'reserved' ? 'arriving' : 'not-available'));
+                        $boardLabel = match ($boardStatus) { 'available' => 'Available', 'arriving' => 'Arriving', 'not-available' => 'Unavailable', default => 'Empty' };
+                    @endphp
+                    <button class="room-slot {{ $boardStatus }}" type="button" @if($room)data-room-target="{{ $slot }}" aria-controls="room-detail-{{ $slot }}" aria-pressed="false"@else disabled aria-label="Room {{ $slot }} is not assigned"@endif>
+                        <span class="room-slot-number">{{ $slot }}</span>
+                        <span class="room-slot-state">{{ $boardLabel }}</span>
+                        <span class="room-slot-name">{{ $room?->name ?? 'No room assigned' }}</span>
+                    </button>
+                @endforeach
+            </div>
+            <div class="room-detail-stage" id="room-detail-stage">
+                <div class="room-detail-placeholder"><strong>Select a room</strong><span>Click a numbered room above to view its stay, status, and management controls.</span></div>
+                @foreach(range(1, 18) as $slot)
+                    @if($room = $roomsBySlot->get($slot))
+                        @include('admin.partials.room-detail-card', ['room' => $room, 'slot' => $slot])
+                    @endif
+                @endforeach
+            </div>
         </section>
     </main>
 </div>
 <script>
     (() => {
+        const roomButtons = [...document.querySelectorAll('[data-room-target]')];
+        const roomDetails = [...document.querySelectorAll('[data-room-detail]')];
+        const detailStage = document.getElementById('room-detail-stage');
+        const detailPlaceholder = detailStage?.querySelector('.room-detail-placeholder');
+        const closeDetails = () => {
+            roomButtons.forEach((button) => button.setAttribute('aria-pressed', 'false'));
+            roomDetails.forEach((detail) => detail.hidden = true);
+            if (detailPlaceholder) detailPlaceholder.hidden = false;
+        };
+        roomButtons.forEach((button) => button.addEventListener('click', () => {
+            const target = button.dataset.roomTarget;
+            roomButtons.forEach((candidate) => candidate.setAttribute('aria-pressed', String(candidate === button)));
+            roomDetails.forEach((detail) => detail.hidden = detail.dataset.roomDetail !== target);
+            if (detailPlaceholder) detailPlaceholder.hidden = true;
+            if (window.matchMedia('(max-width: 700px)').matches) detailStage?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }));
+        document.querySelectorAll('.room-detail-close').forEach((button) => button.addEventListener('click', closeDetails));
+
         const toDateValue = (date) => {
             const pad = (value) => String(value).padStart(2, '0');
             return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
