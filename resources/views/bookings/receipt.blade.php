@@ -26,7 +26,7 @@
         @if($booking->payment_status !== 'paid')
             <form id="paymongo-checkout-form" method="POST" action="{{ route('bookings.paymongo.start', $booking) }}" style="margin-top:16px">
                 @csrf
-                <button class="button paymongo-submit" type="submit" aria-busy="false">
+                <button class="button paymongo-submit" type="submit" aria-busy="false" data-loading-text="Opening the secure PayMongo checkout…">
                     <span class="paymongo-spinner" aria-hidden="true"></span>
                     <span class="paymongo-submit-label">Pay with GCash test mode</span>
                     <span class="paymongo-submit-arrow" aria-hidden="true">→</span>
