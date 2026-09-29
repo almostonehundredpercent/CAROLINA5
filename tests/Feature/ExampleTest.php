@@ -146,6 +146,40 @@ test('hourly reservations only accept advertised arrival hours', function () {
         ->assertSessionHasErrors('check_in_time');
 });
 
+test('a confirmed guest can extend a stay before checking in', function () {
+    Mail::fake();
+    $room = testRoom();
+    $room->update(['rental_hours' => 22]);
+    $start = now()->addDay()->setTime(12, 0);
+    $end = $start->copy()->addHours(22);
+    $booking = confirmedBooking($room, $start, $end);
+
+    $this->from(route('bookings.lookup'))
+        ->patch(route('bookings.lookup.extend', $booking), [
+            'email' => $booking->guest_email,
+            'reference' => $booking->reference,
+            'hours' => 22,
+        ])
+        ->assertRedirect(route('bookings.lookup'))
+        ->assertSessionHasNoErrors();
+
+    $booking->refresh();
+    expect($booking->check_out_at->equalTo($end->copy()->addHours(22)))->toBeTrue()
+        ->and((float) $booking->total_amount)->toBe(2000.0);
+});
+
+test('the guest portal hides extensions until a booking is confirmed', function () {
+    $room = testRoom();
+    $start = now()->addDay()->setTime(12, 0);
+    $booking = confirmedBooking($room, $start, $start->copy()->addDay());
+    $booking->update(['status' => 'pending']);
+
+    $this->post(route('bookings.lookup.submit'), [
+        'email' => $booking->guest_email,
+        'reference' => $booking->reference,
+    ])->assertOk()->assertDontSee('Request extension');
+});
+
 test('confirmed bookings and scheduled room blocks both prevent an overlap', function () {
     $room = testRoom();
     $start = now()->addDays(4)->setTime(10, 0);

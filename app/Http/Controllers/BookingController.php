@@ -467,7 +467,9 @@ class BookingController extends Controller
         }
         $data = $request->validate(['email' => 'required|email:rfc|max:255', 'reference' => 'required|string', 'hours' => 'required|integer|in:6,12,22,24,48,72,96,120,168']);
         abort_unless($booking->user_id === null && strcasecmp($booking->reference, trim($data['reference'])) === 0 && strcasecmp((string) $booking->guest_email, trim($data['email'])) === 0, 403);
-        abort_if($booking->status !== 'confirmed' || ! $booking->checked_in_at || $booking->checked_out_at, 422, 'Extensions are available only for checked-in, confirmed guests.');
+        if ($booking->status !== 'confirmed' || $booking->checked_out_at) {
+            return back()->withErrors(['hours' => 'Extensions are available only for confirmed bookings that have not checked out.']);
+        }
         $end = $booking->check_out_at ?? $booking->check_out->copy()->startOfDay();
         $newEnd = $end->copy()->addHours((int) $data['hours']);
         $conflict = Booking::where('room_id', $booking->room_id)->whereKeyNot($booking->id)->blocking()->overlapping($end, $newEnd)->exists() || RoomBlock::where('room_id', $booking->room_id)->overlapping($end, $newEnd)->exists();
