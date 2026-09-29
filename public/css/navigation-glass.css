@@ -1,0 +1,143 @@
+/* Shared public-site header: the espresso glass treatment stays scoped to navigation. */
+.nav {
+    background-color: rgba(28, 20, 15, 0.9);
+    border-bottom: 1px solid rgba(222, 158, 82, 0.38);
+    box-shadow: 0 8px 26px rgba(24, 15, 9, 0.2);
+    color: #fff6e9;
+    -webkit-backdrop-filter: blur(18px) saturate(145%);
+    backdrop-filter: blur(18px) saturate(145%);
+}
+
+.nav .brand {
+    color: #f3a33e;
+}
+
+.nav .brand small {
+    color: #f4d3a8;
+}
+
+.nav nav,
+.dark-mode .nav nav {
+    color: #fff6e9;
+}
+
+.nav nav > a:not(.nav-button),
+.dark-mode .nav nav > a:not(.nav-button) {
+    border-radius: 8px;
+    color: #fff6e9;
+    transition: color 160ms ease, background-color 160ms ease;
+}
+
+.nav nav > a:not(.nav-button):hover,
+.dark-mode .nav nav > a:not(.nav-button):hover {
+    background-color: rgba(255, 255, 255, 0.08);
+    color: #ffd28e;
+}
+
+.nav .nav-theme-toggle {
+    border: 1px solid rgba(226, 177, 117, 0.42);
+    background: rgba(255, 255, 255, 0.06);
+    color: #fff6e9;
+    transition: background-color 160ms ease, border-color 160ms ease;
+}
+
+.nav .nav-theme-toggle:hover {
+    border-color: rgba(255, 205, 133, 0.78);
+    background: rgba(255, 255, 255, 0.12);
+}
+
+.nav .nav-button {
+    border: 1px solid rgba(255, 205, 133, 0.42);
+    background: linear-gradient(135deg, #d98300, #b65e00);
+    box-shadow: 0 5px 16px rgba(164, 82, 0, 0.28);
+    color: #fffaf2;
+    transition: transform 160ms ease, box-shadow 160ms ease, filter 160ms ease;
+}
+
+.nav .nav-button:hover {
+    box-shadow: 0 8px 20px rgba(164, 82, 0, 0.38);
+    filter: brightness(1.08);
+    transform: translateY(-1px);
+}
+
+.nav .menu-toggle {
+    border: 1px solid rgba(226, 177, 117, 0.48);
+    background: rgba(255, 255, 255, 0.07);
+    color: #fff6e9;
+}
+
+.nav .menu-toggle:hover {
+    background: rgba(255, 255, 255, 0.13);
+}
+
+.nav :is(a, button):focus-visible,
+.nav form button:focus-visible {
+    outline: 3px solid #ffc66e;
+    outline-offset: 3px;
+}
+
+.dark-mode .nav {
+    background-color: rgba(28, 20, 15, 0.9);
+    border-bottom-color: rgba(222, 158, 82, 0.38);
+    color: #fff6e9;
+}
+
+.dark-mode .nav .menu-toggle {
+    border-color: rgba(226, 177, 117, 0.48);
+    background: rgba(255, 255, 255, 0.07);
+    color: #fff6e9;
+}
+
+@media (max-width: 800px) {
+    .nav nav,
+    .dark-mode .nav nav {
+        border: 1px solid rgba(222, 158, 82, 0.46);
+        background-color: rgba(33, 24, 18, 0.97);
+        box-shadow: 0 18px 40px rgba(10, 7, 5, 0.42);
+        -webkit-backdrop-filter: blur(18px) saturate(145%);
+        backdrop-filter: blur(18px) saturate(145%);
+    }
+
+    .nav nav > a:not(.nav-button):hover,
+    .dark-mode .nav nav > a:not(.nav-button):hover {
+        background-color: rgba(255, 255, 255, 0.09);
+    }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+    .nav,
+    .dark-mode .nav {
+        background-color: #1c140f;
+        -webkit-backdrop-filter: none;
+        backdrop-filter: none;
+    }
+
+    @media (max-width: 800px) {
+        .nav nav,
+        .dark-mode .nav nav {
+            background-color: #211812;
+            -webkit-backdrop-filter: none;
+            backdrop-filter: none;
+        }
+    }
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    .nav,
+    .dark-mode .nav {
+        background-color: rgba(28, 20, 15, 0.97);
+    }
+
+    @media (max-width: 800px) {
+        .nav nav,
+        .dark-mode .nav nav {
+            background-color: rgba(33, 24, 18, 0.99);
+        }
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .nav :is(a, button) {
+        transition-duration: 0.01ms;
+    }
+}
