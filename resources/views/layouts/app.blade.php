@@ -39,7 +39,7 @@
         </button>
         <nav id="primary-navigation">
             <a href="{{ route('rooms.index') }}">Rooms</a>
-            <a href="{{ route('bookings.lookup') }}">Find booking</a>
+            @guest<a href="{{ route('bookings.lookup') }}">Find booking</a>@endguest
             <a href="{{ route('home') }}#about">About</a>
             <a href="#contact">Contact</a>
             @auth
@@ -86,7 +86,7 @@
             <nav class="footer-column footer-quick" aria-label="Footer navigation">
                 <h2>Explore</h2>
                 <a href="{{ route('rooms.index') }}">Rooms</a>
-                <a href="{{ route('bookings.lookup') }}">Find booking</a>
+                @auth<a href="{{ route('bookings.index') }}">My bookings</a>@else<a href="{{ route('bookings.lookup') }}">Find booking</a>@endauth
                 <a href="{{ route('home') }}#about">About</a>
             </nav>
 
