@@ -260,6 +260,10 @@ class BookingController extends Controller
                 'exception' => $exception::class,
             ]);
 
+            if ($request->expectsJson()) {
+                return response()->json(['message' => 'Online GCash checkout is unavailable right now. Please try again shortly.'], 503);
+            }
+
             return back()->withErrors(['payment' => 'Online GCash checkout is unavailable right now. Please try again later.']);
         }
 
@@ -273,6 +277,10 @@ class BookingController extends Controller
         ]);
         $booking->update(['payment_method' => 'gcash', 'payment_status' => 'pending']);
         $this->log($booking, $request->user()?->id, 'payment_checkout_started', 'Guest started a PayMongo test GCash checkout.');
+
+        if ($request->expectsJson()) {
+            return response()->json(['checkout_url' => $session['url']]);
+        }
 
         return redirect()->away($session['url']);
     }

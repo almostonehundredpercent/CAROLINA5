@@ -42,6 +42,34 @@ test('a guest can begin an online GCash test checkout', function () {
     expect($booking->fresh()->payment_method)->toBe('gcash');
 });
 
+test('an AJAX checkout request receives a checkout URL without a redirect response', function () {
+    $booking = payMongoBooking();
+    Http::fake(['https://api.paymongo.com/v1/checkout_sessions' => Http::response([
+        'data' => ['id' => 'cs_test_ajax', 'attributes' => ['checkout_url' => 'https://checkout.paymongo.test/cs_test_ajax']],
+    ])]);
+
+    $this->withSession(['guest_booking_reference' => $booking->reference])
+        ->withHeaders(['Accept' => 'application/json', 'X-Requested-With' => 'XMLHttpRequest'])
+        ->post(route('bookings.paymongo.start', $booking))
+        ->assertOk()
+        ->assertJsonPath('checkout_url', 'https://checkout.paymongo.test/cs_test_ajax');
+
+    expect(Payment::where('booking_id', $booking->id)->firstOrFail()->reference)->toBe('paymongo:cs_test_ajax');
+});
+
+test('an AJAX checkout failure returns a visible error response', function () {
+    $booking = payMongoBooking();
+    Http::fake(['https://api.paymongo.com/v1/checkout_sessions' => Http::response(['errors' => [['detail' => 'Unavailable']]], 503)]);
+
+    $this->withSession(['guest_booking_reference' => $booking->reference])
+        ->withHeaders(['Accept' => 'application/json', 'X-Requested-With' => 'XMLHttpRequest'])
+        ->post(route('bookings.paymongo.start', $booking))
+        ->assertStatus(503)
+        ->assertJsonPath('message', 'Online GCash checkout is unavailable right now. Please try again shortly.');
+
+    expect(Payment::where('booking_id', $booking->id)->exists())->toBeFalse();
+});
+
 test('a payment is recorded only after the server verifies PayMongo success', function () {
     $booking = payMongoBooking();
     Payment::create(['booking_id' => $booking->id, 'amount' => 1000, 'method' => 'gcash', 'status' => 'pending', 'reference' => 'paymongo:cs_test_123']);
