@@ -58,3 +58,20 @@ test('monthly promo rejects shorter stays and rooms outside the offer', function
     expect(fn () => PromoPricing::quote('LIMITEDMONTH', $eligibleRoom, 168, 3150))->toThrow(ValidationException::class)
         ->and(fn () => PromoPricing::quote('LIMITEDMONTH', $otherRoom, 720, 13500))->toThrow(ValidationException::class);
 });
+
+test('percentage promo reduces the stay total by ten percent', function () {
+    $room = promoRoom('percentage');
+    $promo = PromoCode::create([
+        'code' => 'CAROLINA-TEST',
+        'name' => 'Carolina 10% Off',
+        'discount_type' => 'percentage',
+        'discount_value' => 10,
+        'is_active' => true,
+    ]);
+    $promo->rooms()->attach($room);
+
+    $quote = PromoPricing::quote('carolina-test', $room, 22, 450);
+
+    expect($quote['discount'])->toBe(45.0)
+        ->and($quote['total'])->toBe(405.0);
+});
