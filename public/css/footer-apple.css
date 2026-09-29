@@ -24,9 +24,6 @@
 .site-footer .brand-logo { width: 58px; height: 58px; border: 1px solid rgba(255,255,255,.5); box-shadow: 0 8px 24px rgba(0,0,0,.22); }
 .site-footer .brand small { margin-top: 5px; color: var(--footer-accent); font: 700 .53rem/1 'DM Sans', sans-serif; letter-spacing: .17em; }
 .site-footer .footer-brand p { max-width: 310px; margin: 21px 0 22px; color: var(--footer-muted); font: 400 1rem/1.55 'DM Sans', sans-serif; }
-.site-footer .footer-primary-action { display: inline-flex; align-items: center; gap: 9px; min-height: 42px; padding: 0 16px; border-radius: 999px; background: #f6f3ee; color: #241d17; font-size: .9rem; font-weight: 700; transition: transform .2s ease, background .2s ease; }
-.site-footer .footer-primary-action span { color: #b86309; font-size: 1.05rem; }
-.site-footer .footer-primary-action:hover { transform: translateY(-1px); background: #fff; }
 .site-footer .footer-column { min-width: 0; padding: 4px 0 0; border: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 12px; }
 .site-footer h2 { margin: 0 0 9px; color: var(--footer-accent); font: 700 .68rem/1 'DM Sans', sans-serif; letter-spacing: .13em; text-transform: uppercase; }
 .site-footer .footer-column > a { color: var(--footer-text); font: 500 .93rem/1.45 'DM Sans', sans-serif; }

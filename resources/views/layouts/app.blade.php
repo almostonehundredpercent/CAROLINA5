@@ -81,7 +81,6 @@
             <section class="footer-brand">
                 <a class="brand" href="{{ route('home') }}"><img class="brand-logo" src="{{ asset('images/carolina-logo.jpg') }}" alt="Carolina logo"><span>Carolina <small>TRANSIENT & AIRBNB</small></span></a>
                 <p>A thoughtful, comfortable stay in the heart of Tabaco City.</p>
-                <a class="footer-primary-action" href="{{ route('rooms.index') }}">Explore rooms <span aria-hidden="true">→</span></a>
             </section>
 
             <nav class="footer-column footer-quick" aria-label="Footer navigation">
