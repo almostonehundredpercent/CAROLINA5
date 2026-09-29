@@ -125,6 +125,65 @@ footer { flex-shrink: 0; }
 .dark-mode .booking-form .hourly-calendar-day:hover:not(:disabled), .dark-mode .booking-form .hourly-time-option:hover, .dark-mode .booking-form .clean-select-option:hover { background: #3a2c22; }
 .dark-mode .booking-form .hourly-calendar-day.selected, .dark-mode .booking-form .hourly-time-option.selected, .dark-mode .booking-form .clean-select-option.selected { background: var(--gold); color: #fff; }
 .dark-mode .booking-form label.checkbox { background: #211a15; border-color: var(--line); color: var(--ink); }
+.dark-mode .booking-form {
+  color-scheme: dark;
+  background: #241c17;
+  border: 1px solid #49382d;
+  box-shadow: 0 18px 46px rgba(0, 0, 0, .3);
+}
+.dark-mode .booking-form h1 { color: #fff8ef; }
+.dark-mode .booking-form > .eyebrow { color: #f0a43c; }
+.dark-mode .booking-form > p { color: #d8c7b5; }
+.dark-mode .booking-form .booking-type-selector {
+  background: #191411;
+  border-color: #4f3d31;
+}
+.dark-mode .booking-form .booking-type-label,
+.dark-mode .booking-form .calendar-weekdays span,
+.dark-mode .booking-form .calendar-heading small { color: #cdb9a7; }
+.dark-mode .booking-form .booking-type-options a {
+  background: #2e241d;
+  border-color: #584437;
+  color: #fff5ea;
+}
+.dark-mode .booking-form .booking-type-options a:hover {
+  background: #3a2b21;
+  border-color: #e29a32;
+}
+.dark-mode .booking-form .booking-type-options a.active {
+  background: #c97900;
+  border-color: #e49a2b;
+  color: #fff;
+  box-shadow: 0 7px 18px rgba(201, 121, 0, .22);
+}
+.dark-mode .booking-form .booking-type-options a.active small { color: #fff3dd; }
+.dark-mode .booking-form .stay-date-fields input[readonly] {
+  background: #191411;
+  border-color: #584437;
+  color: #fff7ee;
+  -webkit-text-fill-color: #fff7ee;
+  opacity: 1;
+}
+.dark-mode .booking-form input::placeholder,
+.dark-mode .booking-form textarea::placeholder { color: #aa998a; opacity: 1; }
+.dark-mode .booking-form .availability-calendar {
+  background: #191411;
+  border-color: #4f3d31;
+}
+.dark-mode .booking-form .calendar-heading strong,
+.dark-mode .booking-form .calendar-controls b { color: #fff4e8; }
+.dark-mode .booking-form .calendar-controls button {
+  background: #332820;
+  border-color: #604a3a;
+  color: #ffc46e;
+}
+.dark-mode .booking-form .calendar-controls button:hover { background: #453326; }
+.dark-mode .booking-form .calendar-day { color: #f5e8dc; }
+.dark-mode .booking-form .calendar-day.past { color: #817469; }
+.dark-mode .booking-form .calendar-day:hover:not([disabled]) { background: #3a2c22; color: #fff; }
+.dark-mode .booking-form .calendar-day.selected { background: #c97900; color: #fff; }
+.dark-mode .booking-form .calendar-day.booked { background: #492522; color: #ffc1b9; }
+.dark-mode .booking-form .calendar-note { color: #e8b96f; }
 
 /* Rooms search availability calendar */
 .rooms-search { position: relative; align-items: stretch; }
