@@ -102,7 +102,7 @@
                     <h3>Guest contact information</h3>
                     <label>Full name<input name="guest_name" value="{{ old('guest_name') }}" placeholder="e.g., Maria Santos" required></label>
                     <label>Email address<input type="email" name="guest_email" value="{{ old('guest_email') }}" placeholder="e.g., maria@example.com" required></label>
-                    <label>Philippine phone number<input type="tel" name="guest_phone" value="{{ old('guest_phone') }}" placeholder="09169907895" pattern="[0-9+() -]+" title="Use 09169907895, 639169907895, or +63 916-990-7895" required></label>
+                    <label>Phone number<input type="tel" name="guest_phone" value="{{ old('guest_phone') }}" placeholder="Your mobile number" pattern="[0-9+() -]+" title="Enter a valid phone number; include your country code if needed." required></label>
                 @endif
                 <section class="promo-entry" data-promo-quote-url="{{ route('rooms.promos.quote', $room) }}">
                     <strong>Promo code</strong>

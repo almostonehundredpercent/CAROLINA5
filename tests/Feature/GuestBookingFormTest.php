@@ -19,6 +19,7 @@ test('guest booking form shows useful examples in contact and special request fi
         ->assertOk()
         ->assertSee('placeholder="e.g., Maria Santos"', false)
         ->assertSee('placeholder="e.g., maria@example.com"', false)
-        ->assertSee('placeholder="09169907895"', false)
+        ->assertSee('placeholder="Your mobile number"', false)
+        ->assertSee('title="Enter a valid phone number; include your country code if needed."', false)
         ->assertSee('placeholder="e.g., Extra pillow, if available."', false);
 });
