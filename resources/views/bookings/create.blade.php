@@ -103,7 +103,7 @@
                     <label>Email address<input type="email" name="guest_email" value="{{ old('guest_email') }}" required></label>
                     <label>Philippine phone number<input type="tel" name="guest_phone" value="{{ old('guest_phone') }}" placeholder="09169907895" pattern="[0-9+() -]+" title="Use 09169907895, 639169907895, or +63 916-990-7895" required></label>
                 @endif
-                <label class="checkbox"><input name="terms_accepted" type="checkbox" value="1" @checked(old('terms_accepted')) required><span><strong>Accept reservation terms</strong><small>I understand this is a reservation request, subject to staff confirmation. <a href="{{ route('terms') }}" target="_blank">Read terms</a>.</small></span></label>
+                <label class="checkbox"><input name="terms_accepted" type="checkbox" value="1" @checked(old('terms_accepted')) required><span><strong>Accept reservation terms</strong><small>I understand this is a reservation request, subject to staff confirmation, and refunds require cancellation at least 3 days before check-in. <a href="{{ route('terms') }}" target="_blank">Read terms</a>.</small></span></label>
 
                 <label>Special request<textarea name="special_request" rows="3">{{ old('special_request') }}</textarea></label>
                 <x-contact-card class="booking-contact-help" />

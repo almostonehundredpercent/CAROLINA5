@@ -8,7 +8,7 @@ use App\Models\Room;
 use App\Models\User;
 use Illuminate\Support\Facades\Mail;
 
-function refundWorkflowBooking(): Booking
+function refundWorkflowBooking(int $daysUntilCheckIn = 4): Booking
 {
     $room = Room::create([
         'name' => 'Refund workflow room '.uniqid(),
@@ -26,10 +26,10 @@ function refundWorkflowBooking(): Booking
         'guest_name' => 'Refund guest',
         'guest_email' => uniqid().'@example.test',
         'guest_phone' => '09171234567',
-        'check_in' => now()->addDay()->toDateString(),
-        'check_out' => now()->addDays(2)->toDateString(),
-        'check_in_at' => now()->addDay()->startOfHour(),
-        'check_out_at' => now()->addDays(2)->startOfHour(),
+        'check_in' => now()->addDays($daysUntilCheckIn)->toDateString(),
+        'check_out' => now()->addDays($daysUntilCheckIn + 1)->toDateString(),
+        'check_in_at' => now()->addDays($daysUntilCheckIn)->startOfHour(),
+        'check_out_at' => now()->addDays($daysUntilCheckIn + 1)->startOfHour(),
         'guests' => 1,
         'nights' => 1,
         'total_amount' => 1000,
@@ -63,6 +63,20 @@ test('a refund cannot exceed the amount actually recorded as paid', function () 
 
     $this->actingAs($staff)->from(route('admin.bookings'))
         ->post(route('admin.bookings.refunds.store', $booking), ['amount' => 500.01, 'reason' => 'Too much'])
+        ->assertRedirect(route('admin.bookings'))
+        ->assertSessionHasErrors('amount');
+
+    expect(Payment::where('booking_id', $booking->id)->where('status', 'refunded')->exists())->toBeFalse();
+});
+
+test('a booking cancelled less than three days before check-in is non-refundable', function () {
+    $staff = User::factory()->create(['is_admin' => true]);
+    $booking = refundWorkflowBooking(2);
+    $booking->update(['status' => 'cancelled', 'cancelled_at' => now()]);
+    Payment::create(['booking_id' => $booking->id, 'amount' => 500, 'method' => 'cash', 'status' => 'paid', 'paid_at' => now()]);
+
+    $this->actingAs($staff)->from(route('admin.bookings'))
+        ->post(route('admin.bookings.refunds.store', $booking), ['amount' => 500, 'reason' => 'Late cancellation'])
         ->assertRedirect(route('admin.bookings'))
         ->assertSessionHasErrors('amount');
 

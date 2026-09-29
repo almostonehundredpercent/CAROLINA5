@@ -21,6 +21,7 @@
         .refund-form label { display:grid; gap:3px; color:var(--muted); font-size:10px; font-weight:700; }
         .refund-form input { min-width:0; padding:7px; border:1px solid var(--line); border-radius:6px; font:inherit; }
         .refund-form button { align-self:end; min-height:33px; border:1px solid #c85b48; border-radius:7px; background:#fff4f1; color:#a23d2e; font-weight:700; cursor:pointer; }
+        .refund-ineligible { display:block; max-width:245px; color:#a23d2e; font-size:11px; font-weight:700; line-height:1.4; }
     </style>
 </head>
 <body>
@@ -105,6 +106,7 @@
                                     <td>
                                         <div class="booking-actions">
                                             @php($refundableAmount = max(0, (float) $booking->payments->where('status', 'paid')->sum('amount') - (float) $booking->payments->where('status', 'refunded')->sum('amount')))
+                                            @php($refundPolicyEligible = $booking->isRefundEligible())
                                             @if($booking->status !== 'cancelled')
                                                 <form method="POST" action="{{ route('admin.bookings.payment', $booking) }}" onsubmit="return confirm('Update this payment record?')">
                                                     @csrf @method('PATCH')
@@ -147,7 +149,7 @@
                                                 </form>
                                             @endif
 
-                                            @if($refundableAmount > 0)
+                                            @if($refundableAmount > 0 && $refundPolicyEligible)
                                                 <details class="refund-panel">
                                                     <summary>Record refund · ₱{{ number_format($refundableAmount, 2) }} available</summary>
                                                     <form class="refund-form" method="POST" action="{{ route('admin.bookings.refunds.store', $booking) }}" onsubmit="return confirm('Record this refund? This only records the refund; complete any cash or GCash transfer separately.')">
@@ -161,6 +163,8 @@
                                                         <button type="submit">Record refund</button>
                                                     </form>
                                                 </details>
+                                            @elseif($refundableAmount > 0)
+                                                <span class="refund-ineligible">Non-refundable: the booking is less than 3 days from check-in.</span>
                                             @endif
                                         </div>
                                     </td>

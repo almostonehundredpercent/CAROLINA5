@@ -226,6 +226,10 @@ class AdminController extends Controller
             $refundable = max(0.0, $paid - $alreadyRefunded);
             $amount = round((float) $data['amount'], 2);
 
+            if (! $lockedBooking->isRefundEligible()) {
+                throw ValidationException::withMessages(['amount' => 'The refund cutoff has passed. Refunds are available only when cancellation is at least 3 days before check-in.']);
+            }
+
             if ($refundable < 0.01) {
                 throw ValidationException::withMessages(['amount' => 'There is no recorded payment available to refund.']);
             }

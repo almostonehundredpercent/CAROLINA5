@@ -53,6 +53,20 @@ class Booking extends Model
         return $this->belongsTo(User::class, 'cancelled_by');
     }
 
+    public function refundCutoffAt()
+    {
+        $checkIn = $this->check_in_at ?? $this->check_in->copy()->startOfDay();
+
+        return $checkIn->copy()->subDays(3);
+    }
+
+    public function isRefundEligible(): bool
+    {
+        $cancelledOrRequestedAt = $this->cancelled_at ?? now();
+
+        return $cancelledOrRequestedAt->lte($this->refundCutoffAt());
+    }
+
     public function getOperationalStatusAttribute(): string
     {
         if ($this->status === 'cancelled') {
