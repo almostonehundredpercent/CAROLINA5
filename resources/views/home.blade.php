@@ -6,11 +6,11 @@
 @endpush
 
 @section('content')
-@php($featuredRoomGroups = $featuredRooms->chunk(6)->values())
-<section class="hero home-hero"><div class="home-hero-glow" aria-hidden="true"></div><div class="hero-copy"><span class="eyebrow">CAROLINA · TABACO CITY</span><h1>Stay well.<br>Spend less.</h1><p>Affordable bed &amp; breakfast and boarding-house stays in Tabaco City.</p><div class="home-hero-actions"><a class="button light" href="{{ route('rooms.index') }}">Explore rooms <span aria-hidden="true">→</span></a>@auth<a class="home-hero-link" href="{{ route('bookings.index') }}">My bookings</a>@else<a class="home-hero-link" href="#find-booking">Already booked?</a>@endauth</div><div class="home-hero-details" aria-label="Carolina stay highlights"><span><b>{{ $featuredRooms->count() }}</b> rooms</span><span><b>4.8</b> guest rating</span><span><b>24/7</b> booking access</span></div></div></section>
+<section class="hero home-hero"><div class="home-hero-glow" aria-hidden="true"></div><div class="hero-copy"><span class="eyebrow">CAROLINA · TABACO CITY</span><h1>Stay well.<br>Spend less.</h1><p>Affordable bed &amp; breakfast and boarding-house stays in Tabaco City.</p><div class="home-hero-actions"><a class="button light" href="{{ route('rooms.index') }}">Explore rooms <span aria-hidden="true">→</span></a>@auth<a class="home-hero-link" href="{{ route('bookings.index') }}">My bookings</a>@else<a class="home-hero-link" href="#find-booking">Already booked?</a>@endauth</div><div class="home-hero-details" aria-label="Carolina stay highlights"><span><b>6</b> stay options</span><span><b>4.8</b> guest rating</span><span><b>24/7</b> booking access</span></div></div></section>
 
 <style>.home-availability{max-width:1080px;margin:16px auto 0;background:#fff;border-radius:10px;padding:20px;box-shadow:0 12px 35px #4a35151c}.home-availability-top{display:grid;grid-template-columns:minmax(0,1fr) minmax(250px,360px);align-items:end;gap:28px}.home-availability-top b{display:block;font-size:1.04rem}.home-room-picker{display:grid;gap:7px;color:var(--muted);font-size:.76rem;font-weight:700}.home-room-picker select{width:100%;min-width:0;height:46px}.home-calendar{max-width:510px;margin-top:15px}.home-calendar-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}.home-calendar-head button{border:1px solid var(--line);background:#fff;border-radius:5px;width:29px;height:29px;color:var(--deep);font-size:18px;cursor:pointer}.home-week,.home-days{display:grid;grid-template-columns:repeat(7,1fr);column-gap:0;row-gap:4px}.home-week span{text-align:center;color:var(--muted);font-size:10px;font-weight:700}.home-day,.home-blank{aspect-ratio:1;display:grid;place-items:center;border:0;background:transparent;font:600 12px 'DM Sans';color:var(--ink)}.home-day.booked{background:#f8dcd9;color:#8f332d;cursor:not-allowed}.home-day.booked-start,.home-day.booked-end{background:#c63e36;color:#fff}.home-day.booked-start{border-radius:5px 0 0 5px}.home-day.booked-end{border-radius:0 5px 5px 0}.home-day.booked-start.booked-end{border-radius:5px}.home-booked-list{display:grid;gap:6px;margin:14px 0 0}.home-booked-list span{font-size:12px;color:#913a32;background:#fff1ee;border-radius:5px;padding:7px 9px}.home-calendar-note{font-size:12px;color:var(--muted);margin:8px 0 0;max-width:520px}@media(max-width:800px){.home-availability{padding:17px}.home-availability-top{grid-template-columns:1fr;gap:18px}.home-room-picker select{width:100%}}</style>
 
+<style>.home-room-carousel{display:flex;gap:25px;overflow-x:auto;padding:2px 2px 16px;scroll-snap-type:x mandatory;scrollbar-width:none}.home-room-carousel::-webkit-scrollbar{display:none}.home-room-carousel .room-card{flex:0 0 calc((100% - 50px)/3);min-width:0;scroll-snap-align:start}@media(max-width:800px){.home-room-carousel{gap:16px;padding-bottom:13px}.home-room-carousel .room-card{flex-basis:84%}}</style>
 <section class="search-wrap home-availability-wrap">
     <section class="home-availability">
         <div class="home-availability-top">
@@ -56,37 +56,7 @@
 
 <section class="ber-promo ber-promo-home" aria-labelledby="home-ber-promo-title"><div class="ber-promo-layout"><div class="ber-promo-copy"><span class="ber-promo-kicker">Ber-Months Promo · Code CAROLINA</span><h2 id="home-ber-promo-title">Free breakfast is back.</h2><p>Enjoy a simple, comfortable <strong>22-hour Fan Room Solo stay for only ₱450</strong>—then use code <strong>CAROLINA</strong> for 10% off.</p><div class="ber-promo-highlights"><span>Free breakfast</span><span>Smart TV + WiFi</span><span>Pet-friendly</span><span>Children below 7 stay free</span></div></div><a class="button" href="{{ route('rooms.show', 'fan-room-solo') }}">View the offer <span aria-hidden="true">→</span></a></div></section>
 
-<section class="section home-rooms" id="rooms"><div class="section-heading"><div><span class="eyebrow">STAY YOUR WAY</span><h2>Rooms that feel easy to settle into.</h2></div><a href="{{ route('rooms.index') }}" class="text-link">View every room <span aria-hidden="true">→</span></a></div>
-    @if($featuredRoomGroups->count() > 1)
-        <div class="home-room-controls" role="group" aria-label="Room groups">
-            <button class="home-room-page-button" type="button" id="home-rooms-previous" aria-label="Show previous six rooms" disabled><span aria-hidden="true">←</span> Previous</button>
-            <span class="home-room-page-indicator" id="home-rooms-page-indicator" aria-live="polite">Rooms 1–6 of {{ $featuredRooms->count() }} · Group 1 of {{ $featuredRoomGroups->count() }}</span>
-            <button class="home-room-page-button" type="button" id="home-rooms-next" aria-label="Show next six rooms">Next <span aria-hidden="true">→</span></button>
-        </div>
-    @endif
-    <div class="home-room-pages" id="home-room-pages" data-room-total="{{ $featuredRooms->count() }}">
-        @forelse($featuredRoomGroups as $groupIndex => $roomGroup)
-            <div class="home-room-page" data-room-page="{{ $groupIndex + 1 }}" @if($groupIndex > 0) hidden @endif>
-                <div class="home-room-grid" aria-label="Rooms {{ $groupIndex * 6 + 1 }}–{{ min(($groupIndex + 1) * 6, $featuredRooms->count()) }}">
-                    @foreach($roomGroup as $room)
-                        <article class="room-card">
-                            <img src="{{ $room->image_url }}" alt="{{ $room->name }}" @if($loop->parent->first && $loop->first) fetchpriority="high" @else loading="lazy" @endif>
-                            <div class="room-card-body">
-                                <span>{{ $room->room_type }} · Up to {{ $room->guests }} guests</span>
-                                <h3>{{ $room->name }}</h3>
-                                @if($room->approved_reviews_count)<small class="card-rating">★ {{ number_format($room->approved_reviews_avg_rating, 1) }} · {{ $room->approved_reviews_count }} {{ Str::plural('review', $room->approved_reviews_count) }}</small>@endif
-                                <p>₱{{ number_format($room->price_per_night) }} <small>{{ $room->rate_label }}</small></p>
-                                <a href="{{ route('rooms.show', $room) }}">View room <span aria-hidden="true">→</span></a>
-                            </div>
-                        </article>
-                    @endforeach
-                </div>
-            </div>
-        @empty
-            <p>Rooms will appear here after the first database seed.</p>
-        @endforelse
-    </div>
-</section>
+<section class="section home-rooms" id="rooms"><div class="section-heading"><div><span class="eyebrow">STAY YOUR WAY</span><h2>Rooms that feel easy to settle into.</h2></div><a href="{{ route('rooms.index') }}" class="text-link">View every room <span aria-hidden="true">→</span></a></div><div class="home-room-carousel" aria-label="Featured rooms">@forelse($featuredRooms as $room)<article class="room-card"><img src="{{ $room->image_url }}" alt="{{ $room->name }}" @if($loop->first) fetchpriority="high" @else loading="lazy" @endif><div class="room-card-body"><span>{{ $room->room_type }} · Up to {{ $room->guests }} guests</span><h3>{{ $room->name }}</h3>@if($room->approved_reviews_count)<small class="card-rating">★ {{ number_format($room->approved_reviews_avg_rating, 1) }} · {{ $room->approved_reviews_count }} {{ Str::plural('review', $room->approved_reviews_count) }}</small>@endif<p>₱{{ number_format($room->price_per_night) }} <small>{{ $room->rate_label }}</small></p><a href="{{ route('rooms.show', $room) }}">View room <span aria-hidden="true">→</span></a></div></article>@empty<p>Rooms will appear here after the first database seed.</p>@endforelse</div></section>
 @guest<section class="section home-lookup" id="find-booking"><div class="empty-state"><div><span class="eyebrow">ALREADY BOOKED?</span><h2>Find your stay in seconds.</h2><p>Use your email address and booking reference to view your reservation anytime—no account required.</p></div><a class="button" href="{{ route('bookings.lookup') }}">Find booking <span aria-hidden="true">→</span></a></div></section>@endguest
 <section class="benefits section home-benefits" id="about"><div class="section-heading center"><div><span class="eyebrow">A LITTLE MORE COMFORT</span><h2>Everything you need, already here.</h2><p>Simple thoughtful touches, included with your stay.</p></div></div><div class="benefit-grid"><div><b aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 3v8M7 3v8M4 7h3M5.5 11v10M15 3v7c0 2 1.3 3 3 3h1v8M19 3v10"/></svg></b><h3>Free breakfast</h3><p>Start your day with a complimentary breakfast.</p></div><div><b aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M9 4h6M11 4V2h2v2M8 7h8v13H8zM6 10h2M16 10h2M11 11h2M11 15h2"/></svg></b><h3>Hygiene kits</h3><p>Essential personal-care items for your stay.</p></div><div><b aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 9.5a13 13 0 0 1 18 0M6.5 13a8 8 0 0 1 11 0M10 16.5a3 3 0 0 1 4 0M12 20h.01"/></svg></b><h3>Free Wi-Fi</h3><p>Stay connected throughout your visit.</p></div><div><b aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="14" rx="2"/><path d="m10 8 5 3.5-5 3.5zM8 21h8"/></svg></b><h3>Free Netflix</h3><p>Relax and stream your favorite shows.</p></div><div><b aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 21V3h11v18M8 21h11M13 12h.01"/></svg></b><h3>Private CR</h3><p>Enjoy the privacy and comfort of your own bathroom.</p></div></div></section>
 
@@ -193,31 +163,6 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 </script>
 <script>document.addEventListener('DOMContentLoaded',()=>{const select=document.getElementById('home-room-calendar'),cal=document.getElementById('home-calendar'),days=document.getElementById('home-days'),month=document.getElementById('home-month'),list=document.getElementById('home-booked-list'),today=new Date();today.setHours(0,0,0,0);let cursor=new Date(today.getFullYear(),today.getMonth(),1),ranges=[];const iso=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`,occupied=v=>ranges.some(r=>v>=r.start&&v<r.end),pretty=v=>new Date(`${v}T00:00:00`).toLocaleDateString('en-PH',{month:'short',day:'numeric',year:'numeric'});const render=()=>{days.innerHTML='';month.textContent=cursor.toLocaleDateString('en-PH',{month:'long',year:'numeric'});const first=new Date(cursor.getFullYear(),cursor.getMonth(),1),last=new Date(cursor.getFullYear(),cursor.getMonth()+1,0);for(let i=0;i<first.getDay();i++)days.insertAdjacentHTML('beforeend','<span class="home-blank"></span>');for(let n=1;n<=last.getDate();n++){const d=new Date(cursor.getFullYear(),cursor.getMonth(),n),v=iso(d),booked=occupied(v),p=new Date(d),next=new Date(d);p.setDate(p.getDate()-1);next.setDate(next.getDate()+1);const c=booked?` booked${occupied(iso(p))?'':' booked-start'}${occupied(iso(next))?'':' booked-end'}`:'';days.insertAdjacentHTML('beforeend',`<span class="home-day${c}">${n}</span>`)}list.innerHTML=ranges.length?ranges.map(r=>{const nights=Math.round((new Date(`${r.end}T00:00:00`)-new Date(`${r.start}T00:00:00`))/86400000);return `<span>Booked: ${pretty(r.start)} to ${pretty(r.end)} · ${nights} night${nights===1?'':'s'}</span>`}).join(''):'<span>No booked dates recorded for this room.</span>'};const load=async()=>{const url=select.selectedOptions[0]?.dataset.url;if(!url){cal.hidden=true;return}try{const response=await fetch(url,{headers:{Accept:'application/json'},cache:'no-store'});if(!response.ok)return;ranges=(await response.json()).ranges;cal.hidden=false;render()}catch(error){cal.hidden=true}};select.addEventListener('change',load);document.getElementById('home-prev').onclick=()=>{cursor=new Date(cursor.getFullYear(),cursor.getMonth()-1,1);render()};document.getElementById('home-next').onclick=()=>{cursor=new Date(cursor.getFullYear(),cursor.getMonth()+1,1);render()}});</script>
-<script>
-document.addEventListener('DOMContentLoaded', () => {
-    const pagesContainer = document.getElementById('home-room-pages');
-    const pages = [...document.querySelectorAll('.home-room-page')];
-    const previous = document.getElementById('home-rooms-previous');
-    const next = document.getElementById('home-rooms-next');
-    const indicator = document.getElementById('home-rooms-page-indicator');
-    if (!pagesContainer || pages.length < 2 || !previous || !next || !indicator) return;
-
-    const totalRooms = Number(pagesContainer.dataset.roomTotal || 0);
-    let currentPage = 0;
-
-    const showPage = page => {
-        currentPage = Math.max(0, Math.min(pages.length - 1, page));
-        pages.forEach((group, index) => group.hidden = index !== currentPage);
-        const firstRoom = currentPage * 6 + 1;
-        indicator.textContent = `Rooms ${firstRoom}–${Math.min(firstRoom + 5, totalRooms)} of ${totalRooms} · Group ${currentPage + 1} of ${pages.length}`;
-        previous.disabled = currentPage === 0;
-        next.disabled = currentPage === pages.length - 1;
-    };
-
-    previous.addEventListener('click', () => showPage(currentPage - 1));
-    next.addEventListener('click', () => showPage(currentPage + 1));
-    showPage(currentPage);
-});
-</script>
+<script>document.addEventListener('DOMContentLoaded',()=>{const carousel=document.querySelector('.home-room-carousel');if(!carousel||window.matchMedia('(prefers-reduced-motion: reduce)').matches)return;const cards=[...carousel.children];if(cards.length<2)return;const duplicate=(card)=>{const copy=card.cloneNode(true);copy.setAttribute('aria-hidden','true');copy.querySelectorAll('a').forEach(link=>link.tabIndex=-1);return copy};cards.forEach(card=>carousel.appendChild(duplicate(card)));cards.slice().reverse().forEach(card=>carousel.insertBefore(duplicate(card),carousel.firstChild));let paused=false;let span=0;const gap=()=>parseFloat(getComputedStyle(carousel).gap)||0;const measure=()=>{span=[...carousel.children].slice(cards.length,cards.length*2).reduce((total,card)=>total+card.getBoundingClientRect().width,0)+gap()*(cards.length-1)};const step=()=>carousel.children[cards.length]?.getBoundingClientRect().width+gap()||0;requestAnimationFrame(()=>{measure();carousel.scrollLeft=span});['pointerenter','focusin','touchstart'].forEach(event=>carousel.addEventListener(event,()=>paused=true,{passive:true}));['pointerleave','focusout','touchend'].forEach(event=>carousel.addEventListener(event,()=>paused=false));carousel.addEventListener('scroll',()=>{if(!span)return;if(carousel.scrollLeft<span*.45)carousel.scrollLeft+=span;else if(carousel.scrollLeft>span*1.55)carousel.scrollLeft-=span},{passive:true});window.addEventListener('resize',()=>{measure();carousel.scrollLeft=span});setInterval(()=>{if(!paused)carousel.scrollBy({left:step(),behavior:'smooth'})},4200)});</script>
 <script>document.addEventListener('DOMContentLoaded',()=>{const roomCalendar=document.getElementById('home-room-calendar');if(!roomCalendar)return;const refresh=()=>{if(!document.hidden&&roomCalendar.value)roomCalendar.dispatchEvent(new Event('change'))};setInterval(refresh,15000);document.addEventListener('visibilitychange',refresh)});</script>
 @endsection

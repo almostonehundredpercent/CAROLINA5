@@ -63,30 +63,23 @@
 .home-rooms .section-heading h2 { max-width:640px; letter-spacing:-.04em; }
 .home-rooms .text-link { display:inline-flex; align-items:center; gap:7px; border:1px solid var(--line); border-radius:999px; padding:11px 15px; color:var(--ink); font-size:.88rem; transition:border-color .2s ease,background .2s ease; }
 .home-rooms .text-link:hover { border-color:#d8b27f; background:#fff8ee; }
-.home-room-page[hidden] { display:none; }
-.home-room-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:20px; padding:4px 2px 18px; }
-.home-room-grid .room-card { min-width:0; border:0; border-radius:18px; box-shadow:0 4px 18px rgba(48,35,21,.1); }
-.home-room-grid .room-card img { height:230px; }
-.home-room-grid .room-card-body { padding:20px; }
-.home-room-grid .room-card-body > span { color:#a3610d; font-size:.7rem; letter-spacing:.03em; }
-.home-room-grid .room-card h3 { margin:9px 0 7px; font-size:1.22rem; letter-spacing:-.025em; }
-.home-room-grid .room-card-body p { margin:15px 0 13px; color:var(--ink); font-size:1.13rem; font-weight:700; }
-.home-room-grid .room-card-body p small { color:var(--muted); font-size:.75rem; font-weight:500; }
-.home-room-grid .room-card-body a { display:inline-flex; align-items:center; gap:6px; color:#9e5c0b; font-weight:700; }
-.home-room-controls { display:flex; align-items:center; justify-content:space-between; gap:14px; margin-bottom:18px; padding:12px 14px; border:1px solid var(--line); border-radius:14px; background:var(--paper); }
-.home-room-page-button { display:inline-flex; min-height:42px; align-items:center; justify-content:center; gap:7px; padding:0 15px; border:1px solid #e7d8c8; border-radius:999px; background:#fffaf4; color:#3d2c20; font:700 .82rem 'DM Sans',sans-serif; cursor:pointer; transition:background .18s ease,border-color .18s ease,color .18s ease; }
-.home-room-page-button:hover:not(:disabled) { border-color:#c65d00; color:#a84f00; }
-.home-room-page-button:focus-visible { outline:3px solid rgba(198,93,0,.25); outline-offset:2px; }
-.home-room-page-button:disabled { opacity:.45; cursor:not-allowed; }
-.home-room-page-indicator { color:var(--muted); font-size:.82rem; font-weight:700; line-height:1.4; text-align:center; }
-.home-room-grid .room-card,
+.home-room-carousel { gap:20px; padding:4px 2px 18px; }
+.home-room-carousel .room-card { border:0; border-radius:18px; box-shadow:0 4px 18px rgba(48,35,21,.1); }
+.home-room-carousel .room-card img { height:230px; }
+.home-room-carousel .room-card-body { padding:20px; }
+.home-room-carousel .room-card-body > span { color:#a3610d; font-size:.7rem; letter-spacing:.03em; }
+.home-room-carousel .room-card h3 { margin:9px 0 7px; font-size:1.22rem; letter-spacing:-.025em; }
+.home-room-carousel .room-card-body p { margin:15px 0 13px; color:var(--ink); font-size:1.13rem; font-weight:700; }
+.home-room-carousel .room-card-body p small { color:var(--muted); font-size:.75rem; font-weight:500; }
+.home-room-carousel .room-card-body a { display:inline-flex; align-items:center; gap:6px; color:#9e5c0b; font-weight:700; }
+.home-room-carousel .room-card,
 .home-benefits .benefit-grid > div,
 .home-availability,
 .ber-promo-home,
 .home-hero .button,
 .home-hero-link,
 .ber-promo-home .button,
-.home-room-grid .room-card-body a,
+.home-room-carousel .room-card-body a,
 .home-rooms .text-link,
 .home-lookup .button,
 .home-room-trigger,
@@ -94,7 +87,7 @@
 .home-hero-link { display:inline-flex; }
 .home-benefits .benefit-grid > div { border-radius:15px; box-shadow:0 3px 14px rgba(48,35,21,.045); }
 @media (hover:hover) and (pointer:fine) {
-    .home-room-grid .room-card:hover,
+    .home-room-carousel .room-card:hover,
     .home-benefits .benefit-grid > div:hover { transform:translateY(-4px); box-shadow:0 14px 28px rgba(48,35,21,.15); }
     .home-availability:hover,
     .ber-promo-home:hover { transform:translateY(-4px); }
@@ -103,7 +96,7 @@
     .home-hero .button:hover,
     .home-hero-link:hover,
     .ber-promo-home .button:hover,
-    .home-room-grid .room-card-body a:hover,
+    .home-room-carousel .room-card-body a:hover,
     .home-rooms .text-link:hover,
     .home-lookup .button:hover,
     .home-room-trigger:hover,
@@ -111,32 +104,32 @@
     .home-hero .button:hover,
     .ber-promo-home .button:hover,
     .home-lookup .button:hover { box-shadow:0 13px 28px rgba(44,30,17,.2); }
-    .dark-mode .home-room-grid .room-card:hover,
+    .dark-mode .home-room-carousel .room-card:hover,
     .dark-mode .home-benefits .benefit-grid > div:hover { box-shadow:0 16px 30px rgba(0,0,0,.34); }
     .dark-mode .home-availability:hover { box-shadow:0 28px 65px rgba(0,0,0,.48); }
     .dark-mode .ber-promo-home:hover { box-shadow:0 24px 56px rgba(0,0,0,.42); }
 }
 @media(prefers-reduced-motion:reduce) {
-    .home-room-grid .room-card,
+    .home-room-carousel .room-card,
     .home-benefits .benefit-grid > div,
     .home-availability,
     .ber-promo-home,
     .home-hero .button,
     .home-hero-link,
     .ber-promo-home .button,
-    .home-room-grid .room-card-body a,
+    .home-room-carousel .room-card-body a,
     .home-rooms .text-link,
     .home-lookup .button,
     .home-room-trigger,
     .home-calendar-head button { transition:none; }
-    .home-room-grid .room-card:hover,
+    .home-room-carousel .room-card:hover,
     .home-benefits .benefit-grid > div:hover,
     .home-availability:hover,
     .ber-promo-home:hover,
     .home-hero .button:hover,
     .home-hero-link:hover,
     .ber-promo-home .button:hover,
-    .home-room-grid .room-card-body a:hover,
+    .home-room-carousel .room-card-body a:hover,
     .home-rooms .text-link:hover,
     .home-lookup .button:hover,
     .home-room-trigger:hover,
@@ -159,14 +152,8 @@
 .dark-mode .home-calendar { background:#2b231d; border-color:#49382d; }
 .dark-mode .home-calendar-head button { background:#342a23; border-color:#584438; color:#fff4e8; }
 .dark-mode .home-rooms .text-link { color:#fff3e4; border-color:#514035; background:#251e19; }
-.dark-mode .home-room-controls { border-color:#49382d; background:#211b17; }
-.dark-mode .home-room-page-button { border-color:#584438; background:#30261f; color:#fff4e8; }
-.dark-mode .home-room-page-button:hover:not(:disabled) { border-color:#e98216; background:#4b301c; color:#ffd391; }
-.dark-mode .home-room-page-button:focus-visible { outline-color:rgba(242,140,40,.35); }
-.dark-mode .home-room-page-indicator { color:#c8b6a5; }
 .dark-mode .home-benefits { background:#211a15; }
 .dark-mode .home-benefits .benefit-grid b { background:#2b211b; border-color:#4a382c; color:#f1a234; }
-@media (max-width:800px) { .home-hero { min-height:640px; padding:78px 7% 54px; background-position:62% center; }.home-hero h1 { font-size:clamp(3rem,14vw,4.4rem); }.home-hero-details { margin-top:49px; }.home-availability-wrap { margin-top:-30px; padding:0 5%; }.home-availability { padding:22px 19px; border-radius:15px; }.home-rooms { padding:65px 6% 54px; }.home-rooms .section-heading { align-items:flex-start; gap:18px; flex-direction:column; }.home-room-grid { grid-template-columns:repeat(2,minmax(0,1fr)); gap:15px; }.home-room-grid .room-card img { height:215px; }.home-room-controls { gap:8px; padding:10px; }.home-room-page-button { min-height:40px; padding:0 11px; font-size:.76rem; }.home-room-page-indicator { flex:1; font-size:.74rem; }.home-lookup { padding:0 6% 57px; }.home-lookup .empty-state { padding:31px 25px; align-items:flex-start; flex-direction:column; }.home-benefits { padding:55px 6%; } }
-@media (max-width:560px) { .home-room-grid { grid-template-columns:1fr; }.home-room-grid .room-card img { height:230px; } }
+@media (max-width:800px) { .home-hero { min-height:640px; padding:78px 7% 54px; background-position:62% center; }.home-hero h1 { font-size:clamp(3rem,14vw,4.4rem); }.home-hero-details { margin-top:49px; }.home-availability-wrap { margin-top:-30px; padding:0 5%; }.home-availability { padding:22px 19px; border-radius:15px; }.home-rooms { padding:65px 6% 54px; }.home-rooms .section-heading { align-items:flex-start; gap:18px; flex-direction:column; }.home-room-carousel .room-card img { height:215px; }.home-lookup { padding:0 6% 57px; }.home-lookup .empty-state { padding:31px 25px; align-items:flex-start; flex-direction:column; }.home-benefits { padding:55px 6%; } }
 @media (max-width:460px) { .home-hero { min-height:570px; padding-top:62px; }.home-hero p { font-size:1rem; }.home-hero-actions { gap:17px; margin-top:26px; }.home-hero-actions .button.light { flex:1 1 auto; min-width:0; justify-content:space-between; }.home-hero-details { gap:13px 0; margin-top:40px; }.home-hero-details span { padding:0 12px; font-size:.7rem; }.home-hero-details span:first-child { padding-left:0; }.home-hero-details span:last-child { border-left:0; padding-left:0; flex-basis:100%; }.home-lookup .empty-state { padding:28px 21px; }.home-lookup .button { width:100%; justify-content:center; } }
 @media (max-width:620px) { .home-benefits { padding:46px 20px; }.home-benefits .section-heading { margin-bottom:20px; }.home-benefits .benefit-grid { grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }.home-benefits .benefit-grid > div { min-height:116px; padding:15px 9px 11px; border:1px solid #eadfD3; border-radius:15px; background:rgba(255,253,249,.7); }.home-benefits .benefit-grid b { width:44px; height:44px; }.home-benefits .benefit-grid h3 { margin:10px 0 0; font-size:.83rem; line-height:1.22; }.home-benefits .benefit-grid > div:last-child { grid-column:1 / -1; width:calc(50% - 5px); justify-self:center; }.dark-mode .home-benefits .benefit-grid > div { border-color:#4a382c; background:#2a211b; } }
