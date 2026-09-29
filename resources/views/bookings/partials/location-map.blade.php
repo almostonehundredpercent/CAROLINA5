@@ -1,7 +1,7 @@
 @php
-    $locationName = 'Carolina Transient House — Panal';
-    $locationAddress = 'Purok 4, Panal, Tabaco City, Albay — near TNHS and Jamaica Mansions';
-    $mapDestination = 'Carolina Transient House, Purok 4 Panal, Tabaco City, Albay';
+    $locationName = 'Carolina Air BnB — San Juan';
+    $locationAddress = 'Tomas Cabiles Street, Zone 6, San Juan, Tabaco City, Albay — near Tabaco College';
+    $mapDestination = 'Carolina Air BnB, Tomas Cabiles Street, San Juan, Tabaco City, Albay';
     $mapQuery = rawurlencode($mapDestination);
 @endphp
 <style>
