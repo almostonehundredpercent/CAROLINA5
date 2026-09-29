@@ -59,7 +59,14 @@
         .room-board-legend .available { background:#3f8f5b; }
         .room-board-legend .arriving { background:#d97706; }
         .room-board-legend .not-available { background:#c94b3c; }
+        .room-page-controls { display:flex; align-items:center; justify-content:space-between; gap:14px; padding:12px 14px; border:1px solid var(--room-tile-border); border-radius:14px; background:var(--room-tile); }
+        .room-page-button { display:inline-flex; min-height:38px; align-items:center; justify-content:center; gap:7px; padding:0 13px; border:1px solid var(--room-tile-border); border-radius:999px; background:var(--room-surface); color:var(--room-text); font:650 12px var(--admin-font); cursor:pointer; transition:background .15s ease,border-color .15s ease,color .15s ease; }
+        .room-page-button:hover:not(:disabled) { border-color:var(--room-blue); color:var(--room-blue); }
+        .room-page-button:focus-visible { outline:3px solid rgba(198,93,0,.25); outline-offset:2px; }
+        .room-page-button:disabled { opacity:.45; cursor:not-allowed; }
+        .room-page-indicator { color:var(--room-secondary); font:650 12px/1.4 var(--admin-font); text-align:center; }
         .room-selector-grid { display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); gap:12px; }
+        .room-slot[hidden] { display:none; }
         .room-slot { --slot-accent:#9a8d82; position:relative; display:grid; min-height:104px; padding:17px 14px 14px; overflow:hidden; border:1px solid var(--room-tile-border); border-radius:16px; background:linear-gradient(145deg,var(--room-tile),#fff); color:var(--room-tile-text); text-align:left; cursor:pointer; box-shadow:0 8px 20px var(--room-tile-shadow); transition:transform .17s ease,box-shadow .17s ease,border-color .17s ease,background .17s ease; }
         .room-slot::before { content:''; position:absolute; inset:0 0 auto; height:5px; background:var(--slot-accent); }
         .room-slot:hover { transform:translateY(-2px); border-color:#d9b896; box-shadow:0 12px 25px rgba(76,45,22,.15); }
@@ -98,6 +105,10 @@
         html.dark-mode .room-slot.not-available .room-slot-state { background:#47201d; color:#ff9b90; }
         html.dark-mode .room-slot.unassigned { background:#181411; }
         html.dark-mode .room-slot.unassigned .room-slot-state { background:#302721; color:#ad9e92; }
+        html.dark-mode .room-page-controls { border-color:#4a3325; background:#1c1713; }
+        html.dark-mode .room-page-button { border-color:#594332; background:#2b211b; color:#fff2e4; }
+        html.dark-mode .room-page-button:hover:not(:disabled) { border-color:#f28c28; color:#ffc16b; }
+        html.dark-mode .room-page-button:focus-visible { outline-color:rgba(242,140,40,.35); }
         html.dark-mode .room-detail-card .room-detail-heading { background:#a94f00; }
         @media (max-width:1050px) { .room-selector-grid { grid-template-columns:repeat(4,minmax(0,1fr)); } }
         @media (max-width:700px) {
@@ -106,6 +117,9 @@
             .room-summary-card strong { font-size:25px; }
             .room-summary-icon { top:14px; right:14px; width:26px; height:26px; }
             .room-summary-icon svg { width:22px; height:22px; }
+            .room-page-controls { gap:8px; padding:10px; }
+            .room-page-button { min-height:40px; padding:0 10px; font-size:11px; }
+            .room-page-indicator { flex:1; font-size:11px; }
             .room-selector-grid { grid-template-columns:repeat(3,minmax(0,1fr)); gap:9px; }
             .room-slot { min-height:90px; padding:12px; border-radius:13px; }
             .room-slot-number { font-size:27px; }
@@ -132,10 +146,16 @@
         <p class="room-operations-note"><span aria-hidden="true">i</span><span><b>Availability is protected.</b> Cleaning and maintenance blocks stop online bookings while the work is scheduled.</span></p>
         <section class="room-board-shell" aria-label="Room operations">
             <div class="room-board-legend" aria-label="Room color guide"><span><i class="available"></i>Available</span><span><i class="arriving"></i>Arriving soon</span><span><i class="not-available"></i>Not available</span></div>
-            <div class="room-selector-grid">
+            <div class="room-page-controls" role="group" aria-label="Room groups">
+                <button class="room-page-button" type="button" id="rooms-previous-page" aria-label="Show previous six rooms" disabled><span aria-hidden="true">←</span> Previous</button>
+                <span class="room-page-indicator" id="rooms-page-indicator" aria-live="polite">Rooms 1–6 of 18 · Group 1 of 3</span>
+                <button class="room-page-button" type="button" id="rooms-next-page" aria-label="Show next six rooms">Next <span aria-hidden="true">→</span></button>
+            </div>
+            <div class="room-selector-grid" id="room-selector-grid">
                 @foreach(range(1, 18) as $slot)
                     @php
                         $room = $roomSlots->get($slot - 1);
+                        $roomPage = intdiv($slot - 1, 6) + 1;
                         $boardStatus = 'unassigned';
                         $boardLabel = 'Empty';
                         if ($room && $room->display_status === 'available') {
@@ -149,7 +169,7 @@
                             $boardLabel = 'Unavailable';
                         }
                     @endphp
-                    <button class="room-slot {{ $boardStatus }}" type="button" @if($room)data-room-target="{{ $slot }}" aria-controls="room-detail-{{ $slot }}" aria-pressed="false"@else disabled aria-label="Room {{ $slot }} is not assigned"@endif>
+                    <button class="room-slot {{ $boardStatus }}" type="button" data-room-page="{{ $roomPage }}" @if($room)data-room-target="{{ $slot }}" aria-controls="room-detail-{{ $slot }}" aria-pressed="false"@else disabled aria-label="Room {{ $slot }} is not assigned"@endif @if($roomPage > 1) hidden @endif>
                         <span class="room-slot-number">{{ $slot }}</span>
                         <span class="room-slot-state">{{ $boardLabel }}</span>
                         <span class="room-slot-name">{{ $room ? $room->name : 'No room assigned' }}</span>
@@ -176,11 +196,33 @@
         const roomDetails = [...document.querySelectorAll('[data-room-detail]')];
         const detailStage = document.getElementById('room-detail-stage');
         const detailPlaceholder = detailStage?.querySelector('.room-detail-placeholder');
+        const previousPageButton = document.getElementById('rooms-previous-page');
+        const nextPageButton = document.getElementById('rooms-next-page');
+        const pageIndicator = document.getElementById('rooms-page-indicator');
+        const roomSlots = [...document.querySelectorAll('.room-slot[data-room-page]')];
+        const pageCount = 3;
+        let currentPage = 1;
         const closeDetails = () => {
             roomButtons.forEach((button) => button.setAttribute('aria-pressed', 'false'));
             roomDetails.forEach((detail) => detail.hidden = true);
             if (detailPlaceholder) detailPlaceholder.hidden = false;
         };
+        const showRoomPage = (page) => {
+            currentPage = Math.max(1, Math.min(pageCount, page));
+            closeDetails();
+            roomSlots.forEach((slot) => {
+                slot.hidden = Number(slot.dataset.roomPage) !== currentPage;
+            });
+            if (pageIndicator) {
+                const firstRoom = (currentPage - 1) * 6 + 1;
+                pageIndicator.textContent = `Rooms ${firstRoom}–${firstRoom + 5} of 18 · Group ${currentPage} of ${pageCount}`;
+            }
+            if (previousPageButton) previousPageButton.disabled = currentPage === 1;
+            if (nextPageButton) nextPageButton.disabled = currentPage === pageCount;
+        };
+        previousPageButton?.addEventListener('click', () => showRoomPage(currentPage - 1));
+        nextPageButton?.addEventListener('click', () => showRoomPage(currentPage + 1));
+        showRoomPage(currentPage);
         roomButtons.forEach((button) => button.addEventListener('click', () => {
             const target = button.dataset.roomTarget;
             roomButtons.forEach((candidate) => candidate.setAttribute('aria-pressed', String(candidate === button)));
