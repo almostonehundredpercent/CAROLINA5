@@ -34,13 +34,17 @@ class BookingController extends Controller
         $key = 'booking-submission:'.$room->id;
         $submissionToken = $request->session()->get($key) ?: (string) Str::uuid();
         $request->session()->put($key, $submissionToken);
+        $hourlyDate = old('hourly_date', Carbon::now('Asia/Manila')->toDateString());
+        $hourlyBlockedSlots = $this->hourlyBlockedSlots($room);
 
         return view('bookings.create', [
             'room' => $room,
             'isGuest' => $request->boolean('guest'),
             'bookingMode' => $room->rental_hours ? 'hourly' : $request->string('mode', 'dates')->value(),
             'blockedRanges' => $blockedRanges,
-            'hourlyBlockedSlots' => $this->hourlyBlockedSlots($room),
+            'hourlyBlockedSlots' => $hourlyBlockedSlots,
+            'hourlyDate' => $hourlyDate,
+            'hourlyBookedWindows' => $this->bookedWindowsForDate($hourlyBlockedSlots, $hourlyDate),
             'submissionToken' => $submissionToken,
         ]);
     }
@@ -64,7 +68,7 @@ class BookingController extends Controller
     {
         $ranges = $room->bookings()
             ->blocking()
-            ->where('check_out', '>', now()->startOfDay())
+            ->whereDate('check_out', '>=', Carbon::now('Asia/Manila')->toDateString())
             ->orderBy('check_in')
             ->get(['check_in', 'check_out'])
             ->map(fn (Booking $booking) => [
@@ -81,7 +85,7 @@ class BookingController extends Controller
     {
         $slots = $room->bookings()
             ->blocking()
-            ->where('check_out', '>', now()->startOfDay())
+            ->whereDate('check_out', '>=', Carbon::now('Asia/Manila')->toDateString())
             ->orderBy('check_in')
             ->get()
             ->map(function (Booking $booking) {
@@ -93,6 +97,38 @@ class BookingController extends Controller
         $room->blocks()->where('ends_at', '>', now())->get()->each(fn (RoomBlock $block) => $slots->push(['start' => $block->starts_at->toIso8601String(), 'end' => $block->ends_at->toIso8601String()]));
 
         return $slots;
+    }
+
+    private function bookedWindowsForDate($slots, string $date): array
+    {
+        // Datetimes are persisted as UTC-formatted values representing the
+        // property's local wall-clock time. Keep the picker on that convention.
+        $timezone = 'UTC';
+        $dayStart = Carbon::parse($date, $timezone)->startOfDay();
+        $dayEnd = $dayStart->copy()->addDay();
+
+        return collect($slots)->map(function (array $slot) use ($dayStart, $dayEnd, $timezone) {
+            $start = Carbon::parse($slot['start']);
+            $end = Carbon::parse($slot['end']);
+            $windowStart = max($start->timestamp, $dayStart->timestamp);
+            $windowEnd = min($end->timestamp, $dayEnd->timestamp);
+
+            if ($windowStart >= $windowEnd) {
+                return null;
+            }
+
+            if ($windowStart === $dayStart->timestamp && $windowEnd === $dayEnd->timestamp) {
+                return 'All day';
+            }
+
+            $format = function (int $timestamp) use ($timezone): string {
+                $time = Carbon::createFromTimestamp($timestamp, $timezone);
+
+                return $time->format('i') === '00' ? $time->format('g A') : $time->format('g:i A');
+            };
+
+            return $format($windowStart).' – '.$format($windowEnd);
+        })->filter()->unique()->values()->all();
     }
 
     public function store(Request $request, Room $room)

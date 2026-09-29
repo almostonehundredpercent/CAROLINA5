@@ -135,8 +135,19 @@ class AdminController extends Controller
         }
         if ($action === 'check_out') {
             abort_if(! $booking->checked_in_at || $booking->checked_out_at, 422, 'This guest is not currently checked in.');
-            $booking->update(['checked_out_at' => now()]);
-            RoomBlock::create(['room_id' => $booking->room_id, 'status' => 'cleaning', 'starts_at' => now(), 'ends_at' => now()->addHour(), 'notes' => 'Automatic cleaning period after check-out.', 'created_by' => $request->user()->id]);
+            DB::transaction(function () use ($booking, $request) {
+                $lockedRoom = Room::whereKey($booking->room_id)->lockForUpdate()->firstOrFail();
+                $checkedOutAt = now();
+                $booking->update(['checked_out_at' => $checkedOutAt]);
+                RoomBlock::create([
+                    'room_id' => $lockedRoom->id,
+                    'status' => 'cleaning',
+                    'starts_at' => $checkedOutAt,
+                    'ends_at' => $checkedOutAt->copy()->addHour(),
+                    'notes' => 'Automatic cleaning period after check-out.',
+                    'created_by' => $request->user()->id,
+                ]);
+            });
             $this->log($booking, $request->user()->id, 'checked_out', 'Guest checked out; room moved to cleaning.');
             $this->email($booking->fresh('room'), 'Thank you for staying with Carolina', 'You have been checked out. Thank you for choosing Carolina.');
 
@@ -693,16 +704,28 @@ class AdminController extends Controller
         }
         $startsAt = Carbon::parse($data['operational_starts_at']);
         $endsAt = Carbon::parse($data['operational_until']);
-        $overlap = $room->bookings()->blocking()->overlapping($startsAt, $endsAt)->exists();
         $override = (bool) ($data['force_override'] ?? false);
-        if ($overlap && (! $override || ! $request->user()->isAdmin())) {
-            return back()->withErrors(['operational_until' => 'This operation overlaps a confirmed stay. Choose another time, or have an administrator record an override.']);
-        }
         $notes = $data['notes'] ?? null;
-        if ($overlap && $override) {
-            $notes = trim(($notes ? $notes.' · ' : '').'Manager override by '.$request->user()->name);
-        }
-        RoomBlock::create(['room_id' => $room->id, 'status' => $data['operational_status'], 'starts_at' => $startsAt, 'ends_at' => $endsAt, 'notes' => $notes, 'created_by' => $request->user()->id]);
+        $overlap = DB::transaction(function () use ($room, $startsAt, $endsAt, $override, $notes, $data, $request) {
+            $lockedRoom = Room::whereKey($room->id)->lockForUpdate()->firstOrFail();
+            $overlap = $lockedRoom->bookings()->blocking()->overlapping($startsAt, $endsAt)->exists();
+
+            if ($overlap && (! $override || ! $request->user()->isAdmin())) {
+                throw ValidationException::withMessages(['operational_until' => 'This operation overlaps a confirmed stay. Choose another time, or have an administrator record an override.']);
+            }
+
+            if ($lockedRoom->blocks()->overlapping($startsAt, $endsAt)->exists()) {
+                throw ValidationException::withMessages(['operational_until' => 'This room already has a cleaning or maintenance operation during that time. Choose another time.']);
+            }
+
+            $blockNotes = $overlap && $override
+                ? trim(($notes ? $notes.' · ' : '').'Manager override by '.$request->user()->name)
+                : $notes;
+
+            RoomBlock::create(['room_id' => $lockedRoom->id, 'status' => $data['operational_status'], 'starts_at' => $startsAt, 'ends_at' => $endsAt, 'notes' => $blockNotes, 'created_by' => $request->user()->id]);
+
+            return $overlap;
+        });
         $this->audit($request->user()->id, 'room_block_created', ucfirst($data['operational_status']).' block scheduled.', $room, [], ['status' => $data['operational_status'], 'starts_at' => $startsAt->toDateTimeString(), 'ends_at' => $endsAt->toDateTimeString()]);
 
         return back()->with('success', $overlap ? 'Scheduled room block saved with manager override.' : 'Scheduled room block saved.');
