@@ -19,7 +19,7 @@
     <section class="receipt-summary">
         <span class="receipt-status">Awaiting staff review</span>
         <div class="receipt-summary-grid">
-            <div><small>Booking total</small><b>₱{{ number_format($booking->total_amount, 2) }}</b></div>
+            <div><small>Booking total</small><b>₱{{ number_format($booking->total_amount, 2) }}</b>@if($booking->discount_amount > 0)<small><s>₱{{ number_format($booking->original_amount, 2) }}</s> · {{ $booking->promo_code }} saved ₱{{ number_format($booking->discount_amount, 2) }}</small>@endif</div>
             <div><small>Next step</small><b>Staff confirmation</b></div>
         </div>
         <p class="receipt-note">Please keep your reference number. Carolina will review your reservation and contact you with any next steps.</p>

@@ -24,6 +24,7 @@ final class AdminPermissions
         // edit the room catalogue or staff accounts.
         'room_operations' => ['admin', 'front_desk', 'housekeeping'],
         'reports' => ['admin'],
+        'promos' => ['admin'],
         'activity' => ['admin'],
         'staff' => ['admin'],
         'exports' => ['admin', 'front_desk'],
@@ -60,6 +61,7 @@ final class AdminPermissions
             ['label' => 'Guests', 'route' => 'admin.guests', 'icon' => '♙', 'ability' => 'guests', 'group' => 'primary'],
             ['label' => 'Overview', 'route' => 'admin.dashboard', 'icon' => '▦', 'ability' => 'dashboard', 'group' => 'more'],
             ['label' => 'Reports', 'route' => 'admin.reports', 'icon' => '⌁', 'ability' => 'reports', 'group' => 'more'],
+            ['label' => 'Promo codes', 'route' => 'admin.promos', 'icon' => '%', 'ability' => 'promos', 'group' => 'more'],
             ['label' => 'Activity log', 'route' => 'admin.activity', 'icon' => '◷', 'ability' => 'activity', 'group' => 'more'],
             ['label' => 'Staff access', 'route' => 'admin.staff', 'icon' => '♙', 'ability' => 'staff', 'group' => 'more'],
         ];

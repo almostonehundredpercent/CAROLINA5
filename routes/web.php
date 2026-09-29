@@ -3,6 +3,7 @@
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BookingController;
+use App\Http\Controllers\PromoCodeController;
 use App\Http\Controllers\RoomController;
 use App\Http\Controllers\StayController;
 use App\Models\Room;
@@ -29,6 +30,7 @@ Route::view('/terms', 'legal.terms')->name('terms');
 Route::get('/rooms', [RoomController::class, 'index'])->name('rooms.index');
 Route::get('/rooms/{room:slug}', [RoomController::class, 'show'])->name('rooms.show');
 Route::get('/rooms/{room:slug}/availability', [BookingController::class, 'availability'])->name('rooms.availability');
+Route::post('/rooms/{room:slug}/promo-quote', [BookingController::class, 'promoQuote'])->middleware('throttle:20,1')->name('rooms.promos.quote');
 Route::get('/booking-lookup', [BookingController::class, 'lookupForm'])->name('bookings.lookup');
 Route::get('/stay/{booking}', [StayController::class, 'show'])->middleware(['signed', 'throttle:60,1'])->name('stay.show');
 Route::post('/stay/{booking}/arrival', [StayController::class, 'arrival'])->middleware(['signed', 'throttle:10,1'])->name('stay.arrival');
@@ -98,6 +100,9 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::get('/walk-ins', [AdminController::class, 'walkInForm'])->middleware('admin.permission:frontdesk')->name('walk-ins.create');
     Route::post('/walk-ins', [AdminController::class, 'storeWalkIn'])->middleware('admin.permission:frontdesk')->name('walk-ins.store');
     Route::get('/reports', [AdminController::class, 'reports'])->middleware('admin.permission:reports')->name('reports');
+    Route::get('/promos', [PromoCodeController::class, 'index'])->middleware('admin.permission:promos')->name('promos');
+    Route::post('/promos', [PromoCodeController::class, 'store'])->middleware('admin.permission:promos')->name('promos.store');
+    Route::patch('/promos/{promo}', [PromoCodeController::class, 'update'])->middleware('admin.permission:promos')->name('promos.update');
     Route::get('/activity', [AdminController::class, 'activity'])->middleware('admin.permission:activity')->name('activity');
     Route::get('/staff', [AdminController::class, 'staff'])->middleware('admin.permission:staff')->name('staff');
     Route::patch('/staff/{user}/role', [AdminController::class, 'updateStaffRole'])->middleware('admin.permission:staff')->name('staff.role');

@@ -19,6 +19,9 @@
         @case('admin.reports')
             <svg viewBox="0 0 24 24"><path d="M4 2a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H4Zm3 16a1 1 0 0 1-2 0v-4a1 1 0 1 1 2 0v4Zm4 0a1 1 0 0 1-2 0V9a1 1 0 1 1 2 0v9Zm4 0a1 1 0 0 1-2 0v-6a1 1 0 1 1 2 0v6Zm4 0a1 1 0 0 1-2 0V6a1 1 0 1 1 2 0v12Z"/></svg>
             @break
+        @case('admin.promos')
+            <svg viewBox="0 0 24 24"><path d="M21 12.59 12.59 21a2 2 0 0 1-2.83 0L3 14.24A2 2 0 0 1 2.41 13V4a2 2 0 0 1 2-2h9a2 2 0 0 1 1.41.59L21 8.76a2.7 2.7 0 0 1 0 3.83ZM7.5 6A1.5 1.5 0 1 0 7.5 9 1.5 1.5 0 0 0 7.5 6Z"/></svg>
+            @break
         @case('admin.activity')
             <svg viewBox="0 0 24 24"><path fill-rule="evenodd" d="M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20Zm1-15a1 1 0 1 0-2 0v5c0 .38.21.72.55.9l3.5 1.75a1 1 0 1 0 .9-1.8L13 11.38V7Z" clip-rule="evenodd"/></svg>
             @break

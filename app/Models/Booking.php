@@ -9,11 +9,11 @@ use Illuminate\Validation\ValidationException;
 
 class Booking extends Model
 {
-    protected $fillable = ['user_id', 'guest_name', 'guest_email', 'guest_phone', 'room_id', 'reference', 'submission_token', 'check_in', 'check_out', 'check_in_at', 'check_out_at', 'booking_type', 'hours', 'guests', 'children_count', 'pets_count', 'nights', 'total_amount', 'hold_expires_at', 'status', 'payment_method', 'payment_status', 'paid_at', 'special_request', 'add_ons', 'staff_notes', 'checked_in_at', 'checked_out_at', 'cancelled_at', 'cancelled_by', 'cancellation_reason'];
+    protected $fillable = ['user_id', 'guest_name', 'guest_email', 'guest_phone', 'room_id', 'promo_code_id', 'reference', 'submission_token', 'check_in', 'check_out', 'check_in_at', 'check_out_at', 'booking_type', 'hours', 'guests', 'children_count', 'pets_count', 'nights', 'total_amount', 'promo_code', 'original_amount', 'discount_amount', 'hold_expires_at', 'status', 'payment_method', 'payment_status', 'paid_at', 'special_request', 'add_ons', 'staff_notes', 'checked_in_at', 'checked_out_at', 'cancelled_at', 'cancelled_by', 'cancellation_reason'];
 
     protected function casts(): array
     {
-        return ['check_in' => 'date', 'check_out' => 'date', 'check_in_at' => 'datetime', 'check_out_at' => 'datetime', 'total_amount' => 'decimal:2', 'add_ons' => 'array', 'hold_expires_at' => 'datetime', 'checked_in_at' => 'datetime', 'checked_out_at' => 'datetime', 'paid_at' => 'datetime', 'cancelled_at' => 'datetime'];
+        return ['check_in' => 'date', 'check_out' => 'date', 'check_in_at' => 'datetime', 'check_out_at' => 'datetime', 'total_amount' => 'decimal:2', 'original_amount' => 'decimal:2', 'discount_amount' => 'decimal:2', 'add_ons' => 'array', 'hold_expires_at' => 'datetime', 'checked_in_at' => 'datetime', 'checked_out_at' => 'datetime', 'paid_at' => 'datetime', 'cancelled_at' => 'datetime'];
     }
 
     protected static function booted(): void
@@ -46,6 +46,11 @@ class Booking extends Model
     public function payments()
     {
         return $this->hasMany(Payment::class);
+    }
+
+    public function promoCode()
+    {
+        return $this->belongsTo(PromoCode::class);
     }
 
     public function cancelledBy()

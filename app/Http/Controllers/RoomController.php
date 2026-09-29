@@ -11,6 +11,10 @@ class RoomController extends Controller
     public function index(Request $request)
     {
         $rooms = Room::where('is_active', true)
+            ->with(['promoCodes' => fn ($query) => $query->where('promo_codes.is_active', true)
+                ->where(fn ($active) => $active->whereNull('starts_at')->orWhere('starts_at', '<=', now()))
+                ->where(fn ($active) => $active->whereNull('ends_at')->orWhere('ends_at', '>=', now()))
+                ->where(fn ($active) => $active->whereNull('usage_limit')->orWhereColumn('times_used', '<', 'usage_limit'))])
             ->withAvg('approvedReviews', 'rating')->withCount('approvedReviews');
         $checkIn = $request->date('check_in');
         $stay = $request->string('stay', 'day')->value();
@@ -35,7 +39,13 @@ class RoomController extends Controller
     public function show(Room $room)
     {
         abort_unless($room->is_active, 404);
-        $room->loadAvg('approvedReviews', 'rating')->loadCount('approvedReviews')->load(['approvedReviews' => fn ($query) => $query->latest()->take(8)]);
+        $room->loadAvg('approvedReviews', 'rating')->loadCount('approvedReviews')->load([
+            'approvedReviews' => fn ($query) => $query->latest()->take(8),
+            'promoCodes' => fn ($query) => $query->where('promo_codes.is_active', true)
+                ->where(fn ($active) => $active->whereNull('starts_at')->orWhere('starts_at', '<=', now()))
+                ->where(fn ($active) => $active->whereNull('ends_at')->orWhere('ends_at', '>=', now()))
+                ->where(fn ($active) => $active->whereNull('usage_limit')->orWhereColumn('times_used', '<', 'usage_limit')),
+        ]);
 
         return view('rooms.show', compact('room'));
     }

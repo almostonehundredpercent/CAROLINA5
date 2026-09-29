@@ -13,6 +13,7 @@ use App\Models\Review;
 use App\Models\Room;
 use App\Models\RoomBlock;
 use App\Services\PayMongoCheckout;
+use App\Support\PromoPricing;
 use Carbon\Carbon;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
@@ -46,6 +47,11 @@ class BookingController extends Controller
             'hourlyDate' => $hourlyDate,
             'hourlyBookedWindows' => $this->bookedWindowsForDate($hourlyBlockedSlots, $hourlyDate),
             'submissionToken' => $submissionToken,
+            'roomPromos' => $room->promoCodes()->where('promo_codes.is_active', true)
+                ->where(fn ($query) => $query->whereNull('starts_at')->orWhere('starts_at', '<=', now()))
+                ->where(fn ($query) => $query->whereNull('ends_at')->orWhere('ends_at', '>=', now()))
+                ->where(fn ($query) => $query->whereNull('usage_limit')->orWhereColumn('times_used', '<', 'usage_limit'))
+                ->get(),
         ]);
     }
 
@@ -62,6 +68,43 @@ class BookingController extends Controller
         }
 
         return response()->json(['ranges' => $this->blockedRanges($room)->values(), 'slots' => $this->hourlyBlockedSlots($room)->values()]);
+    }
+
+    public function promoQuote(Request $request, Room $room)
+    {
+        $data = $request->validate([
+            'promo_code' => ['required', 'string', 'max:40'],
+            'booking_type' => ['required', 'in:dates,hourly'],
+            'hours' => ['nullable', 'integer', 'min:1', 'max:8760'],
+            'check_in' => ['nullable', 'date'],
+            'check_out' => ['nullable', 'date', 'after:check_in'],
+        ]);
+
+        if ($data['booking_type'] === 'hourly') {
+            $hours = (int) ($data['hours'] ?? 0);
+            abort_if($hours < 1, 422, 'Choose a stay duration first.');
+            $original = $room->rental_hours
+                ? round($room->price_per_night * match ($hours) {
+                    48 => 2, 72 => 3, 96 => 4, 120 => 5, 168 => 7, 720 => 30, default => 1
+                }, 2)
+                : round(($room->price_per_night / 24) * $hours, 2);
+        } else {
+            abort_if(empty($data['check_in']) || empty($data['check_out']), 422, 'Choose check-in and check-out dates first.');
+            $nights = Carbon::parse($data['check_in'])->diffInDays(Carbon::parse($data['check_out']));
+            $hours = $nights * 24;
+            $original = $nights * $room->price_per_night;
+        }
+
+        $quote = PromoPricing::quote($data['promo_code'], $room, $hours, $original);
+
+        return response()->json([
+            'code' => $quote['promo']->code,
+            'name' => $quote['promo']->name,
+            'original' => $quote['original'],
+            'discount' => $quote['discount'],
+            'total' => $quote['total'],
+            'message' => $quote['promo']->name.' applied. You save ₱'.number_format($quote['discount'], 2).'.',
+        ])->header('Cache-Control', 'no-store');
     }
 
     private function blockedRanges(Room $room)
@@ -142,9 +185,12 @@ class BookingController extends Controller
         if ($request->filled('guest_phone')) {
             $request->merge(['guest_phone' => preg_replace('/[\s()\-]/', '', (string) $request->input('guest_phone'))]);
         }
-        $rules = ['booking_type' => 'required|in:dates,hourly', 'guests' => 'required|integer|min:1|max:'.$room->guests, 'children_count' => 'nullable|integer|min:0|max:10|lte:guests', 'pets_count' => 'nullable|integer|min:0|max:5', 'special_request' => 'nullable|string|max:500', 'checkout_type' => 'required|in:guest,account', 'submission_token' => 'required|uuid', 'terms_accepted' => 'accepted'];
+        if ($request->filled('promo_code')) {
+            $request->merge(['promo_code' => Str::upper(trim((string) $request->input('promo_code')))]);
+        }
+        $rules = ['booking_type' => 'required|in:dates,hourly', 'guests' => 'required|integer|min:1|max:'.$room->guests, 'children_count' => 'nullable|integer|min:0|max:10|lte:guests', 'pets_count' => 'nullable|integer|min:0|max:5', 'special_request' => 'nullable|string|max:500', 'promo_code' => 'nullable|string|max:40', 'checkout_type' => 'required|in:guest,account', 'submission_token' => 'required|uuid', 'terms_accepted' => 'accepted'];
         if ($request->input('booking_type') === 'hourly') {
-            $rules += ['hourly_date' => 'required|date|after_or_equal:today', 'check_in_time' => ['required', 'date_format:H:i', 'regex:/^(0[6-9]|1[0-9]|2[0-3]):00$/'], 'hours' => 'required|integer|in:'.($room->rental_hours ? implode(',', array_unique([$room->rental_hours, 48, 72, 96, 120, 168])) : '3,12,24,48,72,96,120,168')];
+            $rules += ['hourly_date' => 'required|date|after_or_equal:today', 'check_in_time' => ['required', 'date_format:H:i', 'regex:/^(0[6-9]|1[0-9]|2[0-3]):00$/'], 'hours' => 'required|integer|in:'.($room->rental_hours ? implode(',', array_unique([$room->rental_hours, 48, 72, 96, 120, 168, 720])) : '3,12,24,48,72,96,120,168,720')];
         } else {
             $rules += ['check_in' => 'required|date|after_or_equal:today', 'check_out' => 'required|date|after:check_in'];
         }
@@ -169,7 +215,7 @@ class BookingController extends Controller
             $nights = max(1, (int) ceil($data['hours'] / 24));
             $total = $room->rental_hours
                 ? round($room->price_per_night * match ((int) $data['hours']) {
-                    48 => 2, 72 => 3, 96 => 4, 120 => 5, 168 => 7, default => 1
+                    48 => 2, 72 => 3, 96 => 4, 120 => 5, 168 => 7, 720 => 30, default => 1
                 }, 2)
                 : round(($room->price_per_night / 24) * $data['hours'], 2);
             $data['check_in'] = $checkInAt->toDateString();
@@ -195,7 +241,27 @@ class BookingController extends Controller
                     throw ValidationException::withMessages(['availability' => 'Those dates or hours are reserved. Please choose another time.']);
                 }
 
-                return Booking::create($data + $guestData + ['user_id' => $request->user()?->id, 'room_id' => $lockedRoom->id, 'nights' => $nights, 'total_amount' => $total, 'add_ons' => [], 'hold_expires_at' => null, 'payment_method' => 'cash', 'status' => 'pending']);
+                $hours = $data['booking_type'] === 'hourly' ? (int) $data['hours'] : $nights * 24;
+                $pricing = ! empty($data['promo_code']) ? PromoPricing::quote($data['promo_code'], $lockedRoom, $hours, $total, true) : null;
+                $booking = Booking::create($data + $guestData + [
+                    'user_id' => $request->user()?->id,
+                    'room_id' => $lockedRoom->id,
+                    'promo_code_id' => $pricing ? $pricing['promo']->id : null,
+                    'promo_code' => $pricing ? $pricing['promo']->code : null,
+                    'nights' => $nights,
+                    'total_amount' => $pricing ? $pricing['total'] : $total,
+                    'original_amount' => $pricing ? $pricing['original'] : null,
+                    'discount_amount' => $pricing ? $pricing['discount'] : 0,
+                    'add_ons' => [],
+                    'hold_expires_at' => null,
+                    'payment_method' => 'cash',
+                    'status' => 'pending',
+                ]);
+                if ($pricing) {
+                    $pricing['promo']->increment('times_used');
+                }
+
+                return $booking;
             });
         } catch (QueryException $exception) {
             $booking = Booking::where('submission_token', $data['submission_token'])->first();

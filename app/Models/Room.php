@@ -26,6 +26,11 @@ class Room extends Model
         return $this->hasMany(Booking::class);
     }
 
+    public function promoCodes()
+    {
+        return $this->belongsToMany(PromoCode::class);
+    }
+
     public function payments()
     {
         return $this->hasManyThrough(Payment::class, Booking::class);

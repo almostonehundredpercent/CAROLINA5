@@ -17,6 +17,7 @@
 <style>.hourly-calendar-day.booked{background:#f8dcd9;color:#8f332d;cursor:pointer}.hourly-calendar-day.booked:disabled{color:#8f332d;opacity:1}</style>
 <style>.hourly-time-option.booked,.hourly-time-option.booked:disabled{background:#f8dcd9;color:#8f332d;cursor:not-allowed;opacity:1}.hourly-time-option.booked::after{content:'Overlaps stay';font-size:.54rem}.dark-mode .hourly-time-option.booked,.dark-mode .hourly-time-option.booked:disabled{background:#492522;color:#ffc1b9}</style>
 <style>.hourly-booked-summary{grid-column:1/-1;padding:12px 14px;border:1px solid #efc4be;border-radius:8px;background:#fff3f1;color:#762e28;font-size:.8rem;line-height:1.45}.hourly-booked-summary strong{display:block;margin-bottom:5px;font-size:.82rem}.hourly-booked-summary ul{display:flex;flex-wrap:wrap;gap:6px;margin:0;padding:0;list-style:none}.hourly-booked-summary li{padding:5px 9px;border:1px solid #efc4be;border-radius:999px;background:#fff;color:#762e28;font-weight:700}.hourly-booked-summary.is-clear{border-color:var(--line);background:var(--sand);color:var(--muted)}.hourly-booked-summary.is-clear li{border-color:var(--line);background:transparent;color:var(--ink);font-weight:500}.dark-mode .hourly-booked-summary{border-color:#653a33;background:#382320;color:#ffd5ce}.dark-mode .hourly-booked-summary li{border-color:#70443c;background:#492522;color:#ffd5ce}.dark-mode .hourly-booked-summary.is-clear{border-color:var(--line);background:#211a15;color:var(--muted)}.dark-mode .hourly-booked-summary.is-clear li{background:transparent;color:var(--ink)}.hourly-calendar-hint{display:block;margin-top:9px;color:var(--muted);font-size:.68rem;line-height:1.4}</style>
+<style>.promo-entry{display:grid;gap:10px;padding:16px;border:1px solid #efc47d;border-radius:10px;background:#fff8ec}.promo-entry>strong{font-size:.94rem}.promo-entry-row{display:grid;grid-template-columns:1fr auto;gap:8px}.promo-entry-row input{min-width:0;text-transform:uppercase}.promo-entry-row button{padding:0 16px;border:0;border-radius:7px;background:var(--gold);color:#fff;font-weight:800;cursor:pointer}.promo-message{margin:0;color:var(--muted);font-size:.78rem;line-height:1.45}.promo-message.success{color:#1f7a42;font-weight:700}.promo-message.error{color:#a23d2e;font-weight:700}.promo-offer{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 12px;border-radius:7px;background:#fff}.promo-offer b{color:var(--deep)}.promo-offer small{color:var(--muted)}.promo-offer code{color:var(--orange-dark);font-weight:800}.dark-mode .promo-entry{background:#30251f;border-color:#76552e}.dark-mode .promo-offer{background:#211a15}@media(max-width:520px){.promo-entry-row{grid-template-columns:1fr}.promo-entry-row button{min-height:42px}.promo-offer{align-items:flex-start;flex-direction:column}}</style>
 <section class="booking-page">
     <div class="booking-form">
         <span class="eyebrow">RESERVE {{ strtoupper($room->name) }}</span>
@@ -72,7 +73,7 @@
                     <section class="native-booking-fallback" aria-label="Booking details without JavaScript">
                         <strong>Choose your stay details</strong>
                         @if($bookingMode === 'hourly')
-                            <label>Duration<select name="hours">@foreach(array_unique([$room->rental_hours ?: 3, 48, 72, 96, 120, 168]) as $hours)<option value="{{ $hours }}">{{ $hours < 24 ? $hours . ' hours' : ($hours / 24) . ' days' }}</option>@endforeach</select></label>
+                            <label>Duration<select name="hours">@foreach(array_unique([$room->rental_hours ?: 3, 48, 72, 96, 120, 168, 720]) as $hours)<option value="{{ $hours }}">{{ $hours === 720 ? '1 month' : ($hours < 24 ? $hours . ' hours' : ($hours / 24) . ' days') }}</option>@endforeach</select></label>
                             <label>Check-in date<input type="date" name="hourly_date" min="{{ now()->toDateString() }}" value="{{ old('hourly_date', now()->toDateString()) }}" required></label>
                             <label>Check-in time<input type="time" name="check_in_time" min="06:00" max="23:00" step="3600" value="{{ old('check_in_time', '06:00') }}" required></label>
                         @else
@@ -103,6 +104,14 @@
                     <label>Email address<input type="email" name="guest_email" value="{{ old('guest_email') }}" required></label>
                     <label>Philippine phone number<input type="tel" name="guest_phone" value="{{ old('guest_phone') }}" placeholder="09169907895" pattern="[0-9+() -]+" title="Use 09169907895, 639169907895, or +63 916-990-7895" required></label>
                 @endif
+                <section class="promo-entry" data-promo-quote-url="{{ route('rooms.promos.quote', $room) }}">
+                    <strong>Promo code</strong>
+                    @foreach($roomPromos as $availablePromo)
+                        <div class="promo-offer"><span><b>{{ $availablePromo->name }}</b><br><small>{{ $availablePromo->description }}</small></span><code>{{ $availablePromo->code }}</code></div>
+                    @endforeach
+                    <div class="promo-entry-row"><input id="promo-code" name="promo_code" value="{{ old('promo_code') }}" maxlength="40" placeholder="Enter promo code" autocomplete="off"><button id="apply-promo" type="button">Apply</button></div>
+                    <p class="promo-message" id="promo-message" role="status" aria-live="polite">Choose your stay, enter a code, then tap Apply to see the discounted total.</p>
+                </section>
                 <label class="checkbox"><input name="terms_accepted" type="checkbox" value="1" @checked(old('terms_accepted')) required><span><strong>Accept reservation terms</strong><small>I understand this is a reservation request, subject to staff confirmation, and refunds require cancellation at least 3 days before check-in. <a href="{{ route('terms') }}" target="_blank">Read terms</a>.</small></span></label>
 
                 <label>Special request<textarea name="special_request" rows="3">{{ old('special_request') }}</textarea></label>
@@ -135,8 +144,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const hourlyHours = document.getElementById('hourly-hours');
     if (hourlyHours) {
         const total = document.getElementById('hourly-total'); const packageRate = {{ $room->rental_hours ? $room->price_per_night : 'null' }}; const packageHours = {{ $room->rental_hours ?: 'null' }}; const rate = {{ $room->price_per_night / 24 }};
-        if (packageRate) { const field = hourlyHours.closest('.clean-select'), display = field.querySelector('.selector-display'), options = [[packageHours, `${packageHours} hours`], [48, '2 days'], [72, '3 days'], [96, '4 days'], [120, '5 days'], [168, '1 week']]; if (display) { const trigger = document.createElement('button'), menu = document.createElement('section'); trigger.type = 'button'; trigger.className = 'clean-select-trigger'; menu.className = 'clean-select-menu'; menu.hidden = true; options.forEach(([value, label]) => { const option = document.createElement('button'); option.type = 'button'; option.className = 'clean-select-option'; option.dataset.selectValue = value; option.textContent = label; menu.append(option); }); const select = value => { hourlyHours.value = value; trigger.textContent = options.find(([option]) => Number(option) === Number(value))?.[1] ?? `${value} hours`; menu.querySelectorAll('button').forEach(option => option.classList.toggle('selected', Number(option.dataset.selectValue) === Number(value))); hourlyHours.dispatchEvent(new Event('change')); }; display.replaceWith(trigger); field.append(menu); select(hourlyHours.value); trigger.addEventListener('click', () => { const opening = menu.hidden; closeOpenPickers(menu); menu.hidden = !opening; }); menu.querySelectorAll('button').forEach(option => option.addEventListener('click', () => { select(option.dataset.selectValue); menu.hidden = true; })); } }
-        const refresh = () => { const hours = Number(hourlyHours.value); const multiplier = ({48:2,72:3,96:4,120:5,168:7})[hours] ?? 1; total.textContent = `Estimated total: ₱${(packageRate ? packageRate * multiplier : rate * hours).toLocaleString('en-PH', { minimumFractionDigits: 2 })}`; };
+        if (packageRate) { const field = hourlyHours.closest('.clean-select'), display = field.querySelector('.selector-display'), options = [[packageHours, `${packageHours} hours`], [48, '2 days'], [72, '3 days'], [96, '4 days'], [120, '5 days'], [168, '1 week'], [720, '1 month']]; if (display) { const trigger = document.createElement('button'), menu = document.createElement('section'); trigger.type = 'button'; trigger.className = 'clean-select-trigger'; menu.className = 'clean-select-menu'; menu.hidden = true; options.forEach(([value, label]) => { const option = document.createElement('button'); option.type = 'button'; option.className = 'clean-select-option'; option.dataset.selectValue = value; option.textContent = label; menu.append(option); }); const select = value => { hourlyHours.value = value; trigger.textContent = options.find(([option]) => Number(option) === Number(value))?.[1] ?? `${value} hours`; menu.querySelectorAll('button').forEach(option => option.classList.toggle('selected', Number(option.dataset.selectValue) === Number(value))); hourlyHours.dispatchEvent(new Event('change')); }; display.replaceWith(trigger); field.append(menu); select(hourlyHours.value); trigger.addEventListener('click', () => { const opening = menu.hidden; closeOpenPickers(menu); menu.hidden = !opening; }); menu.querySelectorAll('button').forEach(option => option.addEventListener('click', () => { select(option.dataset.selectValue); menu.hidden = true; })); } }
+        const refresh = () => { const hours = Number(hourlyHours.value); const multiplier = ({48:2,72:3,96:4,120:5,168:7,720:30})[hours] ?? 1; total.textContent = `Estimated total: ₱${(packageRate ? packageRate * multiplier : rate * hours).toLocaleString('en-PH', { minimumFractionDigits: 2 })}`; };
         hourlyHours.addEventListener('change', refresh); refresh();
         const value = document.getElementById('hourly-date'), trigger = document.getElementById('hourly-date-trigger'), picker = document.getElementById('hourly-calendar'), days = document.getElementById('hourly-calendar-days'), month = document.getElementById('hourly-calendar-month');
         const todayParts = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Manila', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(new Date());
@@ -279,6 +288,34 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 </script>
 @endif
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const section = document.querySelector('.promo-entry');
+    if (!section) return;
+    const form = section.closest('form'), input = document.getElementById('promo-code'), button = document.getElementById('apply-promo'), message = document.getElementById('promo-message');
+    const money = value => Number(value).toLocaleString('en-PH', { style: 'currency', currency: 'PHP' });
+    const resetMessage = () => { message.className = 'promo-message'; message.textContent = input.value.trim() ? 'Stay details changed. Tap Apply to refresh this promo.' : 'Choose your stay, enter a code, then tap Apply to see the discounted total.'; };
+    button.addEventListener('click', async () => {
+        const code = input.value.trim().toUpperCase();
+        input.value = code;
+        if (!code) { message.className = 'promo-message error'; message.textContent = 'Enter a promo code first.'; return; }
+        const formData = new FormData(form), payload = new FormData();
+        ['_token', 'booking_type', 'hours', 'check_in', 'check_out'].forEach(key => { const value = formData.get(key); if (value) payload.append(key, value); });
+        payload.append('promo_code', code);
+        button.disabled = true; message.className = 'promo-message'; message.textContent = 'Checking promo…';
+        try {
+            const response = await fetch(section.dataset.promoQuoteUrl, { method: 'POST', body: payload, headers: { Accept: 'application/json' }, credentials: 'same-origin' });
+            const result = await response.json().catch(() => ({}));
+            if (!response.ok) throw new Error(result.errors?.promo_code?.[0] || result.message || 'This promo could not be applied.');
+            message.className = 'promo-message success';
+            message.textContent = `${result.name}: ${money(result.original)} → ${money(result.total)}. You save ${money(result.discount)}.`;
+        } catch (error) {
+            message.className = 'promo-message error'; message.textContent = error.message;
+        } finally { button.disabled = false; }
+    });
+    form.addEventListener('change', event => { if (event.target !== input && !event.target.closest('.promo-entry')) resetMessage(); });
+});
+</script>
 <script>
 document.addEventListener('DOMContentLoaded', () => {
     const submit = document.getElementById('booking-submit');
