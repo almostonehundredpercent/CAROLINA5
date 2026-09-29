@@ -1,7 +1,9 @@
 @php
     $locationName = 'Carolina Air BnB — San Juan';
     $locationAddress = 'Tomas Cabiles Street, Zone 6, San Juan, Tabaco City, Albay — near Tabaco College';
-    $mapDestination = 'Carolina Air BnB, Tomas Cabiles Street, San Juan, Tabaco City, Albay';
+    // Exact Google Maps pin beside Tabaco College. Coordinates prevent Maps from
+    // resolving the similarly named Panal branch instead.
+    $mapDestination = '13.3567576,123.7260803';
     $mapQuery = rawurlencode($mapDestination);
 @endphp
 <style>
