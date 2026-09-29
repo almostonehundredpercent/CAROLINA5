@@ -27,7 +27,23 @@
     </form>
 
     <p class="result-count">{{ $rooms->count() }} room{{ $rooms->count() === 1 ? '' : 's' }} available</p>
-    <div class="room-grid">@forelse($rooms as $room)<article class="room-card rooms-card"><img src="{{ $room->image_url }}" alt="{{ $room->name }}" @if($loop->index > 2) loading="lazy" @endif><div class="room-card-body"><span>{{ $room->room_type }} · {{ $room->beds }} bed{{ $room->beds > 1 ? 's' : '' }} · {{ $room->guests }} guests</span><h3>{{ $room->name }}</h3>@if($room->promoCodes->isNotEmpty())<small class="room-promo-badge">{{ $room->promoCodes->first()->name }} · {{ $room->promoCodes->first()->code }}</small>@endif @if($room->approved_reviews_count)<small class="card-rating">★ {{ number_format($room->approved_reviews_avg_rating, 1) }} · {{ $room->approved_reviews_count }} {{ Str::plural('review', $room->approved_reviews_count) }}</small>@endif<p>{{ Str::limit($room->description, 86) }}</p><section class="room-card-availability" data-availability-url="{{ route('rooms.availability', $room) }}"><button type="button" class="room-availability-toggle" aria-expanded="false"><span><b>Booked dates &amp; times</b><small>See this room’s unavailable schedule</small></span><span aria-hidden="true">＋</span></button><div class="room-availability-panel" hidden><div class="room-availability-calendar"><div class="room-availability-head"><button type="button" data-month-prev aria-label="Previous month">‹</button><b data-month-label></b><button type="button" data-month-next aria-label="Next month">›</button></div><div class="room-availability-week"><span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span></div><div class="room-availability-days" data-calendar-days></div></div><div class="room-availability-detail" aria-live="polite">Select a date to see booked hours.</div><p class="room-availability-legend"><i aria-hidden="true"></i> Unavailable</p></div></section><div class="rooms-card-footer"><strong>₱{{ number_format($room->price_per_night) }} <small>{{ $room->rate_label }}</small></strong><a class="button small" href="{{ route('rooms.show', $room) }}">View room <span aria-hidden="true">→</span></a></div></div></article>@empty<div class="empty-state"><h2>No rooms found</h2><p>Try another date, stay length, or smaller group.</p><a class="text-link" href="{{ route('rooms.index') }}">Clear search</a></div>@endforelse</div>
+    <div class="room-grid">
+        @forelse($rooms as $room)
+            <article class="room-card rooms-card">
+                <img src="{{ $room->image_url }}" alt="{{ $room->name }}" @if($loop->index > 2) loading="lazy" @endif>
+                <div class="room-card-body">
+                    <span>{{ $room->room_type }} · {{ $room->beds }} bed{{ $room->beds > 1 ? 's' : '' }} · {{ $room->guests }} guests</span>
+                    <h3>{{ $room->name }}</h3>
+                    @if($room->promoCodes->isNotEmpty())<small class="room-promo-badge">{{ $room->promoCodes->first()->name }} · {{ $room->promoCodes->first()->code }}</small>@endif
+                    @if($room->approved_reviews_count)<small class="card-rating">★ {{ number_format($room->approved_reviews_avg_rating, 1) }} · {{ $room->approved_reviews_count }} {{ Str::plural('review', $room->approved_reviews_count) }}</small>@endif
+                    <p>{{ Str::limit($room->description, 86) }}</p>
+                    <div class="rooms-card-footer"><strong>₱{{ number_format($room->price_per_night) }} <small>{{ $room->rate_label }}</small></strong><a class="button small" href="{{ route('rooms.show', $room) }}">View room <span aria-hidden="true">→</span></a></div>
+                </div>
+            </article>
+        @empty
+            <div class="empty-state"><h2>No rooms found</h2><p>Try another date, stay length, or smaller group.</p><a class="text-link" href="{{ route('rooms.index') }}">Clear search</a></div>
+        @endforelse
+    </div>
 </section>
 <script>
 document.addEventListener('DOMContentLoaded', () => {
