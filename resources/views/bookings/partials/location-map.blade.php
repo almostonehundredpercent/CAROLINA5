@@ -1,12 +1,7 @@
 @php
-    $isPanalBranch = \Illuminate\Support\Str::contains(\Illuminate\Support\Str::lower($booking->room?->name ?? ''), 'panal');
-    $locationName = $isPanalBranch ? 'Carolina Transient House — Panal' : 'Carolina Air BnB — San Juan';
-    $locationAddress = $isPanalBranch
-        ? 'Purok 4, Panal, Tabaco City, Albay — near TNHS and Jamaica Mansions'
-        : 'Tomas Cabiles Street, Zone 6, San Juan, Tabaco City, Albay — near Tabaco College';
-    $mapDestination = $isPanalBranch
-        ? 'Carolina Transient House, Purok 4 Panal, Tabaco City, Albay'
-        : 'Carolina Air BnB, Tomas Cabiles Street, San Juan, Tabaco City, Albay';
+    $locationName = 'Carolina Transient House — Panal';
+    $locationAddress = 'Purok 4, Panal, Tabaco City, Albay — near TNHS and Jamaica Mansions';
+    $mapDestination = 'Carolina Transient House, Purok 4 Panal, Tabaco City, Albay';
     $mapQuery = rawurlencode($mapDestination);
 @endphp
 <style>
