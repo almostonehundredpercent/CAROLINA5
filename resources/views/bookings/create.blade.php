@@ -100,8 +100,8 @@
                 @if($isGuest)
                     <hr>
                     <h3>Guest contact information</h3>
-                    <label>Full name<input name="guest_name" value="{{ old('guest_name') }}" required></label>
-                    <label>Email address<input type="email" name="guest_email" value="{{ old('guest_email') }}" required></label>
+                    <label>Full name<input name="guest_name" value="{{ old('guest_name') }}" placeholder="e.g., Maria Santos" required></label>
+                    <label>Email address<input type="email" name="guest_email" value="{{ old('guest_email') }}" placeholder="e.g., maria@example.com" required></label>
                     <label>Philippine phone number<input type="tel" name="guest_phone" value="{{ old('guest_phone') }}" placeholder="09169907895" pattern="[0-9+() -]+" title="Use 09169907895, 639169907895, or +63 916-990-7895" required></label>
                 @endif
                 <section class="promo-entry" data-promo-quote-url="{{ route('rooms.promos.quote', $room) }}">
@@ -114,7 +114,7 @@
                 </section>
                 <label class="checkbox"><input name="terms_accepted" type="checkbox" value="1" @checked(old('terms_accepted')) required><span><strong>Accept reservation terms</strong><small>I understand this is a reservation request, subject to staff confirmation, and refunds require cancellation at least 3 days before check-in. <a href="{{ route('terms') }}" target="_blank">Read terms</a>.</small></span></label>
 
-                <label>Special request<textarea name="special_request" rows="3">{{ old('special_request') }}</textarea></label>
+                <label>Special request<textarea name="special_request" rows="3" placeholder="e.g., Extra pillow, if available.">{{ old('special_request') }}</textarea></label>
                 <x-contact-card class="booking-contact-help" />
                 <div id="booking-availability-status" role="status" aria-live="polite" style="padding:14px;border:1px solid var(--line);border-radius:10px;background:var(--paper);color:var(--ink)">Choose your stay dates to check availability. Pending reservations also reserve their time slot.</div>
                 <button class="button" id="booking-submit">Continue to receipt</button>
