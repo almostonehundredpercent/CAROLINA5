@@ -21,6 +21,34 @@
 .home-calendar-note { margin-top:8px; }
 .home-room-picker { color:#5c5149; font-size:.72rem; letter-spacing:.08em; text-transform:uppercase; }
 .home-room-picker select { height:50px; border-radius:10px; font-size:.95rem; font-weight:600; text-transform:none; letter-spacing:0; }
+.home-room-picker { position:relative; min-width:0; }
+.home-room-picker-label { display:block; margin-bottom:1px; }
+.home-room-picker-ready .home-room-native { position:absolute; width:1px; height:1px; margin:-1px; padding:0; overflow:hidden; clip:rect(0,0,0,0); clip-path:inset(50%); white-space:nowrap; border:0; }
+.home-room-trigger { display:flex; align-items:center; justify-content:space-between; gap:14px; width:100%; min-height:56px; padding:0 17px; border:1px solid #e7d7c5; border-radius:13px; background:linear-gradient(180deg,#fffdfa,#fffaf4); color:#30251d; font:600 1rem/1.35 'DM Sans',sans-serif; letter-spacing:0; text-align:left; text-transform:none; box-shadow:0 3px 10px rgba(54,36,19,.035); cursor:pointer; transition:border-color .18s ease,box-shadow .18s ease,background .18s ease; }
+.home-room-trigger:hover,.home-room-trigger[aria-expanded="true"] { border-color:#c77b00; box-shadow:0 0 0 3px rgba(199,123,0,.1); }
+.home-room-trigger:focus-visible { outline:3px solid rgba(199,123,0,.45); outline-offset:3px; }
+.home-room-trigger > span { min-width:0; overflow-wrap:anywhere; }
+.home-room-trigger > svg { width:19px; height:19px; flex:0 0 19px; fill:none; stroke:#9a5b11; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; transition:transform .18s ease; }
+.home-room-trigger[aria-expanded="true"] > svg { transform:rotate(180deg); }
+.home-room-options { position:absolute; z-index:30; top:calc(100% + 9px); left:0; right:0; display:grid; gap:3px; max-height:min(340px,42vh); max-height:min(340px,42dvh); overflow:auto; overscroll-behavior:contain; padding:7px; border:1px solid #e7d7c5; border-radius:14px; background:rgba(255,253,249,.98); box-shadow:0 18px 42px rgba(48,34,21,.2); backdrop-filter:blur(14px); }
+.home-room-options.opens-up { top:auto; bottom:calc(100% + 9px); }
+.home-room-options[hidden],.home-room-trigger[hidden] { display:none!important; }
+.home-room-option { display:flex; align-items:center; justify-content:space-between; gap:12px; width:100%; min-height:48px; padding:10px 12px; border:0; border-radius:9px; background:transparent; color:#3b2d22; font:500 .95rem/1.35 'DM Sans',sans-serif; letter-spacing:0; text-align:left; text-transform:none; cursor:pointer; transition:background .15s ease,color .15s ease; }
+.home-room-option:hover,.home-room-option:focus-visible { background:#f7eddf; color:#763e08; outline:none; }
+.home-room-option[aria-selected="true"] { background:#f5e5ca; color:#6f3c08; font-weight:700; }
+.home-room-option > span { min-width:0; overflow-wrap:anywhere; }
+.home-room-option > svg { width:18px; height:18px; flex:0 0 18px; fill:none; stroke:#a65d00; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; opacity:0; }
+.home-room-option[aria-selected="true"] > svg { opacity:1; }
+.dark-mode .home-room-trigger { border-color:#5a4536; background:linear-gradient(180deg,#2c231d,#241c17); color:#fff4e8; box-shadow:0 3px 10px rgba(0,0,0,.14); }
+.dark-mode .home-room-trigger:hover,.dark-mode .home-room-trigger[aria-expanded="true"] { border-color:#d58b27; box-shadow:0 0 0 3px rgba(213,139,39,.16); }
+.dark-mode .home-room-options { border-color:#5a4536; background:rgba(38,30,24,.98); box-shadow:0 18px 42px rgba(0,0,0,.42); }
+.dark-mode .home-room-option { color:#f5e9dc; }
+.dark-mode .home-room-option:hover,.dark-mode .home-room-option:focus-visible { background:#3a2c22; color:#ffe0ae; }
+.dark-mode .home-room-option[aria-selected="true"] { background:#4b351e; color:#ffd38e; }
+.home-availability-top .home-room-picker { text-transform:none; }
+.home-room-picker-label { font-size:.72rem; font-weight:700; letter-spacing:.08em; text-transform:uppercase; }
+@media(max-width:800px) { .home-room-trigger { min-height:54px; }.home-room-options { max-height:min(360px,45vh); max-height:min(360px,45dvh); } }
+@media(prefers-reduced-motion:reduce) { .home-room-trigger,.home-room-trigger>svg,.home-room-option { transition:none; } }
 .home-calendar { max-width: 560px; margin:26px auto 0; padding:22px; border:1px solid var(--line); border-radius:14px; background:#fffcf8; }
 .home-calendar-head { margin-bottom:18px; }
 .home-calendar-head b { font-size:1.02rem; }
