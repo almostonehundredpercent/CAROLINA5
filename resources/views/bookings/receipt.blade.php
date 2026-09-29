@@ -38,6 +38,7 @@
             <p class="receipt-note" style="margin-top:16px"><strong>GCash test payment confirmed.</strong> Staff review is still required.</p>
         @endif
     </section>
+    @include('bookings.partials.location-map', ['booking' => $booking])
     <div class="receipt-actions">
         <a class="button" href="{{ \App\Http\Controllers\StayController::link($booking) }}">Your arrival page</a>
         <a class="button button-outline" href="{{ route('home') }}">Back to home</a>

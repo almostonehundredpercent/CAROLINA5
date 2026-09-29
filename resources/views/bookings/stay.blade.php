@@ -35,6 +35,7 @@
     </article>
     @endif
     @if($booking->arrival_instructions)<article class="stay-card"><h2>From reception</h2><p class="stay-message">{{ $booking->arrival_instructions }}</p></article>@endif
+    @include('bookings.partials.location-map', ['booking' => $booking])
     <p>This private link expires after seven days. Use <a href="{{ route('bookings.lookup') }}">Find booking</a> to open a fresh arrival page. Keep this link private.</p>
 </section>
 @endsection
