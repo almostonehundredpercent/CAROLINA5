@@ -74,6 +74,8 @@
 .home-room-carousel .room-card-body a { display:inline-flex; align-items:center; gap:6px; color:#9e5c0b; font-weight:700; }
 .home-room-carousel .room-card,
 .home-benefits .benefit-grid > div,
+.home-availability,
+.ber-promo-home,
 .home-hero .button,
 .home-hero-link,
 .ber-promo-home .button,
@@ -87,6 +89,10 @@
 @media (hover:hover) and (pointer:fine) {
     .home-room-carousel .room-card:hover,
     .home-benefits .benefit-grid > div:hover { transform:translateY(-4px); box-shadow:0 14px 28px rgba(48,35,21,.15); }
+    .home-availability:hover,
+    .ber-promo-home:hover { transform:translateY(-4px); }
+    .home-availability:hover { box-shadow:0 28px 65px rgba(43,30,18,.22); }
+    .ber-promo-home:hover { box-shadow:0 20px 48px rgba(91,53,13,.18); }
     .home-hero .button:hover,
     .home-hero-link:hover,
     .ber-promo-home .button:hover,
@@ -100,10 +106,14 @@
     .home-lookup .button:hover { box-shadow:0 13px 28px rgba(44,30,17,.2); }
     .dark-mode .home-room-carousel .room-card:hover,
     .dark-mode .home-benefits .benefit-grid > div:hover { box-shadow:0 16px 30px rgba(0,0,0,.34); }
+    .dark-mode .home-availability:hover { box-shadow:0 28px 65px rgba(0,0,0,.48); }
+    .dark-mode .ber-promo-home:hover { box-shadow:0 24px 56px rgba(0,0,0,.42); }
 }
 @media(prefers-reduced-motion:reduce) {
     .home-room-carousel .room-card,
     .home-benefits .benefit-grid > div,
+    .home-availability,
+    .ber-promo-home,
     .home-hero .button,
     .home-hero-link,
     .ber-promo-home .button,
@@ -114,6 +124,8 @@
     .home-calendar-head button { transition:none; }
     .home-room-carousel .room-card:hover,
     .home-benefits .benefit-grid > div:hover,
+    .home-availability:hover,
+    .ber-promo-home:hover,
     .home-hero .button:hover,
     .home-hero-link:hover,
     .ber-promo-home .button:hover,
