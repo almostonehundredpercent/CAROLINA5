@@ -109,6 +109,20 @@
     .dark-mode .home-availability:hover { box-shadow:0 28px 65px rgba(0,0,0,.48); }
     .dark-mode .ber-promo-home:hover { box-shadow:0 24px 56px rgba(0,0,0,.42); }
 }
+@media (any-pointer:coarse) {
+    .home-room-carousel .room-card.is-touch-pressed,
+    .home-benefits .benefit-grid > div.is-touch-pressed,
+    .home-availability.is-touch-pressed,
+    .ber-promo-home.is-touch-pressed { transform:translateY(-3px) scale(.995); }
+    .home-room-carousel .room-card.is-touch-pressed,
+    .home-benefits .benefit-grid > div.is-touch-pressed { box-shadow:0 14px 28px rgba(48,35,21,.15); }
+    .home-availability.is-touch-pressed { box-shadow:0 28px 65px rgba(43,30,18,.22); }
+    .ber-promo-home.is-touch-pressed { box-shadow:0 20px 48px rgba(91,53,13,.18); }
+    .dark-mode .home-room-carousel .room-card.is-touch-pressed,
+    .dark-mode .home-benefits .benefit-grid > div.is-touch-pressed { box-shadow:0 16px 30px rgba(0,0,0,.34); }
+    .dark-mode .home-availability.is-touch-pressed { box-shadow:0 28px 65px rgba(0,0,0,.48); }
+    .dark-mode .ber-promo-home.is-touch-pressed { box-shadow:0 24px 56px rgba(0,0,0,.42); }
+}
 @media(prefers-reduced-motion:reduce) {
     .home-room-carousel .room-card,
     .home-benefits .benefit-grid > div,
@@ -126,6 +140,10 @@
     .home-benefits .benefit-grid > div:hover,
     .home-availability:hover,
     .ber-promo-home:hover,
+    .home-room-carousel .room-card.is-touch-pressed,
+    .home-benefits .benefit-grid > div.is-touch-pressed,
+    .home-availability.is-touch-pressed,
+    .ber-promo-home.is-touch-pressed,
     .home-hero .button:hover,
     .home-hero-link:hover,
     .ber-promo-home .button:hover,
