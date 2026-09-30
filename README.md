@@ -12,13 +12,24 @@ Carolina is a Laravel application for the guest booking, staff operations, and m
 
 ## Roles
 
-- **Administrator:** full staff access, including rooms, catalog changes, role changes, and overrides.
+- **Super administrator:** all staff tools, plus granting or removing administrator access.
+- **Administrator:** daily staff access, including rooms, catalog changes, and non-admin staff role changes.
 - **Front desk:** booking review, check-in/out, walk-ins, payments, and review moderation.
 - **Housekeeping:** cleaning and maintenance blocks only.
-- **Viewer:** dashboard/report access only.
+- **Viewer:** read-only dashboard and room-board access.
 - **Guest:** public pages and their own account bookings.
 
 Routes are protected on the server; hiding a navigation item is never relied upon for authorization.
+
+## Staff sign-in and MFA
+
+The existing Laravel web guard handles passwords and sessions. After password sign-in, **every staff role** must enroll or complete a time-based authenticator challenge before any `/admin/*` route is available. An authenticator app can scan the setup QR code; eight one-time recovery codes are shown only once. The TOTP secret is encrypted in the users table, and recovery codes are hashed and encrypted. Losing both the authenticator and recovery codes requires a verified identity check by an operator with server access.
+
+Existing staff are prompted to enroll at their next sign-in. This is a one-time rollout step; warn them to save recovery codes before relying on the admin area. A regular administrator can manage non-admin staff roles, but only a super administrator can change administrator access. Existing administrators retain operational permissions without automatic elevation to super administrator.
+
+For a controlled initial promotion, run `php artisan staff:promote-super-admin person@example.com` for an **existing administrator**. If identity and ownership are verified and a staff member loses both MFA methods, run `php artisan staff:reset-mfa person@example.com`; their active staff access is invalidated and they must enroll again. Both actions are server-side commands and are audited. Never expose these commands as web routes or share database credentials to perform them.
+
+Login is limited per account/IP, per account across IPs, and per IP. The MFA challenge is throttled for the authenticated user. Password login and MFA completion regenerate the session; logout invalidates it. Production cookies are Secure, HttpOnly, and SameSite=Lax through the existing configuration. CSRF is still enabled on web forms.
 
 ## Local setup
 
@@ -40,7 +51,7 @@ Set database and mail values in `.env`. Never commit `.env`, database dumps cont
 php artisan test
 ```
 
-The suite covers public pages, authentication, booking timing, overlap protection, staff workflow, check-in/out, maintenance conflicts, and review moderation. Run tests against the test database only; never run `migrate:fresh` against production.
+The suite covers public pages, authentication/MFA, booking timing, overlap protection, staff workflow, check-in/out, maintenance conflicts, and review moderation. Run tests against the test database only; never run `migrate:fresh` against production.
 
 ## Payments and email
 

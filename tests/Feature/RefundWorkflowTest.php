@@ -45,7 +45,7 @@ test('staff can record a partial refund with a reason and guest notification', f
     $booking = refundWorkflowBooking();
     Payment::create(['booking_id' => $booking->id, 'amount' => 1000, 'method' => 'cash', 'status' => 'paid', 'paid_at' => now()]);
 
-    $this->actingAs($staff)->post(route('admin.bookings.refunds.store', $booking), [
+    $this->actingAsStaff($staff)->post(route('admin.bookings.refunds.store', $booking), [
         'amount' => '250.00',
         'reason' => 'Guest cancelled before arrival.',
     ])->assertRedirect()->assertSessionHas('success');
@@ -61,7 +61,7 @@ test('a refund cannot exceed the amount actually recorded as paid', function () 
     $booking = refundWorkflowBooking();
     Payment::create(['booking_id' => $booking->id, 'amount' => 500, 'method' => 'cash', 'status' => 'paid', 'paid_at' => now()]);
 
-    $this->actingAs($staff)->from(route('admin.bookings'))
+    $this->actingAsStaff($staff)->from(route('admin.bookings'))
         ->post(route('admin.bookings.refunds.store', $booking), ['amount' => 500.01, 'reason' => 'Too much'])
         ->assertRedirect(route('admin.bookings'))
         ->assertSessionHasErrors('amount');
@@ -75,7 +75,7 @@ test('a booking cancelled less than three days before check-in is non-refundable
     $booking->update(['status' => 'cancelled', 'cancelled_at' => now()]);
     Payment::create(['booking_id' => $booking->id, 'amount' => 500, 'method' => 'cash', 'status' => 'paid', 'paid_at' => now()]);
 
-    $this->actingAs($staff)->from(route('admin.bookings'))
+    $this->actingAsStaff($staff)->from(route('admin.bookings'))
         ->post(route('admin.bookings.refunds.store', $booking), ['amount' => 500, 'reason' => 'Late cancellation'])
         ->assertRedirect(route('admin.bookings'))
         ->assertSessionHasErrors('amount');

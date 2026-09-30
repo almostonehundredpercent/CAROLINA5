@@ -13,16 +13,16 @@ function staffAccount(string $role): User
     ]);
 }
 
-test('each role is sent to its authorized landing page after login', function (string $role, string $route) {
+test('staff must set up mfa after password login while guests reach home', function (string $role, string $destination) {
     $user = staffAccount($role);
     $this->post(route('login.submit'), ['email' => $user->email, 'password' => 'secure-password'])
-        ->assertRedirect(route($route));
+        ->assertRedirect($destination);
 })->with([
-    'administrator' => ['admin', 'admin.frontdesk'],
-    'front desk' => ['front_desk', 'admin.frontdesk'],
-    'housekeeping' => ['housekeeping', 'admin.rooms'],
-    'viewer' => ['viewer', 'admin.dashboard'],
-    'guest' => ['guest', 'home'],
+    'administrator' => ['admin', '/staff/mfa/setup'],
+    'front desk' => ['front_desk', '/staff/mfa/setup'],
+    'housekeeping' => ['housekeeping', '/staff/mfa/setup'],
+    'viewer' => ['viewer', '/staff/mfa/setup'],
+    'guest' => ['guest', '/'],
 ]);
 
 test('role boundaries are enforced on direct administrative URLs', function () {
@@ -32,15 +32,15 @@ test('role boundaries are enforced on direct administrative URLs', function () {
     $viewer = staffAccount('viewer');
     $guest = staffAccount('guest');
 
-    $this->actingAs($admin)->get(route('admin.reports'))->assertOk();
-    $this->actingAs($frontDesk)->get(route('admin.bookings'))->assertOk();
-    $this->actingAs($frontDesk)->get(route('admin.reports'))->assertForbidden();
-    $this->actingAs($frontDesk)->patch('/admin/guests/not-a-guest/restriction', ['action' => 'remove'])->assertForbidden();
-    $this->actingAs($housekeeping)->get(route('admin.rooms'))->assertOk();
-    $this->actingAs($housekeeping)->get(route('admin.bookings'))->assertForbidden();
-    $this->actingAs($viewer)->get(route('admin.dashboard'))->assertOk();
-    $this->actingAs($viewer)->get(route('admin.rooms'))->assertOk();
-    $this->actingAs($viewer)->get(route('admin.bookings'))->assertForbidden();
+    $this->actingAsStaff($admin)->get(route('admin.reports'))->assertOk();
+    $this->actingAsStaff($frontDesk)->get(route('admin.bookings'))->assertOk();
+    $this->actingAsStaff($frontDesk)->get(route('admin.reports'))->assertForbidden();
+    $this->actingAsStaff($frontDesk)->patch('/admin/guests/not-a-guest/restriction', ['action' => 'remove'])->assertForbidden();
+    $this->actingAsStaff($housekeeping)->get(route('admin.rooms'))->assertOk();
+    $this->actingAsStaff($housekeeping)->get(route('admin.bookings'))->assertForbidden();
+    $this->actingAsStaff($viewer)->get(route('admin.dashboard'))->assertOk();
+    $this->actingAsStaff($viewer)->get(route('admin.rooms'))->assertOk();
+    $this->actingAsStaff($viewer)->get(route('admin.bookings'))->assertForbidden();
     $this->actingAs($guest)->get(route('admin.dashboard'))->assertForbidden();
     $this->post(route('logout'));
     $this->get(route('admin.dashboard'))->assertRedirect(route('login'));
@@ -53,7 +53,7 @@ test('only operational staff can change room operations', function () {
     $housekeeping = staffAccount('housekeeping');
 
     $payload = ['operational_status' => 'cleaning', 'operational_starts_at' => now()->addHour()->toDateTimeString(), 'operational_until' => now()->addHours(2)->toDateTimeString()];
-    $this->actingAs($frontDesk)->patch(route('admin.rooms.status', $room), $payload)->assertRedirect();
-    $this->actingAs($viewer)->patch(route('admin.rooms.status', $room), $payload)->assertForbidden();
-    $this->actingAs($housekeeping)->patch(route('admin.rooms.status', $room), $payload)->assertRedirect();
+    $this->actingAsStaff($frontDesk)->patch(route('admin.rooms.status', $room), $payload)->assertRedirect();
+    $this->actingAsStaff($viewer)->patch(route('admin.rooms.status', $room), $payload)->assertForbidden();
+    $this->actingAsStaff($housekeeping)->patch(route('admin.rooms.status', $room), $payload)->assertRedirect();
 });

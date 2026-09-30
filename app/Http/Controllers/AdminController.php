@@ -659,10 +659,16 @@ class AdminController extends Controller
     public function updateStaffRole(Request $request, User $user)
     {
         abort_unless($request->user()->isAdmin(), 403, 'Only administrators can manage staff roles.');
-        abort_if($user->id === $request->user()->id && $request->input('staff_role') !== 'admin', 422, 'You cannot remove your own administrator access.');
-        $role = $request->validate(['staff_role' => 'required|in:admin,front_desk,housekeeping,viewer,guest'])['staff_role'];
+        $role = $request->validate(['staff_role' => 'required|in:super_admin,admin,front_desk,housekeeping,viewer,guest'])['staff_role'];
+        abort_unless(
+            AdminPermissions::allows($request->user(), 'elevate_staff')
+                || (! $user->isAdmin() && ! in_array($role, ['admin', 'super_admin'], true)),
+            403,
+            'Only a super administrator can change administrator access.',
+        );
+        abort_if($user->id === $request->user()->id && $role !== 'super_admin', 422, 'You cannot remove your own super administrator access.');
         $before = $user->only(['staff_role', 'is_admin']);
-        $user->update(['staff_role' => $role, 'is_admin' => $role === 'admin']);
+        $user->update(['staff_role' => $role, 'is_admin' => in_array($role, ['admin', 'super_admin'], true)]);
         $this->audit($request->user()->id, 'staff_role_updated', 'Staff role updated.', $user, $before, $user->fresh()->only(['staff_role', 'is_admin']));
 
         return back()->with('success', $user->name."'s staff role was updated.");

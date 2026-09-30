@@ -33,10 +33,10 @@ test('arrival updates never cancel bookings and reject completed stays', functio
 test('only reception roles publish readiness and notices', function () {
     $booking = arrivalBooking();
     $viewer = User::factory()->create(['staff_role' => 'viewer']);
-    $this->actingAs($viewer)->get(route('admin.arrivals'))->assertForbidden();
-    $this->actingAs($viewer)->patch(route('admin.arrivals.update', $booking), ['readiness' => 'ready', 'bag_drop_available' => 0])->assertForbidden();
+    $this->actingAsStaff($viewer)->get(route('admin.arrivals'))->assertForbidden();
+    $this->actingAsStaff($viewer)->patch(route('admin.arrivals.update', $booking), ['readiness' => 'ready', 'bag_drop_available' => 0])->assertForbidden();
     $staff = User::factory()->create(['staff_role' => 'front_desk']);
-    $this->actingAs($staff)->get(route('admin.arrivals'))->assertOk();
+    $this->actingAsStaff($staff)->get(route('admin.arrivals'))->assertOk();
     $this->patch(route('admin.arrivals.update', $booking), ['readiness' => 'ready', 'bag_drop_available' => 1])->assertRedirect();
     expect($booking->fresh()->readiness)->toBe('ready');
     $booking->room->update(['operational_status' => 'cleaning']);
@@ -47,7 +47,7 @@ test('guest notices respect room scope expiry and resolution', function () {
     $booking = arrivalBooking();
     $staff = User::factory()->create(['staff_role' => 'front_desk']);
     $data = ['room_id' => $booking->room_id, 'type' => 'water', 'title' => 'Water advisory', 'message' => 'Reception can assist.', 'starts_at' => now()->subMinute()->toDateTimeString(), 'ends_at' => now()->addHour()->toDateTimeString()];
-    $this->actingAs($staff)->post(route('admin.stay-notices.store'), $data)->assertRedirect();
+    $this->actingAsStaff($staff)->post(route('admin.stay-notices.store'), $data)->assertRedirect();
     $this->get(StayController::link($booking))->assertSee('Water advisory');
     $id = DB::table('stay_notices')->value('id');
     $this->patch(route('admin.stay-notices.resolve', $id))->assertRedirect();

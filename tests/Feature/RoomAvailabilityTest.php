@@ -47,7 +47,7 @@ test('room operation scheduling rejects a reservation overlap', function () {
     $admin = User::factory()->create(['is_admin' => true]);
     $start = now()->addDays(4)->setTime(10, 0);
     availabilityTestBooking($room, $start, $start->copy()->addHours(6));
-    $this->actingAs($admin)
+    $this->actingAsStaff($admin)
         ->patch(route('admin.rooms.status', $room), [
             'operational_status' => 'maintenance',
             'operational_starts_at' => $start->copy()->addHour()->format('Y-m-d H:i'),
@@ -70,7 +70,7 @@ test('room operation scheduling rejects an overlapping room block', function () 
         'ends_at' => $start->copy()->addHours(2),
     ]);
 
-    $this->actingAs($admin)
+    $this->actingAsStaff($admin)
         ->patch(route('admin.rooms.status', $room), [
             'operational_status' => 'maintenance',
             'operational_starts_at' => $start->copy()->addHour()->format('Y-m-d H:i'),

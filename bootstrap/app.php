@@ -3,6 +3,7 @@
 use App\Http\Middleware\AdminMiddleware;
 use App\Http\Middleware\PreventAuthenticatedPageCaching;
 use App\Http\Middleware\RequireAdminPermission;
+use App\Http\Middleware\RequireStaffMfa;
 use App\Http\Middleware\SecurityHeaders;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -23,6 +24,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'admin' => AdminMiddleware::class,
             'admin.permission' => RequireAdminPermission::class,
+            'staff.mfa' => RequireStaffMfa::class,
         ]);
 
         $middleware->appendToGroup('web', [

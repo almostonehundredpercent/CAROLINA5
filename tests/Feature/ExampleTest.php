@@ -38,10 +38,10 @@ test('legacy date-only stays block hourly arrivals but allow checkout boundaries
     expect($room->bookings()->blocking()->overlapping($day->copy()->addDay(), $day->copy()->addDays(2))->exists())->toBeFalse();
 });
 
-test('an administrator can sign in with a fresh session', function () {
+test('an administrator can sign in with a fresh session and must complete mfa', function () {
     $admin = User::factory()->create(['is_admin' => true, 'password' => 'password']);
     $this->post(route('login.submit'), ['email' => $admin->email, 'password' => 'password'])
-        ->assertRedirect(route('admin.frontdesk'));
+        ->assertRedirect(route('admin.mfa.setup'));
     $this->assertAuthenticatedAs($admin);
 });
 
@@ -196,6 +196,6 @@ test('staff cannot confirm a request that now conflicts with a block', function 
     $request = Booking::create(['room_id' => $room->id, 'guest_name' => 'Request', 'guest_email' => 'request@example.com', 'guest_phone' => '09171234567', 'check_in' => $start->toDateString(), 'check_out' => $start->copy()->addDay()->toDateString(), 'check_in_at' => $start, 'check_out_at' => $start->copy()->addDay(), 'guests' => 1, 'nights' => 1, 'total_amount' => 1000, 'payment_method' => 'cash', 'status' => 'pending']);
     RoomBlock::create(['room_id' => $room->id, 'status' => 'cleaning', 'starts_at' => $start, 'ends_at' => $start->copy()->addHour()]);
     $admin = User::factory()->create(['is_admin' => true]);
-    $this->actingAs($admin)->patch(route('admin.bookings.update', $request), ['status' => 'confirmed'])->assertSessionHasErrors('status');
+    $this->actingAsStaff($admin)->patch(route('admin.bookings.update', $request), ['status' => 'confirmed'])->assertSessionHasErrors('status');
     expect($request->fresh()->status)->toBe('pending');
 });

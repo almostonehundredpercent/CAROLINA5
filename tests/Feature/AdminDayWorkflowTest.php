@@ -68,7 +68,7 @@ test('staff can complete a busy-day booking workflow without creating conflicts'
         'status' => 'pending',
     ]);
 
-    $this->actingAs($admin);
+    $this->actingAsStaff($admin);
     $this->get(route('admin.dashboard'))->assertOk();
     $this->get(route('admin.bookings'))->assertOk()->assertDontSee('@if');
     $this->get(route('admin.rooms'))->assertOk();

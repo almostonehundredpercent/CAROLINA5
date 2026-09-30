@@ -2,8 +2,11 @@
 
 namespace App\Providers;
 
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Request;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 use Symfony\Component\HttpClient\HttpClient;
@@ -24,6 +27,17 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        RateLimiter::for('staff-login', function (Request $request) {
+            $identifier = strtolower(str_replace('\\@', '@', trim((string) $request->input('email'))));
+            $account = hash('sha256', $identifier);
+
+            return [
+                Limit::perMinute(5)->by('login-account:'.$account.'|'.$request->ip()),
+                Limit::perMinute(10)->by('login-identifier:'.$account),
+                Limit::perMinute(20)->by('login-ip:'.$request->ip()),
+            ];
+        });
+
         Mail::extend('brevo', function () {
             $key = (string) config('services.brevo.key');
             if ($key === '') {

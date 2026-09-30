@@ -12,27 +12,34 @@ use App\Models\User;
 final class AdminPermissions
 {
     private const ABILITIES = [
-        'dashboard' => ['admin', 'viewer'],
-        'frontdesk' => ['admin', 'front_desk'],
-        'bookings' => ['admin', 'front_desk'],
-        'guests' => ['admin', 'front_desk'],
-        'payments' => ['admin', 'front_desk'],
-        'reviews' => ['admin', 'front_desk'],
-        'rooms' => ['admin', 'front_desk', 'housekeeping', 'viewer'],
+        'dashboard' => ['super_admin', 'admin', 'viewer'],
+        'frontdesk' => ['super_admin', 'admin', 'front_desk'],
+        'bookings' => ['super_admin', 'admin', 'front_desk'],
+        'guests' => ['super_admin', 'admin', 'front_desk'],
+        'payments' => ['super_admin', 'admin', 'front_desk'],
+        'reviews' => ['super_admin', 'admin', 'front_desk'],
+        'rooms' => ['super_admin', 'admin', 'front_desk', 'housekeeping', 'viewer'],
         // Front desk needs to mark a room ready, cleaning, or under
         // maintenance as part of an arrival/departure workflow. They cannot
         // edit the room catalogue or staff accounts.
-        'room_operations' => ['admin', 'front_desk', 'housekeeping'],
-        'reports' => ['admin'],
-        'promos' => ['admin'],
-        'activity' => ['admin'],
-        'staff' => ['admin'],
-        'exports' => ['admin', 'front_desk'],
+        'room_operations' => ['super_admin', 'admin', 'front_desk', 'housekeeping'],
+        'reports' => ['super_admin', 'admin'],
+        'promos' => ['super_admin', 'admin'],
+        'activity' => ['super_admin', 'admin'],
+        'staff' => ['super_admin', 'admin'],
+        'elevate_staff' => ['super_admin'],
+        'exports' => ['super_admin', 'admin', 'front_desk'],
     ];
 
     public static function role(User $user): string
     {
-        return $user->isAdmin() ? 'admin' : ($user->staff_role ?: 'guest');
+        if ($user->isAdmin()) {
+            return $user->staff_role === 'super_admin' ? 'super_admin' : 'admin';
+        }
+
+        return in_array($user->staff_role, ['front_desk', 'housekeeping', 'viewer'], true)
+            ? $user->staff_role
+            : 'guest';
     }
 
     public static function allows(User $user, string $ability): bool
@@ -45,7 +52,7 @@ final class AdminPermissions
         return match (self::role($user)) {
             // Start people where their shift begins. The overview remains
             // available, but daily work should not be hidden behind it.
-            'admin', 'front_desk' => 'admin.frontdesk',
+            'super_admin', 'admin', 'front_desk' => 'admin.frontdesk',
             'viewer' => 'admin.dashboard',
             'housekeeping' => 'admin.rooms',
             default => 'home',

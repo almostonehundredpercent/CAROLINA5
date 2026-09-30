@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ActivityLog;
 use App\Models\User;
 use App\Support\AdminPermissions;
 use Illuminate\Auth\Events\PasswordReset;
@@ -50,13 +51,30 @@ class AuthController extends Controller
         $user = User::where('email', $credentials['email'])->first();
 
         if (! $user || ! Hash::check($credentials['password'], $user->password)) {
+            ActivityLog::create([
+                'user_id' => $user?->id,
+                'event' => 'login_failed',
+                'description' => 'A sign-in attempt failed.',
+            ]);
+
             return back()->withErrors([
                 'email' => 'That email and password do not match an account.',
             ])->onlyInput('email');
         }
 
+        $request->session()->forget(['staff_mfa_user_id', 'staff_mfa_stamp', 'staff_mfa_setup_user_id', 'staff_mfa_setup_at']);
         auth()->login($user);
         $request->session()->regenerate();
+
+        if ($user->hasStaffAccess()) {
+            ActivityLog::create([
+                'user_id' => $user->id,
+                'event' => 'staff_password_accepted',
+                'description' => 'Staff password accepted; MFA is still required.',
+            ]);
+
+            return redirect()->route($user->mfa_confirmed_at ? 'admin.mfa.challenge' : 'admin.mfa.setup');
+        }
 
         return redirect()->route(AdminPermissions::landingRoute($user));
     }
@@ -77,6 +95,12 @@ class AuthController extends Controller
             'is_admin' => false,
         ]);
 
+        ActivityLog::create([
+            'user_id' => $user->id,
+            'event' => 'user_registered',
+            'description' => 'A guest account was created.',
+        ]);
+
         auth()->login($user);
         $request->session()->regenerate();
 
@@ -95,6 +119,14 @@ class AuthController extends Controller
 
     public function logout(Request $request)
     {
+        if ($request->user()?->hasStaffAccess()) {
+            ActivityLog::create([
+                'user_id' => $request->user()->id,
+                'event' => 'staff_logout',
+                'description' => 'Staff session ended.',
+            ]);
+        }
+
         auth()->logout();
 
         $request->session()->invalidate();
@@ -132,6 +164,11 @@ class AuthController extends Controller
         $data = $request->validate(['token' => 'required', 'email' => 'required|email:rfc|max:255', 'password' => 'required|min:8|confirmed']);
         $status = Password::reset($data, function (User $user, string $password) {
             $user->forceFill(['password' => Hash::make($password), 'remember_token' => Str::random(60)])->save();
+            ActivityLog::create([
+                'user_id' => $user->id,
+                'event' => 'password_changed',
+                'description' => 'Account password changed through the reset flow.',
+            ]);
             event(new PasswordReset($user));
         });
 

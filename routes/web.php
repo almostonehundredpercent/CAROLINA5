@@ -5,6 +5,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BookingController;
 use App\Http\Controllers\PromoCodeController;
 use App\Http\Controllers\RoomController;
+use App\Http\Controllers\StaffMfaController;
 use App\Http\Controllers\StayController;
 use App\Models\Room;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
@@ -40,7 +41,7 @@ Route::patch('/booking-lookup/{booking}/extend', [BookingController::class, 'ext
 
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
 Route::get('/login/form', [AuthController::class, 'showLoginForm'])->name('login.form');
-Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:5,1')->name('login.submit');
+Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:staff-login')->name('login.submit');
 Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
 Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:5,1')->name('register.submit');
 Route::get('/forgot-password', [AuthController::class, 'showForgotPassword'])->middleware('guest')->name('password.request');
@@ -64,6 +65,15 @@ Route::post('/email/verification-notification', function (Request $request) {
 })->middleware(['auth', 'throttle:6,1'])->name('verification.send');
 Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth')->name('logout');
 
+Route::middleware('auth')->prefix('staff/mfa')->name('admin.mfa.')->group(function () {
+    Route::get('/setup', [StaffMfaController::class, 'setup'])->name('setup');
+    Route::post('/setup', [StaffMfaController::class, 'beginSetup'])->middleware('throttle:5,1')->name('begin');
+    Route::post('/confirm', [StaffMfaController::class, 'confirmSetup'])->middleware('throttle:5,1')->name('confirm');
+    Route::get('/challenge', [StaffMfaController::class, 'challenge'])->name('challenge');
+    Route::post('/challenge', [StaffMfaController::class, 'verifyChallenge'])->middleware('throttle:5,1')->name('verify');
+    Route::get('/recovery-codes', [StaffMfaController::class, 'recoveryCodes'])->name('recovery');
+});
+
 Route::get('/rooms/{room:slug}/book', [BookingController::class, 'create'])->name('bookings.create');
 Route::post('/rooms/{room:slug}/book', [BookingController::class, 'store'])->middleware('throttle:10,1')->name('bookings.store');
 Route::get('/bookings/{booking}/receipt', [BookingController::class, 'receipt'])->name('bookings.receipt');
@@ -76,7 +86,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/bookings/{booking}/review', [BookingController::class, 'submitReview'])->name('bookings.review');
 });
 
-Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
+Route::middleware(['auth', 'admin', 'staff.mfa'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/arrivals', [StayController::class, 'board'])->middleware('admin.permission:frontdesk')->name('arrivals');
     Route::patch('/arrivals/{booking}', [StayController::class, 'readiness'])->middleware('admin.permission:frontdesk')->name('arrivals.update');
     Route::post('/stay-notices', [StayController::class, 'notice'])->middleware('admin.permission:frontdesk')->name('stay-notices.store');
