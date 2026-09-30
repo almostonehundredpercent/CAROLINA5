@@ -60,6 +60,8 @@
 .home-booked-list { margin-top:18px; }
 .home-booked-list span { padding:9px 11px; border-radius:8px; }
 .home-rooms { max-width:1240px; padding-top:92px; padding-bottom:75px; }
+.home-location { max-width:1240px; padding-top:0; padding-bottom:78px; }
+.home-location .booking-location { max-width:none; margin:0; }
 .home-rooms .section-heading h2 { max-width:640px; letter-spacing:-.04em; }
 .home-rooms .text-link { display:inline-flex; align-items:center; gap:7px; border:1px solid var(--line); border-radius:999px; padding:11px 15px; color:var(--ink); font-size:.88rem; transition:border-color .2s ease,background .2s ease; }
 .home-rooms .text-link:hover { border-color:#d8b27f; background:#fff8ee; }

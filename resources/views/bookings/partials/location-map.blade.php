@@ -1,5 +1,6 @@
 @php
     $locationName = 'Carolina Air BnB — San Juan';
+    $locationEyebrow = $locationEyebrow ?? 'GETTING HERE';
     $locationAddress = 'Tomas Cabiles Street, Zone 6, San Juan, Tabaco City, Albay — near Tabaco College';
     // Exact Google Maps pin beside Tabaco College. Coordinates prevent Maps from
     // resolving the similarly named Panal branch instead.
@@ -22,7 +23,7 @@
 </style>
 <section class="booking-location" aria-labelledby="booking-location-title">
     <div class="booking-location-copy">
-        <div><span class="eyebrow">GETTING HERE</span><h2 id="booking-location-title">{{ $locationName }}</h2><p>{{ $locationAddress }}</p></div>
+        <div><span class="eyebrow">{{ $locationEyebrow }}</span><h2 id="booking-location-title">{{ $locationName }}</h2><p>{{ $locationAddress }}</p></div>
         <div class="booking-location-actions">
             <a class="booking-location-link is-secondary" href="{{ $streetViewUrl }}" target="_blank" rel="noopener noreferrer"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"/><circle cx="12" cy="12" r="2.75"/></svg>Street View</a>
             <a class="booking-location-link" href="https://www.google.com/maps/dir/?api=1&destination={{ $mapQuery }}" target="_blank" rel="noopener noreferrer"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s7-5.1 7-12a7 7 0 1 0-14 0c0 6.9 7 12 7 12Z"/><circle cx="12" cy="9" r="2.25"/></svg>Get directions</a>
