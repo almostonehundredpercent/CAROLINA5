@@ -30,7 +30,7 @@
         <div class="page-loader-card"><div class="loader-mark" aria-hidden="true"></div><b id="page-loader-title">Preparing your stay</b><p id="page-loader-message">Just a moment…</p></div>
     </div>
     <div class="network-loader" id="network-loader" role="status" aria-live="polite"><span class="network-loader-dots" aria-hidden="true"><i></i><i></i><i></i></span><span>Updating availability</span></div>
-    <header class="nav">
+    <header class="nav{{ request()->routeIs('home') ? ' nav--over-hero' : '' }}">
         <a class="brand" href="{{ route('home') }}">
             <img class="brand-logo" src="{{ asset('images/carolina-logo.jpg') }}" alt="Carolina logo"><span>Carolina <small>TRANSIENT & AIRBNB</small></span>
         </a>
@@ -145,6 +145,13 @@
             const toggle = document.querySelector('.menu-toggle');
             const navigation = document.querySelector('#primary-navigation');
             const themeToggle = document.querySelector('.theme-toggle');
+            const glassHeader = document.querySelector('.nav--over-hero');
+            const homeHero = document.querySelector('.home-hero');
+            if (glassHeader && homeHero) {
+                const updateGlassHeader = () => glassHeader.classList.toggle('is-scrolled', homeHero.getBoundingClientRect().bottom <= glassHeader.offsetHeight);
+                updateGlassHeader();
+                window.addEventListener('scroll', updateGlassHeader, { passive: true });
+            }
             const setThemeToggle = () => {
                 const dark = document.documentElement.classList.contains('dark-mode');
                 themeToggle?.setAttribute('aria-pressed', String(dark));

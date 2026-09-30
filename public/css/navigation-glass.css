@@ -88,6 +88,33 @@
     color: #fff6e9;
 }
 
+/* Let the homepage photograph show through the header without moving its content. */
+.nav.nav--over-hero {
+    height: 80px;
+    min-height: 80px;
+    margin-bottom: -80px;
+    background-color: rgba(23, 15, 10, 0.2);
+    -webkit-backdrop-filter: blur(7px) saturate(125%);
+    backdrop-filter: blur(7px) saturate(125%);
+    transition: background-color 180ms ease, backdrop-filter 180ms ease;
+}
+
+.dark-mode .nav.nav--over-hero {
+    background-color: rgba(23, 15, 10, 0.2);
+}
+
+.nav.nav--over-hero.is-scrolled,
+.dark-mode .nav.nav--over-hero.is-scrolled {
+    background-color: rgba(28, 20, 15, 0.9);
+    -webkit-backdrop-filter: blur(18px) saturate(145%);
+    backdrop-filter: blur(18px) saturate(145%);
+}
+
+.nav--over-hero + main .home-hero {
+    min-height: min(800px, 100vh);
+    padding-top: 176px;
+}
+
 @media (max-width: 800px) {
     .nav nav,
     .dark-mode .nav nav {
@@ -102,11 +129,32 @@
     .dark-mode .nav nav > a:not(.nav-button):hover {
         background-color: rgba(255, 255, 255, 0.09);
     }
+
+    .nav--over-hero + main .home-hero {
+        min-height: 720px;
+        padding-top: 158px;
+    }
+}
+
+@media (max-width: 460px) {
+    .nav--over-hero + main .home-hero {
+        min-height: 650px;
+        padding-top: 142px;
+    }
 }
 
 @media (prefers-reduced-transparency: reduce) {
     .nav,
     .dark-mode .nav {
+        background-color: #1c140f;
+        -webkit-backdrop-filter: none;
+        backdrop-filter: none;
+    }
+
+    .nav.nav--over-hero,
+    .dark-mode .nav.nav--over-hero,
+    .nav.nav--over-hero.is-scrolled,
+    .dark-mode .nav.nav--over-hero.is-scrolled {
         background-color: #1c140f;
         -webkit-backdrop-filter: none;
         backdrop-filter: none;
@@ -126,6 +174,13 @@
     .nav,
     .dark-mode .nav {
         background-color: rgba(28, 20, 15, 0.97);
+    }
+
+    .nav.nav--over-hero,
+    .dark-mode .nav.nav--over-hero,
+    .nav.nav--over-hero.is-scrolled,
+    .dark-mode .nav.nav--over-hero.is-scrolled {
+        background-color: rgba(28, 20, 15, 0.94);
     }
 
     @media (max-width: 800px) {
