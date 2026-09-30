@@ -170,6 +170,12 @@
 .dark-mode .home-calendar { background:#2b231d; border-color:#49382d; }
 .dark-mode .home-calendar-head button { background:#342a23; border-color:#584438; color:#fff4e8; }
 .dark-mode .home-rooms .text-link { color:#fff3e4; border-color:#514035; background:#251e19; }
+.dark-mode .home-room-carousel .room-card { border:1px solid rgba(197,133,68,.48); background:#31241c linear-gradient(145deg,#37291f,#2a201a 58%,#241b16); box-shadow:0 12px 30px rgba(0,0,0,.34),inset 0 1px 0 rgba(255,255,255,.045); }
+.dark-mode .home-room-carousel .room-card:hover,
+.dark-mode .home-room-carousel .room-card.is-touch-pressed { border-color:rgba(241,175,94,.72); }
+.dark-mode .home-room-carousel .room-card-body > span { color:#f0b366; }
+.dark-mode .home-room-carousel .room-card-body a { color:#ffc17b; }
+.dark-mode .home-room-carousel .room-card-body p small { color:#d2c2b4; }
 .dark-mode .home-benefits { background:#211a15; }
 .dark-mode .home-benefits .benefit-grid b { background:#2b211b; border-color:#4a382c; color:#f1a234; }
 @media (max-width:800px) { .home-hero { min-height:640px; padding:78px 7% 54px; background-position:62% center; }.home-hero h1 { font-size:clamp(3rem,14vw,4.4rem); }.home-hero-details { margin-top:49px; }.home-availability-wrap { margin-top:-30px; padding:0 5%; }.home-availability { padding:22px 19px; border-radius:15px; }.home-rooms { padding:65px 6% 54px; }.home-rooms .section-heading { align-items:flex-start; gap:18px; flex-direction:column; }.home-room-carousel .room-card img { height:215px; }.home-lookup { padding:0 6% 57px; }.home-lookup .empty-state { padding:31px 25px; align-items:flex-start; flex-direction:column; }.home-benefits { padding:55px 6%; } }
