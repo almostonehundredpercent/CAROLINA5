@@ -5,6 +5,7 @@ RUN apt-get update && apt-get install -y git unzip libzip-dev libpq-dev \
     && docker-php-ext-install pdo_mysql pdo_pgsql zip \
     && rm -rf /var/lib/apt/lists/*
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+COPY docker/php-security.ini /usr/local/etc/php/conf.d/99-security.ini
 WORKDIR /var/www/html
 COPY composer.json composer.lock ./
 RUN composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader --no-scripts
