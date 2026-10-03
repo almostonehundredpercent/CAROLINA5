@@ -25,12 +25,12 @@
 
         @guest
             <div class="checkout-choice">
-                <a class="{{ !$isGuest ? 'active' : '' }}" href="{{ route('login') }}">Sign in</a>
-                <a class="{{ $isGuest ? 'active' : '' }}" href="{{ route('bookings.create', ['room' => $room, 'guest' => 1]) }}">Continue as guest</a>
+                <a class="{{ !$isGuest ? 'active' : '' }}" href="{{ route('login', ['room' => $room->slug] + $bookingSearch) }}">Sign in</a>
+                <a class="{{ $isGuest ? 'active' : '' }}" href="{{ route('bookings.create', ['room' => $room, 'guest' => 1] + $bookingSearch) }}">Continue as guest</a>
             </div>
             @if(!$isGuest)
                 <p>Sign in to book with your account, or continue as a guest without creating one.</p>
-                <a class="button" href="{{ route('bookings.create', ['room' => $room, 'guest' => 1]) }}">Continue as guest</a>
+                <a class="button" href="{{ route('bookings.create', ['room' => $room, 'guest' => 1] + $bookingSearch) }}">Continue as guest</a>
             @endif
         @endguest
 
@@ -39,6 +39,7 @@
         @endauth
 
         @if(auth()->check() || $isGuest)
+            @if($selectionNotice)<p class="alert" role="status">{{ $selectionNotice }}</p>@endif
             <form method="POST" action="{{ route('bookings.store', $room) }}">
                 @csrf
                 <input type="hidden" name="checkout_type" value="{{ $isGuest ? 'guest' : 'account' }}">
@@ -48,18 +49,18 @@
                 <section class="booking-type-selector" aria-label="Choose booking type">
                     <span class="booking-type-label">Choose your stay type</span>
                     <div class="booking-type-options">
-                        <a class="{{ $bookingMode !== 'hourly' ? 'active' : '' }}" href="{{ route('bookings.create', ['room' => $room, 'guest' => $isGuest ? 1 : null, 'mode' => 'dates']) }}"><strong>Book by dates</strong><small>Overnight or multi-day stays</small></a>
-                        <a class="{{ $bookingMode === 'hourly' ? 'active' : '' }}" href="{{ route('bookings.create', ['room' => $room, 'guest' => $isGuest ? 1 : null, 'mode' => 'hourly']) }}"><strong>Rent by hours</strong><small>Short stays for 3, 12, or 24 hours</small></a>
+                        <a class="{{ $bookingMode !== 'hourly' ? 'active' : '' }}" href="{{ route('bookings.create', ['room' => $room, 'guest' => $isGuest ? 1 : null, 'mode' => 'dates'] + $bookingSearch) }}"><strong>Book by dates</strong><small>Overnight or multi-day stays</small></a>
+                        <a class="{{ $bookingMode === 'hourly' ? 'active' : '' }}" href="{{ route('bookings.create', ['room' => $room, 'guest' => $isGuest ? 1 : null, 'mode' => 'hourly'] + $bookingSearch) }}"><strong>Rent by hours</strong><small>Short stays for 3, 12, or 24 hours</small></a>
                     </div>
                 </section>
                 @endif
 
                 @if($bookingMode === 'hourly')
                     <div class="hourly-booked-summary {{ count($hourlyBookedWindows) ? '' : 'is-clear' }}" id="hourly-booked-summary" role="status" aria-live="polite"><strong>Booked times on {{ \Carbon\Carbon::parse($hourlyDate)->format('M j') }}</strong>@if(count($hourlyBookedWindows))<ul>@foreach($hourlyBookedWindows as $window)<li>{{ $window }}</li>@endforeach</ul>@else<p>No reservations overlap this date; choose any enabled check-in time.</p>@endif</div>
-                    <div class="hourly-rental"><p><strong>{{ $room->rental_hours ? 'Fixed short-stay package' : 'Short stay rental' }}</strong><br>@if($room->rental_hours) This room is offered as a {{ $room->rental_hours }}-hour stay for ₱{{ number_format($room->price_per_night) }}.@else Rate: ₱{{ number_format($room->price_per_night / 24, 2) }} per hour.@endif</p><label class="clean-select">Duration<input id="hourly-hours" name="hours" type="hidden" value="{{ old('hours', $room->rental_hours ?: 3) }}">@if($room->rental_hours)<span class="selector-display">{{ $room->rental_hours }} hours</span>@else<button type="button" class="clean-select-trigger" data-select-trigger>3 hours</button><section class="clean-select-menu" hidden>@foreach([3,12,24] as $hours)<button type="button" class="clean-select-option" data-select-value="{{ $hours }}">{{ $hours }} hours</button>@endforeach</section>@endif</label><label class="hourly-date-field">Check-in date<input id="hourly-date" name="hourly_date" type="hidden" value="{{ old('hourly_date', now()->toDateString()) }}" required><button id="hourly-date-trigger" class="hourly-date-trigger" type="button"></button><section class="hourly-calendar" id="hourly-calendar" hidden aria-label="Choose check-in date"><div class="hourly-calendar-head"><button type="button" id="hourly-calendar-prev" aria-label="Previous month">‹</button><b id="hourly-calendar-month"></b><button type="button" id="hourly-calendar-next" aria-label="Next month">›</button></div><div class="hourly-calendar-week"><span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span></div><div class="hourly-calendar-days" id="hourly-calendar-days"></div></section></label><label class="hourly-time-field">Check-in time<input id="hourly-time" name="check_in_time" type="hidden" value="{{ old('check_in_time', $room->default_check_in_time ? substr($room->default_check_in_time, 0, 5) : '12:00') }}" required><button id="hourly-time-trigger" class="hourly-time-trigger" type="button"></button><section class="hourly-time-menu" id="hourly-time-menu" hidden aria-label="Choose check-in time"><div class="hourly-time-menu-head"><b>Choose a time</b><small>One-hour slots</small></div><div class="hourly-time-periods"><div class="hourly-time-period"><h4>Morning</h4>@for($hour = 6; $hour < 12; $hour++)<button class="hourly-time-option" type="button" data-time="{{ str_pad($hour, 2, '0', STR_PAD_LEFT) }}:00">{{ \Carbon\Carbon::createFromTime($hour)->format('g A') }}</button>@endfor</div><div class="hourly-time-period"><h4>Afternoon</h4>@for($hour = 12; $hour < 18; $hour++)<button class="hourly-time-option" type="button" data-time="{{ str_pad($hour, 2, '0', STR_PAD_LEFT) }}:00">{{ \Carbon\Carbon::createFromTime($hour)->format('g A') }}</button>@endfor</div><div class="hourly-time-period"><h4>Evening</h4>@for($hour = 18; $hour < 24; $hour++)<button class="hourly-time-option" type="button" data-time="{{ str_pad($hour, 2, '0', STR_PAD_LEFT) }}:00">{{ \Carbon\Carbon::createFromTime($hour)->format('g A') }}</button>@endfor</div></div></section></label><p id="hourly-total">Estimated total: ₱{{ number_format($room->rental_hours ? $room->price_per_night : ($room->price_per_night / 24) * 3, 2) }}</p></div>
+                    <div class="hourly-rental"><p><strong>{{ $room->rental_hours ? 'Fixed short-stay package' : 'Short stay rental' }}</strong><br>@if($room->rental_hours) This room is offered as a {{ $room->rental_hours }}-hour stay for ₱{{ number_format($room->price_per_night) }}.@else Rate: ₱{{ number_format($room->price_per_night / 24, 2) }} per hour.@endif</p><label class="clean-select">Duration<input id="hourly-hours" name="hours" type="hidden" value="{{ old('hours', $selectedHours) }}">@if($room->rental_hours)<span class="selector-display">{{ $room->rental_hours }} hours</span>@else<button type="button" class="clean-select-trigger" data-select-trigger>3 hours</button><section class="clean-select-menu" hidden>@foreach([3,6,12,24,48,72,96,120,168,720] as $hours)<button type="button" class="clean-select-option" data-select-value="{{ $hours }}">{{ $hours }} hours</button>@endforeach</section>@endif</label><label class="hourly-date-field">Check-in date<input id="hourly-date" name="hourly_date" type="hidden" value="{{ $hourlyDate }}" required><button id="hourly-date-trigger" class="hourly-date-trigger" type="button"></button><section class="hourly-calendar" id="hourly-calendar" hidden aria-label="Choose check-in date"><div class="hourly-calendar-head"><button type="button" id="hourly-calendar-prev" aria-label="Previous month">‹</button><b id="hourly-calendar-month"></b><button type="button" id="hourly-calendar-next" aria-label="Next month">›</button></div><div class="hourly-calendar-week"><span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span></div><div class="hourly-calendar-days" id="hourly-calendar-days"></div></section></label><label class="hourly-time-field">Check-in time<input id="hourly-time" name="check_in_time" type="hidden" value="{{ old('check_in_time', $selectedTime) }}" required><button id="hourly-time-trigger" class="hourly-time-trigger" type="button"></button><section class="hourly-time-menu" id="hourly-time-menu" hidden aria-label="Choose check-in time"><div class="hourly-time-menu-head"><b>Choose a time</b><small>One-hour slots</small></div><div class="hourly-time-periods"><div class="hourly-time-period"><h4>Morning</h4>@for($hour = 6; $hour < 12; $hour++)<button class="hourly-time-option" type="button" data-time="{{ str_pad($hour, 2, '0', STR_PAD_LEFT) }}:00">{{ \Carbon\Carbon::createFromTime($hour)->format('g A') }}</button>@endfor</div><div class="hourly-time-period"><h4>Afternoon</h4>@for($hour = 12; $hour < 18; $hour++)<button class="hourly-time-option" type="button" data-time="{{ str_pad($hour, 2, '0', STR_PAD_LEFT) }}:00">{{ \Carbon\Carbon::createFromTime($hour)->format('g A') }}</button>@endfor</div><div class="hourly-time-period"><h4>Evening</h4>@for($hour = 18; $hour < 24; $hour++)<button class="hourly-time-option" type="button" data-time="{{ str_pad($hour, 2, '0', STR_PAD_LEFT) }}:00">{{ \Carbon\Carbon::createFromTime($hour)->format('g A') }}</button>@endfor</div></div></section></label><p id="hourly-total">Estimated total: ₱{{ number_format($room->rental_hours ? $room->price_per_night : ($room->price_per_night / 24) * 3, 2) }}</p></div>
                 @else
                 <div class="stay-date-fields">
-                    <label>Check in<input id="check-in-display" type="text" placeholder="Select a date" readonly required><input id="check-in" name="check_in" type="hidden" value="{{ old('check_in') }}"></label>
+                    <label>Check in<input id="check-in-display" type="text" placeholder="Select a date" readonly required><input id="check-in" name="check_in" type="hidden" value="{{ old('check_in', $bookingSearch['check_in'] ?? null) }}"></label>
                     <label>Check out<input id="check-out-display" type="text" placeholder="Select a date" readonly required><input id="check-out" name="check_out" type="hidden" value="{{ old('check_out') }}"></label>
                 </div>
                 <section class="availability-calendar" aria-label="Room availability calendar" data-availability-url="{{ route('rooms.availability', $room) }}">
@@ -73,12 +74,12 @@
                     <section class="native-booking-fallback" aria-label="Booking details without JavaScript">
                         <strong>Choose your stay details</strong>
                         @if($bookingMode === 'hourly')
-                            <label>Duration<select name="hours">@foreach(array_unique([$room->rental_hours ?: 3, 48, 72, 96, 120, 168, 720]) as $hours)<option value="{{ $hours }}">{{ $hours === 720 ? '1 month' : ($hours < 24 ? $hours . ' hours' : ($hours / 24) . ' days') }}</option>@endforeach</select></label>
-                            <label>Check-in date<input type="date" name="hourly_date" min="{{ now()->toDateString() }}" value="{{ old('hourly_date', now()->toDateString()) }}" required></label>
-                            <label>Check-in time<input type="time" name="check_in_time" min="06:00" max="23:00" step="3600" value="{{ old('check_in_time', '06:00') }}" required></label>
+                            <label>Duration<select name="hours">@foreach($allowedHours as $hours)<option value="{{ $hours }}" @selected((int) old('hours', $selectedHours) === $hours)>{{ $hours === 720 ? '1 month' : ($hours < 24 ? $hours . ' hours' : ($hours / 24) . ' days') }}</option>@endforeach</select></label>
+                            <label>Check-in date<input type="date" name="hourly_date" min="{{ $propertyToday }}" value="{{ $hourlyDate }}" required></label>
+                            <label>Check-in time<input type="time" name="check_in_time" min="06:00" max="23:00" step="3600" value="{{ old('check_in_time', $selectedTime) }}" required></label>
                         @else
-                            <label>Check-in date<input type="date" name="check_in" min="{{ now()->toDateString() }}" value="{{ old('check_in') }}" required></label>
-                            <label>Check-out date<input type="date" name="check_out" min="{{ now()->addDay()->toDateString() }}" value="{{ old('check_out') }}" required></label>
+                            <label>Check-in date<input type="date" name="check_in" min="{{ $propertyToday }}" value="{{ old('check_in', $bookingSearch['check_in'] ?? null) }}" required></label>
+                            <label>Check-out date<input type="date" name="check_out" min="{{ \Carbon\Carbon::parse($propertyToday)->addDay()->toDateString() }}" value="{{ old('check_out') }}" required></label>
                         @endif
                     </section>
                 </noscript>
@@ -90,7 +91,7 @@
                             <input type="hidden" name="guests" value="1">
                             <div class="party-capacity"><b>1 guest</b><small>Room capacity</small></div>
                         @else
-                            <label class="clean-select">Total guests<input name="guests" type="hidden" value="{{ old('guests', 1) }}"><button type="button" class="clean-select-trigger" data-select-trigger>1 guest</button><section class="clean-select-menu" hidden>@for($i = 1; $i <= $room->guests; $i++)<button type="button" class="clean-select-option" data-select-value="{{ $i }}">{{ $i }} guest{{ $i > 1 ? 's' : '' }}</button>@endfor</section></label>
+                            <label class="clean-select">Total guests<input name="guests" type="hidden" value="{{ old('guests', $selectedGuests) }}"><button type="button" class="clean-select-trigger" data-select-trigger>1 guest</button><section class="clean-select-menu" hidden>@for($i = 1; $i <= $room->guests; $i++)<button type="button" class="clean-select-option" data-select-value="{{ $i }}">{{ $i }} guest{{ $i > 1 ? 's' : '' }}</button>@endfor</section></label>
                         @endif
                         <label class="clean-select">Children<input name="children_count" type="hidden" value="{{ old('children_count', 0) }}"><button type="button" class="clean-select-trigger" data-select-trigger>None</button><section class="clean-select-menu" hidden>@for($i = 0; $i <= min(10, $room->guests); $i++)<button type="button" class="clean-select-option" data-select-value="{{ $i }}">{{ $i ? $i . ' child' . ($i > 1 ? 'ren' : '') : 'None' }}</button>@endfor</section></label>
                         <label class="clean-select">Pets<input name="pets_count" type="hidden" value="{{ old('pets_count', 0) }}"><button type="button" class="clean-select-trigger" data-select-trigger>None</button><section class="clean-select-menu" hidden>@for($i = 0; $i <= 5; $i++)<button type="button" class="clean-select-option" data-select-value="{{ $i }}">{{ $i ? $i . ' pet' . ($i > 1 ? 's' : '') : 'None' }}</button>@endfor</section></label>
@@ -116,7 +117,7 @@
 
                 <label>Special request<textarea name="special_request" rows="3" placeholder="e.g., Extra pillow, if available.">{{ old('special_request') }}</textarea></label>
                 <x-contact-card class="booking-contact-help" />
-                <div id="booking-availability-status" role="status" aria-live="polite" style="padding:14px;border:1px solid var(--line);border-radius:10px;background:var(--paper);color:var(--ink)">Choose your stay dates to check availability. Pending reservations also reserve their time slot.</div>
+                <div id="booking-availability-status" role="status" aria-live="polite" style="padding:14px;border:1px solid var(--line);border-radius:10px;background:var(--paper);color:var(--ink)">Choose your stay dates to check availability. Unpaid requests hold their slot for {{ \App\Models\Booking::holdMinutes() }} minutes; paid or confirmed reservations remain reserved.</div>
                 <button class="button" id="booking-submit">Continue to receipt</button>
             </form>
         @endif
@@ -221,7 +222,7 @@ document.addEventListener('DOMContentLoaded', () => {
             renderBookedSummary();
         };
         hourlyHours.addEventListener('change', syncTimeOptions);
-        timeTrigger.textContent = prettyTime(timeValue.value); timeTrigger.addEventListener('click', () => { const opening = timeMenu.hidden; closeOpenPickers(timeMenu); timeMenu.hidden = !opening; if (opening) { syncTimeOptions(); refreshHourlyAvailability(); } }); timeMenu.querySelectorAll('[data-time]').forEach(button => button.addEventListener('click', () => { timeValue.value = button.dataset.time; timeTrigger.textContent = prettyTime(timeValue.value); syncTimeOptions(); timeMenu.hidden = true; })); const refreshHourlyAvailability = async () => { try { const response = await fetch(@json(route('rooms.availability', $room)), { headers: { Accept: 'application/json' }, cache: 'no-store' }); if (!response.ok) return; const data = await response.json(); hourlyBlockedSlots = data.slots ?? []; if (!picker.hidden) renderHourlyCalendar(); syncTimeOptions(); if (timeMenu.querySelector(`[data-time="${timeValue.value}"]`)?.disabled) { timeValue.value = ''; timeTrigger.textContent = 'Choose time'; } } catch (error) { /* Keep the current availability if the connection is unavailable. */ } }; setInterval(refreshHourlyAvailability, 15000); document.addEventListener('visibilitychange', () => { if (!document.hidden) refreshHourlyAvailability(); }); return;
+        timeTrigger.textContent = prettyTime(timeValue.value); timeTrigger.addEventListener('click', () => { const opening = timeMenu.hidden; closeOpenPickers(timeMenu); timeMenu.hidden = !opening; if (opening) { syncTimeOptions(); refreshHourlyAvailability(); } }); timeMenu.querySelectorAll('[data-time]').forEach(button => button.addEventListener('click', () => { timeValue.value = button.dataset.time; timeTrigger.textContent = prettyTime(timeValue.value); syncTimeOptions(); timeMenu.hidden = true; })); const refreshHourlyAvailability = async () => { try { const response = await fetch(@json(route('rooms.availability', $room)), { headers: { Accept: 'application/json' }, cache: 'no-store' }); if (!response.ok) return; const data = await response.json(); hourlyBlockedSlots = data.slots ?? []; if (!picker.hidden) renderHourlyCalendar(); syncTimeOptions(); if (timeMenu.querySelector(`[data-time="${timeValue.value}"]`)?.disabled) { timeValue.value = ''; timeTrigger.textContent = 'Choose time'; } } catch (error) { /* Keep the current availability if the connection is unavailable. */ } }; syncTimeOptions(); setInterval(refreshHourlyAvailability, 15000); document.addEventListener('visibilitychange', () => { if (!document.hidden) refreshHourlyAvailability(); }); return;
     }
     const ranges = @json($blockedRanges);
     const checkIn = document.getElementById('check-in');
@@ -231,7 +232,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const days = document.getElementById('calendar-days');
     const monthLabel = document.getElementById('calendar-month');
     const note = document.getElementById('calendar-note');
-    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const today = new Date(@json($propertyToday) + 'T00:00:00'); today.setHours(0, 0, 0, 0);
     let cursor = new Date(today.getFullYear(), today.getMonth(), 1);
     const iso = (date) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
     const pretty = (value) => value ? new Date(`${value}T00:00:00`).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' }) : '';
@@ -325,7 +326,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const check = async () => {
         const run = ++sequence;
         const data = new FormData(form);
-        status.textContent = 'Choose your stay dates to check availability. Pending reservations also reserve their time slot.';
+        status.textContent = 'Choose your stay dates to check availability. Unpaid requests hold their slot for {{ \App\Models\Booking::holdMinutes() }} minutes; paid or confirmed reservations remain reserved.';
         let start, end;
         if (data.get('booking_type') === 'hourly') {
             if (!data.get('hourly_date') || !data.get('check_in_time')) return false;

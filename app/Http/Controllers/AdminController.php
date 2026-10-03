@@ -197,8 +197,15 @@ class AdminController extends Controller
         abort_if($booking->status === 'cancelled' && $data['payment_status'] === 'paid', 422, 'A cancelled booking cannot be marked paid.');
         $before = $booking->only(['payment_status', 'payment_method', 'paid_at']);
         $paidAt = in_array($data['payment_status'], ['paid', 'refunded'], true) ? now() : null;
-        Payment::create(['booking_id' => $booking->id, 'amount' => $booking->total_amount, 'method' => $data['payment_method'], 'status' => $data['payment_status'], 'paid_at' => $paidAt, 'recorded_by' => $request->user()->id, 'notes' => 'Manual staff payment record.']);
-        $booking->update($data + ['paid_at' => $paidAt]);
+        DB::transaction(function () use ($booking, $data, $paidAt, $request) {
+            Room::whereKey($booking->room_id)->lockForUpdate()->firstOrFail();
+            $lockedBooking = Booking::whereKey($booking->id)->lockForUpdate()->firstOrFail();
+            abort_if(($data['payment_status'] === 'paid' && $lockedBooking->status === 'cancelled')
+                || (in_array($data['payment_status'], ['paid', 'refunded'], true) && $lockedBooking->hasExpiredHold()), 422, 'This hold expired or was cancelled. Confirm availability before recording a new payment.');
+            Payment::create(['booking_id' => $lockedBooking->id, 'amount' => $lockedBooking->total_amount, 'method' => $data['payment_method'], 'status' => $data['payment_status'], 'paid_at' => $paidAt, 'recorded_by' => $request->user()->id, 'notes' => 'Manual staff payment record.']);
+            $lockedBooking->update($data + ['paid_at' => $paidAt]);
+        });
+        $booking->refresh();
         $this->log($booking->fresh(), $request->user()->id, 'payment_'.$data['payment_status'], 'Payment status recorded as '.$data['payment_status'].'.', $before, $booking->fresh()->only(['payment_status', 'payment_method', 'paid_at']));
         $this->email($booking->fresh('room'), 'Payment update for your Carolina booking', 'Your payment status is now '.$data['payment_status'].'.');
 

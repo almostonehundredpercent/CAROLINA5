@@ -3,8 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\ActivityLog;
+use App\Models\Room;
 use App\Models\User;
 use App\Support\AdminPermissions;
+use App\Support\BookingSelection;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\Request;
@@ -25,8 +27,15 @@ class AuthController extends Controller
         }
     }
 
-    public function showLogin()
+    public function showLogin(Request $request)
     {
+        if ($request->filled('room') && is_string($request->input('room'))) {
+            $room = Room::where('slug', $request->input('room'))->where('is_active', true)->first();
+            if ($room) {
+                $request->session()->put('url.intended', route('bookings.create', ['room' => $room] + BookingSelection::query($request)));
+            }
+        }
+
         return view('auth.login');
     }
 
@@ -76,7 +85,7 @@ class AuthController extends Controller
             return redirect()->route($user->mfa_confirmed_at ? 'admin.mfa.challenge' : 'admin.mfa.setup');
         }
 
-        return redirect()->route(AdminPermissions::landingRoute($user));
+        return redirect()->intended(route(AdminPermissions::landingRoute($user)));
     }
 
     public function register(Request $request)

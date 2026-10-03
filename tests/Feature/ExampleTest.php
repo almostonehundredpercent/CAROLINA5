@@ -128,7 +128,7 @@ test('a reservation request reserves its times and queues booking emails', funct
     $payload = ['checkout_type' => 'guest', 'booking_type' => 'dates', 'check_in' => $checkIn->toDateString(), 'check_out' => $checkIn->copy()->addDays(2)->toDateString(), 'guests' => 2, 'children_count' => 1, 'pets_count' => 1, 'guest_name' => 'Test Guest', 'guest_email' => 'guest@example.com', 'guest_phone' => '09171234567', 'terms_accepted' => '1', 'submission_token' => (string) Str::uuid()];
     $this->post(route('bookings.store', $room), $payload)->assertRedirect()->assertSessionHasNoErrors();
     $booking = Booking::firstOrFail();
-    expect($booking->status)->toBe('pending')->and($booking->hold_expires_at)->toBeNull()->and($booking->check_in_at->toDateString())->toBe($checkIn->toDateString())->and($booking->children_count)->toBe(1)->and($booking->pets_count)->toBe(1);
+    expect($booking->status)->toBe('pending')->and($booking->hold_expires_at->isFuture())->toBeTrue()->and($booking->check_in_at->toDateString())->toBe($checkIn->toDateString())->and($booking->children_count)->toBe(1)->and($booking->pets_count)->toBe(1);
     $this->post(route('bookings.store', $room), $payload)->assertRedirect();
     expect(Booking::count())->toBe(1);
     Mail::assertQueued(BookingConfirmation::class, fn ($mail) => $mail->hasTo('guest@example.com'));

@@ -13,6 +13,7 @@ use App\Models\Review;
 use App\Models\Room;
 use App\Models\RoomBlock;
 use App\Services\PayMongoCheckout;
+use App\Support\BookingSelection;
 use App\Support\PromoPricing;
 use Carbon\Carbon;
 use Illuminate\Database\QueryException;
@@ -35,13 +36,26 @@ class BookingController extends Controller
         $key = 'booking-submission:'.$room->id;
         $submissionToken = $request->session()->get($key) ?: (string) Str::uuid();
         $request->session()->put($key, $submissionToken);
-        $hourlyDate = old('hourly_date', Carbon::now('Asia/Manila')->toDateString());
+        $bookingSearch = BookingSelection::query($request);
+        $propertyToday = Carbon::now('Asia/Manila')->toDateString();
+        $hourlyDate = old('hourly_date', $bookingSearch['check_in'] ?? $propertyToday);
+        $selectedHours = BookingSelection::hours($bookingSearch, $room);
+        $allowedHours = $room->rental_hours ? array_unique([$room->rental_hours, 48, 72, 96, 120, 168, 720]) : [3, 6, 12, 24, 48, 72, 96, 120, 168, 720];
+        $selectionNotice = in_array($selectedHours, $allowedHours, true) ? null : 'The searched duration is not offered for this room. Choose one of its available stay packages below.';
+        $selectedHours = in_array($selectedHours, $allowedHours, true) ? $selectedHours : ($room->rental_hours ?: 3);
         $hourlyBlockedSlots = $this->hourlyBlockedSlots($room);
 
         return view('bookings.create', [
             'room' => $room,
             'isGuest' => $request->boolean('guest'),
-            'bookingMode' => $room->rental_hours ? 'hourly' : $request->string('mode', 'dates')->value(),
+            'bookingMode' => $room->rental_hours ? 'hourly' : ($bookingSearch['mode'] ?? (isset($bookingSearch['stay']) ? 'hourly' : 'dates')),
+            'bookingSearch' => $bookingSearch,
+            'propertyToday' => $propertyToday,
+            'selectedHours' => $selectedHours,
+            'allowedHours' => $allowedHours,
+            'selectedTime' => $bookingSearch['check_in_time'] ?? ($room->default_check_in_time ? substr($room->default_check_in_time, 0, 5) : '12:00'),
+            'selectedGuests' => isset($bookingSearch['guests']) && (int) $bookingSearch['guests'] <= $room->guests ? (int) $bookingSearch['guests'] : 1,
+            'selectionNotice' => $selectionNotice,
             'blockedRanges' => $blockedRanges,
             'hourlyBlockedSlots' => $hourlyBlockedSlots,
             'hourlyDate' => $hourlyDate,
@@ -135,7 +149,7 @@ class BookingController extends Controller
                 $start = $booking->check_in_at ?? $booking->check_in->copy()->startOfDay();
                 $end = $booking->check_out_at ?? $booking->check_out->copy()->startOfDay();
 
-                return ['start' => $start->toIso8601String(), 'end' => $end->toIso8601String()];
+                return ['start' => $start->toIso8601String(), 'end' => $end->toIso8601String(), 'booking_type' => $booking->booking_type, 'nights' => $booking->nights];
             });
         $room->blocks()->where('ends_at', '>', now())->get()->each(fn (RoomBlock $block) => $slots->push(['start' => $block->starts_at->toIso8601String(), 'end' => $block->ends_at->toIso8601String()]));
 
@@ -190,9 +204,9 @@ class BookingController extends Controller
         }
         $rules = ['booking_type' => 'required|in:dates,hourly', 'guests' => 'required|integer|min:1|max:'.$room->guests, 'children_count' => 'nullable|integer|min:0|max:10|lte:guests', 'pets_count' => 'nullable|integer|min:0|max:5', 'special_request' => 'nullable|string|max:500', 'promo_code' => 'nullable|string|max:40', 'checkout_type' => 'required|in:guest,account', 'submission_token' => 'required|uuid', 'terms_accepted' => 'accepted'];
         if ($request->input('booking_type') === 'hourly') {
-            $rules += ['hourly_date' => 'required|date|after_or_equal:today', 'check_in_time' => ['required', 'date_format:H:i', 'regex:/^(0[6-9]|1[0-9]|2[0-3]):00$/'], 'hours' => 'required|integer|in:'.($room->rental_hours ? implode(',', array_unique([$room->rental_hours, 48, 72, 96, 120, 168, 720])) : '3,12,24,48,72,96,120,168,720')];
+            $rules += ['hourly_date' => 'required|date|after_or_equal:'.Carbon::now('Asia/Manila')->toDateString(), 'check_in_time' => ['required', 'date_format:H:i', 'regex:/^(0[6-9]|1[0-9]|2[0-3]):00$/'], 'hours' => 'required|integer|in:'.($room->rental_hours ? implode(',', array_unique([$room->rental_hours, 48, 72, 96, 120, 168, 720])) : '3,6,12,24,48,72,96,120,168,720')];
         } else {
-            $rules += ['check_in' => 'required|date|after_or_equal:today', 'check_out' => 'required|date|after:check_in'];
+            $rules += ['check_in' => 'required|date|after_or_equal:'.Carbon::now('Asia/Manila')->toDateString(), 'check_out' => 'required|date|after:check_in'];
         }
         if ($request->input('checkout_type') === 'guest') {
             $rules += ['guest_name' => 'required|string|max:255', 'guest_email' => 'required|email:rfc|max:255', 'guest_phone' => ['required', 'regex:/^(?:\\+63|63|0)9\\d{9}$/'], 'terms_accepted' => 'accepted'];
@@ -253,7 +267,7 @@ class BookingController extends Controller
                     'original_amount' => $pricing ? $pricing['original'] : null,
                     'discount_amount' => $pricing ? $pricing['discount'] : 0,
                     'add_ons' => [],
-                    'hold_expires_at' => null,
+                    'hold_expires_at' => now()->addMinutes(Booking::holdMinutes()),
                     'payment_method' => 'cash',
                     'status' => 'pending',
                 ]);
@@ -348,6 +362,7 @@ class BookingController extends Controller
     public function startPayMongoCheckout(Request $request, Booking $booking, PayMongoCheckout $checkout)
     {
         $this->authorizeBookingAccess($request, $booking);
+        abort_if($booking->hasExpiredHold(), 422, 'This reservation hold expired. Please choose an available stay or contact Carolina before paying.');
         abort_if($booking->status === 'cancelled', 422, 'Cancelled reservations cannot be paid online.');
         abort_if($booking->payment_status === 'paid', 422, 'This reservation has already been paid.');
 
@@ -415,12 +430,17 @@ class BookingController extends Controller
         }
 
         $wasRecorded = DB::transaction(function () use ($booking, $pendingPayment) {
+            Room::whereKey($booking->room_id)->lockForUpdate()->firstOrFail();
+            $lockedBooking = Booking::whereKey($booking->id)->lockForUpdate()->firstOrFail();
             $payment = Payment::whereKey($pendingPayment->id)->lockForUpdate()->firstOrFail();
             if ($payment->status === 'paid') {
                 return false;
             }
+            $expired = $lockedBooking->hasExpiredHold();
             $payment->update(['status' => 'paid', 'paid_at' => now(), 'notes' => 'PayMongo test payment confirmed by server lookup.']);
-            Booking::whereKey($booking->id)->update(['payment_method' => 'gcash', 'payment_status' => 'paid', 'paid_at' => now()]);
+            $lockedBooking->update(['payment_method' => 'gcash', 'payment_status' => 'paid', 'paid_at' => now()] + ($expired ? [
+                'status' => 'cancelled', 'cancelled_at' => now(), 'cancellation_reason' => 'Payment returned after the reservation hold expired; staff resolution required.',
+            ] : []));
 
             return true;
         });
@@ -430,7 +450,11 @@ class BookingController extends Controller
             $this->emailUpdate($booking, 'Your Carolina test payment was received', 'Your GCash test payment has been recorded. Staff will still review your reservation.');
         }
 
-        return redirect()->route('bookings.receipt', $booking)->with('success', 'GCash test payment confirmed. Staff will still review your reservation.');
+        $booking->refresh();
+
+        return redirect()->route('bookings.receipt', $booking)->with('success', $booking->status === 'cancelled'
+            ? 'Test payment recorded, but this reservation is no longer held. Contact Carolina for staff resolution; your room was not re-reserved.'
+            : 'GCash test payment confirmed. Staff will still review your reservation.');
     }
 
     public function cancel(Request $request, Booking $booking)
