@@ -58,7 +58,7 @@ services:
       - key: TEST_VIEWER_PASSWORD
         sync: false
       - key: MAIL_MAILER
-        value: log
+        sync: false
 
 databases:
   - name: carolina5-db
