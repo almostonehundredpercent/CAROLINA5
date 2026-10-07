@@ -55,5 +55,53 @@ class RoomSeeder extends Seeder
                 $room->promoCodes()->syncWithoutDetaching($assignments[$offset]->promoCodes()->pluck('promo_codes.id')->all());
             }
         }
+
+        $photos = [
+            7 => '/images/rooms/room-7-angle-1.jpg',
+            10 => '/images/rooms/room-10-angle-1.jpg',
+            11 => '/images/rooms/room-11-angle-1.jpg',
+            13 => '/images/rooms/room-13-angle-1.jpg',
+        ];
+        $amenitiesByRoom = [
+            7 => ['Common CR', 'Air conditioning'],
+            10 => ['Common CR', 'Refrigerator', 'Air conditioning'],
+            11 => ['Private CR', 'Refrigerator', 'Air conditioning'],
+            13 => ['Private CR', 'Air conditioning'],
+        ];
+        $replacedAmenity = function ($amenity): bool {
+            if (! is_string($amenity)) {
+                return false;
+            }
+
+            $amenity = strtolower(trim($amenity));
+
+            return preg_match('/\b(?:(?:common|private|shared)\s*)?cr\b|\b(?:bathroom|toilet)\b/i', $amenity)
+                || preg_match('/\b(?:a\/c|ac|air[-\s]condition(?:ed|er|ing)?)\b/i', $amenity)
+                || preg_match('/\b(?:ref|refrigerator|fridge)\b/i', $amenity);
+        };
+
+        $roomNumbers = array_unique(array_merge(array_keys($photos), array_keys($amenitiesByRoom)));
+
+        foreach ($roomNumbers as $number) {
+            $room = Room::where('slug', 'carolina-room-'.$number)->first();
+            if (! $room) {
+                continue;
+            }
+
+            if (isset($photos[$number])) {
+                $room->image_url = $photos[$number];
+            }
+
+            if (isset($amenitiesByRoom[$number])) {
+                $room->amenities = collect($room->amenities ?? [])
+                    ->reject($replacedAmenity)
+                    ->merge($amenitiesByRoom[$number])
+                    ->unique()
+                    ->values()
+                    ->all();
+            }
+
+            $room->save();
+        }
     }
 }
