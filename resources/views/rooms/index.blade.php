@@ -29,22 +29,38 @@
     </form>
 
     <p class="result-count">{{ $rooms->count() }} room{{ $rooms->count() === 1 ? '' : 's' }} available</p>
-    <div class="room-grid">
-        @forelse($rooms as $room)
-            <article class="room-card rooms-card">
-                <img src="{{ $room->image_url }}" alt="{{ $room->name }}" @if($loop->index > 2) loading="lazy" @endif>
-                <div class="room-card-body">
-                    <span>{{ $room->room_type }} · {{ $room->beds }} bed{{ $room->beds > 1 ? 's' : '' }} · {{ $room->guests }} guests</span>
-                    <h3>{{ $room->name }}</h3>
-                    @if($room->promoCodes->isNotEmpty())<small class="room-promo-badge">{{ $room->promoCodes->first()->name }} · {{ $room->promoCodes->first()->code }}</small>@endif
-                    @if($room->approved_reviews_count)<small class="card-rating">★ {{ number_format($room->approved_reviews_avg_rating, 1) }} · {{ $room->approved_reviews_count }} {{ Str::plural('review', $room->approved_reviews_count) }}</small>@endif
-                    <p>{{ Str::limit($room->description, 86) }}</p>
-                    <div class="rooms-card-footer"><strong>₱{{ number_format($room->price_per_night) }} <small>{{ $room->rate_label }}</small></strong><a class="button small" href="{{ route('rooms.show', ['room' => $room] + $filters) }}">View room <span aria-hidden="true">→</span></a></div>
+    @php($roomPages = $rooms->chunk(6)->values())
+    <div class="rooms-carousel" id="rooms-carousel">
+        <p class="rooms-page-status" id="rooms-page-status" aria-live="polite">{{ $rooms->isEmpty() ? 'No rooms to display' : 'Showing rooms 1–'.min(6, $rooms->count()).' of '.$rooms->count().($roomPages->count() > 1 ? ' · Group 1 of '.$roomPages->count() : '') }}</p>
+        <button class="rooms-page-arrow rooms-page-arrow-previous" type="button" id="rooms-page-previous" aria-label="Show previous six rooms" aria-controls="rooms-page-track" hidden>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
+        </button>
+        <div class="rooms-page-track" id="rooms-page-track">
+            @forelse($roomPages as $pageIndex => $roomPage)
+                <div class="rooms-page" role="group" data-room-page="{{ $pageIndex + 1 }}" aria-label="Rooms {{ $pageIndex * 6 + 1 }} to {{ min(($pageIndex + 1) * 6, $rooms->count()) }}">
+                    <div class="room-grid">
+                        @foreach($roomPage as $room)
+                            <article class="room-card rooms-card">
+                                <img src="{{ $room->image_url }}" alt="{{ $room->name }}" @if(($pageIndex * 6 + $loop->index) > 2) loading="lazy" @endif>
+                                <div class="room-card-body">
+                                    <span>{{ $room->room_type }} · {{ $room->beds }} bed{{ $room->beds > 1 ? 's' : '' }} · {{ $room->guests }} guests</span>
+                                    <h3>{{ $room->name }}</h3>
+                                    @if($room->promoCodes->isNotEmpty())<small class="room-promo-badge">{{ $room->promoCodes->first()->name }} · {{ $room->promoCodes->first()->code }}</small>@endif
+                                    @if($room->approved_reviews_count)<small class="card-rating">★ {{ number_format($room->approved_reviews_avg_rating, 1) }} · {{ $room->approved_reviews_count }} {{ Str::plural('review', $room->approved_reviews_count) }}</small>@endif
+                                    <p>{{ Str::limit($room->description, 86) }}</p>
+                                    <div class="rooms-card-footer"><strong>₱{{ number_format($room->price_per_night) }} <small>{{ $room->rate_label }}</small></strong><a class="button small" href="{{ route('rooms.show', ['room' => $room] + $filters) }}">View room <span aria-hidden="true">→</span></a></div>
+                                </div>
+                            </article>
+                        @endforeach
+                    </div>
                 </div>
-            </article>
-        @empty
-            <div class="empty-state"><h2>No rooms found</h2><p>Try another date, stay length, or smaller group.</p><a class="text-link" href="{{ route('rooms.index') }}">Clear search</a></div>
-        @endforelse
+            @empty
+                <div class="room-grid"><div class="empty-state"><h2>No rooms found</h2><p>Try another date, stay length, or smaller group.</p><a class="text-link" href="{{ route('rooms.index') }}">Clear search</a></div></div>
+            @endforelse
+        </div>
+        <button class="rooms-page-arrow rooms-page-arrow-next" type="button" id="rooms-page-next" aria-label="Show next six rooms" aria-controls="rooms-page-track" hidden>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+        </button>
     </div>
 </section>
 <script>
@@ -60,6 +76,32 @@ document.addEventListener('DOMContentLoaded', () => {
     const closeMenus=()=>{[stayMenu,guestsMenu,timeMenu].forEach(menu=>menu.hidden=true);[stayTrigger,guestsTrigger,timeTrigger].forEach(button=>button.setAttribute('aria-expanded','false'))};
     const toggleMenu=(menu,button)=>{const opening=menu.hidden;closeMenus();menu.hidden=!opening;button.setAttribute('aria-expanded',String(opening))};
     trigger.addEventListener('click',()=>{calendar.hidden=!calendar.hidden;trigger.setAttribute('aria-expanded',String(!calendar.hidden));render()});stayTrigger.addEventListener('click',event=>{event.stopPropagation();toggleMenu(stayMenu,stayTrigger)});guestsTrigger.addEventListener('click',event=>{event.stopPropagation();toggleMenu(guestsMenu,guestsTrigger)});stayMenu.querySelectorAll('[data-stay]').forEach(button=>button.addEventListener('click',event=>{event.stopPropagation();stay.value=button.dataset.stay;closeMenus();sync()}));guestsMenu.querySelectorAll('[data-guests]').forEach(button=>button.addEventListener('click',event=>{event.stopPropagation();event.stopPropagation();guests.value=button.dataset.guests;closeMenus();sync()}));timeTrigger.addEventListener('click',event=>{event.stopPropagation();toggleMenu(timeMenu,timeTrigger)});timeMenu.querySelectorAll('[data-time]').forEach(button=>button.addEventListener('click',event=>{event.preventDefault();event.stopPropagation();timeValue.value=button.dataset.time;closeMenus();sync()}));document.getElementById('rooms-calendar-prev').addEventListener('click',()=>{const p=new Date(cursor.getFullYear(),cursor.getMonth()-1,1);if(p>=new Date(today.getFullYear(),today.getMonth(),1)){cursor=p;render()}});document.getElementById('rooms-calendar-next').addEventListener('click',()=>{cursor=new Date(cursor.getFullYear(),cursor.getMonth()+1,1);render()});document.addEventListener('click',event=>{if(!calendar.hidden&&!calendar.contains(event.target)&&!trigger.contains(event.target)){calendar.hidden=true;trigger.setAttribute('aria-expanded','false')}if(!stayChoice.contains(event.target)&&!guestsChoice.contains(event.target)&&!timeField.contains(event.target))closeMenus()});sync();
+});
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const carousel = document.getElementById('rooms-carousel');
+    const pages = [...(carousel?.querySelectorAll('[data-room-page]') || [])];
+    const previous = document.getElementById('rooms-page-previous');
+    const next = document.getElementById('rooms-page-next');
+    const status = document.getElementById('rooms-page-status');
+    if (pages.length < 2) return;
+
+    let currentPage = 1;
+    const showPage = page => {
+        currentPage = Math.max(1, Math.min(pages.length, page));
+        pages.forEach((element, index) => { element.hidden = index + 1 !== currentPage; });
+        const firstRoom = (currentPage - 1) * 6 + 1;
+        const lastRoom = Math.min(currentPage * 6, {{ $rooms->count() }});
+        status.textContent = `Showing rooms ${firstRoom}–${lastRoom} of {{ $rooms->count() }} · Group ${currentPage} of ${pages.length}`;
+        previous.hidden = false;
+        next.hidden = false;
+        previous.disabled = currentPage === 1;
+        next.disabled = currentPage === pages.length;
+    };
+    previous.addEventListener('click', () => showPage(currentPage - 1));
+    next.addEventListener('click', () => showPage(currentPage + 1));
+    showPage(currentPage);
 });
 </script>
 <script>

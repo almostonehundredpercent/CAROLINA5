@@ -48,7 +48,7 @@ class StayController extends Controller
     {
         $bookings = Booking::with('room')->whereIn('status', ['pending', 'confirmed'])->whereNull('checked_out_at')
             ->where('check_out', '>=', today())->where('check_in', '<=', today()->addDays(7))->orderBy('check_in')->paginate(20);
-        $rooms = Room::where('is_active', true)->orderBy('name')->get();
+        $rooms = Room::where('is_active', true)->orderBy('id')->get();
         $notices = DB::table('stay_notices')->where('active', true)->where('ends_at', '>', now())->latest()->get();
 
         return view('admin.arrivals', compact('bookings', 'rooms', 'notices'));

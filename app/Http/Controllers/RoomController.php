@@ -33,7 +33,9 @@ class RoomController extends Controller
         }
 
         return view('rooms.index', [
-            'rooms' => $rooms->orderBy('price_per_night')->get(),
+            // Keep the numbered inventory in room-number order (the first six
+            // are the original profiles and the following twelve are units).
+            'rooms' => $rooms->orderBy('id')->get(),
             'filters' => $filters,
         ]);
     }

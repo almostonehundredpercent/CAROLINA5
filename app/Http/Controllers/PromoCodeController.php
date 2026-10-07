@@ -14,7 +14,7 @@ class PromoCodeController extends Controller
     {
         return view('admin.promos', [
             'promos' => PromoCode::with('rooms')->latest()->get(),
-            'rooms' => Room::where('is_active', true)->orderBy('name')->get(),
+            'rooms' => Room::where('is_active', true)->orderBy('id')->get(),
         ]);
     }
 

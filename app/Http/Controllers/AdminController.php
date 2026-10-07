@@ -284,7 +284,7 @@ class AdminController extends Controller
         // are currently unavailable for operational reasons are excluded here.
         $rooms = Room::query()
             ->where('is_active', true)
-            ->orderBy('name')
+            ->orderBy('id')
             ->get();
 
         return view('admin.walk_in', compact('rooms'));
@@ -784,7 +784,7 @@ class AdminController extends Controller
             ->blocking()
             ->where('check_out', '>', $today)
             ->orderBy('check_in'), 'blocks' => fn ($query) => $query->where('ends_at', '>', $now)->orderBy('starts_at')])
-            ->orderBy('name')
+            ->orderBy('id')
             ->get()
             ->map(function (Room $room) use ($now) {
                 $startsAt = fn (Booking $booking) => $booking->check_in_at ?? $booking->check_in->copy()->startOfDay();

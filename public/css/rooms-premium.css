@@ -30,6 +30,17 @@
 .rooms-calendar-day.selected { border-radius:8px; }
 .rooms-calendar-day.selected.start { border-radius:8px; }
 .result-count { margin:30px 0 19px; color:#766b61; font-size:.88rem; }
+.rooms-carousel { position:relative; padding:0 48px; }
+.rooms-page-status { margin:0 0 15px; color:#817367; font-size:.78rem; font-weight:650; text-align:center; }
+.rooms-page[hidden] { display:none; }
+.rooms-page-arrow { position:absolute; z-index:2; top:calc(50% + 12px); display:grid; width:42px; height:42px; place-items:center; border:1px solid #e5d7c8; border-radius:50%; background:#fffdf9; color:#9b570d; box-shadow:0 5px 17px rgba(48,31,14,.12); cursor:pointer; transition:transform .16s ease,border-color .16s ease,background .16s ease,color .16s ease; }
+.rooms-page-arrow-previous { left:0; }
+.rooms-page-arrow-next { right:0; }
+.rooms-page-arrow[hidden] { display:none; }
+.rooms-page-arrow svg { width:23px; height:23px; fill:none; stroke:currentColor; stroke-width:2.3; stroke-linecap:round; stroke-linejoin:round; }
+.rooms-page-arrow:hover:not(:disabled) { transform:scale(1.06); border-color:#d18a36; background:#fff4e4; }
+.rooms-page-arrow:focus-visible { outline:3px solid rgba(198,112,19,.32); outline-offset:3px; }
+.rooms-page-arrow:disabled { opacity:.4; cursor:not-allowed; }
 .room-grid { gap:22px; }
 .rooms-card { display:flex; min-height:100%; flex-direction:column; border:1px solid #eadbca; border-radius:19px; background:linear-gradient(150deg,#fffdf9,#f7eee5); box-shadow:0 7px 24px rgba(51,35,18,.1); transition:transform .23s ease, box-shadow .23s ease,border-color .23s ease; }
 .rooms-card:hover { transform:translateY(-5px); border-color:rgba(207,133,31,.72); box-shadow:0 20px 38px rgba(38,22,11,.16); }
@@ -82,6 +93,9 @@
 .dark-mode .rooms-card .room-card-body > p { color:#cdbbae; }
 .dark-mode .rooms-card-footer strong { color:#fff5e8; }
 .dark-mode .rooms-card-footer strong small { color:#cdbbaa; }
+.dark-mode .rooms-page-status { color:#cdbbaa; }
+.dark-mode .rooms-page-arrow { border-color:#594332; background:#261d17; color:#ffc16b; box-shadow:0 5px 17px rgba(0,0,0,.32); }
+.dark-mode .rooms-page-arrow:hover:not(:disabled) { border-color:#b87828; background:#3a291b; }
 .dark-mode .room-card-availability { border-color:#4d382c; background:rgba(10,8,7,.18); }
 .dark-mode .room-availability-toggle,.dark-mode .room-availability-head b,.dark-mode .room-availability-detail strong { color:#fff2e4; }
 .dark-mode .room-availability-toggle small,.dark-mode .room-availability-week span,.dark-mode .room-availability-legend { color:#ccb9a8; }
@@ -92,4 +106,4 @@
 .dark-mode .room-availability-detail { color:#d0bdac; }
 .dark-mode .room-availability-booked { background:#492522; color:#ffc1b9; }
 @media (max-width:900px) { .rooms-search { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); }.rooms-search > .button { width:100%; }.rooms-date-trigger,.rooms-choice,.rooms-time-field { width:100%; }.rooms-search-calendar { top:auto; left:0; grid-column:1 / -1; }.room-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
-@media (max-width:650px) { .rooms-hero { min-height:330px; padding:70px 7% 58px; }.rooms-hero h1 { font-size:clamp(2.75rem,12vw,3.75rem); }.rooms-results { padding:32px 5% 55px; }.rooms-search { grid-template-columns:1fr; padding:12px; border-radius:15px; }.rooms-search-calendar { grid-column:auto; width:100%; }.rooms-search > .button { min-height:54px; }.rooms-date-trigger,.rooms-choice,.rooms-time-field { min-height:58px; }.room-grid { grid-template-columns:1fr; gap:17px; }.rooms-card img { height:220px; }.rooms-card .room-card-body { padding:18px; } }
+@media (max-width:650px) { .rooms-hero { min-height:330px; padding:70px 7% 58px; }.rooms-hero h1 { font-size:clamp(2.75rem,12vw,3.75rem); }.rooms-results { padding:32px 5% 55px; }.rooms-search { grid-template-columns:1fr; padding:12px; border-radius:15px; }.rooms-search-calendar { grid-column:auto; width:100%; }.rooms-search > .button { min-height:54px; }.rooms-date-trigger,.rooms-choice,.rooms-time-field { min-height:58px; }.rooms-carousel { padding:0 34px; }.rooms-page-arrow { width:32px; height:32px; }.rooms-page-arrow svg { width:19px; height:19px; }.rooms-page-arrow-previous { left:0; }.rooms-page-arrow-next { right:0; }.room-grid { grid-template-columns:1fr; gap:17px; }.rooms-card img { height:220px; }.rooms-card .room-card-body { padding:18px; } }
