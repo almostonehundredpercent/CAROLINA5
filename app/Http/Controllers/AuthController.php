@@ -76,6 +76,16 @@ class AuthController extends Controller
         $request->session()->regenerate();
 
         if ($user->hasStaffAccess()) {
+            if (config('auth.staff_mfa_enabled') === false) {
+                ActivityLog::create([
+                    'user_id' => $user->id,
+                    'event' => 'staff_login',
+                    'description' => 'Staff sign-in completed with password while authenticator is temporarily paused.',
+                ]);
+
+                return redirect()->intended(route(AdminPermissions::landingRoute($user)));
+            }
+
             ActivityLog::create([
                 'user_id' => $user->id,
                 'event' => 'staff_password_accepted',

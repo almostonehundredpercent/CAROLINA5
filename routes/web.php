@@ -7,6 +7,7 @@ use App\Http\Controllers\PromoCodeController;
 use App\Http\Controllers\RoomController;
 use App\Http\Controllers\StaffMfaController;
 use App\Http\Controllers\StayController;
+use App\Http\Middleware\RequireStaffMfaEnabled;
 use App\Models\Room;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use Illuminate\Http\Request;
@@ -65,7 +66,7 @@ Route::post('/email/verification-notification', function (Request $request) {
 })->middleware(['auth', 'throttle:6,1'])->name('verification.send');
 Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth')->name('logout');
 
-Route::middleware('auth')->prefix('staff/mfa')->name('admin.mfa.')->group(function () {
+Route::middleware(['auth', RequireStaffMfaEnabled::class])->prefix('staff/mfa')->name('admin.mfa.')->group(function () {
     Route::get('/setup', [StaffMfaController::class, 'setup'])->name('setup');
     Route::post('/setup', [StaffMfaController::class, 'beginSetup'])->middleware('throttle:5,1')->name('begin');
     Route::post('/confirm', [StaffMfaController::class, 'confirmSetup'])->middleware('throttle:5,1')->name('confirm');

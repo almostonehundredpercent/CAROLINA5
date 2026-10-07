@@ -20,7 +20,7 @@
         </div></header>
         @include('admin.partials.flash')
         <section class="panel">
-            <p class="role-help"><b>Super administrator</b> can grant or remove administrator access. <b>Administrator</b> manages daily operations and non-admin staff roles. <b>Front desk</b> handles bookings and guest service. <b>Housekeeping</b> manages room tasks. <b>Viewer</b> has read-only access. Every staff role requires an authenticator at sign-in.</p>
+            <p class="role-help"><b>Super administrator</b> can grant or remove administrator access. <b>Administrator</b> manages daily operations and non-admin staff roles. <b>Front desk</b> handles bookings and guest service. <b>Housekeeping</b> manages room tasks. <b>Viewer</b> has read-only access. @if (config('auth.staff_mfa_enabled')) Every staff role requires an authenticator at sign-in. @else The authenticator is temporarily paused; staff sign in with a password only. @endif</p>
             <div class="admin-table-wrap"><table>
                 <thead><tr><th>Staff member</th><th>Email</th><th>Role</th><th>Save</th></tr></thead>
                 <tbody>

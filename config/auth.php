@@ -20,6 +20,9 @@ return [
         'passwords' => env('AUTH_PASSWORD_BROKER', 'users'),
     ],
 
+    // Keep enabled by default; set false only during a temporary staff MFA pause.
+    'staff_mfa_enabled' => env('STAFF_MFA_ENABLED', true),
+
     /*
     |--------------------------------------------------------------------------
     | Authentication Guards
