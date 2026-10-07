@@ -2,7 +2,7 @@
     if (!window.matchMedia('(any-pointer: coarse)').matches ||
         window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
-    const cardSelector = '.home-availability, .ber-promo-home, .home-room-carousel .room-card, .home-benefits .benefit-grid > div';
+    const cardSelector = '.home-availability, .ber-promo-home, .home-lookup .empty-state, .home-room-carousel .room-card, .home-benefits .benefit-grid > div';
     let activeCard = null;
     let pointerId = null;
     let startX = 0;
