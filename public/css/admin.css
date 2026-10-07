@@ -2724,6 +2724,85 @@ tbody tr:hover {
     }
 }
 
+/* Housekeeping readability: night-glass cards and a light task planner each
+   need their own high-contrast text and control colors. */
+.housekeeping-capacity {
+    font-size: 12px;
+    font-weight: 700;
+}
+.housekeeping-room-type {
+    font-size: 14px;
+    line-height: 1.4;
+}
+.housekeeping-state b {
+    font-size: 14px;
+}
+.housekeeping-state span {
+    font-size: 13px;
+}
+.housekeeping-counts span {
+    font-size: 13px;
+}
+html.dark-mode .room-board .housekeeping-button,
+html:not(.dark-mode) .room-board .housekeeping-button {
+    min-height: 44px;
+    background: linear-gradient(135deg, #a65b00, #7e3900) !important;
+    color: #fff !important;
+    font-size: 14px !important;
+}
+html.dark-mode .room-board .housekeeping-button:hover,
+html:not(.dark-mode) .room-board .housekeeping-button:hover {
+    background: linear-gradient(135deg, #b15b00, #8b4300) !important;
+}
+html.dark-mode .room-board .housekeeping-button.ready,
+html:not(.dark-mode) .room-board .housekeeping-button.ready {
+    background: #187844 !important;
+}
+html.dark-mode .room-board .housekeeping-button.secondary,
+html:not(.dark-mode) .room-board .housekeeping-button.secondary {
+    background: #30271f !important;
+}
+.housekeeping-plan[open] {
+    --ink: #241b15;
+    --muted: #594a3b;
+    --orange: #995000;
+    --orange-dark: #874000;
+    color: var(--ink);
+    border-color: #a68d75;
+}
+.housekeeping-plan[open] .housekeeping-choice {
+    background: #e8ded3;
+}
+.housekeeping-plan[open] .housekeeping-choice label:has(input:checked) {
+    color: var(--orange-dark);
+}
+.housekeeping-plan[open] .housekeeping-date-trigger,
+.housekeeping-plan[open] .housekeeping-time-trigger,
+.housekeeping-plan[open] .housekeeping-form input:not([type='radio']):not([type='hidden']) {
+    border-color: #a68d75;
+}
+.housekeeping-plan[open] .housekeeping-calendar,
+.housekeeping-plan[open] .housekeeping-time-menu {
+    color: var(--ink);
+    border-color: #a68d75;
+}
+.housekeeping-plan[open] .calendar-week {
+    font-size: 12px;
+}
+.housekeeping-plan[open] .calendar-days button {
+    font-size: 14px;
+}
+.housekeeping-counts span {
+    border-color: #806046;
+    background: #241914;
+    color: #e9d8c6;
+}
+html:not(.dark-mode) .housekeeping-counts span {
+    border-color: #a68d75;
+    background: #fffdf9;
+    color: #594a3b;
+}
+
 /* Theme switch: light mode intentionally restores a calm, high-contrast workspace.
    The glass treatment above remains the only dark-mode treatment. */
 html:not(.dark-mode) {
