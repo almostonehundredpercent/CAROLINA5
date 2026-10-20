@@ -38,6 +38,7 @@ class PayMongoCheckout
                             'cancel_url' => route('bookings.paymongo.return', ['booking' => $booking, 'outcome' => 'cancelled']),
                             'success_url' => route('bookings.paymongo.return', ['booking' => $booking, 'outcome' => 'success']),
                             'description' => 'Carolina reservation '.$booking->reference,
+                            'merchant' => 'Carolina',
                             'payment_method_types' => ['gcash'],
                             'reference_number' => $booking->reference,
                             'send_email_receipt' => false,

@@ -3,6 +3,7 @@
 use App\Models\Booking;
 use App\Models\Payment;
 use App\Models\Room;
+use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Http;
 
 function payMongoBooking(): Booking
@@ -40,6 +41,22 @@ test('a guest can begin an online GCash test checkout', function () {
     $payment = Payment::firstOrFail();
     expect($payment->reference)->toBe('paymongo:cs_test_123')->and($payment->status)->toBe('pending');
     expect($booking->fresh()->payment_method)->toBe('gcash');
+});
+
+test('hosted checkout identifies the merchant as Carolina instead of the account owner', function () {
+    $booking = payMongoBooking();
+    Http::fake(['https://api.paymongo.com/v1/checkout_sessions' => Http::response([
+        'data' => ['id' => 'cs_test_brand', 'attributes' => ['checkout_url' => 'https://checkout.paymongo.test/cs_test_brand']],
+    ])]);
+
+    $this->withSession(['guest_booking_reference' => $booking->reference])
+        ->post(route('bookings.paymongo.start', $booking));
+
+    Http::assertSent(function (Request $request) {
+        $payload = json_decode($request->body(), true);
+
+        return data_get($payload, 'data.attributes.merchant') === 'Carolina';
+    });
 });
 
 test('an AJAX checkout request receives a checkout URL without a redirect response', function () {
