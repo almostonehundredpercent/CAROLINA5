@@ -282,6 +282,24 @@ test('the bookings screen shows provider verification instead of a manual paid t
         ->assertDontSee('Mark paid');
 });
 
+test('the bookings screen keeps payment and refund guidance separate from action buttons', function () {
+    $booking = payMongoBooking();
+    $booking->update(['payment_method' => 'gcash', 'payment_status' => 'paid']);
+    Payment::create(['booking_id' => $booking->id, 'amount' => 1000, 'method' => 'gcash', 'status' => 'paid', 'reference' => 'paymongo:cs_test_123']);
+    $admin = User::factory()->create(['staff_role' => 'admin', 'is_admin' => true]);
+
+    $this->actingAsStaff($admin)->get(route('admin.bookings'))
+        ->assertOk()
+        ->assertSee('booking-action-buttons', false)
+        ->assertSee('booking-payment-status paid', false)
+        ->assertSee('booking-action-note refund-ineligible', false)
+        ->assertSee('Payments update automatically when PayMongo confirms them.')
+        ->assertSee('PayMongo · GCash')
+        ->assertDontSee('Payment: Paid · PayMongo GCash')
+        ->assertDontSee('No online payment is collected.')
+        ->assertDontSee('Paid via PayMongo');
+});
+
 test('admins can verify a pending PayMongo checkout directly with PayMongo', function () {
     Mail::fake();
     $booking = payMongoBooking();

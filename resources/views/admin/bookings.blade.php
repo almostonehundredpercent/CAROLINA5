@@ -7,21 +7,86 @@
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ asset('css/admin.css') }}?v={{ filemtime(public_path('css/admin.css')) }}">
     <style>
-        .booking-actions { display: flex; flex-wrap: wrap; gap: 7px; }
-        .booking-actions form { margin: 0; }
+        .booking-actions {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr);
+            justify-items: start;
+            gap: 9px;
+            min-width: 270px;
+            max-width: 380px;
+        }
+        .booking-actions-cell { vertical-align: top; }
+        .booking-status-stack {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 5px;
+        }
+        .booking-status-stack .mini-status {
+            display: inline-flex;
+            align-items: center;
+            min-height: 23px;
+            padding: 4px 8px;
+            line-height: 1.1;
+        }
+        .booking-payment-method { display: block; }
+        .booking-action-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 8px;
+            max-width: 100%;
+        }
+        .booking-action-buttons form { display: flex; margin: 0; }
+        .booking-action-buttons .status-select {
+            min-width: 88px;
+            min-height: 38px !important;
+            padding: 8px 12px !important;
+            font-size: 12px !important;
+            line-height: 1.2;
+            white-space: nowrap;
+        }
         .booking-note { color: var(--muted); font-size: 12px; margin: 5px 0; }
         .hold-expiry { display: block; color: #9d6100; font-size: 11px; margin-top: 5px; }
         .status-select { cursor: pointer; }
         .booking-filters { display:flex; flex-wrap:wrap; gap:8px; margin:0 0 16px; }
         .booking-filters input, .booking-filters select { border:1px solid var(--line); border-radius:7px; padding:9px; font:inherit; }
         .booking-filters button { border:0; border-radius:7px; padding:9px 13px; background:var(--orange); color:#fff; font-weight:700; cursor:pointer; }
-        .refund-panel { margin-top:7px; min-width:245px; }
+        .refund-panel { width: min(100%, 340px); min-width: 0; margin: 0; }
         .refund-panel summary { color:var(--orange-dark); cursor:pointer; font-size:12px; font-weight:700; }
         .refund-form { display:grid; grid-template-columns:1fr 1fr auto; gap:6px; margin-top:8px; padding:9px; border:1px solid var(--line); border-radius:9px; background:var(--paper); }
         .refund-form label { display:grid; gap:3px; color:var(--muted); font-size:10px; font-weight:700; }
         .refund-form input { min-width:0; padding:7px; border:1px solid var(--line); border-radius:6px; font:inherit; }
         .refund-form button { align-self:end; min-height:33px; border:1px solid #c85b48; border-radius:7px; background:#fff4f1; color:#a23d2e; font-weight:700; cursor:pointer; }
-        .refund-ineligible { display:block; max-width:245px; color:#a23d2e; font-size:11px; font-weight:700; line-height:1.4; }
+        .booking-action-note {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            width: 100%;
+            max-width: 300px;
+            padding: 8px 10px;
+            border: 1px solid;
+            border-radius: 9px;
+            font-size: 11px;
+            line-height: 1.45;
+        }
+        .refund-note-icon {
+            display: grid;
+            flex: 0 0 17px;
+            width: 17px;
+            height: 17px;
+            place-items: center;
+            border-radius: 50%;
+            font-size: 11px;
+            font-weight: 800;
+        }
+        .refund-note-copy { min-width:0; }
+        .refund-note-copy strong { display:block; margin-bottom:1px; font-size:11px; }
+        html:not(.dark-mode) .booking-action-note { border-color: #efd1ca; background: #fff4f1; color: #8f3a2d; }
+        html:not(.dark-mode) .refund-note-icon { background: #f9dfda; color: #9b4033; }
+        html.dark-mode .booking-action-note { border-color: rgba(255, 145, 130, .25); background: rgba(126, 43, 34, .19); color: #ffd2cb; }
+        html.dark-mode .refund-note-icon { background: rgba(239, 128, 119, .18); color: #ffc0b7; }
     </style>
 </head>
 <body>
@@ -56,7 +121,7 @@
                     <div>
                         <p class="admin-kicker">ALL RESERVATIONS</p>
                         <h2>Review requests</h2>
-                        <p class="booking-note">No online payment is collected. Confirming rechecks the room before it becomes unavailable.</p>
+                        <p class="booking-note">Payments update automatically when PayMongo confirms them. Confirming a request checks room availability again.</p>
                     </div>
                     <div><a class="status-select" href="{{ route('admin.bookings.export', request()->query()) }}">Export CSV</a> <span class="pill">{{ $individualBookings->total() }} total</span></div>
                 </div>
@@ -98,64 +163,69 @@
                                     <td>₱{{ number_format($booking->total_amount, 2) }}</td>
                                     <td>
                                         @php($payMongoPayment = $booking->payments->filter(fn ($payment) => $payment->method === 'gcash' && str_starts_with((string) $payment->reference, 'paymongo:'))->sortByDesc('id')->first())
-                                        <span class="mini-status {{ $booking->status }}">{{ ucfirst($booking->status) }}</span>
-                                        <small>Payment: {{ ucfirst($booking->payment_status ?? 'pending') }} · {{ $payMongoPayment ? 'PayMongo GCash' : strtoupper($booking->payment_method ?? 'cash') }}</small>
+                                        @php($paymentStatus = $booking->payment_status ?? 'pending')
+                                        @php($paymentStatusClass = match ($paymentStatus) { 'paid' => 'confirmed', 'refunded', 'failed' => 'cancelled', default => '' })
+                                        <div class="booking-status-stack">
+                                            <span class="mini-status {{ $booking->status }}">{{ ucfirst($booking->status) }}</span>
+                                            <span class="mini-status booking-payment-status {{ $paymentStatus }} {{ $paymentStatusClass }}">Payment {{ ucfirst($paymentStatus) }}</span>
+                                        </div>
+                                        <small class="booking-payment-method">{{ $payMongoPayment ? 'PayMongo · GCash' : strtoupper($booking->payment_method ?? 'cash') }}</small>
                                         @if($booking->status === 'pending')
                                             <span class="hold-expiry">Needs staff review</span>
                                         @endif
                                     </td>
-                                    <td>
+                                    <td class="booking-actions-cell">
                                         <div class="booking-actions">
                                             @php($refundableAmount = max(0, (float) $booking->payments->where('status', 'paid')->sum('amount') - (float) $booking->payments->where('status', 'refunded')->sum('amount')))
                                             @php($refundPolicyEligible = $booking->isRefundEligible())
-                                            @if($payMongoPayment?->status === 'pending')
-                                                <form method="POST" action="{{ route('admin.bookings.payment.recheck-paymongo', $booking) }}" onsubmit="return confirm('Check this GCash checkout directly with PayMongo?')">
-                                                    @csrf
-                                                    <button class="status-select confirmed" type="submit">Verify with PayMongo</button>
-                                                </form>
-                                            @elseif($payMongoPayment?->status === 'paid')
-                                                <span class="mini-status confirmed" title="This payment was confirmed by PayMongo">Paid via PayMongo</span>
-                                            @elseif($booking->status !== 'cancelled')
-                                                <form method="POST" action="{{ route('admin.bookings.payment', $booking) }}" onsubmit="return confirm('Update this payment record?')">
-                                                    @csrf @method('PATCH')
-                                                    <input type="hidden" name="payment_method" value="{{ in_array($booking->payment_method, ['cash', 'gcash']) ? $booking->payment_method : 'cash' }}">
-                                                    <input type="hidden" name="payment_status" value="{{ $booking->payment_status === 'paid' ? 'pending' : 'paid' }}">
-                                                    <button class="status-select {{ $booking->payment_status === 'paid' ? 'confirmed' : '' }}" type="submit">{{ $booking->payment_status === 'paid' ? 'Mark unpaid' : 'Mark paid' }}</button>
-                                                </form>
-                                            @endif
-                                            @if($booking->status === 'pending')
-                                                <form method="POST" action="{{ route('admin.bookings.update', $booking) }}">
-                                                    @csrf
-                                                    @method('PATCH')
-                                                    <input type="hidden" name="status" value="confirmed">
-                                                    <button class="status-select confirmed" type="submit">Confirm</button>
-                                                </form>
-                                            @endif
+                                                <div class="booking-action-buttons">
+                                                    @if($payMongoPayment?->status === 'pending')
+                                                        <form method="POST" action="{{ route('admin.bookings.payment.recheck-paymongo', $booking) }}" onsubmit="return confirm('Check this GCash checkout directly with PayMongo?')">
+                                                            @csrf
+                                                            <button class="status-select confirmed" type="submit">Verify with PayMongo</button>
+                                                        </form>
+                                                    @elseif($booking->status !== 'cancelled')
+                                                        <form method="POST" action="{{ route('admin.bookings.payment', $booking) }}" onsubmit="return confirm('Update this payment record?')">
+                                                            @csrf @method('PATCH')
+                                                            <input type="hidden" name="payment_method" value="{{ in_array($booking->payment_method, ['cash', 'gcash']) ? $booking->payment_method : 'cash' }}">
+                                                            <input type="hidden" name="payment_status" value="{{ $booking->payment_status === 'paid' ? 'pending' : 'paid' }}">
+                                                            <button class="status-select {{ $booking->payment_status === 'paid' ? 'confirmed' : '' }}" type="submit">{{ $booking->payment_status === 'paid' ? 'Mark unpaid' : 'Mark paid' }}</button>
+                                                        </form>
+                                                    @endif
+                                                    @if($booking->status === 'pending')
+                                                        <form method="POST" action="{{ route('admin.bookings.update', $booking) }}">
+                                                            @csrf
+                                                            @method('PATCH')
+                                                            <input type="hidden" name="status" value="confirmed">
+                                                            <button class="status-select confirmed" type="submit">Confirm</button>
+                                                        </form>
+                                                    @endif
 
-                                            @if($booking->status === 'confirmed' && ! $booking->checked_in_at && (! $booking->check_in_at || $booking->check_in_at->lte(now())))
-                                                <form method="POST" action="{{ route('admin.bookings.check-in', $booking) }}" onsubmit="return confirm('Check this guest in now?')">
-                                                    @csrf
-                                                    <input type="hidden" name="action" value="check_in">
-                                                    <button class="status-select confirmed" type="submit">Check in</button>
-                                                </form>
-                                            @endif
+                                                    @if($booking->status === 'confirmed' && ! $booking->checked_in_at && (! $booking->check_in_at || $booking->check_in_at->lte(now())))
+                                                        <form method="POST" action="{{ route('admin.bookings.check-in', $booking) }}" onsubmit="return confirm('Check this guest in now?')">
+                                                            @csrf
+                                                            <input type="hidden" name="action" value="check_in">
+                                                            <button class="status-select confirmed" type="submit">Check in</button>
+                                                        </form>
+                                                    @endif
 
-                                            @if($booking->checked_in_at && ! $booking->checked_out_at)
-                                                <form method="POST" action="{{ route('admin.bookings.check-out', $booking) }}" onsubmit="return confirm('Check this guest out and start cleaning?')">
-                                                    @csrf
-                                                    <input type="hidden" name="action" value="check_out">
-                                                    <button class="status-select" type="submit">Check out</button>
-                                                </form>
-                                            @endif
+                                                    @if($booking->checked_in_at && ! $booking->checked_out_at)
+                                                        <form method="POST" action="{{ route('admin.bookings.check-out', $booking) }}" onsubmit="return confirm('Check this guest out and start cleaning?')">
+                                                            @csrf
+                                                            <input type="hidden" name="action" value="check_out">
+                                                            <button class="status-select" type="submit">Check out</button>
+                                                        </form>
+                                                    @endif
 
-                                            @if($booking->status !== 'cancelled' && ! ($booking->checked_in_at && ! $booking->checked_out_at))
-                                                <form method="POST" action="{{ route('admin.bookings.update', $booking) }}" onsubmit="return confirm('Cancel this booking?')">
-                                                    @csrf
-                                                    @method('PATCH')
-                                                    <input type="hidden" name="status" value="cancelled">
-                                                    <button class="status-select cancelled" type="submit">Cancel</button>
-                                                </form>
-                                            @endif
+                                                    @if($booking->status !== 'cancelled' && ! ($booking->checked_in_at && ! $booking->checked_out_at))
+                                                        <form method="POST" action="{{ route('admin.bookings.update', $booking) }}" onsubmit="return confirm('Cancel this booking?')">
+                                                            @csrf
+                                                            @method('PATCH')
+                                                            <input type="hidden" name="status" value="cancelled">
+                                                            <button class="status-select cancelled" type="submit">Cancel</button>
+                                                        </form>
+                                                    @endif
+                                            </div>
 
                                             @if($refundableAmount > 0 && $refundPolicyEligible)
                                                 <details class="refund-panel">
@@ -172,7 +242,10 @@
                                                     </form>
                                                 </details>
                                             @elseif($refundableAmount > 0)
-                                                <span class="refund-ineligible">Non-refundable: the booking is less than 3 days from check-in.</span>
+                                                <div class="booking-action-note refund-ineligible" role="note">
+                                                    <span class="refund-note-icon" aria-hidden="true">!</span>
+                                                    <span class="refund-note-copy"><strong>Outside the refund window</strong>Refunds aren’t available within 3 days of check-in.</span>
+                                                </div>
                                             @endif
                                         </div>
                                     </td>
