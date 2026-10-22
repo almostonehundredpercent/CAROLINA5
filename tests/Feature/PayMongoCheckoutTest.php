@@ -324,7 +324,10 @@ test('manual payments require an explicit confirmation before marking them unpai
     $this->actingAsStaff($admin)->get(route('admin.bookings'))
         ->assertOk()
         ->assertSee('Mark unpaid')
-        ->assertSee("return confirm('Mark this payment as unpaid? This changes only the payment record and does not issue a refund. Continue?')", false);
+        ->assertSee('data-confirm-title="Update payment record?"', false)
+        ->assertSee('data-confirm-message="Mark this payment as unpaid? This changes only the payment record; it does not issue a refund."', false)
+        ->assertSee('data-confirm-action="Mark unpaid"', false)
+        ->assertDontSee('Update this payment record?', false);
 });
 
 test('admins can verify a pending PayMongo checkout directly with PayMongo', function () {

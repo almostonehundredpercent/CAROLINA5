@@ -190,7 +190,13 @@
                                                             <button class="status-select confirmed" type="submit">Verify with PayMongo</button>
                                                         </form>
                                                     @elseif(! $hasPayMongoPayment && $booking->status !== 'cancelled')
-                                                        <form method="POST" action="{{ route('admin.bookings.payment', $booking) }}" onsubmit="return confirm('{{ $booking->payment_status === 'paid' ? 'Mark this payment as unpaid? This changes only the payment record and does not issue a refund. Continue?' : 'Update this payment record?' }}')">
+                                                        <form method="POST" action="{{ route('admin.bookings.payment', $booking) }}"
+                                                            data-admin-confirm
+                                                            data-confirm-kicker="PAYMENT RECORD"
+                                                            data-confirm-icon="₱"
+                                                            data-confirm-title="Update payment record?"
+                                                            data-confirm-message="{{ $booking->payment_status === 'paid' ? 'Mark this payment as unpaid? This changes only the payment record; it does not issue a refund.' : 'Mark this payment as paid? This records the payment manually and does not process a charge.' }}"
+                                                            data-confirm-action="{{ $booking->payment_status === 'paid' ? 'Mark unpaid' : 'Mark paid' }}">
                                                             @csrf @method('PATCH')
                                                             <input type="hidden" name="payment_method" value="{{ in_array($booking->payment_method, ['cash', 'gcash']) ? $booking->payment_method : 'cash' }}">
                                                             <input type="hidden" name="payment_status" value="{{ $booking->payment_status === 'paid' ? 'pending' : 'paid' }}">

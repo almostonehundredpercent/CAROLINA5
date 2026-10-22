@@ -22,6 +22,7 @@ async function pageWithCheckInForm() {
         <dialog class="admin-confirm-dialog" id="admin-confirm-dialog"
             aria-labelledby="admin-confirm-title" aria-describedby="admin-confirm-message">
             <div class="admin-confirm-card">
+                <span class="admin-confirm-mark" aria-hidden="true">✓</span>
                 <p class="admin-confirm-kicker">CONFIRM CHECK-IN</p>
                 <h2 id="admin-confirm-title">Check in this guest?</h2>
                 <p id="admin-confirm-message"></p>
@@ -78,6 +79,30 @@ test('check-in submits exactly once only after the in-page confirmation is accep
         await page.waitForFunction(() => document.querySelector('#submit-count').textContent === '1');
         assert.equal(await page.evaluate(() => window.nativeConfirmCalls), 0);
         assert.equal(await page.locator('#admin-confirm-dialog').evaluate(element => element.open), false);
+    } finally {
+        await page.close();
+    }
+});
+
+test('the shared dialog displays payment-specific confirmation details', async () => {
+    const page = await pageWithCheckInForm();
+    try {
+        await page.locator('form').evaluate(form => {
+            form.dataset.confirmTitle = 'Update payment record?';
+            form.dataset.confirmMessage = 'Mark this payment as unpaid? This does not issue a refund.';
+            form.dataset.confirmAction = 'Mark unpaid';
+            form.dataset.confirmKicker = 'PAYMENT RECORD';
+            form.dataset.confirmIcon = '₱';
+        });
+        await page.getByRole('button', { name: 'Check in', exact: true }).click();
+
+        const dialog = page.locator('#admin-confirm-dialog');
+        await page.waitForFunction(() => document.querySelector('#admin-confirm-dialog').open);
+        assert.equal(await dialog.locator('#admin-confirm-title').textContent(), 'Update payment record?');
+        assert.match(await dialog.innerText(), /PAYMENT RECORD/);
+        assert.match(await dialog.innerText(), /Mark this payment as unpaid\?/);
+        assert.equal(await dialog.locator('.admin-confirm-mark').textContent(), '₱');
+        assert.equal(await dialog.getByRole('button', { name: 'Mark unpaid' }).count(), 1);
     } finally {
         await page.close();
     }

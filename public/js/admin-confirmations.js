@@ -4,6 +4,8 @@
 
     const title = dialog.querySelector('#admin-confirm-title');
     const message = dialog.querySelector('#admin-confirm-message');
+    const kicker = dialog.querySelector('.admin-confirm-kicker');
+    const mark = dialog.querySelector('.admin-confirm-mark');
     const cancelButton = dialog.querySelector('[data-confirm-cancel]');
     const acceptButton = dialog.querySelector('[data-confirm-accept]');
     const approvedSubmissions = new WeakSet();
@@ -24,6 +26,8 @@
         title.textContent = form.dataset.confirmTitle || 'Please confirm';
         message.textContent = form.dataset.confirmMessage || 'Continue with this action?';
         acceptButton.textContent = form.dataset.confirmAction || 'Continue';
+        if (form.dataset.confirmKicker) kicker.textContent = form.dataset.confirmKicker;
+        if (form.dataset.confirmIcon) mark.textContent = form.dataset.confirmIcon;
         dialog.showModal();
     }, true);
 

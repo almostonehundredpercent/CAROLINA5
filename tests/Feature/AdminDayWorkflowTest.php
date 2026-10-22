@@ -70,6 +70,31 @@ test('check-in confirmation is rendered in the admin interface on front desk and
     }
 });
 
+test('payment status changes show a clear in-page confirmation for paid and unpaid records', function () {
+    Carbon::setTestNow('2026-10-23 12:00:00');
+
+    try {
+        $admin = User::factory()->create(['is_admin' => true]);
+        $guest = User::factory()->create(['name' => 'Jordan Lee']);
+        $unpaidRoom = adminDayRoom('manual-payment-room');
+        $paidRoom = adminDayRoom('recorded-payment-room');
+        adminDayBooking($unpaidRoom, $guest, ['status' => 'confirmed', 'payment_status' => 'pending']);
+        adminDayBooking($paidRoom, $guest, ['status' => 'confirmed', 'payment_status' => 'paid']);
+
+        $this->actingAsStaff($admin)
+            ->get(route('admin.bookings'))
+            ->assertOk()
+            ->assertSee('data-confirm-title="Update payment record?"', false)
+            ->assertSee('data-confirm-message="Mark this payment as paid? This records the payment manually and does not process a charge."', false)
+            ->assertSee('data-confirm-action="Mark paid"', false)
+            ->assertSee('data-confirm-message="Mark this payment as unpaid? This changes only the payment record; it does not issue a refund."', false)
+            ->assertSee('data-confirm-action="Mark unpaid"', false)
+            ->assertDontSee('Update this payment record?', false);
+    } finally {
+        Carbon::setTestNow();
+    }
+});
+
 test('staff can complete a busy-day booking workflow without creating conflicts', function () {
     Mail::fake();
     $admin = User::factory()->create(['is_admin' => true]);
