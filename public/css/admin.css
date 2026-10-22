@@ -2903,11 +2903,27 @@ tbody tr:hover {
     flex: 0 0 220px;
     width: 220px !important;
 }
+.bookings-page .booking-filters .booking-page-size {
+    flex: 0 0 165px;
+    width: 165px !important;
+    min-width: 165px;
+}
 .bookings-page .booking-filters button {
     min-width: 96px;
     min-height: 46px !important;
     padding: 0 17px !important;
     font-size: 14px !important;
+}
+.bookings-page .booking-results-summary {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 8px 16px;
+    margin: 0 1px 10px;
+    color: var(--muted);
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.4;
 }
 .bookings-page .admin-table-wrap {
     max-width: 100%;
@@ -2998,6 +3014,11 @@ tbody tr:hover {
 .bookings-page .refund-note-copy strong {
     font-size: 12px;
 }
+.bookings-page .admin-main nav.d-flex.justify-items-center .pagination .page-link {
+    min-width: 42px;
+    height: 42px;
+    font-size: 14px;
+}
 
 @media (max-width: 700px) {
     .bookings-page .admin-main {
@@ -3035,6 +3056,10 @@ tbody tr:hover {
     .bookings-page .booking-filters select,
     .bookings-page .booking-filters input[type="date"] {
         flex: auto;
+    }
+    .bookings-page .booking-filters .booking-page-size {
+        width: 100% !important;
+        min-width: 0;
     }
     .bookings-page .booking-table {
         min-width: 1180px !important;

@@ -496,6 +496,11 @@ class AdminController extends Controller
             $bookingQuery->where(fn ($query) => $query->where('reference', 'like', $search)->orWhere('guest_name', 'like', $search)->orWhere('guest_email', 'like', $search));
         }
 
+        $perPage = $request->integer('per_page', 50);
+        if (! in_array($perPage, [15, 25, 50, 100], true)) {
+            $perPage = 50;
+        }
+
         return view('admin.bookings', [
             'period' => $period,
             'chartLabels' => $chartLabels,
@@ -505,7 +510,7 @@ class AdminController extends Controller
             'availableRooms' => $rooms->where('display_status', 'available')->count(),
             'maintenanceRooms' => $rooms->where('display_status', 'maintenance')->count(),
             'newCustomers' => Booking::with(['user', 'room'])->latest()->take(5)->get(),
-            'individualBookings' => $bookingQuery->paginate(15, ['*'], 'booking_page')->withQueryString(),
+            'individualBookings' => $bookingQuery->paginate($perPage, ['*'], 'booking_page')->withQueryString(),
             'arrivalsToday' => Booking::with('room')->where('status', 'confirmed')->whereDate('check_in', today())->whereNull('checked_in_at')->where('check_in_at', '<=', now())->get(),
             'departuresToday' => Booking::with('room')->whereNotNull('checked_in_at')->whereNull('checked_out_at')->whereDate('check_out', '<=', today())->get(),
             'recentActivity' => ActivityLog::with(['booking.room', 'user'])->latest()->take(8)->get(),

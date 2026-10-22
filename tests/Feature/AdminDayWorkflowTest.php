@@ -70,6 +70,76 @@ test('check-in confirmation is rendered in the admin interface on front desk and
     }
 });
 
+test('bookings page shows all records within the selected page size and reports the visible range', function () {
+    Carbon::setTestNow('2026-10-23 12:00:00');
+
+    try {
+        $admin = User::factory()->create(['is_admin' => true]);
+        $guest = User::factory()->create(['name' => 'Reservation guest']);
+
+        for ($index = 1; $index <= 16; $index++) {
+            $room = adminDayRoom('booking-list-room-'.$index);
+            $timestamp = now()->addSeconds($index);
+            adminDayBooking($room, $guest, [
+                'guest_name' => 'Reservation '.$index,
+                'guest_email' => 'reservation'.$index.'@example.test',
+                'created_at' => $timestamp,
+                'updated_at' => $timestamp,
+            ]);
+        }
+
+        $this->actingAsStaff($admin)
+            ->get(route('admin.bookings'))
+            ->assertOk()
+            ->assertSee('Reservation 1')
+            ->assertSee('Reservation 16')
+            ->assertSee('Showing 1-16 of 16 bookings')
+            ->assertSee('name="per_page"', false);
+    } finally {
+        Carbon::setTestNow();
+    }
+});
+
+test('bookings page honors a smaller page-size choice and identifies remaining records', function () {
+    Carbon::setTestNow('2026-10-23 12:00:00');
+
+    try {
+        $admin = User::factory()->create(['is_admin' => true]);
+        $guest = User::factory()->create(['name' => 'Reservation guest']);
+
+        for ($index = 1; $index <= 16; $index++) {
+            $room = adminDayRoom('booking-page-size-room-'.$index);
+            $timestamp = now()->addSeconds($index);
+            adminDayBooking($room, $guest, [
+                'guest_name' => 'Reservation '.$index,
+                'guest_email' => 'reservation'.$index.'@example.test',
+                'created_at' => $timestamp,
+                'updated_at' => $timestamp,
+            ]);
+        }
+
+        $firstPage = $this->actingAsStaff($admin)
+            ->get(route('admin.bookings', ['per_page' => 15]))
+            ->assertOk()
+            ->assertSee('Showing 1-15 of 16 bookings')
+            ->assertSee('Page 1 of 2')
+            ->assertSee('booking_page=2', false);
+        preg_match_all('/reservation\d+@example\.test/', $firstPage->getContent(), $firstPageEmails);
+        expect($firstPageEmails[0])->toHaveCount(15);
+
+        $secondPage = $this->actingAsStaff($admin)
+            ->get(route('admin.bookings', ['per_page' => 15, 'booking_page' => 2]))
+            ->assertOk()
+            ->assertSee('Showing 16-16 of 16 bookings')
+            ->assertSee('Page 2 of 2');
+        preg_match_all('/reservation\d+@example\.test/', $secondPage->getContent(), $secondPageEmails);
+        expect($secondPageEmails[0])->toHaveCount(1);
+        expect(array_diff($secondPageEmails[0], $firstPageEmails[0]))->toBe($secondPageEmails[0]);
+    } finally {
+        Carbon::setTestNow();
+    }
+});
+
 test('payment status changes show a clear in-page confirmation for paid and unpaid records', function () {
     Carbon::setTestNow('2026-10-23 12:00:00');
 
