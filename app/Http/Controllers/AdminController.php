@@ -12,6 +12,7 @@ use App\Models\Review;
 use App\Models\Room;
 use App\Models\RoomBlock;
 use App\Models\User;
+use App\Services\OperationalDecisionSupport;
 use App\Services\PayMongoCheckout;
 use App\Services\PayMongoPaymentReconciler;
 use App\Support\AdminPermissions;
@@ -21,7 +22,6 @@ use Carbon\CarbonPeriod;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -33,7 +33,7 @@ use Illuminate\Validation\ValidationException;
 
 class AdminController extends Controller
 {
-    public function index()
+    public function index(OperationalDecisionSupport $decisionSupport)
     {
         if (AdminPermissions::role(request()->user()) === 'viewer') {
             $rooms = $this->roomsWithDisplayStatus();
@@ -48,7 +48,7 @@ class AdminController extends Controller
                 // completion marker is deferred until the database is updated.
                 Log::warning('Room-block completion refresh skipped.', ['exception' => $exception]);
             }
-            [$revenue, $paymentPending] = $this->paymentDashboardMetrics();
+            [$revenue, $paymentPending, $paymentSourceLabel] = $this->paymentDashboardMetrics();
             $recentBookings = Booking::with(['user', 'room'])->latest()->take(8)->get();
             $rooms = $this->roomsWithDisplayStatus();
             $chartStart = now()->subDays(6)->startOfDay();
@@ -64,6 +64,7 @@ class AdminController extends Controller
                 'roomCount' => $rooms->count(),
                 'revenue' => $revenue,
                 'paymentPending' => $paymentPending,
+                'paymentSourceLabel' => $paymentSourceLabel,
                 'checkedInCount' => Booking::whereNotNull('checked_in_at')->whereNull('checked_out_at')->count(),
                 'checkedOutCount' => Booking::whereNotNull('checked_out_at')->count(),
                 'cancelledCount' => Booking::where('status', 'cancelled')->count(),
@@ -81,9 +82,10 @@ class AdminController extends Controller
                 'bookings' => $recentBookings,
                 'recentActivity' => ActivityLog::with(['booking.room', 'user'])->latest()->take(6)->get(),
                 'topRooms' => Booking::query()->where('status', 'confirmed')->selectRaw('room_id, count(*) as bookings_count')->groupBy('room_id')->orderByDesc('bookings_count')->with('room')->take(3)->get(),
+                'turnovers' => $decisionSupport->upcomingTurnovers(),
                 'chartLabels' => collect(range(0, 6))->map(fn ($day) => now()->subDays(6 - $day)->format('D')),
                 'chartValues' => collect(range(0, 6))->map(fn ($day) => $bookingsByDay->get(now()->subDays(6 - $day)->toDateString(), collect())->count()),
-                'recommendations' => $this->operationalRecommendations($rooms),
+                'recommendations' => $decisionSupport->dashboardSignals($rooms),
             ]);
         } catch (\Throwable $exception) {
             // The dashboard is an operational overview. A non-essential
@@ -106,6 +108,7 @@ class AdminController extends Controller
                 'roomCount' => $roomCount,
                 'revenue' => Booking::where('payment_status', 'paid')->sum('total_amount'),
                 'paymentPending' => Booking::where('status', '!=', 'cancelled')->where('payment_status', '!=', 'paid')->count(),
+                'paymentSourceLabel' => 'Legacy booking payment records (ledger unavailable)',
                 'checkedInCount' => 0,
                 'checkedOutCount' => 0,
                 'cancelledCount' => $cancelledCount,
@@ -114,9 +117,16 @@ class AdminController extends Controller
                 'bookings' => Booking::with(['user', 'room'])->latest()->take(8)->get(),
                 'recentActivity' => collect(),
                 'topRooms' => collect(),
+                'turnovers' => collect(),
                 'chartLabels' => collect(range(0, 6))->map(fn ($day) => now()->subDays(6 - $day)->format('D')),
                 'chartValues' => collect(array_fill(0, 7, 0)),
-                'recommendations' => collect(['The dashboard is showing core booking data while a non-essential operational summary is restored.']),
+                'recommendations' => collect([[
+                    'title' => 'Operational summary temporarily unavailable',
+                    'evidence' => 'The dashboard is showing core booking data while a non-essential operational summary is restored.',
+                    'rule' => 'This message appears when an operational summary query fails.',
+                    'action_label' => 'Review bookings',
+                    'action_url' => route('admin.bookings'),
+                ]]),
             ]);
         }
     }
@@ -641,15 +651,19 @@ class AdminController extends Controller
             $dates = collect(CarbonPeriod::create($from, '1 day', $to))->map(fn (Carbon $date) => $date->copy());
             $keys = $dates->map(fn (Carbon $date) => $date->toDateString());
             $labels = $dates->map(fn (Carbon $date) => $date->format('M j'));
-            $bookings = Booking::with(['user', 'room'])->whereBetween('created_at', [$from, $to])->get();
+            $periodStart = $from;
+            $periodEnd = $to;
+            $bookings = Booking::with(['user', 'room', 'payments'])->whereBetween('created_at', [$periodStart, $periodEnd])->get();
             $grouped = $bookings->groupBy(fn (Booking $booking) => $booking->created_at->toDateString());
         } else {
             [$dates, $keys, $labels] = $this->reportPeriods($period);
-            $bookings = Booking::with(['user', 'room'])->where('created_at', '>=', $dates->first())->get();
+            $periodStart = $dates->first();
+            $periodEnd = now()->endOfDay();
+            $bookings = Booking::with(['user', 'room', 'payments'])->whereBetween('created_at', [$periodStart, $periodEnd])->get();
             $grouped = $bookings->groupBy(fn (Booking $booking) => $this->reportKey($booking->created_at, $period));
         }
-        $paymentStart = $period === 'custom' ? $from : $dates->first();
-        $paymentEnd = $period === 'custom' ? $to : now()->endOfDay();
+        $paymentStart = $periodStart;
+        $paymentEnd = $periodEnd;
         $paymentGroups = Payment::whereIn('status', ['paid', 'refunded'])->whereBetween('paid_at', [$paymentStart, $paymentEnd])->get()
             ->groupBy(fn (Payment $payment) => $period === 'custom' ? $payment->paid_at->toDateString() : $this->reportKey($payment->paid_at, $period));
         $values = $keys->map(function (string $key) use ($grouped, $paymentGroups, $metric) {
@@ -661,9 +675,21 @@ class AdminController extends Controller
             };
         });
         $titles = ['payments' => ['Payments collected', 'Net collected payments'], 'bookings' => ['Total bookings', 'Bookings'], 'guests' => ['Guest bookings', 'Bookings']];
-        $rooms = $metric === 'bookings' ? $this->roomsWithDisplayStatus() : collect();
-        $guestBookings = $metric === 'guests' ? Booking::with('user')->get() : collect();
-        $guestGroups = $metric === 'guests' ? $guestBookings->groupBy(fn (Booking $booking) => $this->guestKey($booking)) : collect();
+        $guestGroups = $metric === 'guests' ? $bookings->groupBy(fn (Booking $booking) => $this->guestKey($booking)) : collect();
+        $previousGuestKeys = $metric === 'guests'
+            ? Booking::with('user')->where('created_at', '<', $periodStart)->get()->map(fn (Booking $booking) => $this->guestKey($booking))->unique()->flip()
+            : collect();
+        $durationHours = $bookings->map(function (Booking $booking): ?float {
+            if ($booking->check_in_at && $booking->check_out_at) {
+                return max(0, ($booking->check_out_at->getTimestamp() - $booking->check_in_at->getTimestamp()) / 3600);
+            }
+
+            if ($booking->booking_type === 'hourly' && (int) $booking->hours > 0) {
+                return (float) $booking->hours;
+            }
+
+            return (int) $booking->nights > 0 ? (float) $booking->nights * 24 : null;
+        })->filter(fn (?float $duration) => $duration !== null);
 
         return view('admin.reports', [
             'metric' => $metric,
@@ -674,19 +700,18 @@ class AdminController extends Controller
             'total' => $values->sum(),
             'chartLabels' => $labels,
             'chartValues' => $values,
-            'latestBookings' => Booking::with(['user', 'room'])->latest()->take(5)->get(),
-            'roomPerformance' => Booking::with('room')->where('status', 'confirmed')->get()->groupBy('room_id')->map(fn ($items) => ['room' => $items->first()->room?->name ?? 'Room removed', 'bookings' => $items->count(), 'revenue' => (float) $items->sum('total_amount')])->sortByDesc('revenue')->take(5),
+            'latestBookings' => $bookings->sortByDesc('created_at')->take(5)->values(),
             'bookingReportMetrics' => $metric === 'bookings' ? [
-                'total' => Booking::count(),
-                'cancelled' => Booking::where('status', 'cancelled')->count(),
-                'occupancy' => $rooms->count() ? round($rooms->where('display_status', 'occupied')->count() / $rooms->count() * 100) : 0,
-                'completed' => Booking::where('status', 'confirmed')->where('check_out', '<=', now()->toDateString())->count(),
+                'total' => $bookings->count(),
+                'cancelled' => $bookings->where('status', 'cancelled')->count(),
+                'roomsBooked' => $bookings->where('status', '!=', 'cancelled')->pluck('room_id')->unique()->count(),
+                'completed' => Booking::whereNotNull('checked_out_at')->whereBetween('checked_out_at', [$periodStart, $periodEnd])->count(),
             ] : null,
             'guestReportMetrics' => $metric === 'guests' ? [
                 'total' => $guestGroups->count(),
-                'new' => $guestGroups->filter(fn ($bookings) => $bookings->min('created_at')->gte($dates->first()))->count(),
-                'returning' => $guestGroups->filter(fn ($bookings) => $bookings->count() > 1)->count(),
-                'averageStay' => round((float) ($guestBookings->avg('nights') ?? 0), 1),
+                'new' => $guestGroups->keys()->filter(fn (string $key) => ! $previousGuestKeys->has($key))->count(),
+                'returning' => $guestGroups->keys()->filter(fn (string $key) => $previousGuestKeys->has($key))->count(),
+                'averageDurationHours' => $durationHours->isNotEmpty() ? round((float) $durationHours->avg(), 1) : null,
             ] : null,
             'financialMetrics' => array_merge(
                 FinancialSummary::forBookings($bookings),
@@ -868,6 +893,7 @@ class AdminController extends Controller
                 Booking::where('status', '!=', 'cancelled')
                     ->whereDoesntHave('payments', fn ($query) => $query->where('status', 'paid'))
                     ->count(),
+                'Verified payment ledger, net of refunds',
             ];
         } catch (QueryException $exception) {
             Log::warning('Payment ledger unavailable for dashboard; using legacy payment fields.', [
@@ -877,6 +903,7 @@ class AdminController extends Controller
             return [
                 Booking::where('payment_status', 'paid')->sum('total_amount'),
                 Booking::where('status', '!=', 'cancelled')->where('payment_status', '!=', 'paid')->count(),
+                'Legacy booking payment records (ledger unavailable)',
             ];
         }
     }
@@ -898,29 +925,6 @@ class AdminController extends Controller
             'before_values' => $before ?: null,
             'after_values' => $after ?: null,
         ]);
-    }
-
-    private function operationalRecommendations($rooms): Collection
-    {
-        $recommendations = collect();
-        $confirmed = Booking::where('status', 'confirmed')->count();
-        $cancelled = Booking::where('status', 'cancelled')->count();
-        if ($confirmed + $cancelled >= 5 && $cancelled / ($confirmed + $cancelled) >= .25) {
-            $recommendations->push('Cancellation rate is above 25%. Review booking instructions and follow up on pending requests sooner.');
-        }
-        if ($rooms->isNotEmpty() && $rooms->where('display_status', 'available')->count() === 0) {
-            $recommendations->push('All active rooms are currently reserved, occupied, or unavailable. Review upcoming departures before accepting walk-ins.');
-        }
-        $maintenance = RoomBlock::where('status', 'maintenance')->where('created_at', '>=', now()->subDays(30))->selectRaw('room_id, count(*) as total')->groupBy('room_id')->having('total', '>=', 3)->with('room')->get();
-        foreach ($maintenance as $block) {
-            $recommendations->push(($block->room?->name ?? 'A room').' has had repeated maintenance blocks in the last 30 days. Review its maintenance history.');
-        }
-        $topRoom = Booking::where('status', 'confirmed')->selectRaw('room_id, count(*) as total')->groupBy('room_id')->orderByDesc('total')->with('room')->first();
-        if ($topRoom && $topRoom->total >= 5) {
-            $recommendations->push(($topRoom->room?->name ?? 'One room').' is the most booked room with '.$topRoom->total.' confirmed stays. Consider checking its turnover schedule.');
-        }
-
-        return $recommendations;
     }
 
     private function email(Booking $booking, string $subject, string $message): void
