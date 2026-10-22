@@ -3,6 +3,7 @@
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BookingController;
+use App\Http\Controllers\PayMongoWebhookController;
 use App\Http\Controllers\PromoCodeController;
 use App\Http\Controllers\RoomController;
 use App\Http\Controllers\StaffMfaController;
@@ -81,6 +82,7 @@ Route::get('/bookings/{booking}/receipt', [BookingController::class, 'receipt'])
 Route::get('/bookings/{booking}/confirmation', [BookingController::class, 'confirmation'])->name('bookings.confirmation');
 Route::post('/bookings/{booking}/paymongo', [BookingController::class, 'startPayMongoCheckout'])->middleware('throttle:5,1')->name('bookings.paymongo.start');
 Route::get('/bookings/{booking}/paymongo/return', [BookingController::class, 'returnFromPayMongo'])->middleware('throttle:15,1')->name('bookings.paymongo.return');
+Route::post('/webhooks/paymongo', PayMongoWebhookController::class)->name('bookings.paymongo.webhook');
 Route::middleware('auth')->group(function () {
     Route::get('/bookings', [BookingController::class, 'index'])->name('bookings.index');
     Route::patch('/bookings/{booking}/cancel', [BookingController::class, 'cancel'])->name('bookings.cancel');
@@ -119,6 +121,7 @@ Route::middleware(['auth', 'admin', 'staff.mfa'])->prefix('admin')->name('admin.
     Route::patch('/staff/{user}/role', [AdminController::class, 'updateStaffRole'])->middleware('admin.permission:staff')->name('staff.role');
     Route::patch('/bookings/{booking}', [AdminController::class, 'updateBooking'])->middleware('admin.permission:bookings')->name('bookings.update');
     Route::patch('/bookings/{booking}/payment', [AdminController::class, 'updatePayment'])->middleware('admin.permission:payments')->name('bookings.payment');
+    Route::post('/bookings/{booking}/payment/recheck-paymongo', [AdminController::class, 'recheckPayMongoPayment'])->middleware('admin.permission:payments')->name('bookings.payment.recheck-paymongo');
     Route::post('/bookings/{booking}/refunds', [AdminController::class, 'refundPayment'])->middleware('admin.permission:payments')->name('bookings.refunds.store');
     Route::post('/bookings/{booking}/check-in', [AdminController::class, 'updateBooking'])->middleware('admin.permission:bookings')->name('bookings.check-in');
     Route::post('/bookings/{booking}/check-out', [AdminController::class, 'updateBooking'])->middleware('admin.permission:bookings')->name('bookings.check-out');

@@ -1,10 +1,57 @@
 <?php
 
+use App\Mail\BookingUpdate;
 use App\Models\Booking;
 use App\Models\Payment;
 use App\Models\Room;
+use App\Models\User;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Mail;
+
+function payMongoWebhookPayload(Booking $booking, array $overrides = []): array
+{
+    return array_replace_recursive([
+        'data' => [
+            'id' => 'evt_test_123',
+            'type' => 'event',
+            'attributes' => [
+                'type' => 'checkout_session.payment.paid',
+                'livemode' => false,
+                'created_at' => now()->timestamp,
+                'data' => [
+                    'id' => 'cs_test_123',
+                    'type' => 'checkout_session',
+                    'attributes' => [
+                        'livemode' => false,
+                        'reference_number' => $booking->reference,
+                        'payments' => [[
+                            'id' => 'pay_test_123',
+                            'type' => 'payment',
+                            'attributes' => [
+                                'amount' => 100000,
+                                'currency' => 'PHP',
+                                'status' => 'paid',
+                            ],
+                        ]],
+                    ],
+                ],
+            ],
+        ],
+    ], $overrides);
+}
+
+function signedPayMongoWebhookRequest($test, array $payload, string $secret = 'whsec_test_example')
+{
+    $rawBody = json_encode($payload, JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
+    $timestamp = (string) now()->timestamp;
+    $signature = hash_hmac('sha256', $timestamp.'.'.$rawBody, $secret);
+
+    return $test->call('POST', route('bookings.paymongo.webhook'), [], [], [], [
+        'CONTENT_TYPE' => 'application/json',
+        'HTTP_PAYMONGO_SIGNATURE' => "t={$timestamp},te={$signature},li=",
+    ], $rawBody);
+}
 
 function payMongoBooking(): Booking
 {
@@ -26,6 +73,7 @@ function payMongoBooking(): Booking
 beforeEach(function () {
     config()->set('services.paymongo.mode', 'test');
     config()->set('services.paymongo.secret_key', 'sk_test_example');
+    config()->set('services.paymongo.webhook_secret', 'whsec_test_example');
 });
 
 test('a guest can begin an online GCash test checkout', function () {
@@ -91,7 +139,11 @@ test('a payment is recorded only after the server verifies PayMongo success', fu
     $booking = payMongoBooking();
     Payment::create(['booking_id' => $booking->id, 'amount' => 1000, 'method' => 'gcash', 'status' => 'pending', 'reference' => 'paymongo:cs_test_123']);
     Http::fake(['https://api.paymongo.com/v1/checkout_sessions/cs_test_123' => Http::response([
-        'data' => ['attributes' => ['payment_intent' => ['attributes' => ['status' => 'succeeded']]]],
+        'data' => ['id' => 'cs_test_123', 'attributes' => [
+            'livemode' => false,
+            'reference_number' => $booking->reference,
+            'payments' => [['attributes' => ['amount' => 100000, 'currency' => 'PHP', 'status' => 'paid']]],
+        ]],
     ])]);
 
     $this->withSession(['guest_booking_reference' => $booking->reference])
@@ -106,7 +158,11 @@ test('a browser success return cannot mark an unverified payment as paid', funct
     $booking = payMongoBooking();
     Payment::create(['booking_id' => $booking->id, 'amount' => 1000, 'method' => 'gcash', 'status' => 'pending', 'reference' => 'paymongo:cs_test_123']);
     Http::fake(['https://api.paymongo.com/v1/checkout_sessions/cs_test_123' => Http::response([
-        'data' => ['attributes' => ['payment_intent' => ['attributes' => ['status' => 'awaiting_payment_method']]]],
+        'data' => ['id' => 'cs_test_123', 'attributes' => [
+            'livemode' => false,
+            'reference_number' => $booking->reference,
+            'payments' => [['attributes' => ['amount' => 100000, 'currency' => 'PHP', 'status' => 'awaiting_payment_method']]],
+        ]],
     ])]);
 
     $this->withSession(['guest_booking_reference' => $booking->reference])
@@ -115,5 +171,146 @@ test('a browser success return cannot mark an unverified payment as paid', funct
         ->assertSessionHasErrors('payment');
 
     expect(Payment::firstOrFail()->fresh()->status)->toBe('pending');
+    expect($booking->fresh()->payment_status)->toBe('pending');
+});
+
+test('a signed PayMongo paid event records the full matching payment automatically', function () {
+    Mail::fake();
+    $booking = payMongoBooking();
+    Payment::create(['booking_id' => $booking->id, 'amount' => 1000, 'method' => 'gcash', 'status' => 'pending', 'reference' => 'paymongo:cs_test_123']);
+
+    $response = signedPayMongoWebhookRequest($this, payMongoWebhookPayload($booking));
+
+    $response->assertOk()->assertJsonPath('received', true);
+    expect(Payment::firstOrFail()->fresh()->status)->toBe('paid');
+    expect($booking->fresh()->payment_status)->toBe('paid');
+    Mail::assertSent(BookingUpdate::class, 1);
+});
+
+test('a duplicate PayMongo paid event does not duplicate payment activity or email', function () {
+    Mail::fake();
+    $booking = payMongoBooking();
+    Payment::create(['booking_id' => $booking->id, 'amount' => 1000, 'method' => 'gcash', 'status' => 'pending', 'reference' => 'paymongo:cs_test_123']);
+    $payload = payMongoWebhookPayload($booking);
+
+    signedPayMongoWebhookRequest($this, $payload)->assertOk();
+    signedPayMongoWebhookRequest($this, $payload)->assertOk();
+
+    expect(Payment::where('booking_id', $booking->id)->count())->toBe(1);
+    expect($booking->activityLogs()->where('event', 'payment_paid')->count())->toBe(1);
+    Mail::assertSent(BookingUpdate::class, 1);
+});
+
+test('an invalid PayMongo webhook signature cannot mark a booking paid', function () {
+    $booking = payMongoBooking();
+    Payment::create(['booking_id' => $booking->id, 'amount' => 1000, 'method' => 'gcash', 'status' => 'pending', 'reference' => 'paymongo:cs_test_123']);
+    $payload = payMongoWebhookPayload($booking);
+    $rawBody = json_encode($payload, JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
+
+    $this->call('POST', route('bookings.paymongo.webhook'), [], [], [], [
+        'CONTENT_TYPE' => 'application/json',
+        'HTTP_PAYMONGO_SIGNATURE' => 't=1,te=invalid,li=',
+    ], $rawBody)->assertUnauthorized();
+
+    expect(Payment::firstOrFail()->fresh()->status)->toBe('pending');
+    expect($booking->fresh()->payment_status)->toBe('pending');
+});
+
+test('a signed PayMongo event cannot mark a booking paid for a different amount', function () {
+    $booking = payMongoBooking();
+    Payment::create(['booking_id' => $booking->id, 'amount' => 1000, 'method' => 'gcash', 'status' => 'pending', 'reference' => 'paymongo:cs_test_123']);
+    $payload = payMongoWebhookPayload($booking, [
+        'data' => ['attributes' => ['data' => ['attributes' => ['payments' => [[
+            'attributes' => ['amount' => 50000],
+        ]]]]]],
+    ]);
+
+    signedPayMongoWebhookRequest($this, $payload)->assertOk();
+
+    expect(Payment::firstOrFail()->fresh()->status)->toBe('pending');
+    expect($booking->fresh()->payment_status)->toBe('pending');
+});
+
+test('a signed PayMongo event for a different booking cannot update this reservation', function () {
+    $booking = payMongoBooking();
+    Payment::create(['booking_id' => $booking->id, 'amount' => 1000, 'method' => 'gcash', 'status' => 'pending', 'reference' => 'paymongo:cs_test_123']);
+    $payload = payMongoWebhookPayload($booking, [
+        'data' => ['attributes' => ['data' => ['attributes' => ['reference_number' => 'CAR-OTHER']]]],
+    ]);
+
+    signedPayMongoWebhookRequest($this, $payload)->assertOk()->assertJsonPath('matched', false);
+
+    expect(Payment::firstOrFail()->fresh()->status)->toBe('pending')
+        ->and($booking->fresh()->payment_status)->toBe('pending');
+});
+
+test('the guest return succeeds when the webhook already recorded the PayMongo payment', function () {
+    $booking = payMongoBooking();
+    Payment::create(['booking_id' => $booking->id, 'amount' => 1000, 'method' => 'gcash', 'status' => 'pending', 'reference' => 'paymongo:cs_test_123']);
+    signedPayMongoWebhookRequest($this, payMongoWebhookPayload($booking))->assertOk();
+
+    $this->withSession(['guest_booking_reference' => $booking->reference])
+        ->get(route('bookings.paymongo.return', ['booking' => $booking, 'outcome' => 'success']))
+        ->assertRedirect(route('bookings.receipt', $booking))
+        ->assertSessionHasNoErrors();
+
+    expect(Payment::where('booking_id', $booking->id)->count())->toBe(1);
+    expect($booking->activityLogs()->where('event', 'payment_paid')->count())->toBe(1);
+});
+
+test('PayMongo payments can only be marked paid by a verified provider result', function () {
+    $booking = payMongoBooking();
+    $payment = Payment::create(['booking_id' => $booking->id, 'amount' => 1000, 'method' => 'gcash', 'status' => 'pending', 'reference' => 'paymongo:cs_test_123']);
+    $admin = User::factory()->create(['staff_role' => 'admin', 'is_admin' => true]);
+
+    $this->actingAsStaff($admin)->from(route('admin.bookings'))
+        ->patch(route('admin.bookings.payment', $booking), ['payment_status' => 'paid', 'payment_method' => 'gcash'])
+        ->assertSessionHasErrors('payment_status');
+
+    expect($payment->fresh()->status)->toBe('pending')
+        ->and($booking->fresh()->payment_status)->toBe('pending');
+});
+
+test('the bookings screen shows provider verification instead of a manual paid toggle', function () {
+    $booking = payMongoBooking();
+    Payment::create(['booking_id' => $booking->id, 'amount' => 1000, 'method' => 'gcash', 'status' => 'pending', 'reference' => 'paymongo:cs_test_123']);
+    $admin = User::factory()->create(['staff_role' => 'admin', 'is_admin' => true]);
+
+    $this->actingAsStaff($admin)->get(route('admin.bookings'))
+        ->assertOk()
+        ->assertSee('Verify with PayMongo')
+        ->assertDontSee('Mark paid');
+});
+
+test('admins can verify a pending PayMongo checkout directly with PayMongo', function () {
+    Mail::fake();
+    $booking = payMongoBooking();
+    $payment = Payment::create(['booking_id' => $booking->id, 'amount' => 1000, 'method' => 'gcash', 'status' => 'pending', 'reference' => 'paymongo:cs_test_123']);
+    $admin = User::factory()->create(['staff_role' => 'admin', 'is_admin' => true]);
+    Http::fake(['https://api.paymongo.com/v1/checkout_sessions/cs_test_123' => Http::response([
+        'data' => ['id' => 'cs_test_123', 'attributes' => [
+            'livemode' => false,
+            'reference_number' => $booking->reference,
+            'payments' => [['attributes' => ['amount' => 100000, 'currency' => 'PHP', 'status' => 'paid']]],
+        ]],
+    ])]);
+
+    $this->actingAsStaff($admin)->from(route('admin.bookings'))
+        ->post(route('admin.bookings.payment.recheck-paymongo', $booking))
+        ->assertRedirect(route('admin.bookings'))
+        ->assertSessionHas('success');
+
+    expect($payment->fresh()->status)->toBe('paid')
+        ->and($booking->fresh()->payment_status)->toBe('paid');
+    Mail::assertSent(BookingUpdate::class, 1);
+});
+
+test('a missing PayMongo webhook secret fails closed', function () {
+    config()->set('services.paymongo.webhook_secret', null);
+    $booking = payMongoBooking();
+    Payment::create(['booking_id' => $booking->id, 'amount' => 1000, 'method' => 'gcash', 'status' => 'pending', 'reference' => 'paymongo:cs_test_123']);
+
+    signedPayMongoWebhookRequest($this, payMongoWebhookPayload($booking))->assertStatus(503);
+
     expect($booking->fresh()->payment_status)->toBe('pending');
 });

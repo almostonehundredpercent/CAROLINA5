@@ -97,8 +97,9 @@
                                     </td>
                                     <td>₱{{ number_format($booking->total_amount, 2) }}</td>
                                     <td>
+                                        @php($payMongoPayment = $booking->payments->filter(fn ($payment) => $payment->method === 'gcash' && str_starts_with((string) $payment->reference, 'paymongo:'))->sortByDesc('id')->first())
                                         <span class="mini-status {{ $booking->status }}">{{ ucfirst($booking->status) }}</span>
-                                        <small>Payment: {{ ucfirst($booking->payment_status ?? 'pending') }} · {{ strtoupper($booking->payment_method ?? 'cash') }}</small>
+                                        <small>Payment: {{ ucfirst($booking->payment_status ?? 'pending') }} · {{ $payMongoPayment ? 'PayMongo GCash' : strtoupper($booking->payment_method ?? 'cash') }}</small>
                                         @if($booking->status === 'pending')
                                             <span class="hold-expiry">Needs staff review</span>
                                         @endif
@@ -107,7 +108,14 @@
                                         <div class="booking-actions">
                                             @php($refundableAmount = max(0, (float) $booking->payments->where('status', 'paid')->sum('amount') - (float) $booking->payments->where('status', 'refunded')->sum('amount')))
                                             @php($refundPolicyEligible = $booking->isRefundEligible())
-                                            @if($booking->status !== 'cancelled')
+                                            @if($payMongoPayment?->status === 'pending')
+                                                <form method="POST" action="{{ route('admin.bookings.payment.recheck-paymongo', $booking) }}" onsubmit="return confirm('Check this GCash checkout directly with PayMongo?')">
+                                                    @csrf
+                                                    <button class="status-select confirmed" type="submit">Verify with PayMongo</button>
+                                                </form>
+                                            @elseif($payMongoPayment?->status === 'paid')
+                                                <span class="mini-status confirmed" title="This payment was confirmed by PayMongo">Paid via PayMongo</span>
+                                            @elseif($booking->status !== 'cancelled')
                                                 <form method="POST" action="{{ route('admin.bookings.payment', $booking) }}" onsubmit="return confirm('Update this payment record?')">
                                                     @csrf @method('PATCH')
                                                     <input type="hidden" name="payment_method" value="{{ in_array($booking->payment_method, ['cash', 'gcash']) ? $booking->payment_method : 'cash' }}">

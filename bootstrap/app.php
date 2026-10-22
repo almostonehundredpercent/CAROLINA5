@@ -20,6 +20,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // Render terminates HTTPS before requests reach Laravel. Trust its forwarded
         // protocol headers so redirects and secure session cookies stay on HTTPS.
         $middleware->trustProxies(at: '*');
+        $middleware->validateCsrfTokens(except: ['webhooks/paymongo']);
 
         $middleware->alias([
             'admin' => AdminMiddleware::class,

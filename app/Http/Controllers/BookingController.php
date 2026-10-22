@@ -13,6 +13,7 @@ use App\Models\Review;
 use App\Models\Room;
 use App\Models\RoomBlock;
 use App\Services\PayMongoCheckout;
+use App\Services\PayMongoPaymentReconciler;
 use App\Support\BookingSelection;
 use App\Support\PromoPricing;
 use Carbon\Carbon;
@@ -402,52 +403,46 @@ class BookingController extends Controller
         return redirect()->away($session['url']);
     }
 
-    public function returnFromPayMongo(Request $request, Booking $booking, PayMongoCheckout $checkout)
+    public function returnFromPayMongo(Request $request, Booking $booking, PayMongoCheckout $checkout, PayMongoPaymentReconciler $payments)
     {
         $this->authorizeBookingAccess($request, $booking);
-        $pendingPayment = $booking->payments()
+        $payment = $booking->payments()
             ->where('method', 'gcash')
-            ->where('status', 'pending')
             ->where('reference', 'like', 'paymongo:%')
             ->latest('id')
             ->first();
-        if (! $pendingPayment) {
+        if (! $payment) {
             return redirect()->route('bookings.receipt', $booking)->withErrors(['payment' => 'No pending online payment was found for this reservation.']);
+        }
+        if ($payment->status === 'paid') {
+            $booking->refresh();
+
+            return redirect()->route('bookings.receipt', $booking)->with('success', $booking->status === 'cancelled'
+                ? 'PayMongo confirmed the payment, but the reservation is no longer active. Contact Carolina for staff resolution.'
+                : 'GCash payment confirmed by PayMongo. Staff will still review your reservation.');
         }
         if ($request->query('outcome') === 'cancelled') {
             return redirect()->route('bookings.receipt', $booking)->with('success', 'The GCash test checkout was cancelled. Your reservation remains pending.');
         }
+        if ($payment->status !== 'pending') {
+            return redirect()->route('bookings.receipt', $booking)->withErrors(['payment' => 'This online payment is not pending verification. Please contact Carolina if you need help.']);
+        }
 
         try {
-            $session = $checkout->retrieve(substr($pendingPayment->reference, strlen('paymongo:')));
+            $session = $checkout->retrieve(substr($payment->reference, strlen('paymongo:')));
         } catch (\Throwable $exception) {
             report($exception);
 
             return redirect()->route('bookings.receipt', $booking)->withErrors(['payment' => 'We could not confirm the test payment yet. Please try again in a moment.']);
         }
-        if (! $checkout->isPaid($session)) {
+        if (! $payments->isMatchingPaidCheckout($booking, $payment, $session)) {
             return redirect()->route('bookings.receipt', $booking)->withErrors(['payment' => 'The test payment was not completed. You can try GCash checkout again.']);
         }
 
-        $wasRecorded = DB::transaction(function () use ($booking, $pendingPayment) {
-            Room::whereKey($booking->room_id)->lockForUpdate()->firstOrFail();
-            $lockedBooking = Booking::whereKey($booking->id)->lockForUpdate()->firstOrFail();
-            $payment = Payment::whereKey($pendingPayment->id)->lockForUpdate()->firstOrFail();
-            if ($payment->status === 'paid') {
-                return false;
-            }
-            $expired = $lockedBooking->hasExpiredHold();
-            $payment->update(['status' => 'paid', 'paid_at' => now(), 'notes' => 'PayMongo test payment confirmed by server lookup.']);
-            $lockedBooking->update(['payment_method' => 'gcash', 'payment_status' => 'paid', 'paid_at' => now()] + ($expired ? [
-                'status' => 'cancelled', 'cancelled_at' => now(), 'cancellation_reason' => 'Payment returned after the reservation hold expired; staff resolution required.',
-            ] : []));
-
-            return true;
-        });
-        if ($wasRecorded) {
-            $booking->refresh();
-            $this->log($booking, $request->user()?->id, 'payment_paid', 'PayMongo test GCash payment confirmed by server lookup.');
-            $this->emailUpdate($booking, 'Your Carolina test payment was received', 'Your GCash test payment has been recorded. Staff will still review your reservation.');
+        $payments->recordPaid($booking, $payment, $request->user()?->id);
+        $payment->refresh();
+        if ($payment->status !== 'paid') {
+            return redirect()->route('bookings.receipt', $booking)->withErrors(['payment' => 'PayMongo verified the checkout, but Carolina could not update the payment record. Please contact staff.']);
         }
 
         $booking->refresh();

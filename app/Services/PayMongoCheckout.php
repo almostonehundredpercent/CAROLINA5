@@ -104,17 +104,6 @@ class PayMongoCheckout
         return $response->json();
     }
 
-    public function isPaid(array $checkout): bool
-    {
-        $statuses = [
-            data_get($checkout, 'data.attributes.payment_intent.attributes.status'),
-            data_get($checkout, 'data.attributes.payments.0.attributes.status'),
-            data_get($checkout, 'data.attributes.payment.attributes.status'),
-        ];
-
-        return in_array('succeeded', $statuses, true) || in_array('paid', $statuses, true);
-    }
-
     private function secretKey(): string
     {
         $mode = config('services.paymongo.mode');

@@ -93,7 +93,11 @@ test('late verified payment is recorded without reviving replaced inventory', fu
     $this->travel(2)->minutes();
     heldBooking($room, ['status' => 'confirmed']);
     Http::fake(['https://api.paymongo.com/v1/checkout_sessions/cs_late' => Http::response([
-        'data' => ['attributes' => ['payment_intent' => ['attributes' => ['status' => 'succeeded']]]],
+        'data' => ['id' => 'cs_late', 'attributes' => [
+            'livemode' => false,
+            'reference_number' => $booking->reference,
+            'payments' => [['attributes' => ['amount' => 45000, 'currency' => 'PHP', 'status' => 'paid']]],
+        ]],
     ])]);
     $this->withSession(['guest_booking_reference' => $booking->reference])->get(route('bookings.paymongo.return', $booking))->assertRedirect(route('bookings.receipt', $booking));
     expect($booking->fresh()->status)->toBe('cancelled')->and($booking->fresh()->payment_status)->toBe('paid')
@@ -110,7 +114,11 @@ test('verified payment on protected inventory survives a manager operation overr
     RoomBlock::create(['room_id' => $room->id, 'status' => 'maintenance', 'starts_at' => '2026-10-05 13:00:00', 'ends_at' => '2026-10-05 14:00:00', 'notes' => 'Manager override']);
     Payment::create(['booking_id' => $booking->id, 'amount' => 450, 'method' => 'gcash', 'status' => 'pending', 'reference' => 'paymongo:cs_override']);
     Http::fake(['https://api.paymongo.com/v1/checkout_sessions/cs_override' => Http::response([
-        'data' => ['attributes' => ['payment_intent' => ['attributes' => ['status' => 'succeeded']]]],
+        'data' => ['id' => 'cs_override', 'attributes' => [
+            'livemode' => false,
+            'reference_number' => $booking->reference,
+            'payments' => [['attributes' => ['amount' => 45000, 'currency' => 'PHP', 'status' => 'paid']]],
+        ]],
     ])]);
     $this->withSession(['guest_booking_reference' => $booking->reference])->get(route('bookings.paymongo.return', $booking))->assertRedirect(route('bookings.receipt', $booking));
     expect($booking->fresh()->payment_status)->toBe('paid')->and($booking->fresh()->status)->toBe('confirmed')->and($booking->payments()->first()->status)->toBe('paid');

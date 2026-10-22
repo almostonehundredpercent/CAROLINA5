@@ -12,6 +12,8 @@ use App\Models\Review;
 use App\Models\Room;
 use App\Models\RoomBlock;
 use App\Models\User;
+use App\Services\PayMongoCheckout;
+use App\Services\PayMongoPaymentReconciler;
 use App\Support\AdminPermissions;
 use App\Support\FinancialSummary;
 use Carbon\Carbon;
@@ -200,6 +202,12 @@ class AdminController extends Controller
         DB::transaction(function () use ($booking, $data, $paidAt, $request) {
             Room::whereKey($booking->room_id)->lockForUpdate()->firstOrFail();
             $lockedBooking = Booking::whereKey($booking->id)->lockForUpdate()->firstOrFail();
+            $hasPayMongoCheckout = Payment::where('booking_id', $lockedBooking->id)
+                ->where('reference', 'like', 'paymongo:%')
+                ->exists();
+            if ($hasPayMongoCheckout) {
+                throw ValidationException::withMessages(['payment_status' => 'PayMongo payments must be verified with PayMongo. Use the Verify with PayMongo action instead.']);
+            }
             abort_if(($data['payment_status'] === 'paid' && $lockedBooking->status === 'cancelled')
                 || (in_array($data['payment_status'], ['paid', 'refunded'], true) && $lockedBooking->hasExpiredHold()), 422, 'This hold expired or was cancelled. Confirm availability before recording a new payment.');
             Payment::create(['booking_id' => $lockedBooking->id, 'amount' => $lockedBooking->total_amount, 'method' => $data['payment_method'], 'status' => $data['payment_status'], 'paid_at' => $paidAt, 'recorded_by' => $request->user()->id, 'notes' => 'Manual staff payment record.']);
@@ -210,6 +218,44 @@ class AdminController extends Controller
         $this->email($booking->fresh('room'), 'Payment update for your Carolina booking', 'Your payment status is now '.$data['payment_status'].'.');
 
         return back()->with('success', 'Payment record updated.');
+    }
+
+    public function recheckPayMongoPayment(Request $request, Booking $booking, PayMongoCheckout $checkout, PayMongoPaymentReconciler $payments)
+    {
+        abort_unless($request->user()->canManageBookings(), 403, 'Your staff role cannot manage payments.');
+
+        $payment = $booking->payments()
+            ->where('method', 'gcash')
+            ->where('status', 'pending')
+            ->where('reference', 'like', 'paymongo:%')
+            ->latest('id')
+            ->first();
+        if (! $payment) {
+            return back()->withErrors(['payment_status' => 'There is no pending PayMongo checkout to verify.']);
+        }
+
+        try {
+            $session = $checkout->retrieve(substr($payment->reference, strlen('paymongo:')));
+        } catch (\Throwable $exception) {
+            report($exception);
+
+            return back()->withErrors(['payment_status' => 'PayMongo could not be reached. The payment remains pending; try verification again shortly.']);
+        }
+
+        if (! $payments->isMatchingPaidCheckout($booking, $payment, $session)) {
+            return back()->withErrors(['payment_status' => 'PayMongo has not confirmed a matching full payment yet. The booking remains pending.']);
+        }
+
+        $payments->recordPaid($booking, $payment, $request->user()->id);
+        $payment->refresh();
+        if ($payment->status !== 'paid') {
+            return back()->withErrors(['payment_status' => 'PayMongo verified this checkout, but the booking record could not be updated. Please try again or contact support.']);
+        }
+        $booking->refresh();
+
+        return back()->with('success', $booking->status === 'cancelled'
+            ? 'PayMongo confirmed payment, but the reservation is no longer active. Carolina staff must resolve the booking.'
+            : 'PayMongo confirmed the full payment. The booking payment status has been updated automatically.');
     }
 
     /**

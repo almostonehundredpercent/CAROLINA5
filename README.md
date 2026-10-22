@@ -55,7 +55,11 @@ The suite covers public pages, authentication/MFA, booking timing, overlap prote
 
 ## Payments and email
 
-This project records staff-verified payment status (`pending`, `paid`, `failed`, or `refunded`) and cash/GCash method labels. It does **not** process a live online payment; do not mark a payment paid unless it has actually been verified.
+The site supports PayMongo-hosted GCash checkout in **test mode only**; it does not collect real money. A completed test payment is verified server-side and updates the booking automatically. The guest return page can verify it, and PayMongo can notify the site even if the guest does not return.
+
+To enable automatic PayMongo notifications, register `https://carolina5-web.onrender.com/webhooks/paymongo` in the matching PayMongo test-mode account and subscribe to `checkout_session.payment.paid`. Copy that webhook's signing secret into Render as `PAYMONGO_WEBHOOK_SECRET`. Keep `PAYMONGO_MODE=test` and use test API keys. The endpoint verifies the PayMongo signature, booking reference, checkout ID, full amount, currency, and test/live mode before recording payment. If the webhook secret is not set, the endpoint stays disabled; browser-return verification still works. Never mark a provider payment paid manually.
+
+Cash and offline GCash payments remain staff-recorded. The `Verify with PayMongo` action checks an online payment directly against PayMongo when a notification is delayed.
 
 Booking emails use Laravel mail configuration. Production email needs a real provider and valid sender domain. If a queue worker is added later, email can be moved to queued jobs; this Render setup does not claim a worker exists.
 
