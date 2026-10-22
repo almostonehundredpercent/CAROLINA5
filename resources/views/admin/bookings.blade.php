@@ -131,7 +131,7 @@
                     <select name="status">
                         <option value="">All statuses</option>
                         @foreach(['pending', 'confirmed', 'cancelled'] as $filterStatus)
-                            <option value="{{ $filterStatus }}" @selected(request('status') === $filterStatus)>{{ ucfirst($filterStatus) }}</option>
+                            <option value="{{ $filterStatus }}" @selected(request('status') === $filterStatus)>{{ $filterStatus === 'pending' ? 'Pending staff confirmation' : ucfirst($filterStatus) }}</option>
                         @endforeach
                     </select>
                     <input type="date" name="arrival" value="{{ request('arrival') }}" aria-label="Arrival or departure date">
@@ -162,16 +162,19 @@
                                     </td>
                                     <td>₱{{ number_format($booking->total_amount, 2) }}</td>
                                     <td>
-                                        @php($payMongoPayment = $booking->payments->filter(fn ($payment) => $payment->method === 'gcash' && str_starts_with((string) $payment->reference, 'paymongo:'))->sortByDesc('id')->first())
-                                        @php($paymentStatus = $booking->payment_status ?? 'pending')
+                                        @php($payMongoPayments = $booking->payments->filter(fn ($payment) => $payment->method === 'gcash' && str_starts_with((string) $payment->reference, 'paymongo:'))->sortByDesc('id'))
+                                        @php($payMongoPayment = $payMongoPayments->first())
+                                        @php($hasPayMongoPayment = $payMongoPayments->isNotEmpty())
+                                        @php($hasPaidPayMongoPayment = $payMongoPayments->contains(fn ($payment) => $payment->status === 'paid'))
+                                        @php($paymentStatus = $booking->payment_status === 'refunded' ? 'refunded' : ($hasPaidPayMongoPayment ? 'paid' : ($booking->payment_status ?? 'pending')))
                                         @php($paymentStatusClass = match ($paymentStatus) { 'paid' => 'confirmed', 'refunded', 'failed' => 'cancelled', default => '' })
                                         <div class="booking-status-stack">
-                                            <span class="mini-status {{ $booking->status }}">{{ ucfirst($booking->status) }}</span>
+                                            <span class="mini-status {{ $booking->status }}">{{ $booking->status === 'pending' ? 'Pending staff confirmation' : ucfirst($booking->status) }}</span>
                                             <span class="mini-status booking-payment-status {{ $paymentStatus }} {{ $paymentStatusClass }}">Payment {{ ucfirst($paymentStatus) }}</span>
                                         </div>
-                                        <small class="booking-payment-method">{{ $payMongoPayment ? 'PayMongo · GCash' : strtoupper($booking->payment_method ?? 'cash') }}</small>
+                                        <small class="booking-payment-method">{{ $hasPayMongoPayment ? 'PayMongo · GCash' : strtoupper($booking->payment_method ?? 'cash') }}</small>
                                         @if($booking->status === 'pending')
-                                            <span class="hold-expiry">Needs staff review</span>
+                                            <span class="hold-expiry">Availability is rechecked before confirmation</span>
                                         @endif
                                     </td>
                                     <td class="booking-actions-cell">
@@ -179,13 +182,15 @@
                                             @php($refundableAmount = max(0, (float) $booking->payments->where('status', 'paid')->sum('amount') - (float) $booking->payments->where('status', 'refunded')->sum('amount')))
                                             @php($refundPolicyEligible = $booking->isRefundEligible())
                                                 <div class="booking-action-buttons">
-                                                    @if($payMongoPayment?->status === 'pending')
+                                                    @if($hasPaidPayMongoPayment)
+                                                        <span class="booking-note">Verified through PayMongo</span>
+                                                    @elseif($payMongoPayment?->status === 'pending')
                                                         <form method="POST" action="{{ route('admin.bookings.payment.recheck-paymongo', $booking) }}" onsubmit="return confirm('Check this GCash checkout directly with PayMongo?')">
                                                             @csrf
                                                             <button class="status-select confirmed" type="submit">Verify with PayMongo</button>
                                                         </form>
-                                                    @elseif($booking->status !== 'cancelled')
-                                                        <form method="POST" action="{{ route('admin.bookings.payment', $booking) }}" onsubmit="return confirm('Update this payment record?')">
+                                                    @elseif(! $hasPayMongoPayment && $booking->status !== 'cancelled')
+                                                        <form method="POST" action="{{ route('admin.bookings.payment', $booking) }}" onsubmit="return confirm('{{ $booking->payment_status === 'paid' ? 'Mark this payment as unpaid? This changes only the payment record and does not issue a refund. Continue?' : 'Update this payment record?' }}')">
                                                             @csrf @method('PATCH')
                                                             <input type="hidden" name="payment_method" value="{{ in_array($booking->payment_method, ['cash', 'gcash']) ? $booking->payment_method : 'cash' }}">
                                                             <input type="hidden" name="payment_status" value="{{ $booking->payment_status === 'paid' ? 'pending' : 'paid' }}">

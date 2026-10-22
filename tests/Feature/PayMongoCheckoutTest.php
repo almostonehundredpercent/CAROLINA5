@@ -300,6 +300,33 @@ test('the bookings screen keeps payment and refund guidance separate from action
         ->assertDontSee('Paid via PayMongo');
 });
 
+test('the bookings screen distinguishes staff confirmation from a paid PayMongo payment', function () {
+    $booking = payMongoBooking();
+    Payment::create(['booking_id' => $booking->id, 'amount' => 1000, 'method' => 'gcash', 'status' => 'paid', 'reference' => 'paymongo:cs_test_123']);
+    $admin = User::factory()->create(['staff_role' => 'admin', 'is_admin' => true]);
+
+    $this->actingAsStaff($admin)->get(route('admin.bookings'))
+        ->assertOk()
+        ->assertSee('Pending staff confirmation')
+        ->assertSee('Payment Paid')
+        ->assertSee('PayMongo · GCash')
+        ->assertSee('Confirm')
+        ->assertDontSee('Mark paid')
+        ->assertDontSee('Mark unpaid');
+});
+
+test('manual payments require an explicit confirmation before marking them unpaid', function () {
+    $booking = payMongoBooking();
+    $booking->update(['payment_method' => 'cash', 'payment_status' => 'paid']);
+    Payment::create(['booking_id' => $booking->id, 'amount' => 1000, 'method' => 'cash', 'status' => 'paid']);
+    $admin = User::factory()->create(['staff_role' => 'admin', 'is_admin' => true]);
+
+    $this->actingAsStaff($admin)->get(route('admin.bookings'))
+        ->assertOk()
+        ->assertSee('Mark unpaid')
+        ->assertSee("return confirm('Mark this payment as unpaid? This changes only the payment record and does not issue a refund. Continue?')", false);
+});
+
 test('admins can verify a pending PayMongo checkout directly with PayMongo', function () {
     Mail::fake();
     $booking = payMongoBooking();
