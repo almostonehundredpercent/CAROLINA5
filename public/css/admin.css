@@ -2833,6 +2833,214 @@ tbody tr:hover {
     }
 }
 
+/* Bookings: reclaim page space while keeping labels, filters, and actions easy to scan. */
+.bookings-page .admin-main {
+    width: auto !important;
+    max-width: none !important;
+    padding: 20px clamp(14px, 2vw, 30px) 36px !important;
+}
+.bookings-page .admin-topbar {
+    min-height: 0;
+    margin-bottom: 16px !important;
+}
+.bookings-page .booking-stat-grid {
+    gap: 12px !important;
+    margin-bottom: 14px;
+}
+.bookings-page .booking-stat-grid article {
+    min-height: 104px;
+    padding: 15px 17px !important;
+}
+.bookings-page .booking-stat-grid small {
+    font-size: 13px !important;
+}
+.bookings-page .booking-stat-grid strong {
+    font-size: 31px !important;
+}
+.bookings-page .bookings-reservations {
+    margin-top: 14px !important;
+    padding: 19px !important;
+}
+.bookings-page .bookings-reservations .panel-heading {
+    margin-bottom: 14px !important;
+}
+.bookings-page .bookings-reservations .panel-heading h2 {
+    font-size: 22px !important;
+}
+.bookings-page .bookings-reservations .booking-note {
+    max-width: 780px;
+    margin: 6px 0 0;
+    font-size: 14px !important;
+    line-height: 1.4;
+}
+.bookings-page .booking-filters {
+    display: flex !important;
+    flex-wrap: wrap;
+    align-items: center !important;
+    gap: 10px !important;
+    margin: 0 0 13px !important;
+    padding: 10px !important;
+}
+.bookings-page .booking-filters input,
+.bookings-page .booking-filters select {
+    min-height: 46px !important;
+    padding: 10px 13px !important;
+    border-radius: 10px !important;
+    font-size: 14px !important;
+}
+.bookings-page .booking-filters input[name="search"] {
+    flex: 1 1 320px;
+    width: auto !important;
+    min-width: 260px;
+    max-width: 520px;
+}
+.bookings-page .booking-filters select {
+    flex: 0 1 250px;
+    width: 240px !important;
+    min-width: 200px;
+}
+.bookings-page .booking-filters input[type="date"] {
+    flex: 0 0 220px;
+    width: 220px !important;
+}
+.bookings-page .booking-filters button {
+    min-width: 96px;
+    min-height: 46px !important;
+    padding: 0 17px !important;
+    font-size: 14px !important;
+}
+.bookings-page .admin-table-wrap {
+    max-width: 100%;
+    border-radius: 12px;
+    scrollbar-width: thin;
+}
+.bookings-page .booking-table {
+    width: 100%;
+    min-width: 1180px !important;
+    table-layout: fixed;
+}
+.bookings-page .booking-column-guest { width: 18%; }
+.bookings-page .booking-column-reference { width: 13%; }
+.bookings-page .booking-column-stay { width: 21%; }
+.bookings-page .booking-column-total { width: 9%; }
+.bookings-page .booking-column-status { width: 16%; }
+.bookings-page .booking-column-actions { width: 23%; }
+.bookings-page .booking-table th {
+    padding: 12px 12px !important;
+    font-size: 12px !important;
+    letter-spacing: 0.055em;
+}
+.bookings-page .booking-table td {
+    padding: 11px 12px !important;
+    font-size: 14px !important;
+    line-height: 1.35;
+    white-space: normal !important;
+    vertical-align: middle;
+}
+.bookings-page .booking-table td b {
+    font-size: 14px !important;
+    line-height: 1.3;
+}
+.bookings-page .booking-table td small {
+    margin-top: 4px;
+    font-size: 13px !important;
+    line-height: 1.35;
+    overflow-wrap: anywhere;
+}
+.bookings-page .booking-reference-cell,
+.bookings-page .booking-total-cell {
+    white-space: nowrap !important;
+}
+.bookings-page .booking-reference-cell code {
+    font-size: 13px;
+}
+.bookings-page .booking-status-stack {
+    gap: 6px;
+    margin-bottom: 6px;
+}
+.bookings-page .booking-status-stack .mini-status {
+    min-height: 27px;
+    padding: 5px 9px;
+    font-size: 12px;
+}
+.bookings-page .booking-payment-method {
+    font-size: 13px !important;
+}
+.bookings-page .hold-expiry {
+    font-size: 12px;
+    line-height: 1.35;
+}
+.bookings-page .booking-actions {
+    width: 100%;
+    min-width: 0 !important;
+    max-width: none !important;
+    gap: 7px;
+}
+.bookings-page .booking-action-buttons {
+    gap: 7px;
+}
+.bookings-page .booking-action-buttons .status-select {
+    min-height: 42px !important;
+    padding: 9px 13px !important;
+    font-size: 13px !important;
+}
+.bookings-page .booking-action-buttons .booking-note {
+    margin: 0;
+    font-size: 13px !important;
+    line-height: 1.35;
+}
+.bookings-page .booking-action-note {
+    max-width: 100%;
+    padding: 8px 10px;
+    font-size: 12px;
+    line-height: 1.35;
+}
+.bookings-page .refund-note-copy strong {
+    font-size: 12px;
+}
+
+@media (max-width: 700px) {
+    .bookings-page .admin-main {
+        padding: 18px 12px 30px !important;
+    }
+    .bookings-page .booking-stat-grid {
+        gap: 9px !important;
+    }
+    .bookings-page .booking-stat-grid article {
+        min-height: 96px;
+        padding: 13px !important;
+    }
+    .bookings-page .bookings-reservations {
+        padding: 14px !important;
+    }
+    .bookings-page .bookings-reservations .panel-heading {
+        gap: 10px;
+        align-items: flex-start;
+    }
+    .bookings-page .booking-filters {
+        display: grid !important;
+        grid-template-columns: minmax(0, 1fr);
+        gap: 9px !important;
+        padding: 10px !important;
+    }
+    .bookings-page .booking-filters input,
+    .bookings-page .booking-filters select,
+    .bookings-page .booking-filters button,
+    .bookings-page .booking-filters input[name="search"],
+    .bookings-page .booking-filters input[type="date"] {
+        width: 100% !important;
+        max-width: none;
+        min-width: 0;
+    }
+    .bookings-page .booking-filters select,
+    .bookings-page .booking-filters input[type="date"] {
+        flex: auto;
+    }
+    .bookings-page .booking-table {
+        min-width: 1180px !important;
+    }
+}
+
 /* Housekeeping readability: night-glass cards and a light task planner each
    need their own high-contrast text and control colors. */
 .housekeeping-capacity {

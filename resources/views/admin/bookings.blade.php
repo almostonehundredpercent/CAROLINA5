@@ -89,7 +89,7 @@
         html.dark-mode .refund-note-icon { background: rgba(239, 128, 119, .18); color: #ffc0b7; }
     </style>
 </head>
-<body>
+<body class="bookings-page">
     <div class="admin-shell">
         @include('admin.partials.sidebar')
 
@@ -116,7 +116,7 @@
                 <article class="maintenance"><small>Unavailable</small><strong>{{ $maintenanceRooms }}</strong></article>
             </section>
 
-            <section class="panel" style="margin-top:20px">
+            <section class="panel bookings-reservations" style="margin-top:20px">
                 <div class="panel-heading">
                     <div>
                         <p class="admin-kicker">ALL RESERVATIONS</p>
@@ -140,7 +140,15 @@
                 </form>
 
                 <div class="admin-table-wrap">
-                    <table>
+                    <table class="booking-table">
+                        <colgroup>
+                            <col class="booking-column-guest">
+                            <col class="booking-column-reference">
+                            <col class="booking-column-stay">
+                            <col class="booking-column-total">
+                            <col class="booking-column-status">
+                            <col class="booking-column-actions">
+                        </colgroup>
                         <thead>
                             <tr><th>Guest</th><th>Reference</th><th>Room & stay</th><th>Total</th><th>Status</th><th>Actions</th></tr>
                         </thead>
@@ -155,12 +163,12 @@
                                             <small>{{ $booking->children_count ? $booking->children_count . ' child' . ($booking->children_count > 1 ? 'ren' : '') : 'No children' }} · {{ $booking->pets_count ? $booking->pets_count . ' pet' . ($booking->pets_count > 1 ? 's' : '') : 'No pets' }}</small>
                                         @endif
                                     </td>
-                                    <td><code>{{ $booking->reference }}</code></td>
-                                    <td>
+                                    <td class="booking-reference-cell"><code>{{ $booking->reference }}</code></td>
+                                    <td class="booking-stay-cell">
                                         <b>{{ $booking->room?->name ?? 'Room removed' }}</b>
                                         <small>{{ $booking->check_in_at?->format('M j, g A') ?? $booking->check_in->format('M j') }} to {{ $booking->check_out_at?->format('M j, g A') ?? $booking->check_out->format('M j, Y') }}</small>
                                     </td>
-                                    <td>₱{{ number_format($booking->total_amount, 2) }}</td>
+                                    <td class="booking-total-cell">₱{{ number_format($booking->total_amount, 2) }}</td>
                                     <td>
                                         @php($payMongoPayments = $booking->payments->filter(fn ($payment) => $payment->method === 'gcash' && str_starts_with((string) $payment->reference, 'paymongo:'))->sortByDesc('id'))
                                         @php($payMongoPayment = $payMongoPayments->first())
