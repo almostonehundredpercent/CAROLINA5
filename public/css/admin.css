@@ -443,6 +443,115 @@ td small {
         padding: 0 16px;
     }
 }
+
+/* Shared staff confirmation dialog: warm paper in light mode, copper glass in dark mode. */
+.admin-confirm-dialog {
+    width: min(440px, calc(100vw - 32px));
+    max-width: none;
+    max-height: calc(100dvh - 32px);
+    margin: auto;
+    padding: 0;
+    overflow: auto;
+    border: 1px solid #e7d4c1;
+    border-radius: 20px;
+    background: #fffaf5;
+    color: #211812;
+    box-shadow: 0 28px 90px rgba(29, 17, 9, .32);
+}
+.admin-confirm-dialog::backdrop {
+    background: rgba(17, 12, 9, .58);
+    backdrop-filter: blur(5px);
+}
+.admin-confirm-card { padding: 28px; }
+.admin-confirm-mark {
+    display: grid;
+    width: 42px;
+    height: 42px;
+    margin-bottom: 17px;
+    place-items: center;
+    border: 1px solid #f0c99d;
+    border-radius: 50%;
+    background: #fff0dc;
+    color: #a45100;
+    font-size: 18px;
+    font-weight: 800;
+}
+.admin-confirm-kicker {
+    margin: 0 0 7px;
+    color: #a45100;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: .13em;
+}
+.admin-confirm-card h2 {
+    margin: 0;
+    color: inherit;
+    font-size: clamp(21px, 5vw, 25px);
+    line-height: 1.2;
+}
+.admin-confirm-card > p:not(.admin-confirm-kicker) {
+    margin: 10px 0 24px;
+    color: #5e5148;
+    font-size: 14px;
+    line-height: 1.55;
+}
+.admin-confirm-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+.admin-confirm-actions button {
+    min-width: 112px;
+    min-height: 44px;
+    padding: 10px 16px;
+    border: 1px solid transparent;
+    border-radius: 11px;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 750;
+    cursor: pointer;
+    transition: transform .16s ease, box-shadow .16s ease, background-color .16s ease;
+}
+.admin-confirm-actions button:hover { transform: translateY(-1px); }
+.admin-confirm-actions button:focus-visible { outline: 3px solid #e6a94f; outline-offset: 3px; }
+.admin-confirm-cancel {
+    border-color: #ddc8b2 !important;
+    background: #fff !important;
+    color: #39291e !important;
+}
+.admin-confirm-accept {
+    border-color: #a95500 !important;
+    background: linear-gradient(135deg, #c97710, #a94f00) !important;
+    color: #fff !important;
+    box-shadow: 0 7px 18px rgba(169, 79, 0, .2);
+}
+html.dark-mode .admin-confirm-dialog {
+    border-color: rgba(226, 167, 111, .38);
+    background: linear-gradient(145deg, #2a1d16, #17120f 80%);
+    color: #fff6ec;
+    box-shadow: 0 28px 90px rgba(0, 0, 0, .65), 0 0 0 1px rgba(255, 255, 255, .025) inset;
+}
+html.dark-mode .admin-confirm-dialog::backdrop { background: rgba(5, 4, 3, .72); }
+html.dark-mode .admin-confirm-mark {
+    border-color: rgba(232, 164, 95, .4);
+    background: rgba(171, 92, 31, .22);
+    color: #ffc47f;
+}
+html.dark-mode .admin-confirm-kicker { color: #ffc47f; }
+html.dark-mode .admin-confirm-card > p:not(.admin-confirm-kicker) { color: #e0cec0; }
+html.dark-mode .admin-confirm-cancel {
+    border-color: rgba(237, 213, 190, .28) !important;
+    background: rgba(255, 255, 255, .07) !important;
+    color: #fff5eb !important;
+}
+@media (max-width: 480px) {
+    .admin-confirm-card { padding: 23px 20px 20px; }
+    .admin-confirm-actions { display: grid; grid-template-columns: 1fr 1fr; }
+    .admin-confirm-actions button { min-width: 0; padding-inline: 9px; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .admin-confirm-actions button { transition: none; }
+}
 @media (max-width: 380px) {
     .metric-grid {
         grid-template-columns: 1fr;

@@ -6,6 +6,7 @@ use App\Models\Review;
 use App\Models\Room;
 use App\Models\RoomBlock;
 use App\Models\User;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Mail;
 
 function adminDayRoom(string $slug, int $capacity = 2): Room
@@ -44,6 +45,30 @@ function adminDayBooking(Room $room, User $guest, array $attributes = []): Booki
         'status' => 'pending',
     ], $attributes));
 }
+
+test('check-in confirmation is rendered in the admin interface on front desk and bookings pages', function () {
+    Carbon::setTestNow('2026-10-23 12:00:00');
+
+    try {
+        $admin = User::factory()->create(['is_admin' => true]);
+        $guest = User::factory()->create(['name' => 'Jordan Lee']);
+        $room = adminDayRoom('check-in-confirmation-room');
+        adminDayBooking($room, $guest, ['status' => 'confirmed']);
+
+        $this->actingAsStaff($admin);
+
+        foreach ([route('admin.frontdesk'), route('admin.bookings')] as $url) {
+            $this->get($url)
+                ->assertOk()
+                ->assertSee('id="admin-confirm-dialog"', false)
+                ->assertSee('data-admin-confirm', false)
+                ->assertSee('Check in Jordan Lee now?', false)
+                ->assertDontSee("onsubmit=\"return confirm('Check this guest in now?')\"", false);
+        }
+    } finally {
+        Carbon::setTestNow();
+    }
+});
 
 test('staff can complete a busy-day booking workflow without creating conflicts', function () {
     Mail::fake();
