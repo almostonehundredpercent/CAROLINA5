@@ -21,6 +21,25 @@ class Room extends Model
         return $this->rental_hours ? "per {$this->rental_hours}-hour stay" : 'per night';
     }
 
+    public function responsiveImageSrcset(): ?string
+    {
+        $url = parse_url($this->image_url ?? '');
+        if (! is_array($url) || ($url['scheme'] ?? null) !== 'https' || ($url['host'] ?? null) !== 'images.unsplash.com') {
+            return null;
+        }
+
+        parse_str($url['query'] ?? '', $parameters);
+        $base = 'https://images.unsplash.com'.($url['path'] ?? '');
+
+        return collect([480 => 70, 800 => 75, 1000 => 80])
+            ->map(function (int $quality, int $width) use ($base, $parameters): string {
+                $options = array_merge($parameters, ['w' => $width, 'q' => $quality]);
+
+                return $base.'?'.http_build_query($options).' '.$width.'w';
+            })
+            ->implode(', ');
+    }
+
     public function bookings()
     {
         return $this->hasMany(Booking::class);

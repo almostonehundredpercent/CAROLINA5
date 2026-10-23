@@ -16,7 +16,16 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
-    return view('home', ['featuredRooms' => Room::where('is_active', true)->withAvg('approvedReviews', 'rating')->withCount('approvedReviews')->orderBy('price_per_night')->take(6)->get(), 'availabilityRooms' => Room::where('is_active', true)->orderBy('id')->get()]);
+    $rooms = Room::where('is_active', true)
+        ->withAvg('approvedReviews', 'rating')
+        ->withCount('approvedReviews')
+        ->orderBy('id')
+        ->get();
+
+    return view('home', [
+        'featuredRooms' => $rooms->sortBy(fn (Room $room) => (float) $room->price_per_night)->take(6)->values(),
+        'availabilityRooms' => $rooms,
+    ]);
 })->name('home');
 Route::get('/sitemap.xml', function () {
     $urls = collect([route('home'), route('rooms.index'), route('bookings.lookup'), route('privacy'), route('terms')])->merge(Room::where('is_active', true)->pluck('slug')->map(fn ($slug) => route('rooms.show', $slug)));

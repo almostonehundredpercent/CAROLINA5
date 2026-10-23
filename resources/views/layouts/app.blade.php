@@ -11,6 +11,11 @@
     <script type="application/ld+json">{!! json_encode(['@context' => 'https://schema.org', '@type' => 'LodgingBusiness', 'name' => 'Carolina Transient & Airbnb', 'url' => url('/'), 'address' => ['@type' => 'PostalAddress', 'addressLocality' => 'Tabaco City', 'addressRegion' => 'Albay', 'addressCountry' => 'PH'] ], JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE) !!}</script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    @if(request()->routeIs('home'))
+        <link rel="preconnect" href="https://images.unsplash.com">
+        <link rel="preload" as="image" href="https://images.unsplash.com/photo-1601918774946-25832a4be0d6?auto=format&amp;fit=crop&amp;w=900&amp;q=75" media="(max-width: 800px)" fetchpriority="high">
+        <link rel="preload" as="image" href="https://images.unsplash.com/photo-1601918774946-25832a4be0d6?auto=format&amp;fit=crop&amp;w=1800&amp;q=85" media="(min-width: 801px)" fetchpriority="high">
+    @endif
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
     <script>
         if (localStorage.getItem('carolina-theme') === 'dark' || (!localStorage.getItem('carolina-theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {

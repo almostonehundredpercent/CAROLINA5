@@ -41,7 +41,7 @@
                     <div class="room-grid">
                         @foreach($roomPage as $room)
                             <article class="room-card rooms-card">
-                                <img src="{{ $room->image_url }}" alt="{{ $room->name }}" @if(($pageIndex * 6 + $loop->index) > 2) loading="lazy" @endif>
+                                <img src="{{ $room->image_url }}" alt="{{ $room->name }}" @if($roomSrcset = $room->responsiveImageSrcset()) srcset="{{ $roomSrcset }}" sizes="(max-width: 650px) 82vw, (max-width: 900px) 45vw, 30vw" @endif @if(($pageIndex * 6 + $loop->index) > 2) loading="lazy" @endif decoding="async">
                                 <div class="room-card-body">
                                     <span>{{ $room->room_type }} · {{ $room->beds }} bed{{ $room->beds > 1 ? 's' : '' }} · {{ $room->guests }} guests</span>
                                     <h3>{{ $room->name }}</h3>
