@@ -121,7 +121,7 @@
                     <div>
                         <p class="admin-kicker">ALL RESERVATIONS</p>
                         <h2>Review requests</h2>
-                        <p class="booking-note">Payments update automatically when PayMongo confirms them. Confirming a request checks room availability again.</p>
+                        <p class="booking-note">Payments update automatically when PayMongo confirms them. Fully paid, available bookings are confirmed automatically; cash bookings still need staff confirmation.</p>
                     </div>
                     <div class="booking-heading-actions"><a class="status-select" href="{{ route('admin.bookings.export', request()->query()) }}">Export CSV</a><span class="pill">{{ $individualBookings->total() }} total</span></div>
                 </div>

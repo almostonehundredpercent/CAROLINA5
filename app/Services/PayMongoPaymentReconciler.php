@@ -46,11 +46,11 @@ class PayMongoPaymentReconciler
         return false;
     }
 
-    /** Mark one pending PayMongo ledger row paid once, even if return and webhook race. */
+    /** Record a verified full payment and confirm its available booking exactly once. */
     public function recordPaid(Booking $booking, Payment $payment, ?int $actorId = null): bool
     {
         $changed = DB::transaction(function () use ($booking, $payment, $actorId): bool {
-            Room::whereKey($booking->room_id)->lockForUpdate()->first();
+            $room = Room::whereKey($booking->room_id)->lockForUpdate()->firstOrFail();
             $lockedBooking = Booking::whereKey($booking->id)->lockForUpdate()->firstOrFail();
             $lockedPayment = Payment::whereKey($payment->id)->lockForUpdate()->firstOrFail();
 
@@ -61,6 +61,13 @@ class PayMongoPaymentReconciler
             }
 
             $expired = $lockedBooking->hasExpiredHold();
+            $conflict = false;
+            if ($lockedBooking->status === 'pending' && ! $expired) {
+                $startsAt = $lockedBooking->check_in_at ?? $lockedBooking->check_in->copy()->startOfDay();
+                $endsAt = $lockedBooking->check_out_at ?? $lockedBooking->check_out->copy()->startOfDay();
+                $conflict = $room->bookings()->whereKeyNot($lockedBooking->id)->blocking()->overlapping($startsAt, $endsAt)->exists()
+                    || $room->blocks()->overlapping($startsAt, $endsAt)->exists();
+            }
             $lockedPayment->update([
                 'status' => 'paid',
                 'paid_at' => now(),
@@ -72,11 +79,21 @@ class PayMongoPaymentReconciler
                 'payment_status' => 'paid',
                 'paid_at' => now(),
             ];
-            if ($expired && $lockedBooking->status !== 'cancelled') {
+            if (($expired || $conflict) && $lockedBooking->status === 'pending') {
                 $updates += [
                     'status' => 'cancelled',
                     'cancelled_at' => now(),
-                    'cancellation_reason' => 'Payment was confirmed after the reservation hold expired; staff resolution required.',
+                    'cancellation_reason' => $expired
+                        ? 'Payment was confirmed after the reservation hold expired; staff resolution required.'
+                        : 'Payment was confirmed after the room became unavailable; staff resolution required.',
+                ];
+            } elseif ($lockedBooking->status === 'pending') {
+                $updates += [
+                    'status' => 'confirmed',
+                    'hold_expires_at' => null,
+                    'cancelled_at' => null,
+                    'cancelled_by' => null,
+                    'cancellation_reason' => null,
                 ];
             }
             $lockedBooking->update($updates);
@@ -87,8 +104,19 @@ class PayMongoPaymentReconciler
                 'event' => 'payment_paid',
                 'description' => 'Full GCash payment confirmed by PayMongo.',
                 'before_values' => ['payment_status' => 'pending'],
-                'after_values' => ['payment_status' => 'paid', 'payment_method' => 'gcash'],
+                'after_values' => ['payment_status' => 'paid', 'payment_method' => 'gcash', 'status' => $lockedBooking->status],
             ]);
+
+            if ($lockedBooking->status === 'confirmed' && $lockedBooking->wasChanged('status')) {
+                ActivityLog::create([
+                    'booking_id' => $lockedBooking->id,
+                    'user_id' => $actorId,
+                    'event' => 'booking_auto_confirmed',
+                    'description' => 'Booking automatically confirmed after full PayMongo payment and availability check.',
+                    'before_values' => ['status' => 'pending'],
+                    'after_values' => ['status' => 'confirmed'],
+                ]);
+            }
 
             return true;
         });
@@ -97,7 +125,7 @@ class PayMongoPaymentReconciler
             $booking->refresh()->loadMissing('user');
             $message = $booking->status === 'cancelled'
                 ? 'PayMongo confirmed your GCash payment, but the reservation is no longer active. Carolina staff will contact you to resolve the booking.'
-                : 'PayMongo confirmed your GCash payment. Carolina staff will still review your reservation.';
+                : 'PayMongo confirmed your full GCash payment and your reservation is confirmed.';
             $email = $booking->guest_email ?? $booking->user?->email;
 
             if ($email) {

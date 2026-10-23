@@ -4,6 +4,7 @@ use App\Mail\BookingUpdate;
 use App\Models\Booking;
 use App\Models\Payment;
 use App\Models\Room;
+use App\Models\RoomBlock;
 use App\Models\User;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Http;
@@ -148,10 +149,13 @@ test('a payment is recorded only after the server verifies PayMongo success', fu
 
     $this->withSession(['guest_booking_reference' => $booking->reference])
         ->get(route('bookings.paymongo.return', ['booking' => $booking, 'outcome' => 'success']))
-        ->assertRedirect(route('bookings.receipt', $booking));
+        ->assertRedirect(route('bookings.receipt', $booking))
+        ->assertSessionHas('success', fn ($message) => str_contains($message, 'reservation is confirmed'));
 
     expect(Payment::firstOrFail()->fresh()->status)->toBe('paid');
     expect($booking->fresh()->payment_status)->toBe('paid');
+    expect($booking->fresh()->status)->toBe('confirmed');
+    expect($booking->fresh()->hold_expires_at)->toBeNull();
 });
 
 test('a browser success return cannot mark an unverified payment as paid', function () {
@@ -172,6 +176,7 @@ test('a browser success return cannot mark an unverified payment as paid', funct
 
     expect(Payment::firstOrFail()->fresh()->status)->toBe('pending');
     expect($booking->fresh()->payment_status)->toBe('pending');
+    expect($booking->fresh()->status)->toBe('pending');
 });
 
 test('a signed PayMongo paid event records the full matching payment automatically', function () {
@@ -184,7 +189,28 @@ test('a signed PayMongo paid event records the full matching payment automatical
     $response->assertOk()->assertJsonPath('received', true);
     expect(Payment::firstOrFail()->fresh()->status)->toBe('paid');
     expect($booking->fresh()->payment_status)->toBe('paid');
-    Mail::assertSent(BookingUpdate::class, 1);
+    expect($booking->fresh()->status)->toBe('confirmed');
+    expect($booking->activityLogs()->where('event', 'booking_auto_confirmed')->count())->toBe(1);
+    Mail::assertSent(BookingUpdate::class, fn (BookingUpdate $mail) => str_contains($mail->messageLine, 'reservation is confirmed'));
+});
+
+test('a paid PayMongo booking with a conflicting room block is not auto-confirmed', function () {
+    Mail::fake();
+    $booking = payMongoBooking();
+    Payment::create(['booking_id' => $booking->id, 'amount' => 1000, 'method' => 'gcash', 'status' => 'pending', 'reference' => 'paymongo:cs_test_123']);
+    RoomBlock::create([
+        'room_id' => $booking->room_id,
+        'status' => 'maintenance',
+        'starts_at' => $booking->check_in_at,
+        'ends_at' => $booking->check_out_at,
+        'notes' => 'Manager override',
+    ]);
+
+    signedPayMongoWebhookRequest($this, payMongoWebhookPayload($booking))->assertOk();
+
+    expect($booking->fresh()->payment_status)->toBe('paid')
+        ->and($booking->fresh()->status)->toBe('cancelled')
+        ->and($booking->activityLogs()->where('event', 'booking_auto_confirmed')->count())->toBe(0);
 });
 
 test('a duplicate PayMongo paid event does not duplicate payment activity or email', function () {
@@ -198,6 +224,7 @@ test('a duplicate PayMongo paid event does not duplicate payment activity or ema
 
     expect(Payment::where('booking_id', $booking->id)->count())->toBe(1);
     expect($booking->activityLogs()->where('event', 'payment_paid')->count())->toBe(1);
+    expect($booking->activityLogs()->where('event', 'booking_auto_confirmed')->count())->toBe(1);
     Mail::assertSent(BookingUpdate::class, 1);
 });
 
@@ -214,6 +241,7 @@ test('an invalid PayMongo webhook signature cannot mark a booking paid', functio
 
     expect(Payment::firstOrFail()->fresh()->status)->toBe('pending');
     expect($booking->fresh()->payment_status)->toBe('pending');
+    expect($booking->fresh()->status)->toBe('pending');
 });
 
 test('a signed PayMongo event cannot mark a booking paid for a different amount', function () {
@@ -256,6 +284,7 @@ test('the guest return succeeds when the webhook already recorded the PayMongo p
 
     expect(Payment::where('booking_id', $booking->id)->count())->toBe(1);
     expect($booking->activityLogs()->where('event', 'payment_paid')->count())->toBe(1);
+    expect($booking->fresh()->status)->toBe('confirmed');
 });
 
 test('PayMongo payments can only be marked paid by a verified provider result', function () {
@@ -346,10 +375,11 @@ test('admins can verify a pending PayMongo checkout directly with PayMongo', fun
     $this->actingAsStaff($admin)->from(route('admin.bookings'))
         ->post(route('admin.bookings.payment.recheck-paymongo', $booking))
         ->assertRedirect(route('admin.bookings'))
-        ->assertSessionHas('success');
+        ->assertSessionHas('success', fn ($message) => str_contains($message, 'booking was confirmed automatically'));
 
     expect($payment->fresh()->status)->toBe('paid')
-        ->and($booking->fresh()->payment_status)->toBe('paid');
+        ->and($booking->fresh()->payment_status)->toBe('paid')
+        ->and($booking->fresh()->status)->toBe('confirmed');
     Mail::assertSent(BookingUpdate::class, 1);
 });
 

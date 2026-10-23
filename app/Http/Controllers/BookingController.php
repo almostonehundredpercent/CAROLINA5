@@ -419,7 +419,9 @@ class BookingController extends Controller
 
             return redirect()->route('bookings.receipt', $booking)->with('success', $booking->status === 'cancelled'
                 ? 'PayMongo confirmed the payment, but the reservation is no longer active. Contact Carolina for staff resolution.'
-                : 'GCash payment confirmed by PayMongo. Staff will still review your reservation.');
+                : ($booking->status === 'confirmed'
+                    ? 'GCash payment confirmed by PayMongo. Your reservation is confirmed.'
+                    : 'GCash payment confirmed by PayMongo. Contact Carolina for staff resolution.'));
         }
         if ($request->query('outcome') === 'cancelled') {
             return redirect()->route('bookings.receipt', $booking)->with('success', 'The GCash test checkout was cancelled. Your reservation remains pending.');
@@ -449,7 +451,9 @@ class BookingController extends Controller
 
         return redirect()->route('bookings.receipt', $booking)->with('success', $booking->status === 'cancelled'
             ? 'Test payment recorded, but this reservation is no longer held. Contact Carolina for staff resolution; your room was not re-reserved.'
-            : 'GCash test payment confirmed. Staff will still review your reservation.');
+            : ($booking->status === 'confirmed'
+                ? 'GCash test payment confirmed. Your reservation is confirmed.'
+                : 'GCash test payment confirmed. Contact Carolina for staff resolution.'));
     }
 
     public function cancel(Request $request, Booking $booking)

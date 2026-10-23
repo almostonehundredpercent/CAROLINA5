@@ -265,7 +265,9 @@ class AdminController extends Controller
 
         return back()->with('success', $booking->status === 'cancelled'
             ? 'PayMongo confirmed payment, but the reservation is no longer active. Carolina staff must resolve the booking.'
-            : 'PayMongo confirmed the full payment. The booking payment status has been updated automatically.');
+            : ($booking->status === 'confirmed'
+                ? 'PayMongo confirmed the full payment; the booking was confirmed automatically.'
+                : 'PayMongo confirmed the full payment. Carolina staff must resolve the booking.'));
     }
 
     /**
