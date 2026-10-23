@@ -19,60 +19,60 @@
         .booking-status-stack {
             display: flex;
             flex-wrap: wrap;
-            align-items: flex-start;
-            gap: 8px;
-            margin-bottom: 7px;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 6px;
         }
         .booking-status-stack .mini-status {
             display: inline-flex;
             align-items: center;
-            min-height: 34px;
-            padding: 7px 12px;
-            border: 1px solid transparent;
+            min-height: 29px;
+            padding: 5px 10px;
+            border: 1px solid;
             border-radius: 999px;
-            font-size: 14px;
-            font-weight: 800;
-            line-height: 1.2;
+            font-size: 13px;
+            font-weight: 700;
+            line-height: 1.25;
         }
         .booking-status-stack .mini-status.confirmed {
-            border-color: #86efac;
-            background: #dcfce7;
-            color: #14532d;
+            border-color: #c6dbc8;
+            background: #e6f1e7;
+            color: #285c36;
         }
         .booking-status-stack .booking-payment-status.paid {
-            border-color: #93c5fd;
-            background: #dbeafe;
-            color: #1e3a8a;
+            border-color: #ead4b2;
+            background: #fff0da;
+            color: #81531a;
         }
         .booking-status-stack .mini-status.pending {
-            border-color: #fcd34d;
-            background: #fef3c7;
-            color: #78350f;
+            border-color: #ead4ae;
+            background: #fff3df;
+            color: #83520e;
         }
         .booking-status-stack .mini-status.cancelled {
-            border-color: #fca5a5;
-            background: #fee2e2;
-            color: #7f1d1d;
+            border-color: #e7c5bf;
+            background: #f6e6e2;
+            color: #8e3f36;
         }
         html.dark-mode .booking-status-stack .mini-status.confirmed {
-            border-color: #22c55e;
-            background: #14532d;
-            color: #dcfce7;
+            border-color: #476b4e;
+            background: #26392a;
+            color: #cfe5d1;
         }
         html.dark-mode .booking-status-stack .booking-payment-status.paid {
-            border-color: #60a5fa;
-            background: #1e3a8a;
-            color: #dbeafe;
+            border-color: #76562f;
+            background: #3a2a1a;
+            color: #f3d6aa;
         }
         html.dark-mode .booking-status-stack .mini-status.pending {
-            border-color: #f59e0b;
-            background: #78350f;
-            color: #fef3c7;
+            border-color: #765b31;
+            background: #42321c;
+            color: #f1d4a1;
         }
         html.dark-mode .booking-status-stack .mini-status.cancelled {
-            border-color: #f87171;
-            background: #7f1d1d;
-            color: #fee2e2;
+            border-color: #79413b;
+            background: #422523;
+            color: #f3c7c0;
         }
         .booking-payment-method { display: block; }
         .booking-action-buttons {
@@ -233,8 +233,8 @@
                                         @php($paymentStatus = $booking->payment_status === 'refunded' ? 'refunded' : ($hasPaidPayMongoPayment ? 'paid' : ($booking->payment_status ?? 'pending')))
                                         @php($paymentStatusClass = match ($paymentStatus) { 'paid' => 'confirmed', 'refunded', 'failed' => 'cancelled', default => '' })
                                         <div class="booking-status-stack">
-                                            <span class="mini-status {{ $booking->status }}">{{ $booking->status === 'pending' ? 'Booking: Pending staff confirmation' : 'Booking: ' . ucfirst($booking->status) }}</span>
-                                            <span class="mini-status booking-payment-status {{ $paymentStatus }} {{ $paymentStatusClass }}">Payment: {{ ucfirst($paymentStatus) }}</span>
+                                            <span class="mini-status {{ $booking->status }}" aria-label="Booking status: {{ $booking->status === 'pending' ? 'Pending staff confirmation' : ucfirst($booking->status) }}">{{ $booking->status === 'pending' ? 'Pending staff confirmation' : ucfirst($booking->status) }}</span>
+                                            <span class="mini-status booking-payment-status {{ $paymentStatus }} {{ $paymentStatusClass }}" aria-label="Payment status: {{ ucfirst($paymentStatus) }}">{{ ucfirst($paymentStatus) }}</span>
                                         </div>
                                         <small class="booking-payment-method">{{ $hasPayMongoPayment ? 'PayMongo · GCash' : strtoupper($booking->payment_method ?? 'cash') }}</small>
                                         @if($booking->status === 'pending')
