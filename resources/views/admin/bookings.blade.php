@@ -19,16 +19,60 @@
         .booking-status-stack {
             display: flex;
             flex-wrap: wrap;
-            align-items: center;
-            gap: 6px;
-            margin-bottom: 5px;
+            align-items: flex-start;
+            gap: 8px;
+            margin-bottom: 7px;
         }
         .booking-status-stack .mini-status {
             display: inline-flex;
             align-items: center;
-            min-height: 23px;
-            padding: 4px 8px;
-            line-height: 1.1;
+            min-height: 34px;
+            padding: 7px 12px;
+            border: 1px solid transparent;
+            border-radius: 999px;
+            font-size: 14px;
+            font-weight: 800;
+            line-height: 1.2;
+        }
+        .booking-status-stack .mini-status.confirmed {
+            border-color: #86efac;
+            background: #dcfce7;
+            color: #14532d;
+        }
+        .booking-status-stack .booking-payment-status.paid {
+            border-color: #93c5fd;
+            background: #dbeafe;
+            color: #1e3a8a;
+        }
+        .booking-status-stack .mini-status.pending {
+            border-color: #fcd34d;
+            background: #fef3c7;
+            color: #78350f;
+        }
+        .booking-status-stack .mini-status.cancelled {
+            border-color: #fca5a5;
+            background: #fee2e2;
+            color: #7f1d1d;
+        }
+        html.dark-mode .booking-status-stack .mini-status.confirmed {
+            border-color: #22c55e;
+            background: #14532d;
+            color: #dcfce7;
+        }
+        html.dark-mode .booking-status-stack .booking-payment-status.paid {
+            border-color: #60a5fa;
+            background: #1e3a8a;
+            color: #dbeafe;
+        }
+        html.dark-mode .booking-status-stack .mini-status.pending {
+            border-color: #f59e0b;
+            background: #78350f;
+            color: #fef3c7;
+        }
+        html.dark-mode .booking-status-stack .mini-status.cancelled {
+            border-color: #f87171;
+            background: #7f1d1d;
+            color: #fee2e2;
         }
         .booking-payment-method { display: block; }
         .booking-action-buttons {
@@ -189,8 +233,8 @@
                                         @php($paymentStatus = $booking->payment_status === 'refunded' ? 'refunded' : ($hasPaidPayMongoPayment ? 'paid' : ($booking->payment_status ?? 'pending')))
                                         @php($paymentStatusClass = match ($paymentStatus) { 'paid' => 'confirmed', 'refunded', 'failed' => 'cancelled', default => '' })
                                         <div class="booking-status-stack">
-                                            <span class="mini-status {{ $booking->status }}">{{ $booking->status === 'pending' ? 'Pending staff confirmation' : ucfirst($booking->status) }}</span>
-                                            <span class="mini-status booking-payment-status {{ $paymentStatus }} {{ $paymentStatusClass }}">Payment {{ ucfirst($paymentStatus) }}</span>
+                                            <span class="mini-status {{ $booking->status }}">{{ $booking->status === 'pending' ? 'Booking: Pending staff confirmation' : 'Booking: ' . ucfirst($booking->status) }}</span>
+                                            <span class="mini-status booking-payment-status {{ $paymentStatus }} {{ $paymentStatusClass }}">Payment: {{ ucfirst($paymentStatus) }}</span>
                                         </div>
                                         <small class="booking-payment-method">{{ $hasPayMongoPayment ? 'PayMongo · GCash' : strtoupper($booking->payment_method ?? 'cash') }}</small>
                                         @if($booking->status === 'pending')

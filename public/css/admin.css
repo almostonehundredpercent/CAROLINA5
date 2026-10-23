@@ -3184,16 +3184,17 @@ html.dark-mode .bookings-page .booking-pagination-buttons > .is-disabled {
     font-size: 13px;
 }
 .bookings-page .booking-status-stack {
-    gap: 6px;
-    margin-bottom: 6px;
+    gap: 8px;
+    margin-bottom: 7px;
 }
 .bookings-page .booking-status-stack .mini-status {
-    min-height: 27px;
-    padding: 5px 9px;
-    font-size: 12px;
+    min-height: 34px;
+    padding: 7px 12px;
+    font-size: 14px;
 }
 .bookings-page .booking-payment-method {
-    font-size: 13px !important;
+    font-size: 14px !important;
+    font-weight: 600;
 }
 .bookings-page .hold-expiry {
     font-size: 12px;
