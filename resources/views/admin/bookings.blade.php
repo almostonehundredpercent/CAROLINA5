@@ -26,11 +26,11 @@
         .booking-status-stack .mini-status {
             display: inline-flex;
             align-items: center;
-            min-height: 29px;
-            padding: 5px 10px;
+            min-height: 32px;
+            padding: 6px 11px;
             border: 1px solid;
             border-radius: 999px;
-            font-size: 13px;
+            font-size: 14px;
             font-weight: 700;
             line-height: 1.25;
         }

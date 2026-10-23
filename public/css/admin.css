@@ -3188,9 +3188,9 @@ html.dark-mode .bookings-page .booking-pagination-buttons > .is-disabled {
     margin-bottom: 6px;
 }
 .bookings-page .booking-status-stack .mini-status {
-    min-height: 29px;
-    padding: 5px 10px;
-    font-size: 13px;
+    min-height: 32px;
+    padding: 6px 11px;
+    font-size: 14px;
 }
 .bookings-page .booking-payment-method {
     font-size: 13px !important;
