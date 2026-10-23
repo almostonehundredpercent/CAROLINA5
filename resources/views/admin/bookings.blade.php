@@ -135,8 +135,8 @@
                         @endforeach
                     </select>
                     <input type="date" name="arrival" value="{{ request('arrival') }}" aria-label="Arrival or departure date">
-                    <select name="per_page" class="booking-page-size" aria-label="Bookings per page">
-                        @foreach([15, 25, 50, 100] as $pageSize)
+                    <select name="per_page" class="booking-page-size" aria-label="Bookings per page" onchange="this.form.requestSubmit()">
+                        @foreach([5, 15, 25, 50, 100] as $pageSize)
                             <option value="{{ $pageSize }}" @selected($individualBookings->perPage() === $pageSize)>{{ $pageSize }} per page</option>
                         @endforeach
                     </select>
@@ -144,10 +144,12 @@
                     @if(request()->hasAny(['search', 'status', 'arrival']))<a href="{{ route('admin.bookings') }}">Clear</a>@endif
                 </form>
 
-                <div class="booking-results-summary" role="status" aria-live="polite">
+                <div class="booking-results-summary" id="booking-results" role="status" aria-live="polite">
                     <span>Showing {{ $individualBookings->firstItem() ?? 0 }}-{{ $individualBookings->lastItem() ?? 0 }} of {{ $individualBookings->total() }} bookings</span>
                     <span>Page {{ $individualBookings->currentPage() }} of {{ $individualBookings->lastPage() }}</span>
                 </div>
+
+                @include('admin.partials.booking-pagination')
 
                 <div class="admin-table-wrap">
                     <table class="booking-table">
@@ -286,9 +288,7 @@
                     </table>
                 </div>
 
-                @if($individualBookings->hasPages())
-                    <div style="margin-top:16px">{{ $individualBookings->links() }}</div>
-                @endif
+                @include('admin.partials.booking-pagination')
             </section>
 
             <section class="panel" style="margin-top:20px">

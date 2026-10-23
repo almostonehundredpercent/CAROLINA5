@@ -496,9 +496,9 @@ class AdminController extends Controller
             $bookingQuery->where(fn ($query) => $query->where('reference', 'like', $search)->orWhere('guest_name', 'like', $search)->orWhere('guest_email', 'like', $search));
         }
 
-        $perPage = $request->integer('per_page', 50);
-        if (! in_array($perPage, [15, 25, 50, 100], true)) {
-            $perPage = 50;
+        $perPage = $request->integer('per_page', 5);
+        if (! in_array($perPage, [5, 15, 25, 50, 100], true)) {
+            $perPage = 5;
         }
 
         return view('admin.bookings', [

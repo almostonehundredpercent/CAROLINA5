@@ -70,14 +70,14 @@ test('check-in confirmation is rendered in the admin interface on front desk and
     }
 });
 
-test('bookings page shows all records within the selected page size and reports the visible range', function () {
+test('bookings page navigation reaches every record with the default page size', function () {
     Carbon::setTestNow('2026-10-23 12:00:00');
 
     try {
         $admin = User::factory()->create(['is_admin' => true]);
         $guest = User::factory()->create(['name' => 'Reservation guest']);
 
-        for ($index = 1; $index <= 16; $index++) {
+        for ($index = 1; $index <= 9; $index++) {
             $room = adminDayRoom('booking-list-room-'.$index);
             $timestamp = now()->addSeconds($index);
             adminDayBooking($room, $guest, [
@@ -88,19 +88,32 @@ test('bookings page shows all records within the selected page size and reports 
             ]);
         }
 
-        $this->actingAsStaff($admin)
+        $firstPage = $this->actingAsStaff($admin)
             ->get(route('admin.bookings'))
             ->assertOk()
-            ->assertSee('Reservation 1')
-            ->assertSee('Reservation 16')
-            ->assertSee('Showing 1-16 of 16 bookings')
+            ->assertSee('Showing 1-5 of 9 bookings')
+            ->assertSee('Page 1 of 2')
+            ->assertSee('booking_page=2', false)
+            ->assertSee('Next')
             ->assertSee('name="per_page"', false);
+        preg_match_all('/reservation\d+@example\.test/', $firstPage->getContent(), $firstPageEmails);
+        expect($firstPageEmails[0])->toHaveCount(5);
+
+        $secondPage = $this->actingAsStaff($admin)
+            ->get(route('admin.bookings', ['booking_page' => 2]))
+            ->assertOk()
+            ->assertSee('Showing 6-9 of 9 bookings')
+            ->assertSee('Page 2 of 2')
+            ->assertSee('Previous');
+        preg_match_all('/reservation\d+@example\.test/', $secondPage->getContent(), $secondPageEmails);
+        expect($secondPageEmails[0])->toHaveCount(4);
+        expect(array_unique(array_merge($firstPageEmails[0], $secondPageEmails[0])))->toHaveCount(9);
     } finally {
         Carbon::setTestNow();
     }
 });
 
-test('bookings page honors a smaller page-size choice and identifies remaining records', function () {
+test('bookings page keeps a chosen page size while navigating and can show all records', function () {
     Carbon::setTestNow('2026-10-23 12:00:00');
 
     try {
@@ -124,6 +137,9 @@ test('bookings page honors a smaller page-size choice and identifies remaining r
             ->assertSee('Showing 1-15 of 16 bookings')
             ->assertSee('Page 1 of 2')
             ->assertSee('booking_page=2', false);
+        preg_match('/href="([^"]*booking_page=2[^"]*)"/', $firstPage->getContent(), $nextPageLink);
+        parse_str(parse_url(html_entity_decode($nextPageLink[1]), PHP_URL_QUERY), $nextPageQuery);
+        expect($nextPageQuery)->toMatchArray(['per_page' => '15', 'booking_page' => '2']);
         preg_match_all('/reservation\d+@example\.test/', $firstPage->getContent(), $firstPageEmails);
         expect($firstPageEmails[0])->toHaveCount(15);
 
@@ -135,6 +151,14 @@ test('bookings page honors a smaller page-size choice and identifies remaining r
         preg_match_all('/reservation\d+@example\.test/', $secondPage->getContent(), $secondPageEmails);
         expect($secondPageEmails[0])->toHaveCount(1);
         expect(array_diff($secondPageEmails[0], $firstPageEmails[0]))->toBe($secondPageEmails[0]);
+
+        $allOnOnePage = $this->actingAsStaff($admin)
+            ->get(route('admin.bookings', ['per_page' => 50]))
+            ->assertOk()
+            ->assertSee('Showing 1-16 of 16 bookings')
+            ->assertSee('Page 1 of 1');
+        preg_match_all('/reservation\d+@example\.test/', $allOnOnePage->getContent(), $allPageEmails);
+        expect($allPageEmails[0])->toHaveCount(16);
     } finally {
         Carbon::setTestNow();
     }

@@ -2833,6 +2833,73 @@ tbody tr:hover {
     }
 }
 
+.bookings-page #booking-results {
+    scroll-margin-top: 18px;
+}
+.bookings-page .booking-pagination {
+    display: flex;
+    justify-content: flex-end;
+    margin: 10px 0 14px;
+}
+.bookings-page .admin-table-wrap + .booking-pagination {
+    margin: 16px 0 0;
+}
+.bookings-page .booking-pagination-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 6px;
+}
+.bookings-page .booking-pagination-buttons > a,
+.bookings-page .booking-pagination-buttons > span {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 40px;
+    min-height: 40px;
+    padding: 8px 12px;
+    border: 1px solid;
+    border-radius: 9px;
+    font-size: 13px;
+    font-weight: 700;
+    text-decoration: none;
+    line-height: 1;
+}
+html:not(.dark-mode) .bookings-page .booking-pagination-buttons > a,
+html:not(.dark-mode) .bookings-page .booking-pagination-buttons > span {
+    border-color: #d9c8b7;
+    background: #fffdf9;
+    color: #423022;
+}
+html.dark-mode .bookings-page .booking-pagination-buttons > a,
+html.dark-mode .bookings-page .booking-pagination-buttons > span {
+    border-color: rgba(255, 220, 182, 0.27);
+    background: rgba(255, 255, 255, 0.07);
+    color: #fff1e3;
+}
+.bookings-page .booking-pagination-buttons > a:hover,
+.bookings-page .booking-pagination-buttons > a:focus-visible {
+    border-color: #d87900 !important;
+    outline-color: #d87900;
+}
+html:not(.dark-mode) .bookings-page .booking-pagination-buttons > .is-current,
+html.dark-mode .bookings-page .booking-pagination-buttons > .is-current {
+    border-color: #b96000;
+    background: #b96000;
+    color: #fff;
+}
+html:not(.dark-mode) .bookings-page .booking-pagination-buttons > .is-disabled,
+html.dark-mode .bookings-page .booking-pagination-buttons > .is-disabled {
+    opacity: 0.48;
+    cursor: not-allowed;
+}
+@media (max-width: 700px) {
+    .bookings-page .booking-pagination,
+    .bookings-page .booking-pagination-buttons {
+        justify-content: flex-start;
+    }
+}
+
 /* Bookings: reclaim page space while keeping labels, filters, and actions easy to scan. */
 .bookings-page .admin-main {
     width: auto !important;
