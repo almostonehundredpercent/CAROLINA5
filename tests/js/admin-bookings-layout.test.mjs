@@ -26,8 +26,10 @@ async function render(width, dark) {
         <body class="bookings-page"><div class="admin-shell"><aside class="admin-sidebar"></aside>
             <main class="admin-main">
                 <section class="panel bookings-reservations">
+                    <div class="panel-heading"><div><p class="admin-kicker">ALL RESERVATIONS</p><h2>Review requests</h2><p class="booking-note">Payments update automatically when PayMongo confirms them. Confirming a request checks room availability again.</p></div><div class="booking-heading-actions"><a class="status-select" href="#">Export CSV</a><span class="pill">9 total</span></div></div>
                     <form class="booking-filters"><input placeholder="Guest name, email, or reference"><select><option>All statuses</option></select><input type="date"><select class="booking-page-size"><option>5 per page</option></select><button>Filter</button></form>
-                    <nav class="booking-pagination" aria-label="Booking page navigation"><div class="booking-pagination-buttons"><span class="is-disabled">First</span><span class="is-disabled">Previous</span><span class="is-current">1</span><a href="#">2</a><a href="#">Next</a><a href="#">Last</a></div></nav>
+                    <div class="booking-results-summary"><span>Showing 1-5 of 9 bookings</span><span>Page 1 of 2</span></div>
+                    <nav class="booking-pagination" aria-label="Booking page navigation"><div class="booking-pagination-buttons"><span class="booking-page-first is-disabled">First</span><span class="booking-page-previous is-disabled">Previous</span><span class="booking-page-number is-current">1</span><a class="booking-page-number" href="#">2</a><a class="booking-page-next" href="#">Next</a><a class="booking-page-last" href="#">Last</a></div></nav>
                     <div class="admin-table-wrap"><table class="booking-table"><colgroup>
                         <col class="booking-column-guest"><col class="booking-column-reference"><col class="booking-column-stay"><col class="booking-column-total"><col class="booking-column-status"><col class="booking-column-actions">
                     </colgroup><thead><tr><th>Guest</th><th>Reference</th><th>Room &amp; stay</th><th>Total</th><th>Status</th><th>Actions</th></tr></thead>
@@ -37,7 +39,7 @@ async function render(width, dark) {
                         <td data-label="Status"><div class="booking-status-stack"><span class="mini-status confirmed">Confirmed</span><span class="mini-status booking-payment-status paid">Payment Paid</span></div><small class="booking-payment-method">PayMongo · GCash</small></td>
                         <td class="booking-actions-cell" data-label="Actions"><div class="booking-actions"><div class="booking-action-buttons"><button class="status-select">Mark unpaid</button><button class="status-select cancelled">Cancel</button></div><div class="booking-action-note"><span>Refunds aren’t available within 3 days of check-in.</span></div></div></td>
                     </tr></tbody></table></div>
-                    <nav class="booking-pagination" aria-label="Booking page navigation"><div class="booking-pagination-buttons"><span class="is-disabled">First</span><span class="is-disabled">Previous</span><span class="is-current">1</span><a href="#">2</a><a href="#">Next</a><a href="#">Last</a></div></nav>
+                    <nav class="booking-pagination" aria-label="Booking page navigation"><div class="booking-pagination-buttons"><span class="booking-page-first is-disabled">First</span><span class="booking-page-previous is-disabled">Previous</span><span class="booking-page-number is-current">1</span><a class="booking-page-number" href="#">2</a><a class="booking-page-next" href="#">Next</a><a class="booking-page-last" href="#">Last</a></div></nav>
                 </section>
             </main></div></body></html>`);
     return page;
@@ -70,10 +72,20 @@ for (const [width, dark] of [[1600, false], [1600, true], [768, false], [768, tr
                     guestLabel: getComputedStyle(document.querySelector('.booking-table td'), '::before').content,
                     pageOverflow: document.documentElement.scrollWidth > innerWidth,
                     actionRight: document.querySelector('.booking-action-buttons button').getBoundingClientRect().right,
-                    navigationHeight: document.querySelector('.booking-pagination a').getBoundingClientRect().height,
+                    navigationHeight: document.querySelector('.booking-page-next').getBoundingClientRect().height,
                     referenceWrap: getComputedStyle(document.querySelector('.booking-reference-cell')).whiteSpace,
                     filtersFit: [...document.querySelectorAll('.booking-filters input, .booking-filters select, .booking-filters button')]
                         .every(control => control.getBoundingClientRect().right <= innerWidth),
+                    headingIsStacked: document.querySelector('.booking-heading-actions').getBoundingClientRect().top >=
+                        document.querySelector('.panel-heading .booking-note').getBoundingClientRect().bottom,
+                    exportIsSingleLine: getComputedStyle(document.querySelector('.booking-heading-actions a')).whiteSpace === 'nowrap',
+                    exportHeight: document.querySelector('.booking-heading-actions a').getBoundingClientRect().height,
+                    filterAfterHeading: document.querySelector('.booking-filters').getBoundingClientRect().top >=
+                        document.querySelector('.booking-heading-actions').getBoundingClientRect().bottom,
+                    visibleNavButtons: [...document.querySelectorAll('.booking-pagination:first-of-type .booking-pagination-buttons > *')]
+                        .filter(control => getComputedStyle(control).display !== 'none').map(control => control.textContent.trim()),
+                    navButtonTops: [...document.querySelectorAll('.booking-pagination:first-of-type .booking-pagination-buttons > *')]
+                        .filter(control => getComputedStyle(control).display !== 'none').map(control => control.getBoundingClientRect().top),
                 };
             });
 
@@ -97,6 +109,12 @@ for (const [width, dark] of [[1600, false], [1600, true], [768, false], [768, tr
                 assert.ok(metrics.navigationHeight >= 44, 'page navigation should be easy to tap');
                 assert.equal(metrics.referenceWrap, 'normal', 'references should wrap on narrow cards');
                 assert.ok(metrics.filtersFit, 'booking filters should fit on screen');
+                assert.ok(metrics.headingIsStacked, 'export controls should have their own row below the heading');
+                assert.ok(metrics.exportIsSingleLine, 'Export CSV should stay on one line');
+                assert.ok(metrics.exportHeight >= 44, 'export should be easy to tap');
+                assert.ok(metrics.filterAfterHeading, 'filters should not collide with the export controls');
+                assert.deepEqual(metrics.visibleNavButtons, ['Previous', 'Next'], 'mobile pagination should show only the essential controls');
+                assert.equal(new Set(metrics.navButtonTops).size, 1, 'mobile pagination should fit on one row');
             }
         } finally {
             await page.close();

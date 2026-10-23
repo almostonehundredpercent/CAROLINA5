@@ -95,6 +95,9 @@ test('bookings page navigation reaches every record with the default page size',
             ->assertSee('Page 1 of 2')
             ->assertSee('booking_page=2', false)
             ->assertSee('Next')
+            ->assertSee('class="booking-heading-actions"', false)
+            ->assertSee('class="booking-page-previous is-disabled"', false)
+            ->assertSee('class="booking-page-next"', false)
             ->assertSee('data-label="Guest"', false)
             ->assertSee('data-label="Actions"', false)
             ->assertSee('name="per_page"', false);

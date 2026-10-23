@@ -3048,6 +3048,16 @@ html.dark-mode .bookings-page .booking-pagination-buttons > .is-disabled {
 .bookings-page .bookings-reservations .panel-heading h2 {
     font-size: 22px !important;
 }
+.bookings-page .booking-heading-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+}
+.bookings-page .booking-heading-actions .status-select {
+    min-height: 44px !important;
+    white-space: nowrap;
+}
 .bookings-page .bookings-reservations .booking-note {
     max-width: 780px;
     margin: 6px 0 0;
@@ -3245,6 +3255,30 @@ html.dark-mode .bookings-page .booking-pagination-buttons > .is-disabled {
 }
 
 @media (max-width: 900px) {
+    .bookings-page .bookings-reservations .panel-heading {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 14px;
+    }
+    .bookings-page .booking-heading-actions {
+        width: 100%;
+        justify-content: space-between;
+    }
+    .bookings-page .booking-pagination-buttons {
+        width: 100%;
+        max-width: 360px;
+        flex-wrap: nowrap;
+    }
+    .bookings-page .booking-pagination-buttons > .booking-page-first,
+    .bookings-page .booking-pagination-buttons > .booking-page-number,
+    .bookings-page .booking-pagination-buttons > .booking-page-last {
+        display: none;
+    }
+    .bookings-page .booking-pagination-buttons > .booking-page-previous,
+    .bookings-page .booking-pagination-buttons > .booking-page-next {
+        flex: 1 1 0;
+        min-width: 0;
+    }
     .bookings-page .booking-table {
         min-width: 0 !important;
     }

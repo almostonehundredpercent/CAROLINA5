@@ -123,7 +123,7 @@
                         <h2>Review requests</h2>
                         <p class="booking-note">Payments update automatically when PayMongo confirms them. Confirming a request checks room availability again.</p>
                     </div>
-                    <div><a class="status-select" href="{{ route('admin.bookings.export', request()->query()) }}">Export CSV</a> <span class="pill">{{ $individualBookings->total() }} total</span></div>
+                    <div class="booking-heading-actions"><a class="status-select" href="{{ route('admin.bookings.export', request()->query()) }}">Export CSV</a><span class="pill">{{ $individualBookings->total() }} total</span></div>
                 </div>
 
                 <form class="booking-filters" method="GET" aria-label="Filter bookings">
