@@ -95,6 +95,8 @@ test('bookings page navigation reaches every record with the default page size',
             ->assertSee('Page 1 of 2')
             ->assertSee('booking_page=2', false)
             ->assertSee('Next')
+            ->assertSee('data-label="Guest"', false)
+            ->assertSee('data-label="Actions"', false)
             ->assertSee('name="per_page"', false);
         preg_match_all('/reservation\d+@example\.test/', $firstPage->getContent(), $firstPageEmails);
         expect($firstPageEmails[0])->toHaveCount(5);

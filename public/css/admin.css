@@ -2833,6 +2833,127 @@ tbody tr:hover {
     }
 }
 
+/* Bookings become self-contained cards before the table needs sideways scrolling. */
+@media (max-width: 900px) {
+    .bookings-page .admin-table-wrap {
+        overflow: visible;
+        border: 0;
+        background: transparent !important;
+    }
+    .bookings-page .booking-table,
+    .bookings-page .booking-table tbody {
+        display: block;
+        width: 100%;
+        min-width: 0 !important;
+    }
+    .bookings-page .booking-table colgroup,
+    .bookings-page .booking-table thead {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip-path: inset(50%);
+        white-space: nowrap;
+    }
+    .bookings-page .booking-table tbody tr {
+        display: grid;
+        min-width: 0;
+        gap: 0;
+        margin-bottom: 12px;
+        padding: 7px 14px;
+        border: 1px solid;
+        border-radius: 14px;
+        overflow: hidden;
+    }
+    .bookings-page .booking-table tbody td {
+        display: block;
+        min-width: 0;
+        padding: 9px 0 !important;
+        white-space: normal !important;
+    }
+    .bookings-page .booking-table tbody td:first-child {
+        border-top: 0 !important;
+    }
+    .bookings-page .booking-table tbody td::before {
+        content: attr(data-label);
+        display: block;
+        margin-bottom: 5px;
+        font-size: 11px;
+        font-weight: 800;
+        line-height: 1.25;
+        letter-spacing: 0.07em;
+        text-transform: uppercase;
+    }
+    .bookings-page .booking-reference-cell,
+    .bookings-page .booking-total-cell {
+        white-space: normal !important;
+    }
+    .bookings-page .booking-reference-cell code {
+        overflow-wrap: anywhere;
+    }
+    .bookings-page .booking-action-buttons {
+        width: 100%;
+    }
+    .bookings-page .booking-action-buttons form {
+        flex: 1 1 calc(50% - 7px);
+        min-width: 0;
+    }
+    .bookings-page .booking-action-buttons .status-select {
+        width: 100%;
+        min-height: 44px !important;
+    }
+    .bookings-page .booking-action-buttons .booking-note {
+        flex: 1 1 100%;
+    }
+    .bookings-page .booking-action-note,
+    .bookings-page .refund-panel {
+        width: 100%;
+        max-width: none;
+    }
+    .bookings-page .refund-panel summary {
+        display: flex;
+        align-items: center;
+        min-height: 44px;
+    }
+    .bookings-page .refund-form {
+        grid-template-columns: minmax(0, 1fr);
+    }
+    .bookings-page .refund-form input,
+    .bookings-page .refund-form button {
+        min-height: 44px;
+    }
+    .bookings-page .booking-pagination-buttons > a,
+    .bookings-page .booking-pagination-buttons > span {
+        min-width: 44px;
+        min-height: 44px;
+    }
+    html:not(.dark-mode) .bookings-page .booking-table tbody tr {
+        border-color: #dbc8b6;
+        background: #fffdf9;
+        box-shadow: 0 5px 16px rgba(61, 35, 16, 0.07);
+    }
+    html:not(.dark-mode) .bookings-page .booking-table tbody td::before {
+        color: #785338;
+    }
+    html.dark-mode .bookings-page .booking-table tbody tr {
+        border-color: rgba(255, 210, 163, 0.3);
+        background: linear-gradient(145deg, #38251b, #211712);
+    }
+    html.dark-mode .bookings-page .booking-table tbody td::before {
+        color: #e6ad76;
+    }
+    .bookings-page .booking-table .booking-empty-row {
+        display: block;
+    }
+    .bookings-page .booking-table .booking-empty-row td {
+        text-align: center;
+        border-top: 0 !important;
+    }
+    .bookings-page .booking-table .booking-empty-row td::before {
+        content: none;
+    }
+}
+
 .bookings-page #booking-results {
     scroll-margin-top: 18px;
 }
@@ -2855,8 +2976,8 @@ tbody tr:hover {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-width: 40px;
-    min-height: 40px;
+    min-width: 44px;
+    min-height: 44px;
     padding: 8px 12px;
     border: 1px solid;
     border-radius: 9px;
@@ -3056,7 +3177,7 @@ html.dark-mode .bookings-page .booking-pagination-buttons > .is-disabled {
     gap: 7px;
 }
 .bookings-page .booking-action-buttons .status-select {
-    min-height: 42px !important;
+    min-height: 44px !important;
     padding: 9px 13px !important;
     font-size: 13px !important;
 }
@@ -3121,8 +3242,15 @@ html.dark-mode .bookings-page .booking-pagination-buttons > .is-disabled {
         width: 100% !important;
         min-width: 0;
     }
+}
+
+@media (max-width: 900px) {
     .bookings-page .booking-table {
-        min-width: 1180px !important;
+        min-width: 0 !important;
+    }
+    .bookings-page .booking-reference-cell,
+    .bookings-page .booking-total-cell {
+        white-space: normal !important;
     }
 }
 

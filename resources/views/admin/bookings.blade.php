@@ -167,7 +167,7 @@
                         <tbody>
                             @forelse($individualBookings as $booking)
                                 <tr>
-                                    <td>
+                                    <td data-label="Guest">
                                         <b>{{ $booking->guest_name ?? $booking->user?->name ?? 'Guest' }}</b>
                                         <small>{{ $booking->guest_email ?? $booking->user?->email ?? 'No email' }}</small>
                                         <small>{{ $booking->guest_phone ?? 'No phone' }}</small>
@@ -175,13 +175,13 @@
                                             <small>{{ $booking->children_count ? $booking->children_count . ' child' . ($booking->children_count > 1 ? 'ren' : '') : 'No children' }} · {{ $booking->pets_count ? $booking->pets_count . ' pet' . ($booking->pets_count > 1 ? 's' : '') : 'No pets' }}</small>
                                         @endif
                                     </td>
-                                    <td class="booking-reference-cell"><code>{{ $booking->reference }}</code></td>
-                                    <td class="booking-stay-cell">
+                                    <td class="booking-reference-cell" data-label="Reference"><code>{{ $booking->reference }}</code></td>
+                                    <td class="booking-stay-cell" data-label="Room &amp; stay">
                                         <b>{{ $booking->room?->name ?? 'Room removed' }}</b>
                                         <small>{{ $booking->check_in_at?->format('M j, g A') ?? $booking->check_in->format('M j') }} to {{ $booking->check_out_at?->format('M j, g A') ?? $booking->check_out->format('M j, Y') }}</small>
                                     </td>
-                                    <td class="booking-total-cell">₱{{ number_format($booking->total_amount, 2) }}</td>
-                                    <td>
+                                    <td class="booking-total-cell" data-label="Total">₱{{ number_format($booking->total_amount, 2) }}</td>
+                                    <td data-label="Status">
                                         @php($payMongoPayments = $booking->payments->filter(fn ($payment) => $payment->method === 'gcash' && str_starts_with((string) $payment->reference, 'paymongo:'))->sortByDesc('id'))
                                         @php($payMongoPayment = $payMongoPayments->first())
                                         @php($hasPayMongoPayment = $payMongoPayments->isNotEmpty())
@@ -197,7 +197,7 @@
                                             <span class="hold-expiry">Availability is rechecked before confirmation</span>
                                         @endif
                                     </td>
-                                    <td class="booking-actions-cell">
+                                    <td class="booking-actions-cell" data-label="Actions">
                                         <div class="booking-actions">
                                             @php($refundableAmount = max(0, (float) $booking->payments->where('status', 'paid')->sum('amount') - (float) $booking->payments->where('status', 'refunded')->sum('amount')))
                                             @php($refundPolicyEligible = $booking->isRefundEligible())
@@ -282,7 +282,7 @@
                                     </td>
                                 </tr>
                             @empty
-                                <tr><td colspan="6" class="no-bookings">No reservations yet.</td></tr>
+                                <tr class="booking-empty-row"><td colspan="6" class="no-bookings">No reservations yet.</td></tr>
                             @endforelse
                         </tbody>
                     </table>
