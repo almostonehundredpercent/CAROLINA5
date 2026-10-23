@@ -26,6 +26,7 @@
         title.textContent = form.dataset.confirmTitle || 'Please confirm';
         message.textContent = form.dataset.confirmMessage || 'Continue with this action?';
         acceptButton.textContent = form.dataset.confirmAction || 'Continue';
+        cancelButton.textContent = form.dataset.confirmDismiss || 'Cancel';
         if (form.dataset.confirmKicker) kicker.textContent = form.dataset.confirmKicker;
         if (form.dataset.confirmIcon) mark.textContent = form.dataset.confirmIcon;
         dialog.showModal();

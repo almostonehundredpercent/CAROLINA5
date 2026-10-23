@@ -249,7 +249,14 @@
                                                     @endif
 
                                                     @if($booking->status !== 'cancelled' && ! ($booking->checked_in_at && ! $booking->checked_out_at))
-                                                        <form method="POST" action="{{ route('admin.bookings.update', $booking) }}" onsubmit="return confirm('Cancel this booking?')">
+                                                        <form method="POST" action="{{ route('admin.bookings.update', $booking) }}"
+                                                            data-admin-confirm
+                                                            data-confirm-kicker="BOOKING CANCELLATION"
+                                                            data-confirm-icon="!"
+                                                            data-confirm-title="Cancel this booking?"
+                                                            data-confirm-message="Cancel booking {{ $booking->reference }} for {{ $booking->guest_name ?? $booking->user?->name ?? 'this guest' }}? This releases the room time. Refunds must be handled separately."
+                                                            data-confirm-action="Cancel booking"
+                                                            data-confirm-dismiss="Keep booking">
                                                             @csrf
                                                             @method('PATCH')
                                                             <input type="hidden" name="status" value="cancelled">

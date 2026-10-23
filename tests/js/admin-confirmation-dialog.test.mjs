@@ -107,3 +107,33 @@ test('the shared dialog displays payment-specific confirmation details', async (
         await page.close();
     }
 });
+
+test('booking cancellation offers Keep booking and only submits after explicit approval', async () => {
+    const page = await pageWithCheckInForm();
+    try {
+        await page.locator('form').evaluate(form => {
+            form.dataset.confirmTitle = 'Cancel this booking?';
+            form.dataset.confirmMessage = 'Cancel booking CAR-123 for Jordan Lee? Refunds must be handled separately.';
+            form.dataset.confirmAction = 'Cancel booking';
+            form.dataset.confirmDismiss = 'Keep booking';
+            form.dataset.confirmKicker = 'BOOKING CANCELLATION';
+            form.dataset.confirmIcon = '!';
+            form.querySelector('button').textContent = 'Cancel booking';
+        });
+
+        await page.getByRole('button', { name: 'Cancel booking', exact: true }).click();
+        const dialog = page.getByRole('dialog', { name: 'Cancel this booking?' });
+        await dialog.waitFor({ state: 'visible' });
+        assert.match(await dialog.innerText(), /Refunds must be handled separately/);
+        assert.equal(await dialog.getByRole('button', { name: 'Keep booking' }).count(), 1);
+        await dialog.getByRole('button', { name: 'Keep booking' }).click();
+        assert.equal(await page.locator('#submit-count').textContent(), '0');
+
+        await page.getByRole('button', { name: 'Cancel booking', exact: true }).click();
+        await dialog.getByRole('button', { name: 'Cancel booking' }).click();
+        await page.waitForFunction(() => document.querySelector('#submit-count').textContent === '1');
+        assert.equal(await page.evaluate(() => window.nativeConfirmCalls), 0);
+    } finally {
+        await page.close();
+    }
+});

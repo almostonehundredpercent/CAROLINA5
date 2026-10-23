@@ -70,6 +70,25 @@ test('check-in confirmation is rendered in the admin interface on front desk and
     }
 });
 
+test('booking cancellation uses the in-page confirmation and explains refunds are separate', function () {
+    $admin = User::factory()->create(['is_admin' => true]);
+    $guest = User::factory()->create(['name' => 'Jordan Lee']);
+    $room = adminDayRoom('cancel-confirmation-room');
+    $booking = adminDayBooking($room, $guest, ['status' => 'confirmed']);
+
+    $this->actingAsStaff($admin)
+        ->get(route('admin.bookings'))
+        ->assertOk()
+        ->assertSee('data-confirm-kicker="BOOKING CANCELLATION"', false)
+        ->assertSee('data-confirm-icon="!"', false)
+        ->assertSee('data-confirm-title="Cancel this booking?"', false)
+        ->assertSee('data-confirm-action="Cancel booking"', false)
+        ->assertSee('data-confirm-dismiss="Keep booking"', false)
+        ->assertSee('Refunds must be handled separately.', false)
+        ->assertSee($booking->reference)
+        ->assertDontSee('onsubmit="return confirm(\'Cancel this booking?\')"', false);
+});
+
 test('bookings page navigation reaches every record with the default page size', function () {
     Carbon::setTestNow('2026-10-23 12:00:00');
 
