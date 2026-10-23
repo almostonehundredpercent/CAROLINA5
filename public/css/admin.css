@@ -2965,6 +2965,11 @@ tbody tr:hover {
 .bookings-page .admin-table-wrap + .booking-pagination {
     margin: 16px 0 0;
 }
+@media (min-width: 901px) {
+    .bookings-page .admin-table-wrap + .booking-pagination {
+        display: none;
+    }
+}
 .bookings-page .booking-pagination-buttons {
     display: flex;
     flex-wrap: wrap;

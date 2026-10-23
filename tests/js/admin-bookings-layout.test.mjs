@@ -86,6 +86,8 @@ for (const [width, dark] of [[1600, false], [1600, true], [768, false], [768, tr
                         .filter(control => getComputedStyle(control).display !== 'none').map(control => control.textContent.trim()),
                     navButtonTops: [...document.querySelectorAll('.booking-pagination:first-of-type .booking-pagination-buttons > *')]
                         .filter(control => getComputedStyle(control).display !== 'none').map(control => control.getBoundingClientRect().top),
+                    visiblePaginationCount: [...document.querySelectorAll('.booking-pagination')]
+                        .filter(nav => getComputedStyle(nav).display !== 'none').length,
                 };
             });
 
@@ -98,8 +100,12 @@ for (const [width, dark] of [[1600, false], [1600, true], [768, false], [768, tr
             assert.ok(metrics.buttonHeight >= 42, `action target is ${metrics.buttonHeight}px high`);
             assert.ok(metrics.filterText >= 14, `filter text is ${metrics.filterText}px`);
             assert.ok(metrics.filterHeight >= 44, `filter target is ${metrics.filterHeight}px high`);
-            if (!metrics.mobileViewport) assert.ok(metrics.actionWidth >= 280, `actions column is only ${metrics.actionWidth}px wide`);
+            if (!metrics.mobileViewport) {
+                assert.ok(metrics.actionWidth >= 280, `actions column is only ${metrics.actionWidth}px wide`);
+                assert.equal(metrics.visiblePaginationCount, 1, 'desktop should show one pagination bar');
+            }
             if (metrics.mobileViewport) {
+                assert.equal(metrics.visiblePaginationCount, 2, 'long mobile cards should keep both page controls');
                 assert.equal(metrics.rowDisplay, 'grid', 'mobile bookings should be shown as cards');
                 assert.match(metrics.guestLabel, /Guest/, 'mobile cards should label each field');
                 assert.ok(!metrics.horizontalScroll, 'mobile bookings should not need horizontal scrolling');
