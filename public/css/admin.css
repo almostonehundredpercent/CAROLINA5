@@ -2833,6 +2833,23 @@ tbody tr:hover {
     }
 }
 
+/* Native status menus need their own colors; the orange trigger styles do not
+   carry through to the browser's option popup. */
+select.status-select {
+    color-scheme: light;
+}
+select.status-select option {
+    background-color: #fffaf4;
+    color: #231a14;
+}
+html.dark-mode select.status-select {
+    color-scheme: dark;
+}
+html.dark-mode select.status-select option {
+    background-color: #241a15;
+    color: #fff5e9;
+}
+
 /* Bookings become self-contained cards before the table needs sideways scrolling. */
 @media (max-width: 900px) {
     .bookings-page .admin-table-wrap {
