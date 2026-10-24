@@ -48,6 +48,11 @@ class Booking extends Model
         return $this->hasMany(Payment::class);
     }
 
+    public function timeAdjustments()
+    {
+        return $this->hasMany(BookingTimeAdjustment::class);
+    }
+
     public function promoCode()
     {
         return $this->belongsTo(PromoCode::class);

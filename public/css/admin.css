@@ -444,6 +444,45 @@ td small {
     }
 }
 
+.bookings-page .booking-time-change {
+    flex: 1 1 100%;
+    min-width: 190px;
+    border: 1px solid rgba(212, 132, 39, .42);
+    border-radius: 10px;
+    background: rgba(255, 246, 232, .06);
+}
+.bookings-page .booking-time-change summary {
+    padding: 10px 12px;
+    color: #ffc36b;
+    font-weight: 700;
+    cursor: pointer;
+}
+.bookings-page .booking-time-change form {
+    display: grid;
+    grid-template-columns: 1fr 1fr auto;
+    align-items: end;
+    gap: 8px;
+    padding: 0 10px 10px;
+}
+.bookings-page .booking-time-change label {
+    display: grid;
+    gap: 4px;
+    color: var(--admin-muted, #cdbbaa);
+    font-size: 12px;
+}
+.bookings-page .booking-time-change select {
+    width: 100%;
+    min-height: 40px;
+    padding: 6px 8px;
+    border: 1px solid rgba(212, 132, 39, .42);
+    border-radius: 8px;
+    background: #211812;
+    color: #fff8ef;
+}
+@media (max-width: 700px) {
+    .bookings-page .booking-time-change form { grid-template-columns: 1fr; }
+}
+
 /* Shared staff confirmation dialog: warm paper in light mode, copper glass in dark mode. */
 .admin-confirm-dialog {
     width: min(440px, calc(100vw - 32px));

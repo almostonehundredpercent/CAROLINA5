@@ -12,6 +12,7 @@ use App\Models\Payment;
 use App\Models\Review;
 use App\Models\Room;
 use App\Models\RoomBlock;
+use App\Services\BookingTimeAdjustmentService;
 use App\Services\PayMongoCheckout;
 use App\Services\PayMongoPaymentReconciler;
 use App\Support\BookingSelection;
@@ -403,18 +404,27 @@ class BookingController extends Controller
         return redirect()->away($session['url']);
     }
 
-    public function returnFromPayMongo(Request $request, Booking $booking, PayMongoCheckout $checkout, PayMongoPaymentReconciler $payments)
+    public function returnFromPayMongo(Request $request, Booking $booking, PayMongoCheckout $checkout, PayMongoPaymentReconciler $payments, BookingTimeAdjustmentService $adjustments)
     {
-        $this->authorizeBookingAccess($request, $booking);
-        $payment = $booking->payments()
-            ->where('method', 'gcash')
-            ->where('reference', 'like', 'paymongo:%')
-            ->latest('id')
-            ->first();
+        abort_unless($request->user()?->canManageBookings()
+            || ($booking->user_id && $request->user()?->id === $booking->user_id)
+            || ($booking->user_id === null && $request->session()->get('guest_booking_reference') === $booking->reference), 403);
+        $adjustment = $request->integer('adjustment')
+            ? $booking->timeAdjustments()->whereKey($request->integer('adjustment'))->first()
+            : null;
+        abort_if($request->integer('adjustment') && ! $adjustment, 404);
+        $payment = $adjustment?->payment ?? $booking->payments()
+            ->where('method', 'gcash')->where('reference', 'like', 'paymongo:%')->latest('id')->first();
         if (! $payment) {
             return redirect()->route('bookings.receipt', $booking)->withErrors(['payment' => 'No pending online payment was found for this reservation.']);
         }
         if ($payment->status === 'paid') {
+            if ($adjustment?->status === 'needs_review') {
+                return redirect()->route('bookings.receipt', $booking)->with('success', 'PayMongo received your extra-time payment. Carolina staff will contact you to confirm the room time.');
+            }
+            if ($adjustment?->status === 'applied') {
+                return redirect()->route('bookings.receipt', $booking)->with('success', 'Your extra stay time is paid and confirmed. The updated checkout time is shown on your receipt.');
+            }
             $booking->refresh();
 
             return redirect()->route('bookings.receipt', $booking)->with('success', $booking->status === 'cancelled'
@@ -424,6 +434,12 @@ class BookingController extends Controller
                     : 'GCash payment confirmed by PayMongo. Contact Carolina for staff resolution.'));
         }
         if ($request->query('outcome') === 'cancelled') {
+            if ($adjustment) {
+                $adjustments->cancel($adjustment, 'Guest cancelled the PayMongo time-change checkout.');
+
+                return redirect()->route('bookings.receipt', $booking)->with('success', 'The extra-time checkout was cancelled. Your original booking time is unchanged.');
+            }
+
             return redirect()->route('bookings.receipt', $booking)->with('success', 'The GCash test checkout was cancelled. Your reservation remains pending.');
         }
         if ($payment->status !== 'pending') {
@@ -448,6 +464,14 @@ class BookingController extends Controller
         }
 
         $booking->refresh();
+
+        if ($adjustment) {
+            $adjustment->refresh();
+
+            return redirect()->route('bookings.receipt', $booking)->with('success', $adjustment->status === 'applied'
+                ? 'Your extra stay time is paid and confirmed. The updated checkout time is shown on your receipt.'
+                : 'PayMongo confirmed your extra-time payment, but the room time needs staff attention. Carolina will contact you.');
+        }
 
         return redirect()->route('bookings.receipt', $booking)->with('success', $booking->status === 'cancelled'
             ? 'Test payment recorded, but this reservation is no longer held. Contact Carolina for staff resolution; your room was not re-reserved.'
@@ -483,29 +507,31 @@ class BookingController extends Controller
         return view('bookings.lookup-result', ['booking' => $booking->fresh('room'), 'lookupEmail' => $data['email']]);
     }
 
-    public function extendGuest(Request $request, Booking $booking)
+    public function extendGuest(Request $request, Booking $booking, BookingTimeAdjustmentService $adjustments, PayMongoCheckout $checkout)
     {
         if ($request->filled('email')) {
             $request->merge(['email' => strtolower(trim((string) $request->input('email')))]);
         }
-        $data = $request->validate(['email' => 'required|email:rfc|max:255', 'reference' => 'required|string', 'hours' => 'required|integer|in:6,12,22,24,48,72,96,120,168']);
+        $data = $request->validate(['email' => 'required|email:rfc|max:255', 'reference' => 'required|string', 'hours' => 'required|integer|in:1,2,6,12,22,24,48,72,96,120,168']);
         abort_unless($booking->user_id === null && strcasecmp($booking->reference, trim($data['reference'])) === 0 && strcasecmp((string) $booking->guest_email, trim($data['email'])) === 0, 403);
         if ($booking->status !== 'confirmed' || $booking->checked_out_at) {
             return back()->withErrors(['hours' => 'Extensions are available only for confirmed bookings that have not checked out.']);
         }
-        $end = $booking->check_out_at ?? $booking->check_out->copy()->startOfDay();
-        $newEnd = $end->copy()->addHours((int) $data['hours']);
-        $conflict = Booking::where('room_id', $booking->room_id)->whereKeyNot($booking->id)->blocking()->overlapping($end, $newEnd)->exists() || RoomBlock::where('room_id', $booking->room_id)->overlapping($end, $newEnd)->exists();
-        if ($conflict) {
-            return back()->withErrors(['hours' => 'The room is not available for that extension length.']);
-        }
-        $baseHours = $booking->room->rental_hours ?: 24;
-        $extra = round($booking->room->price_per_night * ($data['hours'] / $baseHours), 2);
-        $booking->update(['check_out_at' => $newEnd, 'check_out' => $newEnd->toDateString(), 'hours' => ($booking->hours ?? 0) + $data['hours'], 'nights' => max(1, (int) ceil(($booking->hours + $data['hours']) / 24)), 'total_amount' => $booking->total_amount + $extra]);
-        $this->log($booking, null, 'stay_extended', "Guest extended the stay by {$data['hours']} hours.");
-        $this->emailUpdate($booking->fresh('room'), 'Your Carolina stay was extended', "Your stay was extended by {$data['hours']} hours. The updated total is included below.");
+        abort_if($booking->payment_status !== 'paid' && ! $booking->paid_at, 422, 'Please contact Carolina staff to arrange an extension for a booking that is not fully paid.');
 
-        return back()->with('success', 'Your stay was extended. Your updated receipt total is now available.');
+        try {
+            $adjustment = $adjustments->prepare($booking, 'late_checkout', (int) $data['hours']);
+            $url = $adjustments->startPayMongo($adjustment, $checkout);
+        } catch (\Throwable $exception) {
+            if ($exception instanceof ValidationException) {
+                throw $exception;
+            }
+            report($exception);
+
+            return back()->withErrors(['hours' => 'Online GCash payment is unavailable right now. Your original checkout time is unchanged.']);
+        }
+
+        return redirect()->away($url);
     }
 
     public function lookupForm()

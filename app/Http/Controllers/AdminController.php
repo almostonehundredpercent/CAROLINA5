@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Mail\BookingUpdate;
 use App\Models\ActivityLog;
 use App\Models\Booking;
+use App\Models\BookingTimeAdjustment;
 use App\Models\GuestNote;
 use App\Models\GuestRestriction;
 use App\Models\Payment;
@@ -12,6 +13,7 @@ use App\Models\Review;
 use App\Models\Room;
 use App\Models\RoomBlock;
 use App\Models\User;
+use App\Services\BookingTimeAdjustmentService;
 use App\Services\OperationalDecisionSupport;
 use App\Services\PayMongoCheckout;
 use App\Services\PayMongoPaymentReconciler;
@@ -253,7 +255,7 @@ class AdminController extends Controller
         }
 
         if (! $payments->isMatchingPaidCheckout($booking, $payment, $session)) {
-            return back()->withErrors(['payment_status' => 'PayMongo has not confirmed a matching full payment yet. The booking remains pending.']);
+            return back()->withErrors(['payment_status' => 'PayMongo has not confirmed this matching payment yet. No booking times were changed.']);
         }
 
         $payments->recordPaid($booking, $payment, $request->user()->id);
@@ -262,12 +264,47 @@ class AdminController extends Controller
             return back()->withErrors(['payment_status' => 'PayMongo verified this checkout, but the booking record could not be updated. Please try again or contact support.']);
         }
         $booking->refresh();
+        $adjustment = BookingTimeAdjustment::where('payment_id', $payment->id)->first();
+        if ($adjustment) {
+            return back()->with('success', $adjustment->status === 'applied'
+                ? 'PayMongo confirmed the extra-time payment. The new booking time is active.'
+                : 'PayMongo received the extra-time payment, but the room time needs staff follow-up.');
+        }
 
         return back()->with('success', $booking->status === 'cancelled'
             ? 'PayMongo confirmed payment, but the reservation is no longer active. Carolina staff must resolve the booking.'
             : ($booking->status === 'confirmed'
                 ? 'PayMongo confirmed the full payment; the booking was confirmed automatically.'
                 : 'PayMongo confirmed the full payment. Carolina staff must resolve the booking.'));
+    }
+
+    public function createBookingTimeAdjustment(Request $request, Booking $booking, BookingTimeAdjustmentService $adjustments, PayMongoCheckout $checkout)
+    {
+        abort_unless($request->user()->canManageBookings(), 403, 'Your staff role cannot manage booking times.');
+        $data = $request->validate([
+            'type' => 'required|in:early_checkin,late_checkout',
+            'hours' => 'required|integer|in:1,2',
+            'payment_method' => 'required|in:cash,gcash',
+        ]);
+
+        $adjustment = $adjustments->prepare($booking, $data['type'], (int) $data['hours'], $request->user()->id);
+        if ($data['payment_method'] === 'cash') {
+            $adjustments->recordCashReceived($adjustment, $request->user()->id);
+
+            return back()->with('success', $data['type'] === 'early_checkin'
+                ? 'Cash received. The guest is checked in early.'
+                : 'Cash received. The checkout time has been extended.');
+        }
+
+        try {
+            $url = $adjustments->startPayMongo($adjustment, $checkout);
+        } catch (\Throwable $exception) {
+            report($exception);
+
+            return back()->withErrors(['payment_method' => 'Online GCash checkout is unavailable. The original booking time has not changed.']);
+        }
+
+        return redirect()->away($url);
     }
 
     /**
@@ -483,7 +520,7 @@ class AdminController extends Controller
         [$chartLabels, $chartValues] = $this->bookingChartData($period);
         $rooms = $this->roomsWithDisplayStatus();
 
-        $bookingQuery = Booking::with(['user', 'room', 'payments'])->latest();
+        $bookingQuery = Booking::with(['user', 'room', 'payments', 'timeAdjustments'])->latest();
         if ($request->filled('status')) {
             $bookingQuery->where('status', $request->string('status')->value());
         }

@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Booking;
+use App\Models\BookingTimeAdjustment;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use RuntimeException;
@@ -13,7 +14,7 @@ class PayMongoCheckout
     private const BASE_URL = 'https://api.paymongo.com/v1';
 
     /** Create a hosted GCash checkout. Amounts are in centavos. */
-    public function create(Booking $booking, ?string $attemptId = null): array
+    public function create(Booking $booking, ?string $attemptId = null, ?BookingTimeAdjustment $adjustment = null): array
     {
         $secretKey = $this->secretKey();
         $startedAt = hrtime(true);
@@ -35,9 +36,9 @@ class PayMongoCheckout
                                 'email' => $booking->guest_email ?? $booking->user?->email,
                                 'phone' => $booking->guest_phone,
                             ]),
-                            'cancel_url' => route('bookings.paymongo.return', ['booking' => $booking, 'outcome' => 'cancelled']),
-                            'success_url' => route('bookings.paymongo.return', ['booking' => $booking, 'outcome' => 'success']),
-                            'description' => 'Carolina reservation '.$booking->reference,
+                            'cancel_url' => route('bookings.paymongo.return', array_filter(['booking' => $booking, 'outcome' => 'cancelled', 'adjustment' => $adjustment?->id])),
+                            'success_url' => route('bookings.paymongo.return', array_filter(['booking' => $booking, 'outcome' => 'success', 'adjustment' => $adjustment?->id])),
+                            'description' => $adjustment ? 'Carolina stay time change '.$booking->reference : 'Carolina reservation '.$booking->reference,
                             'merchant' => 'Carolina',
                             'payment_method_types' => ['gcash'],
                             'reference_number' => $booking->reference,
@@ -45,10 +46,12 @@ class PayMongoCheckout
                             'show_description' => true,
                             'show_line_items' => true,
                             'line_items' => [[
-                                'amount' => (int) round(((float) $booking->total_amount) * 100),
+                                'amount' => (int) round(((float) ($adjustment?->amount ?? $booking->total_amount)) * 100),
                                 'currency' => 'PHP',
-                                'description' => $booking->room?->name ?? 'Carolina stay',
-                                'name' => 'Carolina reservation',
+                                'description' => $adjustment
+                                    ? ($adjustment->type === 'early_checkin' ? 'Early check-in' : 'Extra checkout time')
+                                    : ($booking->room?->name ?? 'Carolina stay'),
+                                'name' => $adjustment ? 'Carolina stay time change' : 'Carolina reservation',
                                 'quantity' => 1,
                             ]],
                         ],

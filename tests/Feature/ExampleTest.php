@@ -3,12 +3,14 @@
 use App\Mail\BookingConfirmation;
 use App\Mail\NewBookingRequest;
 use App\Models\Booking;
+use App\Models\Payment;
 use App\Models\Room;
 use App\Models\RoomBlock;
 use App\Models\User;
 use App\Notifications\QueuedResetPassword;
 use App\Notifications\QueuedVerifyEmail;
 use Illuminate\Notifications\SendQueuedNotifications;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Queue;
@@ -146,13 +148,18 @@ test('hourly reservations only accept advertised arrival hours', function () {
         ->assertSessionHasErrors('check_in_time');
 });
 
-test('a confirmed guest can extend a stay before checking in', function () {
+test('a fully paid confirmed guest can request extra time before checking in without an upfront schedule change', function () {
     Mail::fake();
     $room = testRoom();
     $room->update(['rental_hours' => 22]);
     $start = now()->addDay()->setTime(12, 0);
     $end = $start->copy()->addHours(22);
     $booking = confirmedBooking($room, $start, $end);
+    $booking->update(['payment_status' => 'paid', 'paid_at' => now()]);
+    config()->set('services.paymongo.secret_key', 'sk_test_example');
+    Http::fake(['https://api.paymongo.com/v1/checkout_sessions' => Http::response([
+        'data' => ['id' => 'cs_prearrival_extension', 'attributes' => ['checkout_url' => 'https://checkout.paymongo.test/cs_prearrival_extension']],
+    ])]);
 
     $this->from(route('bookings.lookup'))
         ->patch(route('bookings.lookup.extend', $booking), [
@@ -160,12 +167,13 @@ test('a confirmed guest can extend a stay before checking in', function () {
             'reference' => $booking->reference,
             'hours' => 22,
         ])
-        ->assertRedirect(route('bookings.lookup'))
+        ->assertRedirect('https://checkout.paymongo.test/cs_prearrival_extension')
         ->assertSessionHasNoErrors();
 
     $booking->refresh();
-    expect($booking->check_out_at->equalTo($end->copy()->addHours(22)))->toBeTrue()
-        ->and((float) $booking->total_amount)->toBe(2000.0);
+    expect($booking->check_out_at->equalTo($end))->toBeTrue()
+        ->and((float) $booking->total_amount)->toBe(1000.0)
+        ->and(Payment::where('booking_id', $booking->id)->where('status', 'pending')->exists())->toBeTrue();
 });
 
 test('the guest portal hides extensions until a booking is confirmed', function () {
@@ -177,7 +185,7 @@ test('the guest portal hides extensions until a booking is confirmed', function 
     $this->post(route('bookings.lookup.submit'), [
         'email' => $booking->guest_email,
         'reference' => $booking->reference,
-    ])->assertOk()->assertDontSee('Request extension');
+    ])->assertOk()->assertDontSee('Extend your stay');
 });
 
 test('confirmed bookings and scheduled room blocks both prevent an overlap', function () {

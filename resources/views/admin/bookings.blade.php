@@ -227,16 +227,24 @@
                                     <td class="booking-total-cell" data-label="Total">₱{{ number_format($booking->total_amount, 2) }}</td>
                                     <td data-label="Status">
                                         @php($payMongoPayments = $booking->payments->filter(fn ($payment) => $payment->method === 'gcash' && str_starts_with((string) $payment->reference, 'paymongo:'))->sortByDesc('id'))
-                                        @php($payMongoPayment = $payMongoPayments->first())
+                                        @php($payMongoPayment = $payMongoPayments->firstWhere('status', 'pending') ?? $payMongoPayments->first())
                                         @php($hasPayMongoPayment = $payMongoPayments->isNotEmpty())
                                         @php($hasPaidPayMongoPayment = $payMongoPayments->contains(fn ($payment) => $payment->status === 'paid'))
+                                        @php($timeAdjustment = $booking->timeAdjustments->sortByDesc('id')->first())
                                         @php($paymentStatus = $booking->payment_status === 'refunded' ? 'refunded' : ($hasPaidPayMongoPayment ? 'paid' : ($booking->payment_status ?? 'pending')))
                                         @php($paymentStatusClass = match ($paymentStatus) { 'paid' => 'confirmed', 'refunded', 'failed' => 'cancelled', default => '' })
                                         <div class="booking-status-stack">
                                             <span class="mini-status {{ $booking->status }}" aria-label="Booking status: {{ $booking->status === 'pending' ? 'Pending staff confirmation' : ucfirst($booking->status) }}">{{ $booking->status === 'pending' ? 'Pending staff confirmation' : ucfirst($booking->status) }}</span>
-                                            <span class="mini-status booking-payment-status {{ $paymentStatus }} {{ $paymentStatusClass }}" aria-label="Payment status: {{ ucfirst($paymentStatus) }}">{{ ucfirst($paymentStatus) }}</span>
+                                            <span class="mini-status booking-payment-status {{ $paymentStatus }} {{ $paymentStatusClass }}" aria-label="Payment status: {{ ucfirst($paymentStatus) }}">Payment {{ ucfirst($paymentStatus) }}</span>
                                         </div>
                                         <small class="booking-payment-method">{{ $hasPayMongoPayment ? 'PayMongo · GCash' : strtoupper($booking->payment_method ?? 'cash') }}</small>
+                                        @if($timeAdjustment?->status === 'needs_review')
+                                            <span class="hold-expiry" role="status">Extra-time payment received · staff follow-up needed</span>
+                                        @elseif($timeAdjustment?->status === 'pending' && $timeAdjustment->expires_at?->lte(now()))
+                                            <span class="hold-expiry" role="status">Extra-time payment expired · original booking time kept</span>
+                                        @elseif($timeAdjustment?->status === 'pending')
+                                            <span class="hold-expiry" role="status">Extra-time payment pending · held until {{ $timeAdjustment->expires_at?->format('g:i A') }}</span>
+                                        @endif
                                         @if($booking->status === 'pending')
                                             <span class="hold-expiry">Availability is rechecked before confirmation</span>
                                         @endif
@@ -246,13 +254,13 @@
                                             @php($refundableAmount = max(0, (float) $booking->payments->where('status', 'paid')->sum('amount') - (float) $booking->payments->where('status', 'refunded')->sum('amount')))
                                             @php($refundPolicyEligible = $booking->isRefundEligible())
                                                 <div class="booking-action-buttons">
-                                                    @if($hasPaidPayMongoPayment)
-                                                        <span class="booking-note">Verified through PayMongo</span>
-                                                    @elseif($payMongoPayment?->status === 'pending')
+                                                    @if($payMongoPayment?->status === 'pending')
                                                         <form method="POST" action="{{ route('admin.bookings.payment.recheck-paymongo', $booking) }}" onsubmit="return confirm('Check this GCash checkout directly with PayMongo?')">
                                                             @csrf
                                                             <button class="status-select confirmed" type="submit">Verify with PayMongo</button>
                                                         </form>
+                                                    @elseif($hasPaidPayMongoPayment)
+                                                        <span class="booking-note">Verified through PayMongo</span>
                                                     @elseif(! $hasPayMongoPayment && $booking->status !== 'cancelled')
                                                         <form method="POST" action="{{ route('admin.bookings.payment', $booking) }}"
                                                             data-admin-confirm
@@ -284,11 +292,52 @@
                                                         </form>
                                                     @endif
 
+                                                    @if($booking->status === 'confirmed' && ! $booking->checked_in_at && ($booking->payment_status === 'paid' || $booking->paid_at) && $booking->check_in->isToday() && $booking->check_in_at && $booking->check_in_at->gt(now()) && $booking->check_in_at->lte(now()->addHours(2)))
+                                                        <details class="booking-time-change">
+                                                            <summary>Check in early</summary>
+                                                            <form method="POST" action="{{ route('admin.bookings.time-adjustments', $booking) }}" data-admin-confirm data-confirm-title="Check in early?" data-confirm-message="The guest is checked in after the extra fee is paid. Record cash only after you have received it; GCash will open secure checkout." data-confirm-action="Continue">
+                                                                @csrf
+                                                                <input type="hidden" name="type" value="early_checkin">
+                                                                <label>Extra time
+                                                                    @php($earlyHours = (int) ceil(max(0, $booking->check_in_at->getTimestamp() - now()->getTimestamp()) / 3600))
+                                                                    <select name="hours" required>
+                                                                        <option value="{{ $earlyHours }}">{{ $earlyHours }} hour{{ $earlyHours > 1 ? 's' : '' }} · ₱{{ number_format(\App\Models\BookingTimeAdjustment::quoteAmount($booking, $earlyHours), 2) }}</option>
+                                                                    </select>
+                                                                </label>
+                                                                <label>Payment
+                                                                    <select name="payment_method" required><option value="gcash">Pay by GCash</option><option value="cash">Cash received</option></select>
+                                                                </label>
+                                                                <button class="status-select confirmed" type="submit">Continue</button>
+                                                            </form>
+                                                        </details>
+                                                    @endif
+
+                                                    @if($booking->checked_in_at && ! $booking->checked_out_at && ($booking->payment_status === 'paid' || $booking->paid_at))
+                                                        <details class="booking-time-change">
+                                                            <summary>Add checkout time</summary>
+                                                            <form method="POST" action="{{ route('admin.bookings.time-adjustments', $booking) }}" data-admin-confirm data-confirm-title="Add checkout time?" data-confirm-message="The checkout time changes only after the extra fee is paid. Record cash only after you have received it; GCash will open secure checkout." data-confirm-action="Continue">
+                                                                @csrf
+                                                                <input type="hidden" name="type" value="late_checkout">
+                                                                <label>Extra time
+                                                                    <select name="hours" required>
+                                                                        @foreach([1, 2] as $extraHours)
+                                                                            <option value="{{ $extraHours }}">{{ $extraHours }} hour{{ $extraHours > 1 ? 's' : '' }} · ₱{{ number_format(\App\Models\BookingTimeAdjustment::quoteAmount($booking, $extraHours), 2) }}</option>
+                                                                        @endforeach
+                                                                    </select>
+                                                                </label>
+                                                                <label>Payment
+                                                                    <select name="payment_method" required><option value="gcash">Pay by GCash</option><option value="cash">Cash received</option></select>
+                                                                </label>
+                                                                <button class="status-select confirmed" type="submit">Continue</button>
+                                                            </form>
+                                                        </details>
+                                                    @endif
+
                                                     @if($booking->checked_in_at && ! $booking->checked_out_at)
-                                                        <form method="POST" action="{{ route('admin.bookings.check-out', $booking) }}" onsubmit="return confirm('Check this guest out and start cleaning?')">
+                                                        <form method="POST" action="{{ route('admin.bookings.check-out', $booking) }}" data-admin-confirm data-confirm-title="Check out now?" data-confirm-message="This records the guest’s actual checkout and starts room cleaning. It does not automatically refund unused time." data-confirm-action="Check out now">
                                                             @csrf
                                                             <input type="hidden" name="action" value="check_out">
-                                                            <button class="status-select" type="submit">Check out</button>
+                                                            <button class="status-select" type="submit">Check out now</button>
                                                         </form>
                                                     @endif
 

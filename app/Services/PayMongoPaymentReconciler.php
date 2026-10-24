@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Mail\BookingUpdate;
 use App\Models\ActivityLog;
 use App\Models\Booking;
+use App\Models\BookingTimeAdjustment;
 use App\Models\Payment;
 use App\Models\Room;
 use Illuminate\Support\Facades\DB;
@@ -29,8 +30,11 @@ class PayMongoPaymentReconciler
         }
 
         $expectedAmount = (int) round(((float) $payment->amount) * 100);
-        $bookingAmount = (int) round(((float) $booking->total_amount) * 100);
-        if ($expectedAmount !== $bookingAmount) {
+        $adjustment = BookingTimeAdjustment::where('payment_id', $payment->id)->first();
+        $expectedCheckoutAmount = $adjustment
+            ? (int) round(((float) $adjustment->amount) * 100)
+            : (int) round(((float) $booking->total_amount) * 100);
+        if ($expectedAmount !== $expectedCheckoutAmount) {
             return false;
         }
 
@@ -49,6 +53,10 @@ class PayMongoPaymentReconciler
     /** Record a verified full payment and confirm its available booking exactly once. */
     public function recordPaid(Booking $booking, Payment $payment, ?int $actorId = null): bool
     {
+        if (BookingTimeAdjustment::where('payment_id', $payment->id)->exists()) {
+            return app(BookingTimeAdjustmentService::class)->recordPayMongoPaid($booking, $payment, $actorId);
+        }
+
         $changed = DB::transaction(function () use ($booking, $payment, $actorId): bool {
             $room = Room::whereKey($booking->room_id)->lockForUpdate()->firstOrFail();
             $lockedBooking = Booking::whereKey($booking->id)->lockForUpdate()->firstOrFail();

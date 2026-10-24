@@ -134,5 +134,6 @@ Route::middleware(['auth', 'admin', 'staff.mfa'])->prefix('admin')->name('admin.
     Route::post('/bookings/{booking}/refunds', [AdminController::class, 'refundPayment'])->middleware('admin.permission:payments')->name('bookings.refunds.store');
     Route::post('/bookings/{booking}/check-in', [AdminController::class, 'updateBooking'])->middleware('admin.permission:bookings')->name('bookings.check-in');
     Route::post('/bookings/{booking}/check-out', [AdminController::class, 'updateBooking'])->middleware('admin.permission:bookings')->name('bookings.check-out');
+    Route::post('/bookings/{booking}/time-adjustments', [AdminController::class, 'createBookingTimeAdjustment'])->middleware('admin.permission:bookings')->name('bookings.time-adjustments');
     Route::patch('/reviews/{review}', [AdminController::class, 'updateReview'])->middleware('admin.permission:reviews')->name('reviews.update');
 });
