@@ -45,6 +45,23 @@ document.addEventListener('DOMContentLoaded', () => {
     lightboxCount.setAttribute('aria-live', 'polite');
     lightboxCount.setAttribute('aria-atomic', 'true');
 
+    const zoomControls = document.createElement('div');
+    zoomControls.className = 'room-lightbox-zoom-controls';
+    zoomControls.setAttribute('role', 'group');
+    zoomControls.setAttribute('aria-label', 'Photo zoom controls');
+    const makeZoomButton = (label, glyph) => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.setAttribute('aria-label', label);
+        button.title = label;
+        button.textContent = glyph;
+        return button;
+    };
+    const zoomOut = makeZoomButton('Zoom out', '−');
+    const zoomIn = makeZoomButton('Zoom in', '+');
+    const zoomReset = makeZoomButton('Reset zoom', '↺');
+    zoomControls.append(zoomOut, zoomIn, zoomReset);
+
     const close = document.createElement('button');
     close.className = 'room-lightbox-close';
     close.type = 'button';
@@ -77,7 +94,7 @@ document.addEventListener('DOMContentLoaded', () => {
         lightboxStage.append(lightboxPrevious, lightboxNext);
     }
 
-    toolbar.append(lightboxCount, close);
+    toolbar.append(lightboxCount, zoomControls, close);
     lightboxStage.prepend(enlargedImage);
     lightbox.append(toolbar, lightboxStage);
 
@@ -92,8 +109,55 @@ document.addEventListener('DOMContentLoaded', () => {
     thumbnails.setAttribute('aria-label', `${roomGallery.room} photos`);
 
     let activeIndex = 0;
+    let zoom = 1;
+    let panX = 0;
+    let panY = 0;
+    const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
+    const panLimits = () => {
+        const { width, height } = lightboxStage.getBoundingClientRect();
+        if (!width || !height || !enlargedImage.naturalWidth || !enlargedImage.naturalHeight) {
+            return { x: 0, y: 0 };
+        }
+
+        const fitScale = Math.min(width / enlargedImage.naturalWidth, height / enlargedImage.naturalHeight);
+        const imageWidth = enlargedImage.naturalWidth * fitScale;
+        const imageHeight = enlargedImage.naturalHeight * fitScale;
+
+        return {
+            x: Math.max(0, (imageWidth * zoom - width) / 2),
+            y: Math.max(0, (imageHeight * zoom - height) / 2),
+        };
+    };
+    const updateViewport = () => {
+        const limits = panLimits();
+        panX = clamp(panX, -limits.x, limits.x);
+        panY = clamp(panY, -limits.y, limits.y);
+        enlargedImage.style.transform = `translate3d(${panX}px, ${panY}px, 0) scale(${zoom})`;
+        lightbox.dataset.zoomed = String(zoom > 1);
+        zoomOut.disabled = zoom <= 1;
+        zoomIn.disabled = zoom >= 4;
+        zoomReset.disabled = zoom <= 1 && panX === 0 && panY === 0;
+    };
+    const setZoom = (value) => {
+        zoom = clamp(Math.round(value * 100) / 100, 1, 4);
+        if (zoom === 1) {
+            panX = 0;
+            panY = 0;
+        }
+        updateViewport();
+    };
+    const resetZoom = () => setZoom(1);
+
+    zoomIn.addEventListener('click', () => setZoom(zoom * 1.5));
+    zoomOut.addEventListener('click', () => setZoom(zoom / 1.5));
+    zoomReset.addEventListener('click', resetZoom);
+    enlargedImage.addEventListener('load', updateViewport);
+
     const show = (index) => {
         activeIndex = Math.max(0, Math.min(index, roomGallery.images.length - 1));
+        zoom = 1;
+        panX = 0;
+        panY = 0;
         const imageCount = roomGallery.images.length;
         const source = roomGallery.images[activeIndex];
         const imageLabel = imageCount > 1
@@ -108,7 +172,8 @@ document.addEventListener('DOMContentLoaded', () => {
             ? `Enlarge ${roomGallery.room} photo ${activeIndex + 1} of ${imageCount}`
             : `Enlarge ${roomGallery.room} photo`);
         count.textContent = imageCount > 1 ? `${activeIndex + 1} / ${imageCount}` : '';
-        lightboxCount.textContent = imageCount > 1 ? `${activeIndex + 1} / ${imageCount}` : `Viewing ${roomGallery.room}`;
+        lightboxCount.textContent = `${activeIndex + 1} / ${imageCount}`;
+        updateViewport();
 
         if (hasMultipleImages) {
             previous.disabled = activeIndex === 0;
@@ -150,6 +215,9 @@ document.addEventListener('DOMContentLoaded', () => {
         lightbox.addEventListener('keydown', (event) => {
             if (event.key === 'ArrowLeft' && activeIndex > 0) show(activeIndex - 1);
             if (event.key === 'ArrowRight' && activeIndex < roomGallery.images.length - 1) show(activeIndex + 1);
+            if (event.key === '+' || event.key === '=') setZoom(zoom * 1.5);
+            if (event.key === '-') setZoom(zoom / 1.5);
+            if (event.key === '0') resetZoom();
         });
 
         let touchStartX = null;
@@ -164,6 +232,61 @@ document.addEventListener('DOMContentLoaded', () => {
             touchStartX = null;
         }, { passive: true });
     }
+
+    const pointers = new Map();
+    let drag = null;
+    let pinch = null;
+    const pointerDistance = (first, second) => Math.hypot(second.x - first.x, second.y - first.y);
+    const movePointer = (event) => {
+        if (!pointers.has(event.pointerId)) return;
+
+        pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+        if (pointers.size > 1 && pinch) {
+            const [first, second] = [...pointers.values()];
+            const distance = pointerDistance(first, second);
+            setZoom(pinch.zoom * distance / pinch.distance);
+            return;
+        }
+
+        if (drag?.pointerId === event.pointerId && zoom > 1) {
+            const limits = panLimits();
+            panX = clamp(drag.panX + event.clientX - drag.x, -limits.x, limits.x);
+            panY = clamp(drag.panY + event.clientY - drag.y, -limits.y, limits.y);
+            updateViewport();
+        }
+    };
+    const endPointer = (event) => {
+        pointers.delete(event.pointerId);
+        pinch = null;
+        drag = null;
+
+        if (pointers.size === 1 && zoom > 1) {
+            const [pointerId, point] = [...pointers.entries()][0];
+            drag = { pointerId, x: point.x, y: point.y, panX, panY };
+        }
+    };
+
+    lightboxStage.addEventListener('pointerdown', (event) => {
+        if (event.target.closest('button') || (event.pointerType === 'mouse' && event.button !== 0)) return;
+
+        pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+        lightboxStage.setPointerCapture(event.pointerId);
+
+        if (pointers.size === 2) {
+            const [first, second] = [...pointers.values()];
+            pinch = { distance: Math.max(1, pointerDistance(first, second)), zoom };
+            drag = null;
+        } else if (zoom > 1) {
+            drag = { pointerId: event.pointerId, x: event.clientX, y: event.clientY, panX, panY };
+        }
+    });
+    lightboxStage.addEventListener('pointermove', movePointer);
+    lightboxStage.addEventListener('pointerup', endPointer);
+    lightboxStage.addEventListener('pointercancel', endPointer);
+    lightboxStage.addEventListener('wheel', (event) => {
+        event.preventDefault();
+        setZoom(zoom * (event.deltaY < 0 ? 1.2 : 1 / 1.2));
+    }, { passive: false });
 
     openImage.addEventListener('click', () => {
         lightbox.showModal();
