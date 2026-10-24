@@ -54,6 +54,15 @@ test('check-in confirmation is rendered in the admin interface on front desk and
         $guest = User::factory()->create(['name' => 'Jordan Lee']);
         $room = adminDayRoom('check-in-confirmation-room');
         adminDayBooking($room, $guest, ['status' => 'confirmed']);
+        $departureRoom = adminDayRoom('checkout-confirmation-room');
+        adminDayBooking($departureRoom, $guest, [
+            'check_in' => today()->subDay()->toDateString(),
+            'check_out' => today()->toDateString(),
+            'check_in_at' => today()->subDay()->setTime(12, 0),
+            'check_out_at' => today()->setTime(12, 0),
+            'checked_in_at' => today()->subDay()->setTime(12, 0),
+            'status' => 'confirmed',
+        ]);
 
         $this->actingAsStaff($admin);
 
@@ -65,6 +74,14 @@ test('check-in confirmation is rendered in the admin interface on front desk and
                 ->assertSee('Check in Jordan Lee now?', false)
                 ->assertDontSee("onsubmit=\"return confirm('Check this guest in now?')\"", false);
         }
+
+        $this->get(route('admin.frontdesk'))
+            ->assertOk()
+            ->assertSee('data-confirm-kicker="GUEST DEPARTURE"', false)
+            ->assertSee('data-confirm-title="Check out this guest?"', false)
+            ->assertSee('data-confirm-message="Check out Jordan Lee now? This records the departure and marks the room for cleaning."', false)
+            ->assertSee('data-confirm-action="Check out guest"', false)
+            ->assertDontSee("onsubmit=\"return confirm('Check this guest out and start cleaning?')\"", false);
     } finally {
         Carbon::setTestNow();
     }
