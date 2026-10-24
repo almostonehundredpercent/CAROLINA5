@@ -27,11 +27,36 @@
                 @if($booking->review)
                     <b>Your review</b><span class="review-stars">{{ str_repeat('★', $booking->review->rating) }}{{ str_repeat('☆', 5 - $booking->review->rating) }}</span><small>{{ $booking->review->status === 'approved' ? 'Published' : ($booking->review->status === 'hidden' ? 'Not published' : 'Awaiting staff approval') }}</small>
                 @elseif($booking->status !== 'cancelled')
-                    <details class="review-form"><summary>Leave a review</summary><form method="POST" action="{{ route('bookings.review', $booking) }}">@csrf
-                        <label>Overall rating<select name="rating" required><option value="">Choose rating</option>@for($rating = 5; $rating >= 1; $rating--)<option value="{{ $rating }}">{{ $rating }} star{{ $rating === 1 ? '' : 's' }}</option>@endfor</select></label>
-                        <div class="review-score-grid"><label>Cleanliness<select name="cleanliness_rating"><option value="">Optional</option>@for($rating = 5; $rating >= 1; $rating--)<option value="{{ $rating }}">{{ $rating }}</option>@endfor</select></label><label>Comfort<select name="comfort_rating"><option value="">Optional</option>@for($rating = 5; $rating >= 1; $rating--)<option value="{{ $rating }}">{{ $rating }}</option>@endfor</select></label><label>Value<select name="value_rating"><option value="">Optional</option>@for($rating = 5; $rating >= 1; $rating--)<option value="{{ $rating }}">{{ $rating }}</option>@endfor</select></label></div>
-                        <label>Comment<textarea name="comment" rows="3" maxlength="750" placeholder="Tell future guests about your stay (optional)"></textarea></label><button class="button small" type="submit">Submit review</button>
-                    </form></details>
+                    <details class="review-form">
+                        <summary>Leave a review</summary>
+                        <form method="POST" action="{{ route('bookings.review', $booking) }}">
+                            @csrf
+                            <fieldset class="review-rating review-rating-overall">
+                                <legend>Overall rating</legend>
+                                <div class="review-stars-picker">
+                                    @for($rating = 5; $rating >= 1; $rating--)
+                                        <input class="review-star-input" type="radio" id="review-{{ $booking->id }}-rating-{{ $rating }}" name="rating" value="{{ $rating }}" required>
+                                        <label class="review-star-choice" for="review-{{ $booking->id }}-rating-{{ $rating }}" title="{{ $rating }} {{ Str::plural('star', $rating) }}"><span aria-hidden="true">★</span><span class="sr-only">{{ $rating }} {{ Str::plural('star', $rating) }}</span></label>
+                                    @endfor
+                                </div>
+                            </fieldset>
+                            <div class="review-score-grid">
+                                @foreach(['cleanliness_rating' => 'Cleanliness', 'comfort_rating' => 'Comfort', 'value_rating' => 'Value'] as $field => $label)
+                                    <fieldset class="review-rating review-rating-compact">
+                                        <legend>{{ $label }} <span class="review-rating-optional">Optional</span></legend>
+                                        <div class="review-stars-picker">
+                                            @for($rating = 5; $rating >= 1; $rating--)
+                                                <input class="review-star-input" type="radio" id="review-{{ $booking->id }}-{{ $field }}-{{ $rating }}" name="{{ $field }}" value="{{ $rating }}">
+                                                <label class="review-star-choice" for="review-{{ $booking->id }}-{{ $field }}-{{ $rating }}" title="{{ $rating }} {{ Str::plural('star', $rating) }}"><span aria-hidden="true">★</span><span class="sr-only">{{ $rating }} {{ Str::plural('star', $rating) }}</span></label>
+                                            @endfor
+                                        </div>
+                                    </fieldset>
+                                @endforeach
+                            </div>
+                            <label>Comment<textarea name="comment" rows="3" maxlength="750" placeholder="Tell future guests about your stay (optional)"></textarea></label>
+                            <button class="button small" type="submit">Submit review</button>
+                        </form>
+                    </details>
                 @endif
             </div>
         @endif

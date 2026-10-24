@@ -38,10 +38,23 @@ test('a checked-out guest booking renders separate action and review sections', 
         'checked_out_at' => '2026-10-23 06:00:00',
     ]);
 
-    $this->actingAs($user)->get(route('bookings.index'))
+    $response = $this->actingAs($user)->get(route('bookings.index'))
         ->assertOk()
         ->assertSee('class="booking-actions"', false)
         ->assertSee('class="booking-review-area"', false)
         ->assertSee('View details')
         ->assertSee('Leave a review');
+
+    $document = new DOMDocument;
+    @$document->loadHTML($response->getContent());
+    $xpath = new DOMXPath($document);
+    expect($xpath->query('//fieldset[contains(concat(" ", normalize-space(@class), " "), " review-rating ")]')->length)->toBe(4);
+
+    foreach (['rating', 'cleanliness_rating', 'comfort_rating', 'value_rating'] as $name) {
+        expect($xpath->query('//input[@type="radio" and @name="'.$name.'"]')->length)->toBe(5);
+    }
+
+    expect($xpath->query('//input[@type="radio" and @name="rating" and @required]')->length)->toBe(5)
+        ->and($xpath->query('//input[@type="radio" and @name!="rating" and @required]')->length)->toBe(0)
+        ->and($xpath->query('//select[@name="rating" or @name="cleanliness_rating" or @name="comfort_rating" or @name="value_rating"]')->length)->toBe(0);
 });
