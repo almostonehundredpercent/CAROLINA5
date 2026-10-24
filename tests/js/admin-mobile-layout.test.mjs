@@ -72,6 +72,8 @@ for (const width of [390, 320]) {
                     reportWrapperOverflow: getComputedStyle(document.querySelector('.report-table-wrap')).overflowX,
                     reportRowDisplay: getComputedStyle(document.querySelector('.report-table tbody tr')).display,
                     rowDisplay: getComputedStyle(document.querySelector('.mobile-stack-table tbody tr')).display,
+                    firstRecordHeight: document.querySelector('.mobile-stack-table tbody tr:not(.mobile-table-empty)').getBoundingClientRect().height,
+                    reportRecordHeight: document.querySelector('.report-table tbody tr').getBoundingClientRect().height,
                     cellDisplay: getComputedStyle(document.querySelector('.mobile-stack-table td')).display,
                     labels: [...document.querySelectorAll('.mobile-stack-table tbody tr:not(.mobile-table-empty) td')].map(cell => getComputedStyle(cell, '::before').content),
                     actionHeight: document.querySelector('.mobile-stack-table .status-select').getBoundingClientRect().height,
@@ -80,6 +82,8 @@ for (const width of [390, 320]) {
                 assert.ok(metrics.pageWidth <= metrics.viewportWidth, `admin page overflows by ${metrics.pageWidth - metrics.viewportWidth}px`);
                 assert.equal(metrics.wrapperOverflow, 'visible', 'mobile cards should not be trapped in a sideways-scrolling table');
                 assert.equal(metrics.rowDisplay, 'grid', 'each record should be presented as a mobile card');
+                assert.ok(metrics.firstRecordHeight <= 300, `mobile card has excessive internal spacing at ${metrics.firstRecordHeight}px high`);
+                assert.ok(metrics.reportRecordHeight <= 220, `report card has excessive internal spacing at ${metrics.reportRecordHeight}px high`);
                 assert.equal(metrics.cellDisplay, 'grid', 'card fields should align with their labels');
                 assert.equal(metrics.reportWrapperOverflow, 'visible', 'reports should use stacked cards rather than a sideways-scrolling wrapper');
                 assert.equal(metrics.reportRowDisplay, 'grid', 'report rows should be presented as mobile cards');
