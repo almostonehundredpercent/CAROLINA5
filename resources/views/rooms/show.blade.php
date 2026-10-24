@@ -28,10 +28,10 @@
             asset('images/rooms/room-13-angle-1.jpg'),
             asset('images/rooms/room-13-angle-2.jpg'),
         ],
-        default => [],
+        default => $room->image_url ? [$room->image_url] : [],
     };
 @endphp
-@if (count($roomGalleryImages) > 1)
+@if (count($roomGalleryImages) > 0)
     <script id="room-gallery-data" type="application/json">@json(['room' => $room->name, 'images' => $roomGalleryImages])</script>
     <script src="{{ asset('js/room-gallery.js') }}?v={{ filemtime(public_path('js/room-gallery.js')) }}" defer></script>
 @endif
