@@ -1,6 +1,6 @@
 (() => {
     const enhanceTables = () => {
-        document.querySelectorAll('.admin-table-wrap table:not(.booking-table):not(.staff-access-table)').forEach(table => {
+        document.querySelectorAll('.admin-table-wrap table:not(.booking-table):not(.staff-access-table), .report-table-wrap table').forEach(table => {
             const headerRow = table.tHead?.rows?.[table.tHead.rows.length - 1];
             const headers = headerRow ? [...headerRow.cells].map(cell => cell.textContent.trim()) : [];
             if (!headers.length) return;

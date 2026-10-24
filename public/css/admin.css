@@ -4835,13 +4835,13 @@ body {
 
 /* Turn secondary admin data tables into labeled, readable cards on phones. */
 @media (max-width: 700px) {
-    .admin-table-wrap.mobile-stack-wrap {
+    .mobile-stack-wrap {
         overflow: visible !important;
         border: 0 !important;
         background: transparent !important;
     }
 
-    .admin-table-wrap.mobile-stack-wrap .mobile-stack-table {
+    .mobile-stack-wrap .mobile-stack-table {
         display: block;
         width: 100% !important;
         min-width: 0 !important;

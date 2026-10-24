@@ -26,6 +26,8 @@ function pageMarkup(dark = false) {
                 <tr><td data-label="Guest"><b>Another Guest</b><small>another@example.test</small></td><td data-label="Stay">Oct 26, 2026 · Room 7</td><td data-label="Actions"><a class="status-select" href="#">Open profile</a></td></tr>
                 <tr><td class="no-bookings" colspan="3">No matching records.</td></tr>
             </tbody></table>
+        </div></section><section class="panel"><div class="report-table-wrap">
+            <table class="report-table"><thead><tr><th>Period</th><th>Value</th></tr></thead><tbody><tr><td>Oct 24, 2026</td><td>₱900.00</td></tr></tbody></table>
         </div></section></main></div>
     </body></html>`;
 }
@@ -67,6 +69,8 @@ for (const width of [390, 320]) {
                     viewportWidth: document.documentElement.clientWidth,
                     pageWidth: document.documentElement.scrollWidth,
                     wrapperOverflow: getComputedStyle(document.querySelector('.mobile-stack-wrap')).overflowX,
+                    reportWrapperOverflow: getComputedStyle(document.querySelector('.report-table-wrap')).overflowX,
+                    reportRowDisplay: getComputedStyle(document.querySelector('.report-table tbody tr')).display,
                     rowDisplay: getComputedStyle(document.querySelector('.mobile-stack-table tbody tr')).display,
                     cellDisplay: getComputedStyle(document.querySelector('.mobile-stack-table td')).display,
                     labels: [...document.querySelectorAll('.mobile-stack-table tbody tr:not(.mobile-table-empty) td')].map(cell => getComputedStyle(cell, '::before').content),
@@ -77,6 +81,8 @@ for (const width of [390, 320]) {
                 assert.equal(metrics.wrapperOverflow, 'visible', 'mobile cards should not be trapped in a sideways-scrolling table');
                 assert.equal(metrics.rowDisplay, 'grid', 'each record should be presented as a mobile card');
                 assert.equal(metrics.cellDisplay, 'grid', 'card fields should align with their labels');
+                assert.equal(metrics.reportWrapperOverflow, 'visible', 'reports should use stacked cards rather than a sideways-scrolling wrapper');
+                assert.equal(metrics.reportRowDisplay, 'grid', 'report rows should be presented as mobile cards');
                 assert.ok(metrics.labels.every(label => label !== 'none' && label !== 'normal'), 'each card value should retain its column label');
                 assert.ok(metrics.actionHeight >= 44, `profile action is only ${metrics.actionHeight}px high`);
             } finally {
@@ -92,8 +98,10 @@ test('mobile enhancement gives generic admin table cells their readable column l
         await page.setContent(pageMarkup());
         await enhanceAdminTables(page);
                 const labels = await page.locator('.mobile-stack-table tbody tr:not(.mobile-table-empty) td').evaluateAll(cells => cells.map(cell => cell.dataset.label));
-        assert.deepEqual(labels, ['Guest', 'Stay', 'Actions', 'Guest', 'Stay', 'Actions']);
+        assert.deepEqual(labels, ['Guest', 'Stay', 'Actions', 'Guest', 'Stay', 'Actions', 'Period', 'Value']);
         assert.equal(await page.locator('.admin-table-wrap').first().evaluate(node => node.classList.contains('mobile-stack-wrap')), true);
+        assert.deepEqual(await page.locator('.report-table td').evaluateAll(cells => cells.map(cell => cell.dataset.label)), ['Period', 'Value']);
+        assert.equal(await page.locator('.report-table-wrap').evaluate(node => node.classList.contains('mobile-stack-wrap')), true);
                 assert.equal(await page.locator('.mobile-stack-table .mobile-table-empty').evaluate(node => getComputedStyle(node).display), 'block');
     } finally {
         await page.close();
