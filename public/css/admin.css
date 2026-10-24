@@ -3046,6 +3046,17 @@ tbody tr:hover {
     }
 }
 
+html.dark-mode .admin-more > summary:hover,
+html.dark-mode .admin-more > summary:focus-visible {
+    background: #3b281d !important;
+    color: #fff8f1 !important;
+    box-shadow: inset 3px 0 #d98b36;
+}
+html.dark-mode .admin-more > summary:focus-visible {
+    outline: 2px solid rgba(255, 190, 120, 0.75) !important;
+    outline-offset: 2px;
+}
+
 /* Checkout cleaning timers share one calm, high-contrast treatment across room views. */
 .cleaning-countdown {
     display: grid;
