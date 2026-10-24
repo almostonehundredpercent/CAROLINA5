@@ -143,6 +143,7 @@ test('the bookings page offers short and priced time-change actions for paid sta
         ->assertSee('Add checkout time')
         ->assertSee('Cash received')
         ->assertSee('Pay by GCash')
+        ->assertSee('Choose extra time and payment')
         ->assertSee('₱50.00')
         ->assertSee($arrival->reference)
         ->assertSee($active->reference);

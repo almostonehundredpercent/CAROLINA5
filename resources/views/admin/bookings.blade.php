@@ -294,7 +294,11 @@
 
                                                     @if($booking->status === 'confirmed' && ! $booking->checked_in_at && ($booking->payment_status === 'paid' || $booking->paid_at) && $booking->check_in->isToday() && $booking->check_in_at && $booking->check_in_at->gt(now()) && $booking->check_in_at->lte(now()->addHours(2)))
                                                         <details class="booking-time-change">
-                                                            <summary>Check in early</summary>
+                                                            <summary>
+                                                                <span class="booking-time-change-title">Check in early</span>
+                                                                <span class="booking-time-change-chevron" aria-hidden="true">⌄</span>
+                                                            </summary>
+                                                            <p class="booking-time-change-intro">Choose extra time and payment.</p>
                                                             <form method="POST" action="{{ route('admin.bookings.time-adjustments', $booking) }}" data-admin-confirm data-confirm-title="Check in early?" data-confirm-message="The guest is checked in after the extra fee is paid. Record cash only after you have received it; GCash will open secure checkout." data-confirm-action="Continue">
                                                                 @csrf
                                                                 <input type="hidden" name="type" value="early_checkin">
@@ -307,14 +311,18 @@
                                                                 <label>Payment
                                                                     <select name="payment_method" required><option value="gcash">Pay by GCash</option><option value="cash">Cash received</option></select>
                                                                 </label>
-                                                                <button class="status-select confirmed" type="submit">Continue</button>
+                                                                <button class="status-select confirmed" type="submit"><span>Continue</span><span aria-hidden="true">→</span></button>
                                                             </form>
                                                         </details>
                                                     @endif
 
                                                     @if($booking->checked_in_at && ! $booking->checked_out_at && ($booking->payment_status === 'paid' || $booking->paid_at))
                                                         <details class="booking-time-change">
-                                                            <summary>Add checkout time</summary>
+                                                            <summary>
+                                                                <span class="booking-time-change-title">Add checkout time</span>
+                                                                <span class="booking-time-change-chevron" aria-hidden="true">⌄</span>
+                                                            </summary>
+                                                            <p class="booking-time-change-intro">Choose extra time and payment.</p>
                                                             <form method="POST" action="{{ route('admin.bookings.time-adjustments', $booking) }}" data-admin-confirm data-confirm-title="Add checkout time?" data-confirm-message="The checkout time changes only after the extra fee is paid. Record cash only after you have received it; GCash will open secure checkout." data-confirm-action="Continue">
                                                                 @csrf
                                                                 <input type="hidden" name="type" value="late_checkout">
@@ -328,7 +336,7 @@
                                                                 <label>Payment
                                                                     <select name="payment_method" required><option value="gcash">Pay by GCash</option><option value="cash">Cash received</option></select>
                                                                 </label>
-                                                                <button class="status-select confirmed" type="submit">Continue</button>
+                                                                <button class="status-select confirmed" type="submit"><span>Continue</span><span aria-hidden="true">→</span></button>
                                                             </form>
                                                         </details>
                                                     @endif

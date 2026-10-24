@@ -1650,6 +1650,157 @@ button {
     }
 }
 
+/* Refined booking time-change panel: spacious controls with clear payment steps. */
+.bookings-page .booking-time-change {
+    box-sizing: border-box;
+    flex: 1 1 100%;
+    width: min(100%, 360px);
+    min-width: 0;
+    overflow: hidden;
+    border: 1px solid #e9d9c8;
+    border-radius: 14px;
+    background: linear-gradient(145deg, #fffdf9 0%, #f8f0e7 100%);
+    box-shadow: 0 8px 22px rgba(84, 55, 29, .08);
+}
+.bookings-page .booking-time-change summary {
+    display: flex;
+    min-height: 48px;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 14px;
+    color: #7d480e;
+    font-size: 14px;
+    font-weight: 700;
+    list-style: none;
+    cursor: pointer;
+    transition: background-color .18s ease, color .18s ease;
+}
+.bookings-page .booking-time-change summary::-webkit-details-marker { display: none; }
+.bookings-page .booking-time-change summary::marker { content: ""; }
+.bookings-page .booking-time-change summary:hover { background: rgba(193, 116, 30, .07); }
+.bookings-page .booking-time-change summary:focus-visible {
+    outline: 3px solid rgba(188, 118, 43, .32);
+    outline-offset: -3px;
+}
+.bookings-page .booking-time-change[open] summary { border-bottom: 1px solid rgba(161, 111, 61, .18); }
+.bookings-page .booking-time-change-chevron {
+    display: grid;
+    width: 26px;
+    height: 26px;
+    flex: 0 0 26px;
+    place-items: center;
+    border: 1px solid rgba(161, 111, 61, .24);
+    border-radius: 50%;
+    color: #a76419;
+    font-size: 17px;
+    line-height: 1;
+    transition: transform .18s ease, background-color .18s ease;
+}
+.bookings-page .booking-time-change[open] .booking-time-change-chevron {
+    transform: rotate(180deg);
+    background: rgba(193, 116, 30, .09);
+}
+.bookings-page .booking-time-change-intro {
+    margin: 0;
+    padding: 11px 14px 0;
+    color: #76675a;
+    font-size: 12px;
+    line-height: 1.45;
+}
+.bookings-page .booking-time-change form {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: end;
+    gap: 10px;
+    padding: 10px 14px 14px;
+}
+.bookings-page .booking-time-change label {
+    display: grid;
+    min-width: 0;
+    gap: 6px;
+    color: #776454;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .02em;
+}
+.bookings-page .booking-time-change select {
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    min-height: 44px;
+    padding: 8px 10px;
+    border: 1px solid #dfcbb5;
+    border-radius: 9px;
+    background-color: #fffdfa;
+    color: #30251d;
+    font: inherit;
+    font-size: 13px;
+    letter-spacing: 0;
+    cursor: pointer;
+    transition: border-color .18s ease, box-shadow .18s ease;
+}
+.bookings-page .booking-time-change select:focus-visible {
+    border-color: #bc762b;
+    outline: 0;
+    box-shadow: 0 0 0 3px rgba(188, 118, 43, .18);
+}
+.bookings-page .booking-time-change option { background: #fffdfa; color: #30251d; }
+.bookings-page .booking-time-change form > button.status-select {
+    display: flex;
+    grid-column: 1 / -1;
+    width: 100%;
+    min-height: 46px !important;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 14px !important;
+    border: 1px solid #8d4400 !important;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #b15800, #934900) !important;
+    box-shadow: 0 5px 12px rgba(169, 79, 8, .18);
+    color: #fff !important;
+    font-size: 13px !important;
+    font-weight: 700;
+    transition: transform .18s ease, box-shadow .18s ease;
+}
+.bookings-page .booking-time-change form > button.status-select:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 16px rgba(169, 79, 8, .24);
+}
+.bookings-page .booking-time-change form > button.status-select:focus-visible {
+    outline: 3px solid rgba(188, 118, 43, .32);
+    outline-offset: 2px;
+}
+html.dark-mode .bookings-page .booking-time-change {
+    border-color: rgba(218, 161, 101, .31);
+    background: linear-gradient(145deg, #2b201a 0%, #211915 100%);
+    box-shadow: 0 8px 22px rgba(0, 0, 0, .2);
+}
+html.dark-mode .bookings-page .booking-time-change summary { color: #f3c17e; }
+html.dark-mode .bookings-page .booking-time-change summary:hover { background: rgba(243, 193, 126, .06); }
+html.dark-mode .bookings-page .booking-time-change[open] summary { border-bottom-color: rgba(218, 161, 101, .2); }
+html.dark-mode .bookings-page .booking-time-change-chevron {
+    border-color: rgba(218, 161, 101, .3);
+    color: #f3c17e;
+}
+html.dark-mode .bookings-page .booking-time-change-intro { color: #cdbbaa; }
+html.dark-mode .bookings-page .booking-time-change label { color: #d8c4b1; }
+html.dark-mode .bookings-page .booking-time-change select {
+    border-color: rgba(218, 161, 101, .36);
+    background-color: #18120f;
+    color: #fff7ef;
+    color-scheme: dark;
+}
+html.dark-mode .bookings-page .booking-time-change option { background: #211915; color: #fff7ef; }
+@media (prefers-reduced-motion: reduce) {
+    .bookings-page .booking-time-change *,
+    .bookings-page .booking-time-change *::before,
+    .bookings-page .booking-time-change *::after {
+        transition-duration: .01ms !important;
+    }
+}
+
 /* Any remaining plain content link becomes a deliberate, accessible admin control. */
 .admin-main a:not([class]) {
     display: inline-flex;

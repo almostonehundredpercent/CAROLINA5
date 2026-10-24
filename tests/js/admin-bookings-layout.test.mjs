@@ -7,6 +7,21 @@ const stylesheet = await readFile(new URL('../../public/css/admin.css', import.m
 const pageTemplate = await readFile(new URL('../../resources/views/admin/bookings.blade.php', import.meta.url), 'utf8');
 let browser;
 
+function luminance(color) {
+    const channels = color.match(/[\d.]+/g)?.slice(0, 3).map(Number);
+    assert.equal(channels?.length, 3, `Expected an RGB color, received ${color}`);
+    const linear = channels.map(value => {
+        const channel = value / 255;
+        return channel <= 0.04045 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4;
+    });
+    return linear[0] * 0.2126 + linear[1] * 0.7152 + linear[2] * 0.0722;
+}
+
+function contrast(foreground, background) {
+    const values = [luminance(foreground), luminance(background)].sort((a, b) => b - a);
+    return (values[0] + 0.05) / (values[1] + 0.05);
+}
+
 before(async () => { browser = await chromium.launch(); });
 after(async () => { await browser?.close(); });
 
@@ -37,7 +52,10 @@ async function render(width, dark) {
                         <td class="booking-reference-cell" data-label="Reference"><code>CAR-123456</code></td>
                         <td class="booking-stay-cell" data-label="Room &amp; stay"><b>Room 1</b><small>Oct 24, 6 AM to Oct 26, 6 AM</small></td><td class="booking-total-cell" data-label="Total">₱900.00</td>
                         <td data-label="Status"><div class="booking-status-stack"><span class="mini-status confirmed">Confirmed</span><span class="mini-status booking-payment-status paid">Payment Paid</span></div><small class="booking-payment-method">PayMongo · GCash</small></td>
-                        <td class="booking-actions-cell" data-label="Actions"><div class="booking-actions"><div class="booking-action-buttons"><button class="status-select">Mark unpaid</button><button class="status-select cancelled">Cancel</button></div><div class="booking-action-note"><span>Refunds aren’t available within 3 days of check-in.</span></div></div></td>
+                        <td class="booking-actions-cell" data-label="Actions"><div class="booking-actions"><div class="booking-action-buttons"><button class="status-select">Mark unpaid</button><button class="status-select cancelled">Cancel</button></div><div class="booking-action-note"><span>Refunds aren’t available within 3 days of check-in.</span></div>
+                            <details class="booking-time-change" open><summary><span class="booking-time-change-title">Add checkout time</span><span class="booking-time-change-chevron" aria-hidden="true">⌄</span></summary>
+                                <p class="booking-time-change-intro">Choose extra time and payment.</p><form><label>Extra time<select><option>1 hour · ₱75</option><option>2 hours · ₱150</option></select></label><label>Payment<select><option>Pay by GCash</option><option>Cash received</option></select></label><button class="status-select confirmed" type="submit"><span>Continue</span><span aria-hidden="true">→</span></button></form>
+                            </details></div></td>
                     </tr></tbody></table></div>
                     <nav class="booking-pagination" aria-label="Booking page navigation"><div class="booking-pagination-buttons"><span class="booking-page-first is-disabled">First</span><span class="booking-page-previous is-disabled">Previous</span><span class="booking-page-number is-current">1</span><a class="booking-page-number" href="#">2</a><a class="booking-page-next" href="#">Next</a><a class="booking-page-last" href="#">Last</a></div></nav>
                 </section>
@@ -61,6 +79,15 @@ for (const [width, dark] of [[1600, false], [1600, true], [768, false], [768, tr
                     rowPadding: px('.booking-table td', 'paddingTop'),
                     buttonText: px('.booking-action-buttons button', 'fontSize'),
                     buttonHeight: document.querySelector('.booking-action-buttons button').getBoundingClientRect().height,
+                    timeChangeRight: document.querySelector('.booking-time-change').getBoundingClientRect().right,
+                    timeChangeButtonHeight: document.querySelector('.booking-time-change form > button').getBoundingClientRect().height,
+                    timeChangeButtonWidth: document.querySelector('.booking-time-change form > button').getBoundingClientRect().width,
+                    timeChangeButtonText: getComputedStyle(document.querySelector('.booking-time-change form > button')).color,
+                    timeChangeButtonStops: getComputedStyle(document.querySelector('.booking-time-change form > button')).backgroundImage
+                        .match(/rgba?\([^)]+\)/g) ?? [],
+                    timeChangeSelectsFit: [...document.querySelectorAll('.booking-time-change select')]
+                        .every(control => control.getBoundingClientRect().right <= document.querySelector('.booking-time-change').getBoundingClientRect().right),
+                    timeChangePanelWidth: document.querySelector('.booking-time-change').getBoundingClientRect().width,
                     filterText: px('.booking-filters input', 'fontSize'),
                     filterHeight: document.querySelector('.booking-filters input').getBoundingClientRect().height,
                     actionWidth: document.querySelector('.booking-column-actions').getBoundingClientRect().width,
@@ -98,6 +125,15 @@ for (const [width, dark] of [[1600, false], [1600, true], [768, false], [768, tr
             assert.ok(metrics.rowPadding <= 12, `table row padding is ${metrics.rowPadding}px`);
             assert.ok(metrics.buttonText >= 13, `action text is ${metrics.buttonText}px`);
             assert.ok(metrics.buttonHeight >= 42, `action target is ${metrics.buttonHeight}px high`);
+            assert.ok(metrics.timeChangeRight <= width, `time-change panel overflows viewport at ${metrics.timeChangeRight}px`);
+            assert.ok(metrics.timeChangeButtonHeight >= 46, `time-change action is only ${metrics.timeChangeButtonHeight}px high`);
+            assert.ok(metrics.timeChangeButtonWidth >= metrics.timeChangePanelWidth - 32,
+                `continue action is only ${metrics.timeChangeButtonWidth}px wide in a ${metrics.timeChangePanelWidth}px panel`);
+            assert.ok(metrics.timeChangeSelectsFit, 'time-change fields should stay within their panel');
+            for (const stop of metrics.timeChangeButtonStops) {
+                assert.ok(contrast(metrics.timeChangeButtonText, stop) >= 4.5,
+                    `continue action contrast is ${contrast(metrics.timeChangeButtonText, stop).toFixed(2)}:1 at ${stop}`);
+            }
             assert.ok(metrics.filterText >= 14, `filter text is ${metrics.filterText}px`);
             assert.ok(metrics.filterHeight >= 44, `filter target is ${metrics.filterHeight}px high`);
             if (!metrics.mobileViewport) {
