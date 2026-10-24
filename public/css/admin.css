@@ -3094,6 +3094,9 @@ tbody tr:hover {
     color: #35734b;
     font: 600 11px/1.35 "DM Sans", sans-serif;
 }
+.cleaning-countdown [hidden] {
+    display: none;
+}
 .cleaning-countdown-clock {
     min-width: 70px;
     padding: 6px 9px;
