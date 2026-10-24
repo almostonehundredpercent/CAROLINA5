@@ -70,3 +70,4 @@
         });
     })();
 </script>
+<script src="{{ asset('js/admin-mobile-tables.js') }}?v={{ filemtime(public_path('js/admin-mobile-tables.js')) }}" defer></script>

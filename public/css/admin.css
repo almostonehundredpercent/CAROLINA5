@@ -4832,6 +4832,121 @@ body {
 .admin-more-links a {
     margin-left: 0 !important;
 }
+
+/* Turn secondary admin data tables into labeled, readable cards on phones. */
+@media (max-width: 700px) {
+    .admin-table-wrap.mobile-stack-wrap {
+        overflow: visible !important;
+        border: 0 !important;
+        background: transparent !important;
+    }
+
+    .admin-table-wrap.mobile-stack-wrap .mobile-stack-table {
+        display: block;
+        width: 100% !important;
+        min-width: 0 !important;
+        border-collapse: separate;
+        border-spacing: 0;
+        background: transparent !important;
+    }
+
+    .mobile-stack-table thead {
+        position: absolute !important;
+        width: 1px !important;
+        height: 1px !important;
+        padding: 0 !important;
+        margin: -1px !important;
+        overflow: hidden !important;
+        clip: rect(0, 0, 0, 0) !important;
+        white-space: nowrap !important;
+        border: 0 !important;
+    }
+
+    .mobile-stack-table tbody {
+        display: grid;
+        gap: 11px;
+    }
+
+    .mobile-stack-table tbody tr:not(.mobile-table-empty) {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        gap: 10px;
+        min-width: 0;
+        margin: 0;
+        padding: 14px;
+        border: 1px solid var(--line) !important;
+        border-radius: 14px;
+        background: var(--white) !important;
+        box-shadow: 0 5px 16px rgba(0, 0, 0, .12);
+    }
+
+    .mobile-stack-table tbody tr:not(.mobile-table-empty):hover {
+        background: var(--white) !important;
+    }
+
+    .mobile-stack-table tbody tr.mobile-table-empty {
+        display: block;
+    }
+
+    .mobile-stack-table tbody td:not(.no-bookings) {
+        display: grid !important;
+        grid-template-columns: minmax(82px, .38fr) minmax(0, 1fr);
+        align-items: start;
+        gap: 8px 10px;
+        min-width: 0;
+        padding: 0 !important;
+        border: 0 !important;
+        color: var(--ink) !important;
+        line-height: 1.45;
+        white-space: normal !important;
+        overflow-wrap: anywhere;
+    }
+
+    .mobile-stack-table tbody td:not(.no-bookings)::before {
+        content: attr(data-label);
+        grid-column: 1;
+        grid-row: 1 / span 20;
+        color: var(--muted) !important;
+        font-size: 10px;
+        font-weight: 750;
+        letter-spacing: .045em;
+        line-height: 1.5;
+        text-transform: uppercase;
+    }
+
+    .mobile-stack-table tbody td > * {
+        grid-column: 2;
+        min-width: 0;
+        max-width: 100%;
+    }
+
+    .mobile-stack-table tbody td b {
+        font-size: 14px !important;
+    }
+
+    .mobile-stack-table tbody td small {
+        overflow-wrap: anywhere;
+    }
+
+    .mobile-stack-table tbody td form {
+        margin: 0;
+    }
+
+    .mobile-stack-table tbody td select,
+    .mobile-stack-table tbody td .status-select {
+        min-height: 44px !important;
+        max-width: 100%;
+    }
+
+    .mobile-stack-table tbody tr.mobile-table-empty td.no-bookings {
+        display: block;
+        width: 100%;
+        padding: 16px !important;
+        border: 0 !important;
+        color: var(--muted) !important;
+        text-align: center;
+    }
+}
 .admin-sidebar > a.admin-home {
     min-height: 40px !important;
     border: 0 !important;
