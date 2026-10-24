@@ -356,24 +356,36 @@
                     <div><p class="admin-kicker">GUEST REVIEWS</p><h2>Review moderation</h2></div>
                     <span class="pill">{{ $pendingReviews->count() }} pending</span>
                 </div>
-                <div class="customer-list">
+                <div class="review-moderation-list">
                     @forelse($pendingReviews as $review)
-                        <div class="customer-item">
-                            <div>
-                                <b>{{ $review->guest_name }} · {{ $review->room?->name }}</b>
-                                <small>{{ str_repeat('★', $review->rating) }}{{ str_repeat('☆', 5 - $review->rating) }} · {{ $review->comment ?: 'No written comment' }}</small>
+                        <article class="review-moderation-card">
+                            <div class="review-moderation-heading">
+                                <div>
+                                    <h3>{{ $review->guest_name }} <span>· {{ $review->room?->name }}</span></h3>
+                                    <p class="review-moderation-rating" aria-label="Rated {{ $review->rating }} out of 5">
+                                        <span aria-hidden="true">{{ str_repeat('★', $review->rating) }}{{ str_repeat('☆', 5 - $review->rating) }}</span>
+                                        <b>{{ $review->rating }} / 5</b>
+                                    </p>
+                                </div>
+                                <span class="review-moderation-pending">Awaiting review</span>
                             </div>
-                            <form method="POST" action="{{ route('admin.reviews.update', $review) }}">
+                            <p class="review-moderation-guidance">Check for private details before publishing. You can shorten the guest name, remove sensitive text, or publish the rating only.</p>
+                            <form method="POST" action="{{ route('admin.reviews.update', $review) }}" class="review-moderation-form">
                                 @csrf @method('PATCH')
-                                <input type="hidden" name="status" value="approved">
-                                <button class="status-select confirmed" type="submit">Approve</button>
+                                <label for="review-name-{{ $review->id }}">Name guests will see <small>Use a first name or “Verified guest” to protect identity.</small></label>
+                                <input id="review-name-{{ $review->id }}" name="guest_name" value="{{ $review->guest_name }}" maxlength="255" required>
+                                <label for="review-comment-{{ $review->id }}">Public comment guests will see <small>Remove phone numbers, emails, addresses, or other private details. Clear this field to publish the rating only.</small></label>
+                                <textarea id="review-comment-{{ $review->id }}" name="comment" rows="4" maxlength="750">{{ $review->comment }}</textarea>
+                                <label class="review-moderation-attestation" for="review-privacy-{{ $review->id }}">
+                                    <input id="review-privacy-{{ $review->id }}" class="review-moderation-checkbox" type="checkbox" name="privacy_checked" value="1" required>
+                                    <span>I checked that the name and comment are safe to publish.</span>
+                                </label>
+                                <div class="review-moderation-actions">
+                                    <button class="review-moderation-button review-moderation-approve" type="submit" name="status" value="approved">Approve &amp; publish</button>
+                                    <button class="review-moderation-button review-moderation-hide" type="submit" name="status" value="hidden" formnovalidate>Hide review</button>
+                                </div>
                             </form>
-                            <form method="POST" action="{{ route('admin.reviews.update', $review) }}">
-                                @csrf @method('PATCH')
-                                <input type="hidden" name="status" value="hidden">
-                                <button class="status-select cancelled" type="submit">Hide</button>
-                            </form>
-                        </div>
+                        </article>
                     @empty
                         <p class="empty-copy">No reviews waiting for moderation.</p>
                     @endforelse

@@ -403,7 +403,12 @@ test('staff can complete a busy-day booking workflow without creating conflicts'
     ])->assertRedirect();
     expect(RoomBlock::where('room_id', $freeRoom->id)->where('status', 'cleaning')->exists())->toBeTrue();
 
-    $this->patch(route('admin.reviews.update', $review), ['status' => 'approved'])
+    $this->patch(route('admin.reviews.update', $review), [
+        'status' => 'approved',
+        'guest_name' => $review->guest_name,
+        'comment' => $review->comment,
+        'privacy_checked' => '1',
+    ])
         ->assertRedirect();
     expect($review->fresh()->status)->toBe('approved');
 
@@ -419,4 +424,78 @@ test('staff can complete a busy-day booking workflow without creating conflicts'
     ])->assertSessionHasErrors('room_id');
 
     expect(ActivityLog::whereIn('event', ['booking_confirmed', 'checked_in', 'checked_out', 'review_approved'])->count())->toBe(4);
+});
+
+test('staff can redact or remove sensitive review comments before publishing the rating', function () {
+    $admin = User::factory()->create(['is_admin' => true]);
+    $guest = User::factory()->create(['name' => 'Sam Guest']);
+    $room = adminDayRoom('review-redaction-room');
+    $redactedBooking = adminDayBooking($room, $guest);
+    $sensitiveComment = 'Lovely room. Please call me at 09171234567 or email sam.private@example.test.';
+    $redactedReview = Review::create([
+        'booking_id' => $redactedBooking->id,
+        'room_id' => $room->id,
+        'user_id' => $guest->id,
+        'guest_name' => $guest->name,
+        'rating' => 5,
+        'comment' => $sensitiveComment,
+        'status' => 'pending',
+    ]);
+
+    $this->actingAsStaff($admin)
+        ->get(route('admin.bookings'))
+        ->assertOk()
+        ->assertSee('Name guests will see')
+        ->assertSee('Public comment guests will see')
+        ->assertSee('Clear this field to publish the rating only')
+        ->assertSee('I checked that the name and comment are safe to publish')
+        ->assertSee($sensitiveComment);
+
+    $this->patch(route('admin.reviews.update', $redactedReview), [
+        'status' => 'approved',
+        'guest_name' => 'Verified guest',
+        'comment' => 'Lovely room. Contact details removed.',
+    ])->assertSessionHasErrors('privacy_checked');
+
+    expect($redactedReview->fresh()->status)->toBe('pending')
+        ->and($redactedReview->fresh()->comment)->toBe($sensitiveComment);
+
+    $this->patch(route('admin.reviews.update', $redactedReview), [
+        'status' => 'approved',
+        'guest_name' => 'Verified guest',
+        'comment' => 'Lovely room. Contact details removed.',
+        'privacy_checked' => '1',
+    ])->assertRedirect();
+
+    $blankRoom = adminDayRoom('review-rating-only-room');
+    $blankBooking = adminDayBooking($blankRoom, $guest);
+    $blankReview = Review::create([
+        'booking_id' => $blankBooking->id,
+        'room_id' => $blankRoom->id,
+        'user_id' => $guest->id,
+        'guest_name' => $guest->name,
+        'rating' => 4,
+        'comment' => 'Please do not publish my personal details.',
+        'status' => 'pending',
+    ]);
+
+    $this->patch(route('admin.reviews.update', $blankReview), [
+        'status' => 'approved',
+        'guest_name' => 'Verified guest',
+        'comment' => '',
+        'privacy_checked' => '1',
+    ])->assertRedirect();
+
+    expect($redactedReview->fresh()->comment)->toBe('Lovely room. Contact details removed.')
+        ->and($redactedReview->fresh()->guest_name)->toBe('Verified guest')
+        ->and($blankReview->fresh()->comment)->toBeNull();
+
+    $this->get(route('rooms.show', $room))
+        ->assertOk()
+        ->assertSee('Verified guest')
+        ->assertSee('Lovely room. Contact details removed.')
+        ->assertDontSee('Sam Guest')
+        ->assertDontSee('09171234567')
+        ->assertDontSee('sam.private@example.test')
+        ->assertSee('★★★★★');
 });

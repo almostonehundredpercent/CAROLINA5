@@ -634,11 +634,23 @@ class AdminController extends Controller
     public function updateReview(Request $request, Review $review)
     {
         abort_unless($request->user()->canManageBookings(), 403, 'Your staff role cannot moderate reviews.');
-        $data = $request->validate(['status' => 'required|in:approved,hidden']);
+        $approving = $request->input('status') === 'approved';
+        $data = $request->validate([
+            'status' => 'required|in:approved,hidden',
+            'guest_name' => $approving ? 'required|string|max:255' : 'sometimes|required|string|max:255',
+            'comment' => $approving ? 'present|nullable|string|max:750' : 'sometimes|nullable|string|max:750',
+            'privacy_checked' => $approving ? 'accepted' : 'sometimes|accepted',
+        ]);
         $review->update([
             'status' => $data['status'],
-            'approved_at' => $data['status'] === 'approved' ? now() : null,
-            'approved_by' => $data['status'] === 'approved' ? $request->user()->id : null,
+            'guest_name' => $approving
+                ? trim($data['guest_name'])
+                : $review->guest_name,
+            'comment' => $approving
+                ? (filled($data['comment']) ? trim($data['comment']) : null)
+                : $review->comment,
+            'approved_at' => $approving ? now() : null,
+            'approved_by' => $approving ? $request->user()->id : null,
         ]);
         $this->log($review->booking, $request->user()->id, 'review_'.$data['status'], 'Guest review '.$data['status'].' by staff.');
 
