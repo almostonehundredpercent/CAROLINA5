@@ -5,6 +5,7 @@ import { chromium } from 'playwright';
 
 const stylesheet = await readFile(new URL('../../public/css/admin.css', import.meta.url), 'utf8');
 const pageTemplate = await readFile(new URL('../../resources/views/admin/bookings.blade.php', import.meta.url), 'utf8');
+const inlineStyles = [...pageTemplate.matchAll(/<style>([\s\S]*?)<\/style>/g)].map(([, styles]) => styles).join('\n');
 let browser;
 
 function luminance(color) {
@@ -37,7 +38,7 @@ test('bookings page uses the scoped layout and explicit table columns covered he
 async function render(width, dark) {
     const page = await browser.newPage({ viewport: { width, height: 900 } });
     await page.setContent(`
-        <html class="${dark ? 'dark-mode' : ''}"><head><style>${stylesheet}</style></head>
+        <html class="${dark ? 'dark-mode' : ''}"><head><style>${stylesheet}\n${inlineStyles}</style></head>
         <body class="bookings-page"><div class="admin-shell"><aside class="admin-sidebar"></aside>
             <main class="admin-main">
                 <section class="panel bookings-reservations">
@@ -54,7 +55,7 @@ async function render(width, dark) {
                         <td data-label="Status"><div class="booking-status-stack"><span class="mini-status confirmed">Confirmed</span><span class="mini-status booking-payment-status paid">Payment Paid</span></div><small class="booking-payment-method">PayMongo · GCash</small></td>
                         <td class="booking-actions-cell" data-label="Actions"><div class="booking-actions"><div class="booking-action-buttons"><button class="status-select">Mark unpaid</button><button class="status-select cancelled">Cancel</button></div><div class="booking-action-note"><span>Refunds aren’t available within 3 days of check-in.</span></div>
                             <details class="booking-time-change" open><summary><span class="booking-time-change-title">Add checkout time</span><span class="booking-time-change-chevron" aria-hidden="true">⌄</span></summary>
-                                <p class="booking-time-change-intro">Choose extra time and payment.</p><form><label>Extra time<select><option>1 hour · ₱75</option><option>2 hours · ₱150</option></select></label><label>Payment<select><option>Pay by GCash</option><option>Cash received</option></select></label><button class="status-select confirmed" type="submit"><span>Continue</span><span aria-hidden="true">→</span></button></form>
+                                <p class="booking-time-change-intro">Choose extra time and payment.</p><form><label>Extra time<select><option>1 hour · ₱75.00</option><option selected>2 hours · ₱150.00</option></select></label><label>Payment<select><option>Pay by GCash</option><option>Cash received</option></select></label><button class="status-select confirmed" type="submit"><span>Continue</span><span aria-hidden="true">→</span></button></form>
                             </details></div></td>
                     </tr></tbody></table></div>
                     <nav class="booking-pagination" aria-label="Booking page navigation"><div class="booking-pagination-buttons"><span class="booking-page-first is-disabled">First</span><span class="booking-page-previous is-disabled">Previous</span><span class="booking-page-number is-current">1</span><a class="booking-page-number" href="#">2</a><a class="booking-page-next" href="#">Next</a><a class="booking-page-last" href="#">Last</a></div></nav>
@@ -87,6 +88,12 @@ for (const [width, dark] of [[1600, false], [1600, true], [768, false], [768, tr
                         .match(/rgba?\([^)]+\)/g) ?? [],
                     timeChangeSelectsFit: [...document.querySelectorAll('.booking-time-change select')]
                         .every(control => control.getBoundingClientRect().right <= document.querySelector('.booking-time-change').getBoundingClientRect().right),
+                    timeChangeOptionTextFits: [...document.querySelectorAll('.booking-time-change select')].every(select => {
+                        const context = document.createElement('canvas').getContext('2d');
+                        context.font = getComputedStyle(select).font;
+                        const widestOption = Math.max(...[...select.options].map(option => context.measureText(option.text).width));
+                        return widestOption + 40 <= select.clientWidth;
+                    }),
                     timeChangePanelWidth: document.querySelector('.booking-time-change').getBoundingClientRect().width,
                     filterText: px('.booking-filters input', 'fontSize'),
                     filterHeight: document.querySelector('.booking-filters input').getBoundingClientRect().height,
@@ -130,6 +137,7 @@ for (const [width, dark] of [[1600, false], [1600, true], [768, false], [768, tr
             assert.ok(metrics.timeChangeButtonWidth >= metrics.timeChangePanelWidth - 32,
                 `continue action is only ${metrics.timeChangeButtonWidth}px wide in a ${metrics.timeChangePanelWidth}px panel`);
             assert.ok(metrics.timeChangeSelectsFit, 'time-change fields should stay within their panel');
+            assert.ok(metrics.timeChangeOptionTextFits, 'time and payment choices should not clip their labels');
             for (const stop of metrics.timeChangeButtonStops) {
                 assert.ok(contrast(metrics.timeChangeButtonText, stop) >= 4.5,
                     `continue action contrast is ${contrast(metrics.timeChangeButtonText, stop).toFixed(2)}:1 at ${stop}`);
