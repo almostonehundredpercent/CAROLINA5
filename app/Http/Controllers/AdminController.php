@@ -156,15 +156,15 @@ class AdminController extends Controller
                     'room_id' => $lockedRoom->id,
                     'status' => 'cleaning',
                     'starts_at' => $checkedOutAt,
-                    'ends_at' => $checkedOutAt->copy()->addHour(),
-                    'notes' => 'Automatic cleaning period after check-out.',
+                    'ends_at' => $checkedOutAt->copy()->addMinutes(20),
+                    'notes' => 'Automatic 20-minute cleaning period after check-out.',
                     'created_by' => $request->user()->id,
                 ]);
             });
-            $this->log($booking, $request->user()->id, 'checked_out', 'Guest checked out; room moved to cleaning.');
+            $this->log($booking, $request->user()->id, 'checked_out', 'Guest checked out; 20-minute room cleaning timer started.');
             $this->email($booking->fresh('room'), 'Thank you for staying with Carolina', 'You have been checked out. Thank you for choosing Carolina.');
 
-            return back()->with('success', 'Guest checked out. A one-hour cleaning block is now active.');
+            return back()->with('success', 'Guest checked out. A 20-minute cleaning timer is now active.');
         }
 
         $data = $request->validate(['status' => 'required|in:pending,confirmed,cancelled', 'staff_note' => 'nullable|string|max:500', 'cancellation_reason' => 'nullable|string|max:500']);

@@ -44,6 +44,9 @@
                 @if($block)
                     <b>{{ ucfirst($block->status) }}</b>
                     <span>{{ $block->starts_at->format('M j, g A') }} – {{ $block->ends_at->format('M j, g A') }}</span>
+                    @if($block->status === 'cleaning' && $block->starts_at->lte(now()) && $block->ends_at->gt(now()))
+                        @include('admin.partials.cleaning-countdown', ['remainingSeconds' => max(0, $block->ends_at->getTimestamp() - now()->getTimestamp())])
+                    @endif
                 @else
                     <b>No cleaning or maintenance planned</b>
                 @endif

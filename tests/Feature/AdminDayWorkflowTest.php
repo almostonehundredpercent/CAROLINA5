@@ -87,6 +87,110 @@ test('check-in confirmation is rendered in the admin interface on front desk and
     }
 });
 
+test('checkout starts one twenty-minute cleaning timer and cannot be repeated', function () {
+    Carbon::setTestNow('2026-10-24 12:00:00');
+
+    try {
+        Mail::fake();
+        $admin = User::factory()->create(['is_admin' => true]);
+        $guest = User::factory()->create(['name' => 'Jordan Lee']);
+        $room = adminDayRoom('twenty-minute-checkout-room');
+        $booking = adminDayBooking($room, $guest, [
+            'checked_in_at' => now()->subHours(2),
+            'status' => 'confirmed',
+        ]);
+
+        $this->actingAsStaff($admin)
+            ->post(route('admin.bookings.check-out', $booking), ['action' => 'check_out'])
+            ->assertRedirect()
+            ->assertSessionHas('success', 'Guest checked out. A 20-minute cleaning timer is now active.');
+
+        $block = RoomBlock::where('room_id', $room->id)->where('status', 'cleaning')->firstOrFail();
+
+        expect(RoomBlock::where('room_id', $room->id)->where('status', 'cleaning')->count())->toBe(1)
+            ->and($block->starts_at->equalTo(Carbon::parse('2026-10-24 12:00:00')))->toBeTrue()
+            ->and($block->ends_at->equalTo(Carbon::parse('2026-10-24 12:20:00')))->toBeTrue()
+            ->and($block->completed_at)->toBeNull();
+
+        $this->actingAsStaff($admin)
+            ->post(route('admin.bookings.check-out', $booking), ['action' => 'check_out'])
+            ->assertUnprocessable();
+
+        expect(RoomBlock::where('room_id', $room->id)->where('status', 'cleaning')->count())->toBe(1);
+    } finally {
+        Carbon::setTestNow();
+    }
+});
+
+test('room views show a live cleaning countdown based on the server time', function () {
+    Carbon::setTestNow('2026-10-24 12:00:00');
+
+    try {
+        $room = adminDayRoom('countdown-visible-room');
+        RoomBlock::create([
+            'room_id' => $room->id,
+            'status' => 'cleaning',
+            'starts_at' => now()->subMinutes(14)->subSeconds(37),
+            'ends_at' => now()->addMinutes(5)->addSeconds(23),
+        ]);
+        $admin = User::factory()->create(['is_admin' => true]);
+        $housekeeping = User::factory()->create(['staff_role' => 'housekeeping', 'is_admin' => false]);
+
+        $adminView = $this->actingAsStaff($admin)
+            ->get(route('admin.rooms'))
+            ->assertOk()
+            ->assertSee('data-cleaning-countdown', false)
+            ->assertSee('data-remaining-seconds="323"', false)
+            ->assertSee('data-countdown-value', false)
+            ->assertSee('05:23')
+            ->assertSee('js/cleaning-countdown.js', false);
+
+        expect($adminView->getContent())->toContain('Cleaning');
+
+        $this->actingAsStaff($housekeeping)
+            ->get(route('admin.rooms'))
+            ->assertOk()
+            ->assertSee('data-cleaning-countdown', false)
+            ->assertSee('data-remaining-seconds="323"', false)
+            ->assertSee('data-countdown-value', false)
+            ->assertSee('05:23')
+            ->assertSee('js/cleaning-countdown.js', false);
+    } finally {
+        Carbon::setTestNow();
+    }
+});
+
+test('scheduled cleaning and maintenance blocks do not show a live cleaning countdown', function () {
+    Carbon::setTestNow('2026-10-24 12:00:00');
+
+    try {
+        $futureCleaningRoom = adminDayRoom('future-cleaning-room');
+        RoomBlock::create([
+            'room_id' => $futureCleaningRoom->id,
+            'status' => 'cleaning',
+            'starts_at' => now()->addMinutes(10),
+            'ends_at' => now()->addMinutes(30),
+        ]);
+        $maintenanceRoom = adminDayRoom('maintenance-room');
+        RoomBlock::create([
+            'room_id' => $maintenanceRoom->id,
+            'status' => 'maintenance',
+            'starts_at' => now()->subMinutes(5),
+            'ends_at' => now()->addMinutes(30),
+        ]);
+        $housekeeping = User::factory()->create(['staff_role' => 'housekeeping', 'is_admin' => false]);
+
+        $this->actingAsStaff($housekeeping)
+            ->get(route('admin.rooms'))
+            ->assertOk()
+            ->assertDontSee('data-cleaning-countdown', false)
+            ->assertSee('Cleaning scheduled')
+            ->assertSee('Maintenance scheduled');
+    } finally {
+        Carbon::setTestNow();
+    }
+});
+
 test('booking cancellation uses the in-page confirmation and explains refunds are separate', function () {
     $admin = User::factory()->create(['is_admin' => true]);
     $guest = User::factory()->create(['name' => 'Jordan Lee']);

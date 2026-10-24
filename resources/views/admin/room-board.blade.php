@@ -38,8 +38,14 @@
 
                     <div class="housekeeping-state">
                         @if($room->display_block)
-                            <b>{{ ucfirst($room->display_block->status) }} scheduled</b>
-                            <span>{{ $room->display_block->starts_at->format('M j, g:i A') }} – {{ $room->display_block->ends_at->format('g:i A') }}</span>
+                            @if($room->display_block->status === 'cleaning' && $room->display_block->starts_at->lte(now()) && $room->display_block->ends_at->gt(now()))
+                                <b>Cleaning in progress</b>
+                                <span>Estimated ready time {{ $room->display_block->ends_at->format('g:i A') }}</span>
+                                @include('admin.partials.cleaning-countdown', ['remainingSeconds' => max(0, $room->display_block->ends_at->getTimestamp() - now()->getTimestamp())])
+                            @else
+                                <b>{{ ucfirst($room->display_block->status) }} scheduled</b>
+                                <span>{{ $room->display_block->starts_at->format('M j, g:i A') }} – {{ $room->display_block->ends_at->format('g:i A') }}</span>
+                            @endif
                         @elseif($room->display_booking)
                             <b>Guest stay in progress</b>
                             <span>Unavailable until {{ $room->display_booking->check_out_at?->format('M j, g:i A') ?? 'check-out' }}</span>
@@ -111,6 +117,7 @@
         </section>
     </main>
 </div>
+<script src="{{ asset('js/cleaning-countdown.js') }}?v={{ filemtime(public_path('js/cleaning-countdown.js')) }}" defer></script>
 <script>
 const closeHousekeepingPickers = (except = null) => {
     document.querySelectorAll('.housekeeping-calendar, .housekeeping-time-menu').forEach((menu) => {
