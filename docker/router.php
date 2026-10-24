@@ -8,8 +8,15 @@ if ($uri !== '/' && is_file($file)) {
     $extension = strtolower(pathinfo($file, PATHINFO_EXTENSION));
     header('Content-Type: '.($types[$extension] ?? 'application/octet-stream'));
     header('Cache-Control: public, max-age=31536000, immutable');
+    if (in_array($extension, ['css', 'js', 'mjs', 'svg'], true) && extension_loaded('zlib')) {
+        ob_start('ob_gzhandler');
+    }
     readfile($file);
     exit;
+}
+
+if (extension_loaded('zlib')) {
+    ob_start('ob_gzhandler');
 }
 
 require __DIR__.'/../public/index.php';

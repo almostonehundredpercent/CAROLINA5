@@ -3,14 +3,17 @@ FROM php:8.3-cli
 # Keep MySQL support for local XAMPP and add PostgreSQL for the free Render database.
 RUN apt-get update && apt-get install -y git unzip libzip-dev libpq-dev \
     && docker-php-ext-install pdo_mysql pdo_pgsql zip \
+    && docker-php-ext-install opcache \
     && rm -rf /var/lib/apt/lists/*
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 COPY docker/php-security.ini /usr/local/etc/php/conf.d/99-security.ini
+COPY docker/php-performance.ini /usr/local/etc/php/conf.d/zz-performance.ini
 WORKDIR /var/www/html
 COPY composer.json composer.lock ./
 RUN composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader --no-scripts
 COPY . .
 RUN composer dump-autoload --no-dev --optimize
+RUN php artisan view:cache
 RUN chmod +x docker/start.sh && chown -R www-data:www-data storage bootstrap/cache
 EXPOSE 8000
 CMD ["docker/start.sh"]
