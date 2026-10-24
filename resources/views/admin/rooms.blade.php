@@ -111,6 +111,21 @@
         html.dark-mode .room-page-button:hover:not(:disabled) { border-color:#f28c28; color:#ffc16b; }
         html.dark-mode .room-page-button:focus-visible { outline-color:rgba(242,140,40,.35); }
         html.dark-mode .room-detail-card .room-detail-heading { background:#a94f00; }
+        .room-summary-card.available strong,.room-status.available { color:#21623c!important; }
+        .room-summary-card.reserved strong,.room-status.reserved { color:#8a4800!important; }
+        .room-summary-card.not-available strong,.room-status.occupied,.room-status.unavailable { color:#a12920!important; }
+        .room-status.cleaning,.room-status.maintenance { color:#874b11!important; }
+        html.dark-mode .room-operations-header .admin-kicker { color:#ffc269; }
+        html.dark-mode .room-operations-header .admin-subtitle,
+        html.dark-mode .room-summary-card small,
+        html.dark-mode .room-card-meta,
+        html.dark-mode .room-board-legend,
+        html.dark-mode .room-page-indicator { color:#d4c3b2; }
+        html.dark-mode .room-card-rate { color:#fff8f1; }
+        html.dark-mode .room-summary-card.available strong,html.dark-mode .room-status.available { color:#83dca0!important; }
+        html.dark-mode .room-summary-card.reserved strong,html.dark-mode .room-status.reserved { color:#ffc269!important; }
+        html.dark-mode .room-summary-card.not-available strong,html.dark-mode .room-status.occupied,html.dark-mode .room-status.unavailable { color:#ff8a80!important; }
+        html.dark-mode .room-status.cleaning,html.dark-mode .room-status.maintenance { color:#ffc269!important; }
         @media (max-width:1050px) { .room-selector-grid { grid-template-columns:repeat(4,minmax(0,1fr)); } }
         @media (max-width:700px) {
             .room-summary { grid-template-columns:repeat(3,minmax(0,1fr)); }
