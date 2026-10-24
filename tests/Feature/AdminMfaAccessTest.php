@@ -267,12 +267,21 @@ test('a server-side recovery command clears a lost authenticator and invalidates
 
 test('the staff screen only offers administrator roles to super administrators', function () {
     $admin = User::factory()->create(['staff_role' => 'admin', 'is_admin' => true]);
+    User::factory()->create(['staff_role' => 'viewer']);
     $this->actingAsStaff($admin)->get(route('admin.staff'))
-        ->assertOk()->assertDontSee('value="super_admin"', false);
+        ->assertOk()
+        ->assertDontSee('value="super_admin"', false)
+        ->assertSee('class="staff-access-table"', false)
+        ->assertSee('data-staff-role-picker', false)
+        ->assertSee('data-staff-role-trigger', false)
+        ->assertSee('data-label="Email"', false)
+        ->assertSee('js/staff-role-picker.js', false);
 
     $owner = User::factory()->create(['staff_role' => 'super_admin', 'is_admin' => true]);
     $this->actingAsStaff($owner)->get(route('admin.staff'))
-        ->assertOk()->assertSee('value="super_admin"', false);
+        ->assertOk()
+        ->assertSee('value="super_admin"', false)
+        ->assertSee('data-value="super_admin"', false);
 });
 
 test('state-changing admin requests still reject a missing csrf token', function () {
