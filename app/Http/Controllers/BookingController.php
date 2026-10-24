@@ -507,33 +507,6 @@ class BookingController extends Controller
         return view('bookings.lookup-result', ['booking' => $booking->fresh('room'), 'lookupEmail' => $data['email']]);
     }
 
-    public function extendGuest(Request $request, Booking $booking, BookingTimeAdjustmentService $adjustments, PayMongoCheckout $checkout)
-    {
-        if ($request->filled('email')) {
-            $request->merge(['email' => strtolower(trim((string) $request->input('email')))]);
-        }
-        $data = $request->validate(['email' => 'required|email:rfc|max:255', 'reference' => 'required|string', 'hours' => 'required|integer|in:1,2,6,12,22,24,48,72,96,120,168']);
-        abort_unless($booking->user_id === null && strcasecmp($booking->reference, trim($data['reference'])) === 0 && strcasecmp((string) $booking->guest_email, trim($data['email'])) === 0, 403);
-        if ($booking->status !== 'confirmed' || $booking->checked_out_at) {
-            return back()->withErrors(['hours' => 'Extensions are available only for confirmed bookings that have not checked out.']);
-        }
-        abort_if($booking->payment_status !== 'paid' && ! $booking->paid_at, 422, 'Please contact Carolina staff to arrange an extension for a booking that is not fully paid.');
-
-        try {
-            $adjustment = $adjustments->prepare($booking, 'late_checkout', (int) $data['hours']);
-            $url = $adjustments->startPayMongo($adjustment, $checkout);
-        } catch (\Throwable $exception) {
-            if ($exception instanceof ValidationException) {
-                throw $exception;
-            }
-            report($exception);
-
-            return back()->withErrors(['hours' => 'Online GCash payment is unavailable right now. Your original checkout time is unchanged.']);
-        }
-
-        return redirect()->away($url);
-    }
-
     public function lookupForm()
     {
         return view('bookings.lookup');

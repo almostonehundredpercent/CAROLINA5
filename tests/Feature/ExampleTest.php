@@ -148,46 +148,6 @@ test('hourly reservations only accept advertised arrival hours', function () {
         ->assertSessionHasErrors('check_in_time');
 });
 
-test('a fully paid confirmed guest can request extra time before checking in without an upfront schedule change', function () {
-    Mail::fake();
-    $room = testRoom();
-    $room->update(['rental_hours' => 22]);
-    $start = now()->addDay()->setTime(12, 0);
-    $end = $start->copy()->addHours(22);
-    $booking = confirmedBooking($room, $start, $end);
-    $booking->update(['payment_status' => 'paid', 'paid_at' => now()]);
-    config()->set('services.paymongo.secret_key', 'sk_test_example');
-    Http::fake(['https://api.paymongo.com/v1/checkout_sessions' => Http::response([
-        'data' => ['id' => 'cs_prearrival_extension', 'attributes' => ['checkout_url' => 'https://checkout.paymongo.test/cs_prearrival_extension']],
-    ])]);
-
-    $this->from(route('bookings.lookup'))
-        ->patch(route('bookings.lookup.extend', $booking), [
-            'email' => $booking->guest_email,
-            'reference' => $booking->reference,
-            'hours' => 22,
-        ])
-        ->assertRedirect('https://checkout.paymongo.test/cs_prearrival_extension')
-        ->assertSessionHasNoErrors();
-
-    $booking->refresh();
-    expect($booking->check_out_at->equalTo($end))->toBeTrue()
-        ->and((float) $booking->total_amount)->toBe(1000.0)
-        ->and(Payment::where('booking_id', $booking->id)->where('status', 'pending')->exists())->toBeTrue();
-});
-
-test('the guest portal hides extensions until a booking is confirmed', function () {
-    $room = testRoom();
-    $start = now()->addDay()->setTime(12, 0);
-    $booking = confirmedBooking($room, $start, $start->copy()->addDay());
-    $booking->update(['status' => 'pending']);
-
-    $this->post(route('bookings.lookup.submit'), [
-        'email' => $booking->guest_email,
-        'reference' => $booking->reference,
-    ])->assertOk()->assertDontSee('Extend your stay');
-});
-
 test('confirmed bookings and scheduled room blocks both prevent an overlap', function () {
     $room = testRoom();
     $start = now()->addDays(4)->setTime(10, 0);

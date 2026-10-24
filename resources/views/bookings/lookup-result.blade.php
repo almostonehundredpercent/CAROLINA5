@@ -35,25 +35,6 @@
     </div>
 
     <div class="portal-grid">
-        @if($booking->status === 'confirmed' && ! $booking->checked_out_at && ($booking->payment_status === 'paid' || $booking->paid_at))
-            <section class="portal-card">
-                <h2>Extend your stay</h2>
-                <p>We’ll check that the room is available. Your checkout time stays the same until the extra fee is paid.</p>
-                <form method="POST" action="{{ route('bookings.lookup.extend', $booking) }}">
-                    @csrf @method('PATCH')
-                    <input type="hidden" name="email" value="{{ $lookupEmail }}">
-                    <input type="hidden" name="reference" value="{{ $booking->reference }}">
-                    <select name="hours" required>
-                        @foreach(collect([$booking->room->rental_hours ?: 24, 48, 72])->unique() as $extraHours)
-                            <option value="{{ $extraHours }}">Add {{ $extraHours }} hours · ₱{{ number_format(\App\Models\BookingTimeAdjustment::quoteAmount($booking, $extraHours), 2) }}</option>
-                        @endforeach
-                    </select>
-                    <p class="portal-note">Continue to pay securely by GCash. The new checkout time is confirmed after payment.</p>
-                    <button class="button" type="submit">Continue to GCash</button>
-                </form>
-            </section>
-        @endif
-
         @if($booking->user_id === null && $booking->status !== 'cancelled' && $booking->check_in->isFuture())
             <section class="portal-card">
                 <h2>Cancel booking</h2>

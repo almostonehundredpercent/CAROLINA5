@@ -13,7 +13,6 @@ use App\Models\Review;
 use App\Models\Room;
 use App\Models\RoomBlock;
 use App\Models\User;
-use App\Services\BookingTimeAdjustmentService;
 use App\Services\OperationalDecisionSupport;
 use App\Services\PayMongoCheckout;
 use App\Services\PayMongoPaymentReconciler;
@@ -276,35 +275,6 @@ class AdminController extends Controller
             : ($booking->status === 'confirmed'
                 ? 'PayMongo confirmed the full payment; the booking was confirmed automatically.'
                 : 'PayMongo confirmed the full payment. Carolina staff must resolve the booking.'));
-    }
-
-    public function createBookingTimeAdjustment(Request $request, Booking $booking, BookingTimeAdjustmentService $adjustments, PayMongoCheckout $checkout)
-    {
-        abort_unless($request->user()->canManageBookings(), 403, 'Your staff role cannot manage booking times.');
-        $data = $request->validate([
-            'type' => 'required|in:early_checkin,late_checkout',
-            'hours' => 'required|integer|in:1,2',
-            'payment_method' => 'required|in:cash,gcash',
-        ]);
-
-        $adjustment = $adjustments->prepare($booking, $data['type'], (int) $data['hours'], $request->user()->id);
-        if ($data['payment_method'] === 'cash') {
-            $adjustments->recordCashReceived($adjustment, $request->user()->id);
-
-            return back()->with('success', $data['type'] === 'early_checkin'
-                ? 'Cash received. The guest is checked in early.'
-                : 'Cash received. The checkout time has been extended.');
-        }
-
-        try {
-            $url = $adjustments->startPayMongo($adjustment, $checkout);
-        } catch (\Throwable $exception) {
-            report($exception);
-
-            return back()->withErrors(['payment_method' => 'Online GCash checkout is unavailable. The original booking time has not changed.']);
-        }
-
-        return redirect()->away($url);
     }
 
     /**
