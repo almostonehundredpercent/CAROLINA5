@@ -3203,14 +3203,6 @@ tbody tr:hover {
 .review-moderation-approve:hover {
     background: #8f4005;
 }
-.review-moderation-hide {
-    border-color: #885148;
-    background: #38211e;
-    color: #ffe0d9;
-}
-.review-moderation-hide:hover {
-    background: #4b2925;
-}
 html:not(.dark-mode) .review-moderation-card {
     border-color: #e5d7c8;
     background: #fffaf4;
@@ -3254,14 +3246,6 @@ html:not(.dark-mode) .review-moderation-approve {
 html:not(.dark-mode) .review-moderation-approve:hover {
     background: #8f4005;
 }
-html:not(.dark-mode) .review-moderation-hide {
-    border-color: #a65b51;
-    background: #fff4f2;
-    color: #742d25;
-}
-html:not(.dark-mode) .review-moderation-hide:hover {
-    background: #ffe7e3;
-}
 @media (max-width: 700px) {
     .review-moderation-card {
         gap: 13px;
@@ -3272,7 +3256,7 @@ html:not(.dark-mode) .review-moderation-hide:hover {
     }
     .review-moderation-actions {
         display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-columns: minmax(0, 1fr);
     }
     .review-moderation-button {
         width: 100%;

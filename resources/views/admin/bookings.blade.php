@@ -354,7 +354,7 @@
             <section class="panel" style="margin-top:20px">
                 <div class="panel-heading">
                     <div><p class="admin-kicker">GUEST REVIEWS</p><h2>Review moderation</h2></div>
-                    <span class="pill">{{ $pendingReviews->count() }} pending</span>
+                    <span class="pill">{{ $pendingReviews->count() }} to publish</span>
                 </div>
                 <div class="review-moderation-list">
                     @forelse($pendingReviews as $review)
@@ -367,7 +367,7 @@
                                         <b>{{ $review->rating }} / 5</b>
                                     </p>
                                 </div>
-                                <span class="review-moderation-pending">Awaiting review</span>
+                                <span class="review-moderation-pending">Ready to publish</span>
                             </div>
                             <p class="review-moderation-guidance">Check for private details before publishing. You can shorten the guest name, remove sensitive text, or publish the rating only.</p>
                             <form method="POST" action="{{ route('admin.reviews.update', $review) }}" class="review-moderation-form">
@@ -382,7 +382,6 @@
                                 </label>
                                 <div class="review-moderation-actions">
                                     <button class="review-moderation-button review-moderation-approve" type="submit" name="status" value="approved">Approve &amp; publish</button>
-                                    <button class="review-moderation-button review-moderation-hide" type="submit" name="status" value="hidden" formnovalidate>Hide review</button>
                                 </div>
                             </form>
                         </article>

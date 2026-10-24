@@ -499,3 +499,40 @@ test('staff can redact or remove sensitive review comments before publishing the
         ->assertDontSee('sam.private@example.test')
         ->assertSee('★★★★★');
 });
+
+test('review moderation publishes every review and rejects hide actions', function () {
+    $admin = User::factory()->create(['is_admin' => true]);
+    $guest = User::factory()->create(['name' => 'Taylor Guest']);
+    $room = adminDayRoom('transparent-reviews-room');
+    $booking = adminDayBooking($room, $guest);
+    $review = Review::create([
+        'booking_id' => $booking->id,
+        'room_id' => $room->id,
+        'user_id' => $guest->id,
+        'guest_name' => $guest->name,
+        'rating' => 4,
+        'comment' => 'The room was comfortable.',
+        'status' => 'hidden',
+    ]);
+
+    $this->actingAsStaff($admin)
+        ->get(route('admin.bookings'))
+        ->assertOk()
+        ->assertSee('1 to publish')
+        ->assertSee('The room was comfortable.')
+        ->assertDontSee('Hide review');
+
+    $this->patch(route('admin.reviews.update', $review), ['status' => 'hidden'])
+        ->assertSessionHasErrors('status');
+
+    expect($review->fresh()->status)->toBe('hidden');
+
+    $this->patch(route('admin.reviews.update', $review), [
+        'status' => 'approved',
+        'guest_name' => 'Verified guest',
+        'comment' => 'The room was comfortable.',
+        'privacy_checked' => '1',
+    ])->assertRedirect();
+
+    expect($review->fresh()->status)->toBe('approved');
+});

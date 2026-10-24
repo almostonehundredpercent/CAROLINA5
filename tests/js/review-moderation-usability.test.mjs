@@ -35,7 +35,6 @@ test('review moderation is readable in both themes and has large touch-friendly 
                     <label for="comment">Public comment guests will see <small>Edit to remove private details.</small></label>
                     <textarea id="comment">A bright and comfortable room.</textarea>
                     <button class="review-moderation-button review-moderation-approve">Approve &amp; publish</button>
-                    <button class="review-moderation-button review-moderation-hide">Hide review</button>
                 </form>
             </article>
         </body>`;

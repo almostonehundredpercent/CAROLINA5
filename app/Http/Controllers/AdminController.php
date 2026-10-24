@@ -523,7 +523,7 @@ class AdminController extends Controller
             'arrivalsToday' => Booking::with('room')->where('status', 'confirmed')->whereDate('check_in', today())->whereNull('checked_in_at')->where('check_in_at', '<=', now())->get(),
             'departuresToday' => Booking::with('room')->whereNotNull('checked_in_at')->whereNull('checked_out_at')->whereDate('check_out', '<=', today())->get(),
             'recentActivity' => ActivityLog::with(['booking.room', 'user'])->latest()->take(8)->get(),
-            'pendingReviews' => Review::with(['booking.room', 'user'])->where('status', 'pending')->latest()->take(10)->get(),
+            'pendingReviews' => Review::with(['booking.room', 'user'])->where('status', '!=', 'approved')->latest()->take(10)->get(),
             'recentReviews' => Review::with(['booking.room'])->whereIn('status', ['approved', 'hidden'])->latest()->take(8)->get(),
         ]);
     }
@@ -636,7 +636,7 @@ class AdminController extends Controller
         abort_unless($request->user()->canManageBookings(), 403, 'Your staff role cannot moderate reviews.');
         $approving = $request->input('status') === 'approved';
         $data = $request->validate([
-            'status' => 'required|in:approved,hidden',
+            'status' => 'required|in:approved',
             'guest_name' => $approving ? 'required|string|max:255' : 'sometimes|required|string|max:255',
             'comment' => $approving ? 'present|nullable|string|max:750' : 'sometimes|nullable|string|max:750',
             'privacy_checked' => $approving ? 'accepted' : 'sometimes|accepted',
