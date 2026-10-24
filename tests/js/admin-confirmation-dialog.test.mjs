@@ -118,20 +118,30 @@ test('booking cancellation offers Keep booking and only submits after explicit a
             form.dataset.confirmDismiss = 'Keep booking';
             form.dataset.confirmKicker = 'BOOKING CANCELLATION';
             form.dataset.confirmIcon = '!';
+            form.dataset.confirmStyle = 'cancellation';
             form.querySelector('button').textContent = 'Cancel booking';
         });
 
         await page.getByRole('button', { name: 'Cancel booking', exact: true }).click();
         const dialog = page.getByRole('dialog', { name: 'Cancel this booking?' });
         await dialog.waitFor({ state: 'visible' });
+        assert.equal(await page.locator('#admin-confirm-dialog').evaluate(element => element.classList.contains('is-cancellation')), true);
         assert.match(await dialog.innerText(), /Refunds must be handled separately/);
         assert.equal(await dialog.getByRole('button', { name: 'Keep booking' }).count(), 1);
         await dialog.getByRole('button', { name: 'Keep booking' }).click();
+        await page.waitForFunction(() => {
+            const dialog = document.querySelector('#admin-confirm-dialog');
+            return !dialog.open && !dialog.classList.contains('is-cancellation');
+        });
+        assert.equal(await page.locator('#admin-confirm-dialog').evaluate(element => element.classList.contains('is-cancellation')), false);
         assert.equal(await page.locator('#submit-count').textContent(), '0');
 
         await page.getByRole('button', { name: 'Cancel booking', exact: true }).click();
+        assert.equal(await page.locator('#admin-confirm-dialog').evaluate(element => element.classList.contains('is-cancellation')), true);
         await dialog.getByRole('button', { name: 'Cancel booking' }).click();
         await page.waitForFunction(() => document.querySelector('#submit-count').textContent === '1');
+        await page.waitForFunction(() => !document.querySelector('#admin-confirm-dialog').classList.contains('is-cancellation'));
+        assert.equal(await page.locator('#admin-confirm-dialog').evaluate(element => element.classList.contains('is-cancellation')), false);
         assert.equal(await page.evaluate(() => window.nativeConfirmCalls), 0);
     } finally {
         await page.close();

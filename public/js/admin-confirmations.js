@@ -27,6 +27,7 @@
         message.textContent = form.dataset.confirmMessage || 'Continue with this action?';
         acceptButton.textContent = form.dataset.confirmAction || 'Continue';
         cancelButton.textContent = form.dataset.confirmDismiss || 'Cancel';
+        dialog.classList.toggle('is-cancellation', form.dataset.confirmStyle === 'cancellation');
         if (form.dataset.confirmKicker) kicker.textContent = form.dataset.confirmKicker;
         if (form.dataset.confirmIcon) mark.textContent = form.dataset.confirmIcon;
         dialog.showModal();
@@ -37,6 +38,7 @@
     dialog.addEventListener('close', () => {
         pendingForm = null;
         pendingSubmitter = null;
+        dialog.classList.remove('is-cancellation');
     });
 
     acceptButton.addEventListener('click', () => {

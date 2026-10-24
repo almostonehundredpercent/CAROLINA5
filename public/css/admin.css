@@ -525,6 +525,18 @@ td small {
     color: #fff !important;
     box-shadow: 0 7px 18px rgba(169, 79, 0, .2);
 }
+.admin-confirm-dialog.is-cancellation .admin-confirm-cancel {
+    border-color: #a95500 !important;
+    background: linear-gradient(135deg, #c97710, #a94f00) !important;
+    color: #fff !important;
+    box-shadow: 0 7px 18px rgba(169, 79, 0, .2);
+}
+.admin-confirm-dialog.is-cancellation .admin-confirm-accept {
+    border-color: #ddc8b2 !important;
+    background: #fff !important;
+    color: #39291e !important;
+    box-shadow: none;
+}
 html.dark-mode .admin-confirm-dialog {
     border-color: rgba(226, 167, 111, .38);
     background: linear-gradient(145deg, #2a1d16, #17120f 80%);
@@ -543,6 +555,17 @@ html.dark-mode .admin-confirm-cancel {
     border-color: rgba(237, 213, 190, .28) !important;
     background: rgba(255, 255, 255, .07) !important;
     color: #fff5eb !important;
+}
+html.dark-mode .admin-confirm-dialog.is-cancellation .admin-confirm-cancel {
+    border-color: #a95500 !important;
+    background: linear-gradient(135deg, #c97710, #a94f00) !important;
+    color: #fff !important;
+}
+html.dark-mode .admin-confirm-dialog.is-cancellation .admin-confirm-accept {
+    border-color: rgba(237, 213, 190, .28) !important;
+    background: rgba(255, 255, 255, .07) !important;
+    color: #fff5eb !important;
+    box-shadow: none;
 }
 @media (max-width: 480px) {
     .admin-confirm-card { padding: 23px 20px 20px; }

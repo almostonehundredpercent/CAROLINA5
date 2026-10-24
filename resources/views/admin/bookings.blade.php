@@ -300,6 +300,7 @@
                                                             data-confirm-title="Cancel this booking?"
                                                             data-confirm-message="Cancel booking {{ $booking->reference }} for {{ $booking->guest_name ?? $booking->user?->name ?? 'this guest' }}? This releases the room time. Refunds must be handled separately."
                                                             data-confirm-action="Cancel booking"
+                                                            data-confirm-style="cancellation"
                                                             data-confirm-dismiss="Keep booking">
                                                             @csrf
                                                             @method('PATCH')
