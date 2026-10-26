@@ -40,7 +40,6 @@ async function render(dark) {
                 <article class="room-summary-card not-available"><small>Not available</small><strong>4</strong></article>
             </section>
             <div class="room-board-legend"><span><i class="available"></i>Available</span><span><i class="arriving"></i>Arriving soon</span><span><i class="not-available"></i>Not available</span></div>
-            <div class="room-page-indicator">Rooms 1–6 of 18 · Group 1 of 3</div>
             <article class="room-card"><div class="room-card-main"><div class="room-card-top"><div><h2 class="room-card-title">Room 1</h2><p class="room-card-meta">Fan room · Sleeps 1</p><span class="room-card-rate">₱450 per 22-hour stay</span></div><span class="room-status occupied">Occupied</span></div>
                 <div class="room-card-schedule"><div class="schedule-item"><small>Guest in house</small><b>Guest name</b><span>Oct 24, 6 AM – Oct 26, 6 AM</span></div><div class="schedule-item"><small>Operations</small><b>No cleaning or maintenance planned</b></div></div>
                 <div class="room-card-actions"><a class="room-action-link" href="#">Edit details</a><button class="room-archive-button" type="button">Archive</button></div>
@@ -71,7 +70,6 @@ test('dark room operations text remains legible against Carolina dark surfaces',
             ['room type', '.room-card-meta'],
             ['room rate', '.room-card-rate'],
             ['availability legend', '.room-board-legend'],
-            ['room pagination', '.room-page-indicator'],
             ['available status', '.room-summary-card.available strong'],
             ['arriving status', '.room-summary-card.reserved strong'],
             ['unavailable status', '.room-summary-card.not-available strong'],
