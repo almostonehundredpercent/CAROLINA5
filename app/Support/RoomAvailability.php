@@ -47,4 +47,69 @@ class RoomAvailability
 
         return $rooms;
     }
+
+    /** Find the next bookable start, including later bookings and room operations. */
+    public static function nextAvailableAt(Room $room, Carbon $from, int $hours, bool $dateOnly = false): ?Carbon
+    {
+        if ($room->operational_status !== 'available' && (! $room->operational_until || $room->operational_until->lte(now()))) {
+            return null; // A manual closure without a future end cannot be predicted.
+        }
+
+        $intervals = Booking::where('room_id', $room->id)->blocking()
+            ->where(fn ($query) => $query->where('check_out_at', '>', $from)
+                ->orWhere(fn ($legacy) => $legacy->whereNull('check_in_at')->whereDate('check_out', '>=', $from->toDateString())))
+            ->get(['check_in', 'check_out', 'check_in_at', 'check_out_at'])
+            ->map(fn (Booking $booking) => [
+                $booking->check_in_at ?? $booking->check_in->copy()->startOfDay(),
+                $booking->check_out_at ?? $booking->check_out->copy()->startOfDay(),
+            ])->all();
+
+        $blocks = RoomBlock::where('room_id', $room->id)->whereNull('completed_at')
+            ->where(fn ($query) => $query->whereNull('hold_expires_at')->orWhere('hold_expires_at', '>', now()))
+            ->where('ends_at', '>', $from)->get(['starts_at', 'ends_at']);
+        foreach ($blocks as $block) {
+            $intervals[] = [$block->starts_at, $block->ends_at];
+        }
+        if ($room->operational_status !== 'available') {
+            $intervals[] = [now(), $room->operational_until];
+        }
+
+        usort($intervals, fn ($left, $right) => $left[0]->getTimestamp() <=> $right[0]->getTimestamp());
+        $candidate = $from->greaterThan(now()) ? $from->copy() : now();
+
+        // Each collision moves past at least one interval; one final pass finds a gap.
+        for ($attempt = 0; $attempt <= count($intervals); $attempt++) {
+            $candidate = $dateOnly ? $candidate->copy()->ceilDay() : self::nextCheckInHour($candidate);
+            $end = $candidate->copy()->addHours($hours);
+            $collision = null;
+            foreach ($intervals as [$startsAt, $endsAt]) {
+                if ($startsAt->lt($end) && $endsAt->gt($candidate)
+                    && (! $collision || $endsAt->gt($collision))) {
+                    $collision = $endsAt;
+                }
+            }
+            if (! $collision) {
+                return $candidate;
+            }
+            $candidate = $collision->copy();
+        }
+
+        return null;
+    }
+
+    private static function nextCheckInHour(Carbon $time): Carbon
+    {
+        $hour = $time->copy()->startOfHour();
+        if ($hour->lt($time)) {
+            $hour->addHour();
+        }
+        if ($hour->hour < 6) {
+            return $hour->setTime(6, 0);
+        }
+        if ($hour->hour > 23) {
+            return $hour->addDay()->setTime(6, 0);
+        }
+
+        return $hour;
+    }
 }

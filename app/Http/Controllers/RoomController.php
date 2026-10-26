@@ -60,6 +60,15 @@ class RoomController extends Controller
         [$startsAt, $endsAt] = RoomAvailability::window($bookingSearch);
         RoomAvailability::annotate(collect([$room]), $startsAt, $endsAt);
 
-        return view('rooms.show', compact('room', 'bookingSearch'));
+        $stayHours = isset($bookingSearch['check_in'])
+            ? BookingSelection::hours($bookingSearch, $room)
+            : ($room->rental_hours ?: 24);
+        $dateOnly = ! $room->rental_hours && ! isset($bookingSearch['stay'])
+            && ($bookingSearch['mode'] ?? 'dates') === 'dates';
+        $nextAvailableAt = $room->availability_reason
+            ? RoomAvailability::nextAvailableAt($room, $startsAt, $stayHours, $dateOnly)
+            : null;
+
+        return view('rooms.show', compact('room', 'bookingSearch', 'stayHours', 'nextAvailableAt'));
     }
 }
