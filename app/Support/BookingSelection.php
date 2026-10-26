@@ -17,6 +17,7 @@ class BookingSelection
             'check_in_time' => ['regex:/^(0[6-9]|1[0-9]|2[0-3]):00$/'],
             'guests' => ['integer', 'min:1', 'max:100'],
             'mode' => ['in:dates,hourly'],
+            'sort' => ['in:recommended,price_asc,price_desc'],
         ];
         $selection = [];
         foreach ($rules as $field => $rule) {

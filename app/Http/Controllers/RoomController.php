@@ -24,13 +24,20 @@ class RoomController extends Controller
         if (isset($filters['guests'])) {
             $rooms->where('guests', '>=', (int) $filters['guests']);
         }
+        if (($filters['sort'] ?? 'recommended') === 'price_asc') {
+            $rooms->orderBy('price_per_night')->orderBy('id');
+        } elseif (($filters['sort'] ?? 'recommended') === 'price_desc') {
+            $rooms->orderByDesc('price_per_night')->orderBy('id');
+        } else {
+            $rooms->orderBy('id');
+        }
 
         [$startsAt, $endsAt] = RoomAvailability::window($filters);
 
         return view('rooms.index', [
             // Keep the numbered inventory in room-number order (the first six
             // are the original profiles and the following twelve are units).
-            'rooms' => RoomAvailability::annotate($rooms->orderBy('id')->get(), $startsAt, $endsAt),
+            'rooms' => RoomAvailability::annotate($rooms->get(), $startsAt, $endsAt),
             'filters' => $filters,
         ]);
     }
