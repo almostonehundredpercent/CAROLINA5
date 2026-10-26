@@ -30,7 +30,7 @@
                 @php($isInProgress = in_array($room->display_status, ['cleaning', 'maintenance'], true))
                 <article class="housekeeping-card {{ $room->display_status }}">
                     <div class="housekeeping-card-top">
-                        <span class="room-status {{ $room->display_status }}">{{ ucfirst($room->display_status) }}</span>
+                        <span class="room-status {{ $room->display_status }}">{{ $room->display_status === 'available' ? 'Available' : 'Unavailable · '.ucfirst($room->display_status) }}</span>
                         <span class="housekeeping-capacity">Up to {{ $room->guests }} guests</span>
                     </div>
                     <h2>{{ $room->name }}</h2>

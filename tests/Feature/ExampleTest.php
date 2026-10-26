@@ -135,7 +135,7 @@ test('a reservation request reserves its times and queues booking emails', funct
     expect(Booking::count())->toBe(1);
     Mail::assertQueued(BookingConfirmation::class, fn ($mail) => $mail->hasTo('guest@example.com'));
     Mail::assertQueued(NewBookingRequest::class, fn ($mail) => $mail->hasTo('staff@example.com'));
-    $this->get(route('rooms.index', ['check_in' => $checkIn->toDateString(), 'check_out' => $checkIn->copy()->addDay()->toDateString()]))->assertOk()->assertSee('No rooms found');
+    $this->get(route('rooms.index', ['check_in' => $checkIn->toDateString(), 'check_out' => $checkIn->copy()->addDay()->toDateString()]))->assertOk()->assertSee('Unavailable');
     $payload['submission_token'] = (string) Str::uuid();
     $this->post(route('bookings.store', $room), $payload)->assertSessionHasErrors('availability');
     expect(Booking::count())->toBe(1);

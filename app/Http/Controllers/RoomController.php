@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Room;
 use App\Support\BookingSelection;
-use Carbon\Carbon;
+use App\Support\RoomAvailability;
 use Illuminate\Http\Request;
 
 class RoomController extends Controller
@@ -21,21 +21,16 @@ class RoomController extends Controller
         if (isset($filters['check_in'])) {
             $filters += ['stay' => 'day', 'check_in_time' => '12:00'];
         }
-        $hours = BookingSelection::hours(['stay' => $filters['stay'] ?? 'day']);
-        if (isset($filters['check_in'])) {
-            $startsAt = Carbon::parse($filters['check_in'].' '.($filters['check_in_time'] ?? '12:00'));
-            $endsAt = $startsAt->copy()->addHours($hours);
-            $rooms->whereDoesntHave('bookings', fn ($query) => $query->blocking()->overlapping($startsAt, $endsAt))
-                ->whereDoesntHave('blocks', fn ($query) => $query->overlapping($startsAt, $endsAt));
-        }
         if (isset($filters['guests'])) {
             $rooms->where('guests', '>=', (int) $filters['guests']);
         }
 
+        [$startsAt, $endsAt] = RoomAvailability::window($filters);
+
         return view('rooms.index', [
             // Keep the numbered inventory in room-number order (the first six
             // are the original profiles and the following twelve are units).
-            'rooms' => $rooms->orderBy('id')->get(),
+            'rooms' => RoomAvailability::annotate($rooms->orderBy('id')->get(), $startsAt, $endsAt),
             'filters' => $filters,
         ]);
     }
@@ -52,6 +47,11 @@ class RoomController extends Controller
         ]);
 
         $bookingSearch = BookingSelection::query($request);
+        if (isset($bookingSearch['check_in'])) {
+            $bookingSearch += ['stay' => 'day', 'check_in_time' => '12:00'];
+        }
+        [$startsAt, $endsAt] = RoomAvailability::window($bookingSearch);
+        RoomAvailability::annotate(collect([$room]), $startsAt, $endsAt);
 
         return view('rooms.show', compact('room', 'bookingSearch'));
     }

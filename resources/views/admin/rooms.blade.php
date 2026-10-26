@@ -140,14 +140,14 @@
         @php
             $availableRoomCount = $rooms->where('display_status', 'available')->count();
             $arrivingRoomCount = $rooms->where('display_status', 'reserved')->count();
-            $notAvailableRoomCount = $rooms->count() - $availableRoomCount - $arrivingRoomCount;
+            $notAvailableRoomCount = $rooms->count() - $availableRoomCount;
             $roomSlots = $rooms->sortBy('id')->values();
             $boardSlotCount = max(18, $roomSlots->count());
         @endphp
-        <section class="room-summary" aria-label="Room status summary"><article class="room-summary-card available"><span class="room-summary-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><polyline points="8 12 11 15 16 9"/></svg></span><small>Available</small><strong>{{ $availableRoomCount }}</strong></article><article class="room-summary-card reserved"><span class="room-summary-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="3"/><line x1="8" y1="3" x2="8" y2="7"/><line x1="16" y1="3" x2="16" y2="7"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M15.5 14v2.5l1.7 1"/></svg></span><small>Arriving soon</small><strong>{{ $arrivingRoomCount }}</strong></article><article class="room-summary-card not-available"><span class="room-summary-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><line x1="9" y1="9" x2="15" y2="15"/><line x1="15" y1="9" x2="9" y2="15"/></svg></span><small>Not available</small><strong>{{ $notAvailableRoomCount }}</strong></article></section>
+        <section class="room-summary" aria-label="Room status summary"><article class="room-summary-card available"><span class="room-summary-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><polyline points="8 12 11 15 16 9"/></svg></span><small>Available now</small><strong>{{ $availableRoomCount }}</strong></article><article class="room-summary-card reserved"><span class="room-summary-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="3"/><line x1="8" y1="3" x2="8" y2="7"/><line x1="16" y1="3" x2="16" y2="7"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M15.5 14v2.5l1.7 1"/></svg></span><small>Booked soon</small><strong>{{ $arrivingRoomCount }}</strong></article><article class="room-summary-card not-available"><span class="room-summary-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><line x1="9" y1="9" x2="15" y2="15"/><line x1="15" y1="9" x2="9" y2="15"/></svg></span><small>Unavailable / booked</small><strong>{{ $notAvailableRoomCount }}</strong></article></section>
         <p class="room-operations-note"><span aria-hidden="true">i</span><span><b>Availability is protected.</b> Cleaning and maintenance blocks stop online bookings while the work is scheduled.</span></p>
         <section class="room-board-shell" aria-label="Room operations">
-            <div class="room-board-legend" aria-label="Room color guide"><span><i class="available"></i>Available</span><span><i class="arriving"></i>Arriving soon</span><span><i class="not-available"></i>Not available</span></div>
+            <div class="room-board-legend" aria-label="Room color guide"><span><i class="available"></i>Available</span><span><i class="not-available"></i>Unavailable · booked, cleaning or maintenance</span></div>
             <div class="room-selector-grid" id="room-selector-grid">
                 @foreach(range(1, $boardSlotCount) as $slot)
                     @php
@@ -157,9 +157,6 @@
                         if ($room && $room->display_status === 'available') {
                             $boardStatus = 'available';
                             $boardLabel = 'Available';
-                        } elseif ($room && $room->display_status === 'reserved') {
-                            $boardStatus = 'arriving';
-                            $boardLabel = 'Arriving';
                         } elseif ($room) {
                             $boardStatus = 'not-available';
                             $boardLabel = 'Unavailable';

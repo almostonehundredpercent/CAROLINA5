@@ -72,6 +72,14 @@
 .home-room-carousel .room-card-body { padding:20px; }
 .home-room-carousel .room-card-body > span { color:#a3610d; font-size:.7rem; letter-spacing:.03em; }
 .home-room-carousel .room-card h3 { margin:9px 0 7px; font-size:1.22rem; letter-spacing:-.025em; }
+.home-room-carousel .room-availability-line { display:flex; align-items:center; flex-wrap:wrap; gap:7px; margin:7px 0 10px; }
+.home-room-carousel .room-availability-line .room-availability-badge { display:inline-flex; width:max-content; padding:6px 10px; border-radius:999px; font-size:.71rem; font-weight:800; letter-spacing:0; }
+.home-room-carousel .room-availability-badge.is-available { background:#e2f2e6; color:#1e6537; }
+.home-room-carousel .room-availability-badge.is-unavailable { background:#fbe6df; color:#962f24; }
+.home-room-carousel .room-availability-line small { color:#6b5549; font-size:.75rem; font-weight:600; }
+.dark-mode .home-room-carousel .room-availability-badge.is-available { background:#1b4730; color:#a7e9bc; }
+.dark-mode .home-room-carousel .room-availability-badge.is-unavailable { background:#59271f; color:#ffc2b4; }
+.dark-mode .home-room-carousel .room-availability-line small { color:#d7c4b5; }
 .home-room-carousel .room-card-body p { margin:15px 0 13px; color:var(--ink); font-size:1.13rem; font-weight:700; }
 .home-room-carousel .room-card-body p small { color:var(--muted); font-size:.75rem; font-weight:500; }
 .home-room-carousel .room-card-body a { display:inline-flex; align-items:center; gap:6px; color:#9e5c0b; font-weight:700; }

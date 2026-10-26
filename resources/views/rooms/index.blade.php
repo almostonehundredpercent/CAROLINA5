@@ -28,7 +28,7 @@
         </section>
     </form>
 
-    <p class="result-count">{{ $rooms->count() }} room{{ $rooms->count() === 1 ? '' : 's' }} available</p>
+    <p class="result-count">{{ $rooms->whereNull('availability_reason')->count() }} available · {{ $rooms->whereNotNull('availability_reason')->count() }} unavailable{{ isset($filters['check_in']) ? ' for your stay' : ' right now' }}</p>
     @php($roomPages = $rooms->chunk(6)->values())
     <div class="rooms-carousel" id="rooms-carousel">
         <p class="rooms-page-status" id="rooms-page-status" aria-live="polite">{{ $rooms->isEmpty() ? 'No rooms to display' : 'Showing rooms 1–'.min(6, $rooms->count()).' of '.$rooms->count().($roomPages->count() > 1 ? ' · Group 1 of '.$roomPages->count() : '') }}</p>
@@ -45,6 +45,7 @@
                                 <div class="room-card-body">
                                     <span>{{ $room->room_type }} · {{ $room->beds }} bed{{ $room->beds > 1 ? 's' : '' }} · {{ $room->guests }} guests</span>
                                     <h3>{{ $room->name }}</h3>
+                                    <div class="room-availability-line"><span class="room-availability-badge {{ $room->availability_reason ? 'is-unavailable' : 'is-available' }}">{{ $room->availability_reason ? 'Unavailable' : 'Available' }}</span>@if($room->availability_reason)<small>{{ $room->availability_reason }}</small>@endif</div>
                                     @if($room->promoCodes->isNotEmpty())<small class="room-promo-badge">{{ $room->promoCodes->first()->name }} · {{ $room->promoCodes->first()->code }}</small>@endif
                                     @include('rooms.partials.card-rating', ['room' => $room])
                                     <p>{{ Str::limit($room->description, 86) }}</p>

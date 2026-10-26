@@ -879,8 +879,10 @@ class AdminController extends Controller
         return Room::where('is_active', true)->with(['bookings' => fn ($query) => $query
             ->with('user')
             ->blocking()
-            ->where('check_out', '>', $today)
-            ->orderBy('check_in'), 'blocks' => fn ($query) => $query->where('ends_at', '>', $now)->orderBy('starts_at')])
+            ->where('check_out', '>=', $today->toDateString())
+            ->orderBy('check_in'), 'blocks' => fn ($query) => $query->whereNull('completed_at')
+                ->where(fn ($active) => $active->whereNull('hold_expires_at')->orWhere('hold_expires_at', '>', $now))
+                ->where('ends_at', '>', $now)->orderBy('starts_at')])
             ->orderBy('id')
             ->get()
             ->map(function (Room $room) use ($now) {
