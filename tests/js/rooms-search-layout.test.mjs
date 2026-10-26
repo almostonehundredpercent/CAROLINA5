@@ -32,7 +32,7 @@ async function render(viewport, { darkMode = false } = {}) {
                 <section class="rooms-search-calendar" id="rooms-search-calendar" hidden aria-label="Choose check-in date"><div class="rooms-calendar-head"><button type="button" id="rooms-calendar-prev" aria-label="Previous month">‹</button><b id="rooms-calendar-month"></b><button type="button" id="rooms-calendar-next" aria-label="Next month">›</button></div><div class="rooms-calendar-week"><span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span></div><div class="rooms-calendar-days" id="rooms-calendar-days"></div><p class="rooms-calendar-note" id="rooms-calendar-note" aria-live="polite">Choose your check-in date.</p></section>
             </form>
             <p class="result-count">16 available · 2 unavailable right now</p>
-            <div class="rooms-carousel"><p class="rooms-page-status">Showing rooms 1–6 of 18 · Group 1 of 3</p><div class="room-grid"><article class="rooms-card">Room preview</article></div></div>
+            <div class="rooms-carousel"><p class="rooms-page-status">Showing rooms 1–6 of 18 · Group 1 of 3</p><div class="room-grid"><article class="room-card rooms-card"><img src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" alt=""><div class="room-card-body">Room preview</div></article><article class="room-card rooms-card"><img src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" alt=""><div class="room-card-body">Room preview</div></article><article class="room-card rooms-card"><img src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" alt=""><div class="room-card-body">Room preview</div></article></div></div>
         </section>
     </body></html>`, { waitUntil: 'domcontentloaded' });
     await page.addScriptTag({ content: roomsSearchScript });
@@ -211,6 +211,26 @@ test('price sort choices use a high-contrast, touch-friendly dark menu', async (
         assert.equal(menu.choices.length, 3);
         assert.ok(menu.choices.every(choice => choice.height >= 44), 'each option should be easy to tap');
         assert.ok(menu.choices.every(choice => choice.color.startsWith('rgb(255,')), 'option text should remain light against the dark menu');
+    } finally {
+        await page.close();
+    }
+});
+
+test('price sort options remain above room cards where the dropdown overlaps them', async () => {
+    const page = await render({ width: 1162, height: 700 }, { darkMode: true });
+    try {
+        await page.locator('#rooms-sort-trigger').click();
+        const option = await page.locator('#rooms-sort-menu [data-sort="price_desc"]').boundingBox();
+        const point = { x: option.x + option.width / 2, y: option.y + option.height / 2 };
+        const layering = await page.evaluate(({ x, y }) => {
+            const card = document.querySelector('.room-grid .rooms-card:last-child').getBoundingClientRect();
+            return {
+                overlapsCard: x >= card.left && x <= card.right && y >= card.top && y <= card.bottom,
+                hit: document.elementFromPoint(x, y)?.closest('#rooms-sort-menu') !== null,
+            };
+        }, point);
+        assert.equal(layering.overlapsCard, true, 'test point should exercise the dropdown directly over a room card');
+        assert.equal(layering.hit, true, 'the option should be clickable instead of hidden behind the card');
     } finally {
         await page.close();
     }

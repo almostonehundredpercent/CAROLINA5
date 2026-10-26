@@ -6,7 +6,7 @@
 .rooms-hero h1 { max-width:650px; color:#fff8ef; font-size:clamp(3rem,5vw,4.8rem); letter-spacing:-.055em; }
 .rooms-hero p { max-width:560px; margin:0; color:#dbcabd; font-size:1.08rem; }
 .rooms-results { max-width:1240px; padding-top:54px; padding-bottom:80px; }
-.rooms-search { display:grid; grid-template-columns:minmax(145px,1.2fr) minmax(145px,1fr) minmax(130px,.92fr) minmax(140px,1fr) minmax(170px,1.15fr) minmax(155px,1fr); align-items:stretch; max-width:none; padding:16px; border:1px solid rgba(216,185,151,.78); border-radius:21px; background:linear-gradient(145deg,rgba(255,253,249,.96),rgba(248,239,227,.9)); box-shadow:0 22px 50px rgba(54,36,18,.14),inset 0 1px 0 rgba(255,255,255,.82); backdrop-filter:blur(14px) saturate(1.08); gap:11px; }
+.rooms-search { position:relative; z-index:3; display:grid; grid-template-columns:minmax(145px,1.2fr) minmax(145px,1fr) minmax(130px,.92fr) minmax(140px,1fr) minmax(170px,1.15fr) minmax(155px,1fr); align-items:stretch; max-width:none; padding:16px; border:1px solid rgba(216,185,151,.78); border-radius:21px; background:linear-gradient(145deg,rgba(255,253,249,.96),rgba(248,239,227,.9)); box-shadow:0 22px 50px rgba(54,36,18,.14),inset 0 1px 0 rgba(255,255,255,.82); backdrop-filter:blur(14px) saturate(1.08); gap:11px; }
 .rooms-search > * { min-width:0; width:100%; }
 .rooms-date-trigger,.rooms-choice,.rooms-time-field { min-height:61px; border-color:#e5d9cc; border-radius:13px; background:linear-gradient(155deg,#fffefa,#fbf5ed); box-shadow:inset 0 1px 0 rgba(255,255,255,.9); transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease,background .18s ease; }
 .rooms-date-trigger { padding:12px 14px; }
