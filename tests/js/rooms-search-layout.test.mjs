@@ -61,6 +61,47 @@ test('price sorting keeps all room search controls readable on desktop and mobil
     }
 });
 
+test('price sort control feels refined on hover and gives clear keyboard focus', async () => {
+    for (const darkMode of [false, true]) {
+        const page = await render({ width: 1274, height: 850 });
+        try {
+            if (darkMode) await page.evaluate(() => document.documentElement.classList.add('dark-mode'));
+            const control = page.locator('.rooms-sort-control');
+            const initialBorder = await control.evaluate(element => getComputedStyle(element).borderColor);
+            await control.hover();
+            await page.waitForTimeout(220);
+            const hoverStyle = await control.evaluate(element => ({
+                border: getComputedStyle(element).borderColor,
+                shadow: getComputedStyle(element).boxShadow,
+                translation: new DOMMatrixReadOnly(getComputedStyle(element).transform).m42,
+            }));
+            assert.notEqual(hoverStyle.border, initialBorder, 'hover should reveal the warm accent border');
+            assert.notEqual(hoverStyle.shadow, 'none', 'hover should lift the control from the search surface');
+            assert.ok(hoverStyle.translation < 0, 'hover should give a subtle lift');
+
+            await control.locator('select').focus();
+            await page.waitForTimeout(220);
+            const focusShadow = await control.evaluate(element => getComputedStyle(element).boxShadow);
+            assert.notEqual(focusShadow, 'none', 'keyboard focus should remain clearly visible');
+        } finally {
+            await page.close();
+        }
+    }
+});
+
+test('premium room search hover effects respect reduced-motion preferences', async () => {
+    const page = await render({ width: 1274, height: 850 });
+    try {
+        await page.emulateMedia({ reducedMotion: 'reduce' });
+        await page.locator('.rooms-sort-control').hover();
+        await page.waitForTimeout(220);
+        const offset = await page.locator('.rooms-sort-control').evaluate(element => new DOMMatrixReadOnly(getComputedStyle(element).transform).m42);
+        assert.equal(offset, 0, 'reduced-motion users should not see the hover lift');
+    } finally {
+        await page.close();
+    }
+});
+
 async function renderDarkSortMenu() {
     const page = await browser.newPage({ viewport: { width: 390, height: 700 } });
     await page.setContent(`<html class="dark-mode"><style>${baseStyles}\n${roomsStyles}</style>
