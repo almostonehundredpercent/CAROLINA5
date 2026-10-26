@@ -60,3 +60,46 @@ test('price sorting keeps all room search controls readable on desktop and mobil
         }
     }
 });
+
+async function renderDarkSortMenu() {
+    const page = await browser.newPage({ viewport: { width: 390, height: 700 } });
+    await page.setContent(`<html class="dark-mode"><style>${baseStyles}\n${roomsStyles}</style>
+        <form class="rooms-search"><label class="rooms-sort-control">Sort by price
+            <select size="3"><option>Recommended</option><option>Lowest first</option><option>Highest first</option></select>
+        </label></form></html>`);
+    return page;
+}
+
+test('dark price sort options use a readable dark surface and light text', async () => {
+    const page = await renderDarkSortMenu();
+    try {
+        const optionColors = await page.locator('.rooms-sort-control option').evaluateAll(options => options.map(option => ({
+            color: getComputedStyle(option).color,
+            background: getComputedStyle(option).backgroundColor,
+        })));
+        for (const option of optionColors) {
+            assert.equal(option.color, 'rgb(244, 233, 220)');
+            assert.equal(option.background, 'rgb(42, 33, 27)');
+        }
+    } finally {
+        await page.close();
+    }
+});
+
+test('price sort labels fit inside the compact dropdown without clipping', async () => {
+    const page = await renderDarkSortMenu();
+    try {
+        const select = await page.locator('.rooms-sort-control select').evaluate(select => ({
+            width: select.clientWidth,
+            optionWidths: [...select.options].map(option => {
+                const canvas = document.createElement('canvas');
+                const context = canvas.getContext('2d');
+                context.font = getComputedStyle(select).font;
+                return context.measureText(option.textContent).width;
+            }),
+        }));
+        assert.ok(select.optionWidths.every(width => width <= select.width - 30), 'every choice should fit before the dropdown arrow');
+    } finally {
+        await page.close();
+    }
+});
