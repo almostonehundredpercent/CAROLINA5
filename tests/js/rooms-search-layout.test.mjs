@@ -1,0 +1,62 @@
+import assert from 'node:assert/strict';
+import test from 'node:test';
+import { after, before } from 'node:test';
+import { readFile } from 'node:fs/promises';
+import { chromium } from 'playwright';
+
+const baseStyles = await readFile(new URL('../../public/css/site.css', import.meta.url), 'utf8');
+const roomsStyles = await readFile(new URL('../../public/css/rooms-premium.css', import.meta.url), 'utf8');
+let browser;
+
+before(async () => { browser = await chromium.launch({ headless: true }); });
+after(async () => { await browser?.close(); });
+
+async function render(viewport) {
+    const page = await browser.newPage({ viewport });
+    await page.setContent(`<style>${baseStyles}\n${roomsStyles}</style>
+        <section class="section compact rooms-results"><form class="filter-bar rooms-search">
+            <button class="rooms-date-trigger"><span>Check-in date</span><b>Choose date</b></button>
+            <div class="rooms-choice"><span>Stay length</span><button>1 day stay</button></div>
+            <div class="rooms-time-field"><span>Check-in time</span><button>12:00 PM</button></div>
+            <div class="rooms-choice"><span>Guests</span><button>Any guests</button></div>
+            <label class="rooms-sort-control">Sort by price<select><option>Recommended</option></select></label>
+            <button class="button">Check availability</button>
+        </form></section>`);
+    return page;
+}
+
+test('price sorting keeps all room search controls readable on desktop and mobile', async () => {
+    for (const width of [1274, 1024, 901, 768, 390]) {
+        const page = await render({ width, height: 850 });
+        try {
+            const layout = await page.locator('.rooms-search').evaluate(form => {
+                const bounds = selector => {
+                    const rect = form.querySelector(selector).getBoundingClientRect();
+                    return { left: rect.left, right: rect.right, width: rect.width };
+                };
+                return {
+                    date: bounds('.rooms-date-trigger'),
+                    sort: bounds('.rooms-sort-control'),
+                    submit: bounds('.rooms-search > .button'),
+                    form: form.getBoundingClientRect(),
+                    items: [...form.children].filter(element => element.getBoundingClientRect().width > 0)
+                        .map(element => element.getBoundingClientRect().toJSON()),
+                };
+            });
+            assert.ok(layout.date.width >= 145, `date field should remain readable at ${width}px`);
+            assert.ok(layout.sort.width >= 170, `price sort should remain readable at ${width}px`);
+            assert.ok(layout.submit.left >= layout.form.left && layout.submit.right <= layout.form.right,
+                `submit button should fit inside the search bar at ${width}px`);
+            for (let index = 0; index < layout.items.length; index++) {
+                for (let other = index + 1; other < layout.items.length; other++) {
+                    const first = layout.items[index], second = layout.items[other];
+                    const overlaps = first.left < second.right && first.right > second.left
+                        && first.top < second.bottom && first.bottom > second.top;
+                    assert.equal(overlaps, false, `search controls should not overlap at ${width}px`);
+                }
+            }
+        } finally {
+            await page.close();
+        }
+    }
+});
