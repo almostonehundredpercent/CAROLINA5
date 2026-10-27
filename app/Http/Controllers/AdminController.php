@@ -442,14 +442,14 @@ class AdminController extends Controller
 
     public function createRoom(Request $request)
     {
-        abort_unless($request->user()->isAdmin(), 403, 'Only administrators can add rooms.');
+        abort_unless($request->user()->isAdmin(), 403, 'Only Organization Admins can add rooms.');
 
         return view('admin.room-form', ['room' => new Room, 'action' => route('admin.rooms.store'), 'method' => 'POST']);
     }
 
     public function storeRoom(Request $request)
     {
-        abort_unless($request->user()->isAdmin(), 403, 'Only administrators can add rooms.');
+        abort_unless($request->user()->isAdmin(), 403, 'Only Organization Admins can add rooms.');
         $room = Room::create($this->roomData($request));
         $this->audit($request->user()->id, 'room_created', 'Room added to the catalog.', $room, [], $room->only(['name', 'room_type', 'price_per_night', 'guests', 'is_active']));
 
@@ -458,14 +458,14 @@ class AdminController extends Controller
 
     public function editRoom(Request $request, Room $room)
     {
-        abort_unless($request->user()->isAdmin(), 403, 'Only administrators can edit room details.');
+        abort_unless($request->user()->isAdmin(), 403, 'Only Organization Admins can edit room details.');
 
         return view('admin.room-form', ['room' => $room, 'action' => route('admin.rooms.update', $room), 'method' => 'PATCH']);
     }
 
     public function updateRoom(Request $request, Room $room)
     {
-        abort_unless($request->user()->isAdmin(), 403, 'Only administrators can edit room details.');
+        abort_unless($request->user()->isAdmin(), 403, 'Only Organization Admins can edit room details.');
         $before = $room->only(['name', 'room_type', 'description', 'price_per_night', 'guests', 'beds', 'amenities', 'image_url', 'is_active']);
         $room->update($this->roomData($request, $room));
         $this->audit($request->user()->id, 'room_updated', 'Room details updated.', $room, $before, $room->fresh()->only(['name', 'room_type', 'description', 'price_per_night', 'guests', 'beds', 'amenities', 'image_url', 'is_active']));
@@ -475,7 +475,7 @@ class AdminController extends Controller
 
     public function archiveRoom(Request $request, Room $room)
     {
-        abort_unless($request->user()->isAdmin(), 403, 'Only administrators can archive rooms.');
+        abort_unless($request->user()->isAdmin(), 403, 'Only Organization Admins can archive rooms.');
         abort_if($room->bookings()->blocking()->where('check_out_at', '>', now())->exists(), 422, 'This room has future or active confirmed stays and cannot be archived yet.');
         $room->update(['is_active' => false]);
         $this->audit($request->user()->id, 'room_archived', 'Room archived without deleting booking history.', $room, ['is_active' => true], ['is_active' => false]);
@@ -789,24 +789,18 @@ class AdminController extends Controller
 
     public function staff(Request $request)
     {
-        abort_unless($request->user()->isAdmin(), 403, 'Only administrators can manage staff roles.');
+        abort_unless($request->user()->isAdmin(), 403, 'Only Organization Admins can manage staff roles.');
 
         return view('admin.staff', ['staff' => User::orderByDesc('is_admin')->orderBy('name')->get()]);
     }
 
     public function updateStaffRole(Request $request, User $user)
     {
-        abort_unless($request->user()->isAdmin(), 403, 'Only administrators can manage staff roles.');
-        $role = $request->validate(['staff_role' => 'required|in:super_admin,admin,front_desk,housekeeping,viewer,guest'])['staff_role'];
-        abort_unless(
-            AdminPermissions::allows($request->user(), 'elevate_staff')
-                || (! $user->isAdmin() && ! in_array($role, ['admin', 'super_admin'], true)),
-            403,
-            'Only a super administrator can change administrator access.',
-        );
-        abort_if($user->id === $request->user()->id && $role !== 'super_admin', 422, 'You cannot remove your own super administrator access.');
+        abort_unless($request->user()->isAdmin(), 403, 'Only Organization Admins can manage staff roles.');
+        $role = $request->validate(['staff_role' => 'required|in:organization_admin,front_desk,housekeeping,viewer,guest'])['staff_role'];
+        abort_if($user->id === $request->user()->id && $role !== 'organization_admin', 422, 'You cannot remove your own Organization Admin access.');
         $before = $user->only(['staff_role', 'is_admin']);
-        $user->update(['staff_role' => $role, 'is_admin' => in_array($role, ['admin', 'super_admin'], true)]);
+        $user->update(['staff_role' => $role, 'is_admin' => $role === 'organization_admin']);
         $this->audit($request->user()->id, 'staff_role_updated', 'Staff role updated.', $user, $before, $user->fresh()->only(['staff_role', 'is_admin']));
 
         return back()->with('success', $user->name."'s staff role was updated.");
@@ -859,7 +853,7 @@ class AdminController extends Controller
             $overlap = $lockedRoom->bookings()->blocking()->overlapping($startsAt, $endsAt)->exists();
 
             if ($overlap && (! $override || ! $request->user()->isAdmin())) {
-                throw ValidationException::withMessages(['operational_until' => 'This operation overlaps a confirmed stay. Choose another time, or have an administrator record an override.']);
+                throw ValidationException::withMessages(['operational_until' => 'This operation overlaps a confirmed stay. Choose another time, or have an Organization Admin record an override.']);
             }
 
             $existingBlock = $lockedRoom->blocks()->overlapping($startsAt, $endsAt)->orderBy('starts_at')->first();

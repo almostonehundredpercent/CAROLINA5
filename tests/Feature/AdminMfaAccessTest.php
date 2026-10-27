@@ -29,7 +29,7 @@ test('an authenticated staff member cannot open admin pages before mfa setup', f
         ->assertRedirect('/staff/mfa/setup');
 });
 
-test('a regular administrator cannot elevate a staff member to administrator', function () {
+test('an Organization Admin can grant Organization Admin access to a staff member', function () {
     $admin = User::factory()->create(['staff_role' => 'admin', 'is_admin' => true]);
     $staff = User::factory()->create(['staff_role' => 'front_desk']);
     $admin->forceFill(['mfa_secret' => 'JBSWY3DPEHPK3PXPJBSWY3DPEHPK3PXP', 'mfa_confirmed_at' => now()])->save();
@@ -38,8 +38,11 @@ test('a regular administrator cannot elevate a staff member to administrator', f
         'staff_mfa_user_id' => $admin->id,
         'staff_mfa_stamp' => $admin->mfa_confirmed_at->getTimestamp(),
     ])->patch(route('admin.staff.role', $staff), [
-        'staff_role' => 'super_admin',
-    ])->assertForbidden();
+        'staff_role' => 'organization_admin',
+    ])->assertRedirect();
+
+    expect($staff->fresh()->staff_role)->toBe('organization_admin');
+    expect($staff->fresh()->is_admin)->toBeTrue();
 });
 
 test('staff enrollment requires the current password and encrypts the authenticator secret', function () {
@@ -172,20 +175,20 @@ test('distributed authenticator guesses against one staff account are limited', 
         ->assertTooManyRequests();
 });
 
-test('a super administrator can grant administrator access after mfa', function () {
-    $owner = User::factory()->create(['staff_role' => 'super_admin', 'is_admin' => true]);
+test('an Organization Admin can grant Organization Admin access after mfa', function () {
+    $owner = User::factory()->create(['staff_role' => 'organization_admin', 'is_admin' => true]);
     $staff = User::factory()->create(['staff_role' => 'front_desk']);
 
     $this->actingAsStaff($owner)->patch(route('admin.staff.role', $staff), [
-        'staff_role' => 'admin',
+        'staff_role' => 'organization_admin',
     ])->assertRedirect();
 
-    expect($staff->fresh()->staff_role)->toBe('admin');
+    expect($staff->fresh()->staff_role)->toBe('organization_admin');
     expect($staff->fresh()->is_admin)->toBeTrue();
 });
 
-test('a super administrator label alone cannot grant access without the admin flag', function () {
-    $misconfigured = User::factory()->create(['staff_role' => 'super_admin', 'is_admin' => false]);
+test('an Organization Admin role label alone cannot grant access without the admin flag', function () {
+    $misconfigured = User::factory()->create(['staff_role' => 'organization_admin', 'is_admin' => false]);
 
     expect(AdminPermissions::allows($misconfigured, 'elevate_staff'))->toBeFalse();
     $this->actingAs($misconfigured)->get(route('admin.staff'))->assertForbidden();
@@ -238,15 +241,14 @@ test('the staff session is regenerated after password and mfa verification', fun
     expect(session()->getId())->not->toBe($afterLogin);
 });
 
-test('the maintenance command can promote only an existing administrator', function () {
-    $admin = User::factory()->create(['staff_role' => 'admin', 'is_admin' => true]);
+test('the maintenance command can promote an existing account to Organization Admin', function () {
     $guest = User::factory()->create();
 
-    $this->artisan('staff:promote-super-admin', ['email' => $guest->email])->assertExitCode(1);
-    expect($guest->fresh()->is_admin)->toBeFalse();
+    $this->artisan('staff:promote-organization-admin', ['email' => 'missing@example.test'])->assertExitCode(1);
 
-    $this->artisan('staff:promote-super-admin', ['email' => $admin->email])->assertExitCode(0);
-    expect($admin->fresh()->staff_role)->toBe('super_admin');
+    $this->artisan('staff:promote-organization-admin', ['email' => $guest->email])->assertExitCode(0);
+    expect($guest->fresh()->staff_role)->toBe('organization_admin');
+    expect($guest->fresh()->is_admin)->toBeTrue();
 });
 
 test('a server-side recovery command clears a lost authenticator and invalidates mfa sessions', function () {
@@ -265,23 +267,20 @@ test('a server-side recovery command clears a lost authenticator and invalidates
     $this->get(route('admin.frontdesk'))->assertRedirect(route('admin.mfa.setup'));
 });
 
-test('the staff screen only offers administrator roles to super administrators', function () {
+test('all Organization Admins can assign the single Organization Admin role', function () {
     $admin = User::factory()->create(['staff_role' => 'admin', 'is_admin' => true]);
     User::factory()->create(['staff_role' => 'viewer']);
     $this->actingAsStaff($admin)->get(route('admin.staff'))
         ->assertOk()
         ->assertDontSee('value="super_admin"', false)
+        ->assertSee('value="organization_admin"', false)
         ->assertSee('class="staff-access-table"', false)
         ->assertSee('data-staff-role-picker', false)
         ->assertSee('data-staff-role-trigger', false)
         ->assertSee('data-label="Email"', false)
         ->assertSee('js/staff-role-picker.js', false);
 
-    $owner = User::factory()->create(['staff_role' => 'super_admin', 'is_admin' => true]);
-    $this->actingAsStaff($owner)->get(route('admin.staff'))
-        ->assertOk()
-        ->assertSee('value="super_admin"', false)
-        ->assertSee('data-value="super_admin"', false);
+    $this->assertTrue(AdminPermissions::allows($admin, 'elevate_staff'));
 });
 
 test('state-changing admin requests still reject a missing csrf token', function () {
