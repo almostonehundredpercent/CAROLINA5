@@ -668,12 +668,44 @@ class AdminController extends Controller
         abort_unless(in_array($period, ['daily', 'weekly', 'monthly', 'yearly', 'custom'], true), 404);
         abort_unless(in_array($metric, ['payments', 'bookings', 'guests'], true), 404);
 
-        $range = $request->validate(['from' => 'nullable|date', 'to' => 'nullable|date|after_or_equal:from']);
+        try {
+            $range = $request->validate(['from' => 'nullable|date', 'to' => 'nullable|date|after_or_equal:from']);
+        } catch (ValidationException $exception) {
+            if ($period !== 'custom') {
+                throw $exception;
+            }
+
+            return redirect()
+                ->route('admin.reports', ['metric' => $metric, 'period' => 'monthly'])
+                ->withInput($request->only(['from', 'to']))
+                ->withErrors($exception->errors());
+        }
+
         if ($period === 'custom') {
-            abort_unless(! empty($range['from']) && ! empty($range['to']), 422, 'Choose both dates for a custom report.');
+            $rangeErrors = [];
+            if (empty($range['from'])) {
+                $rangeErrors['from'] = 'Choose a start date for the custom report.';
+            }
+            if (empty($range['to'])) {
+                $rangeErrors['to'] = 'Choose an end date for the custom report.';
+            }
+
+            if ($rangeErrors !== []) {
+                return redirect()
+                    ->route('admin.reports', ['metric' => $metric, 'period' => 'monthly'])
+                    ->withInput($request->only(['from', 'to']))
+                    ->withErrors($rangeErrors);
+            }
+
             $from = Carbon::parse($range['from'])->startOfDay();
             $to = Carbon::parse($range['to'])->endOfDay();
-            abort_if($from->diffInDays($to) > 92, 422, 'Custom reports are limited to 93 days.');
+            $lastAllowedDay = $from->copy()->addMonthsNoOverflow(3);
+            if (Carbon::parse($range['to'])->startOfDay()->gt($lastAllowedDay)) {
+                return redirect()
+                    ->route('admin.reports', ['metric' => $metric, 'period' => 'monthly'])
+                    ->withInput($request->only(['from', 'to']))
+                    ->withErrors(['to' => 'Choose a custom report range of three months or less.']);
+            }
             $dates = collect(CarbonPeriod::create($from, '1 day', $to))->map(fn (Carbon $date) => $date->copy());
             $keys = $dates->map(fn (Carbon $date) => $date->toDateString());
             $labels = $dates->map(fn (Carbon $date) => $date->format('M j'));
