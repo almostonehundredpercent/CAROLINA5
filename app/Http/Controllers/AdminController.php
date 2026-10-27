@@ -358,11 +358,13 @@ class AdminController extends Controller
     public function frontdesk()
     {
         $today = today();
+        $tomorrow = $today->copy()->addDay();
 
         return view('admin.frontdesk', [
             'arrivals' => Booking::with(['user', 'room'])->where('status', 'confirmed')->whereDate('check_in', $today)->whereNull('checked_in_at')->get(),
             'activeStays' => Booking::with(['user', 'room'])->whereNotNull('checked_in_at')->whereNull('checked_out_at')->get(),
             'departures' => Booking::with(['user', 'room'])->whereNotNull('checked_in_at')->whereNull('checked_out_at')->whereDate('check_out', '<=', $today)->get(),
+            'maintenanceBlocks' => RoomBlock::with('room')->where('status', 'maintenance')->overlapping($today, $tomorrow)->orderBy('starts_at')->get(),
         ]);
     }
 
