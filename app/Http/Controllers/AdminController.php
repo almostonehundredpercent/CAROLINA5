@@ -862,8 +862,13 @@ class AdminController extends Controller
                 throw ValidationException::withMessages(['operational_until' => 'This operation overlaps a confirmed stay. Choose another time, or have an administrator record an override.']);
             }
 
-            if ($lockedRoom->blocks()->overlapping($startsAt, $endsAt)->exists()) {
-                throw ValidationException::withMessages(['operational_until' => 'This room already has a cleaning or maintenance operation during that time. Choose another time.']);
+            $existingBlock = $lockedRoom->blocks()->overlapping($startsAt, $endsAt)->orderBy('starts_at')->first();
+            if ($existingBlock) {
+                $existingStatus = ucfirst($existingBlock->status);
+                $existingStart = $existingBlock->starts_at->format('M j, g:i A');
+                $existingEnd = $existingBlock->ends_at->format('M j, g:i A');
+
+                throw ValidationException::withMessages(['operational_until' => "Room {$lockedRoom->name} already has {$existingStatus} scheduled from {$existingStart} to {$existingEnd}. Choose a time outside that window."]);
             }
 
             $blockNotes = $overlap && $override
