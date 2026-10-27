@@ -173,6 +173,7 @@ test('an expired unpaid cash hold shows a restore action instead of payment or c
     $this->actingAsStaff($admin)->get(route('admin.bookings'))
         ->assertOk()
         ->assertSee('Hold expired')
+        ->assertSee($booking->holdDeadline()->format('M j, Y · g:i A'))
         ->assertSee('Check availability &amp; restore', false)
         ->assertDontSee('>Mark paid</button>', false)
         ->assertDontSee('>Confirm</button>', false);
@@ -213,6 +214,21 @@ test('an expired cash hold cannot be restored over a competing booking', functio
         ->and($booking->payments()->count())->toBe(0);
 });
 
+test('an expired cash hold cannot be restored over a cleaning block', function () {
+    Mail::fake();
+    $room = holdRoom();
+    $booking = heldBooking($room, ['hold_expires_at' => now()->subMinute()]);
+    RoomBlock::create(['room_id' => $room->id, 'status' => 'cleaning', 'starts_at' => '2026-10-05 12:00:00', 'ends_at' => '2026-10-05 13:00:00']);
+    $admin = User::factory()->create(['is_admin' => true]);
+
+    $this->actingAsStaff($admin)->from(route('admin.bookings'))
+        ->patch(route('admin.bookings.update', $booking), ['status' => 'confirmed'])
+        ->assertRedirect(route('admin.bookings'))->assertSessionHasErrors('status');
+
+    expect($booking->fresh()->status)->toBe('pending')
+        ->and($booking->payments()->count())->toBe(0);
+});
+
 test('an expired cash hold cannot be restored while the room is manually unavailable', function () {
     Mail::fake();
     $room = holdRoom();
@@ -239,6 +255,23 @@ test('an expired cash hold cannot be restored for an archived room', function ()
 
     expect($booking->fresh()->status)->toBe('pending')
         ->and($booking->payments()->count())->toBe(0);
+});
+
+test('a stale restore request cannot reopen a booking that staff cancelled', function () {
+    Mail::fake();
+    $booking = heldBooking(holdRoom(), ['hold_expires_at' => now()->subMinute()]);
+    $admin = User::factory()->create(['is_admin' => true]);
+
+    $this->actingAsStaff($admin)->patch(route('admin.bookings.update', $booking), ['status' => 'cancelled'])
+        ->assertSessionHasNoErrors();
+    $cancelledAt = $booking->fresh()->cancelled_at;
+
+    $this->actingAsStaff($admin)->from(route('admin.bookings'))
+        ->patch(route('admin.bookings.update', $booking), ['status' => 'confirmed'])
+        ->assertRedirect(route('admin.bookings'))->assertSessionHasErrors('status');
+
+    expect($booking->fresh()->status)->toBe('cancelled')
+        ->and($booking->fresh()->cancelled_at->equalTo($cancelledAt))->toBeTrue();
 });
 
 test('legacy migration grants grace only to unpaid requests and is idempotent', function () {

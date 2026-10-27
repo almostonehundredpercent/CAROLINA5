@@ -169,30 +169,37 @@ class AdminController extends Controller
 
         $data = $request->validate(['status' => 'required|in:pending,confirmed,cancelled', 'staff_note' => 'nullable|string|max:500', 'cancellation_reason' => 'nullable|string|max:500']);
         $status = $data['status'];
-        $before = $booking->only(['status', 'staff_notes', 'cancelled_at', 'cancelled_by', 'cancellation_reason']);
-        abort_if($status === 'cancelled' && $booking->checked_in_at && ! $booking->checked_out_at, 422, 'Check out the guest before cancelling their booking.');
-        if ($status === 'confirmed') {
-            DB::transaction(function () use ($booking) {
-                $lockedRoom = Room::whereKey($booking->room_id)->lockForUpdate()->firstOrFail();
+        $before = DB::transaction(function () use ($booking, $status, $data, $request) {
+            $lockedRoom = Room::whereKey($booking->room_id)->lockForUpdate()->firstOrFail();
+            $lockedBooking = Booking::whereKey($booking->id)->lockForUpdate()->firstOrFail();
+            $before = $lockedBooking->only(['status', 'staff_notes', 'cancelled_at', 'cancelled_by', 'cancellation_reason']);
+            if ($status === 'confirmed') {
+                if ($lockedBooking->status !== 'pending') {
+                    throw ValidationException::withMessages(['status' => 'This booking is no longer pending. Refresh the bookings page before taking action.']);
+                }
                 if (! $lockedRoom->is_active || $lockedRoom->operational_status !== 'available') {
                     throw ValidationException::withMessages(['status' => 'This room is not ready to book. Restore it only after the room is active and available.']);
                 }
-                $startsAt = $booking->check_in_at ?? $booking->check_in->copy()->startOfDay();
-                $endsAt = $booking->check_out_at ?? $booking->check_out->copy()->startOfDay();
-                $conflict = $lockedRoom->bookings()->whereKeyNot($booking->id)->blocking()->overlapping($startsAt, $endsAt)->exists()
+                $startsAt = $lockedBooking->check_in_at ?? $lockedBooking->check_in->copy()->startOfDay();
+                $endsAt = $lockedBooking->check_out_at ?? $lockedBooking->check_out->copy()->startOfDay();
+                $conflict = $lockedRoom->bookings()->whereKeyNot($lockedBooking->id)->blocking()->overlapping($startsAt, $endsAt)->exists()
                     || $lockedRoom->blocks()->overlapping($startsAt, $endsAt)->exists();
                 if ($conflict) {
                     throw ValidationException::withMessages(['status' => 'This room is no longer available for the requested stay.']);
                 }
-                $booking->update(['status' => 'confirmed', 'hold_expires_at' => null, 'cancelled_at' => null, 'cancelled_by' => null, 'cancellation_reason' => null]);
-            });
-        } else {
-            $booking->update(['status' => $status, 'hold_expires_at' => null] + ($status === 'cancelled' ? [
-                'cancelled_at' => now(),
-                'cancelled_by' => $request->user()->id,
-                'cancellation_reason' => trim((string) ($data['cancellation_reason'] ?? '')) ?: 'Cancelled by staff.',
-            ] : ['cancelled_at' => null, 'cancelled_by' => null, 'cancellation_reason' => null]));
-        }
+                $lockedBooking->update(['status' => 'confirmed', 'hold_expires_at' => null, 'cancelled_at' => null, 'cancelled_by' => null, 'cancellation_reason' => null]);
+            } else {
+                abort_if($status === 'cancelled' && $lockedBooking->checked_in_at && ! $lockedBooking->checked_out_at, 422, 'Check out the guest before cancelling their booking.');
+                $lockedBooking->update(['status' => $status, 'hold_expires_at' => null] + ($status === 'cancelled' ? [
+                    'cancelled_at' => now(),
+                    'cancelled_by' => $request->user()->id,
+                    'cancellation_reason' => trim((string) ($data['cancellation_reason'] ?? '')) ?: 'Cancelled by staff.',
+                ] : ['cancelled_at' => null, 'cancelled_by' => null, 'cancellation_reason' => null]));
+            }
+
+            return $before;
+        });
+        $booking->refresh();
         $note = trim((string) $request->input('staff_note'));
         if ($note !== '') {
             $booking->update(['staff_notes' => trim(($booking->staff_notes ? $booking->staff_notes."\n" : '').now()->format('Y-m-d H:i').' · '.$request->user()->name.': '.$note)]);
