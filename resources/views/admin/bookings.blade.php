@@ -49,6 +49,11 @@
             background: #fff3df;
             color: #83520e;
         }
+        .booking-status-stack .mini-status.hold-expired {
+            border-color: #e5b9a4;
+            background: #fff0e8;
+            color: #8a3b1c;
+        }
         .booking-status-stack .mini-status.cancelled {
             border-color: #e7c5bf;
             background: #f6e6e2;
@@ -68,6 +73,11 @@
             border-color: #765b31;
             background: #42321c;
             color: #f1d4a1;
+        }
+        html.dark-mode .booking-status-stack .mini-status.hold-expired {
+            border-color: #a66b4c;
+            background: #432b22;
+            color: #ffdcc6;
         }
         html.dark-mode .booking-status-stack .mini-status.cancelled {
             border-color: #79413b;
@@ -90,6 +100,11 @@
             font-size: 12px !important;
             line-height: 1.2;
             white-space: nowrap;
+        }
+        .booking-action-buttons .restore-booking-button {
+            min-height: 44px !important;
+            white-space: normal;
+            text-align: center;
         }
         .booking-note { color: var(--muted); font-size: 12px; margin: 5px 0; }
         .hold-expiry { display: block; color: #9d6100; font-size: 11px; margin-top: 5px; }
@@ -230,11 +245,12 @@
                                         @php($payMongoPayment = $payMongoPayments->firstWhere('status', 'pending') ?? $payMongoPayments->first())
                                         @php($hasPayMongoPayment = $payMongoPayments->isNotEmpty())
                                         @php($hasPaidPayMongoPayment = $payMongoPayments->contains(fn ($payment) => $payment->status === 'paid'))
+                                        @php($expiredCashHold = ! $hasPayMongoPayment && ($booking->payment_method === 'cash' || $booking->payment_method === null) && $booking->hasExpiredHold())
                                         @php($timeAdjustment = $booking->timeAdjustments->sortByDesc('id')->first())
                                         @php($paymentStatus = $booking->payment_status === 'refunded' ? 'refunded' : ($hasPaidPayMongoPayment ? 'paid' : ($booking->payment_status ?? 'pending')))
                                         @php($paymentStatusClass = match ($paymentStatus) { 'paid' => 'confirmed', 'refunded', 'failed' => 'cancelled', default => '' })
                                         <div class="booking-status-stack">
-                                            <span class="mini-status {{ $booking->status }}" aria-label="Booking status: {{ $booking->status === 'pending' ? 'Pending staff confirmation' : ucfirst($booking->status) }}">{{ $booking->status === 'pending' ? 'Pending staff confirmation' : ucfirst($booking->status) }}</span>
+                                            <span class="mini-status {{ $expiredCashHold ? 'hold-expired' : $booking->status }}" aria-label="Booking status: {{ $expiredCashHold ? 'Hold expired' : ($booking->status === 'pending' ? 'Pending staff confirmation' : ucfirst($booking->status)) }}">{{ $expiredCashHold ? 'Hold expired' : ($booking->status === 'pending' ? 'Pending staff confirmation' : ucfirst($booking->status)) }}</span>
                                             <span class="mini-status booking-payment-status {{ $paymentStatus }} {{ $paymentStatusClass }}" aria-label="Payment status: {{ ucfirst($paymentStatus) }}">Payment {{ ucfirst($paymentStatus) }}</span>
                                         </div>
                                         <small class="booking-payment-method">{{ $hasPayMongoPayment ? 'PayMongo · GCash' : strtoupper($booking->payment_method ?? 'cash') }}</small>
@@ -245,7 +261,9 @@
                                         @elseif($timeAdjustment?->status === 'pending')
                                             <span class="hold-expiry" role="status">Extra-time payment pending · held until {{ $timeAdjustment->expires_at?->format('g:i A') }}</span>
                                         @endif
-                                        @if($booking->status === 'pending')
+                                        @if($expiredCashHold)
+                                            <span class="hold-expiry" role="status">Expired {{ $booking->holdDeadline()?->format('M j, Y · g:i A') }} · Room time is no longer reserved</span>
+                                        @elseif($booking->status === 'pending')
                                             <span class="hold-expiry">Availability is rechecked before confirmation</span>
                                         @endif
                                     </td>
@@ -254,7 +272,19 @@
                                             @php($refundableAmount = max(0, (float) $booking->payments->where('status', 'paid')->sum('amount') - (float) $booking->payments->where('status', 'refunded')->sum('amount')))
                                             @php($refundPolicyEligible = $booking->isRefundEligible())
                                                 <div class="booking-action-buttons">
-                                                    @if($payMongoPayment?->status === 'pending')
+                                                    @if($expiredCashHold)
+                                                        <form method="POST" action="{{ route('admin.bookings.update', $booking) }}"
+                                                            data-admin-confirm
+                                                            data-confirm-kicker="EXPIRED BOOKING HOLD"
+                                                            data-confirm-icon="↻"
+                                                            data-confirm-title="Check availability and restore?"
+                                                            data-confirm-message="The original hold has expired. This checks the room again and confirms the booking only if it is still available. No payment will be recorded."
+                                                            data-confirm-action="Check and restore">
+                                                            @csrf @method('PATCH')
+                                                            <input type="hidden" name="status" value="confirmed">
+                                                            <button class="status-select confirmed restore-booking-button" type="submit">Check availability &amp; restore</button>
+                                                        </form>
+                                                    @elseif($payMongoPayment?->status === 'pending')
                                                         <form method="POST" action="{{ route('admin.bookings.payment.recheck-paymongo', $booking) }}" onsubmit="return confirm('Check this GCash checkout directly with PayMongo?')">
                                                             @csrf
                                                             <button class="status-select confirmed" type="submit">Verify with PayMongo</button>
@@ -275,7 +305,7 @@
                                                             <button class="status-select {{ $booking->payment_status === 'paid' ? 'confirmed' : '' }}" type="submit">{{ $booking->payment_status === 'paid' ? 'Mark unpaid' : 'Mark paid' }}</button>
                                                         </form>
                                                     @endif
-                                                    @if($booking->status === 'pending')
+                                                    @if($booking->status === 'pending' && ! $expiredCashHold)
                                                         <form method="POST" action="{{ route('admin.bookings.update', $booking) }}">
                                                             @csrf
                                                             @method('PATCH')

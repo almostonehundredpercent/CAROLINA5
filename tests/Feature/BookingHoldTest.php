@@ -166,6 +166,18 @@ test('staff cannot record a new paid ledger on an expired slot', function () {
     expect($booking->payments()->count())->toBe(0);
 });
 
+test('an expired unpaid cash hold shows a restore action instead of payment or confirmation actions', function () {
+    $booking = heldBooking(holdRoom(), ['hold_expires_at' => now()->subMinute()]);
+    $admin = User::factory()->create(['is_admin' => true]);
+
+    $this->actingAsStaff($admin)->get(route('admin.bookings'))
+        ->assertOk()
+        ->assertSee('Hold expired')
+        ->assertSee('Check availability &amp; restore', false)
+        ->assertDontSee('>Mark paid</button>', false)
+        ->assertDontSee('>Confirm</button>', false);
+});
+
 test('an expired cash hold can be restored without recording payment when the room is free', function () {
     Mail::fake();
     $booking = heldBooking(holdRoom(), ['hold_expires_at' => now()->subMinute()]);
@@ -177,6 +189,14 @@ test('an expired cash hold can be restored without recording payment when the ro
     expect($booking->fresh()->status)->toBe('confirmed')
         ->and($booking->fresh()->payment_status)->toBe('pending')
         ->and($booking->payments()->count())->toBe(0);
+
+    $this->actingAsStaff($admin)->patch(route('admin.bookings.payment', $booking), [
+        'payment_status' => 'paid',
+        'payment_method' => 'cash',
+    ])->assertSessionHasNoErrors();
+
+    expect($booking->fresh()->payment_status)->toBe('paid')
+        ->and($booking->payments()->where('status', 'paid')->count())->toBe(1);
 });
 
 test('an expired cash hold cannot be restored over a competing booking', function () {
