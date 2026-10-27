@@ -144,20 +144,20 @@ test('admin room board marks booked cleaning and maintenance rooms unavailable',
 
     $admin = User::factory()->create(['is_admin' => true]);
     $html = $this->actingAsStaff($admin)->get(route('admin.rooms'))->assertOk()->getContent();
-    foreach (['Booked Room', 'Cleaning Room', 'Maintenance Room'] as $name) {
-        expect($html)->toMatch('/class="room-slot not-available"[^>]*>.*?Unavailable.*?'.preg_quote($name, '/').'/s');
+    foreach (['Booked Room' => 'Occupied', 'Cleaning Room' => 'Cleaning', 'Maintenance Room' => 'Maintenance'] as $name => $status) {
+        expect($html)->toMatch('/class="room-slot not-available"[^>]*>.*?'.preg_quote($status, '/').'.*?'.preg_quote($name, '/').'/s');
     }
     expect($html)->toMatch('/class="room-slot available"[^>]*>.*?Available.*?Free Room/s');
 });
 
-test('admin room board labels a room with an upcoming booking unavailable', function () {
+test('admin room board labels a room with an upcoming booking available now', function () {
     $room = statusTestRoom('Upcoming Booked Room');
     $start = now()->addDay()->setTime(13, 0);
     statusTestBooking($room, $start, $start->copy()->addHours(6));
     $admin = User::factory()->create(['is_admin' => true]);
 
     $this->actingAsStaff($admin)->get(route('admin.rooms'))->assertOk()
-        ->assertSee('Unavailable</span>', false);
+        ->assertSee('Available</span>', false);
 });
 
 test('guest homepage and housekeeping board identify rooms blocked at the current time', function () {
