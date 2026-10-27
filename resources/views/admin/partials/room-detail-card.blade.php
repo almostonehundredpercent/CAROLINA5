@@ -1,6 +1,7 @@
 @php
     $stay = $room->display_booking;
     $block = $room->display_block;
+    $roomVisualStatus = $room->display_status === 'reserved' ? 'available' : $room->display_status;
     $stayLabel = $stay ? ($stay->check_in_at?->lte(now()) && $stay->check_out_at?->gt(now()) ? 'Guest in house' : 'Next arrival') : 'Guest stay';
     $blockLabel = $block ? ($block->starts_at->lte(now()) ? 'Current task' : 'Next task') : 'Operations';
     $operationStart = now()->second(0)->minute(now()->minute >= 30 ? 30 : 0);
@@ -10,7 +11,7 @@
 @endphp
 
 <article
-    class="room-card room-detail-card {{ $room->display_status }}"
+    class="room-card room-detail-card {{ $roomVisualStatus }}"
     id="room-detail-{{ $slot }}"
     data-room-detail="{{ $slot }}"
     aria-labelledby="room-detail-title-{{ $slot }}"
@@ -27,7 +28,7 @@
                 <p class="room-card-meta">{{ $room->room_type }} · Sleeps {{ $room->guests }}</p>
                 <span class="room-card-rate">₱{{ number_format($room->price_per_night) }} {{ $room->rate_label }}</span>
             </div>
-            <span class="room-status {{ $room->display_status }}">{{ ucfirst($room->display_status) }}</span>
+            <span class="room-status {{ $roomVisualStatus }}">{{ ucfirst($roomVisualStatus) }}</span>
         </div>
         <div class="room-card-schedule">
             <div class="schedule-item {{ $stay ? '' : 'empty' }}">

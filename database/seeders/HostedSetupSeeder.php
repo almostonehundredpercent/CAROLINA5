@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Hash;
 class HostedSetupSeeder extends Seeder
 {
     /**
-     * Add the public room catalogue and one administrator chosen in deployment settings.
+     * Add the public room catalogue and one Organization Admin chosen in deployment settings.
      */
     public function run(): void
     {
@@ -30,9 +30,10 @@ class HostedSetupSeeder extends Seeder
         User::firstOrCreate(
             ['email' => $email],
             [
-                'name' => env('ADMIN_NAME', 'Carolina Administrator'),
+                'name' => env('ADMIN_NAME', 'Carolina Organization Admin'),
                 'password' => Hash::make($password),
                 'is_admin' => true,
+                'staff_role' => 'organization_admin',
                 'email_verified_at' => now(),
             ]
         );

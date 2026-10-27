@@ -35,12 +35,12 @@
                     @if(auth()->user()->isAdmin())
                         <form class="restriction-form" method="POST" action="{{ route('admin.guests.restriction', $guestToken) }}" onsubmit="return confirm('Remove this booking restriction?')">@csrf @method('PATCH')<input type="hidden" name="action" value="remove"><button type="submit">Remove restriction</button></form>
                     @else
-                        <p class="empty-copy">Only an administrator can change booking restrictions.</p>
+                        <p class="empty-copy">Only an Organization Admin can change booking restrictions.</p>
                     @endif
                 @elseif(auth()->user()->isAdmin())
                     <h2>Not restricted</h2><form class="restriction-form" method="POST" action="{{ route('admin.guests.restriction', $guestToken) }}" onsubmit="return confirm('Restrict future bookings for this guest?')">@csrf @method('PATCH')<input type="hidden" name="action" value="restrict"><label for="reason">Internal reason</label><input id="reason" name="reason" maxlength="500" required><button class="danger" type="submit">Restrict future bookings</button></form>
                 @else
-                    <p>Only an administrator can change booking restrictions.</p>
+                    <p>Only an Organization Admin can change booking restrictions.</p>
                 @endif
             </article>
             <article class="panel wide">

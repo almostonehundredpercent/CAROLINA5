@@ -69,21 +69,20 @@
         </div></header>
         @include('admin.partials.flash')
         <section class="panel">
-            <p class="role-help"><b>Super administrator</b> can grant or remove administrator access. <b>Administrator</b> manages daily operations and non-admin staff roles. <b>Front desk</b> handles bookings and guest service. <b>Housekeeping</b> manages room tasks. <b>Viewer</b> has read-only access. @if (config('auth.staff_mfa_enabled')) Every staff role requires an authenticator at sign-in. @else The authenticator is temporarily paused; staff sign in with a password only. @endif</p>
+            <p class="role-help"><b>Organization Admin</b> manages the organization, including operations and staff access. <b>Front desk</b> handles bookings and guest service. <b>Housekeeping</b> manages room tasks. <b>Viewer</b> has read-only access. @if (config('auth.staff_mfa_enabled')) Every staff role requires an authenticator at sign-in. @else The authenticator is temporarily paused; staff sign in with a password only. @endif</p>
             <div class="admin-table-wrap"><table class="staff-access-table">
                 <thead><tr><th>Staff member</th><th>Email</th><th>Role</th><th>Save</th></tr></thead>
                 <tbody>
                 @forelse ($staff as $member)
                     @php
-                        $canElevate = \App\Support\AdminPermissions::allows(auth()->user(), 'elevate_staff');
                         $memberRole = \App\Support\AdminPermissions::role($member);
-                        $roleLabels = ['super_admin' => 'Super administrator', 'admin' => 'Administrator', 'front_desk' => 'Front desk', 'housekeeping' => 'Housekeeping', 'viewer' => 'Viewer', 'guest' => 'Guest'];
-                        $availableRoles = ($canElevate ? ['super_admin' => $roleLabels['super_admin'], 'admin' => $roleLabels['admin']] : []) + ['front_desk' => $roleLabels['front_desk'], 'housekeeping' => $roleLabels['housekeeping'], 'viewer' => $roleLabels['viewer'], 'guest' => $roleLabels['guest']];
+                        $roleLabels = ['organization_admin' => 'Organization Admin', 'front_desk' => 'Front desk', 'housekeeping' => 'Housekeeping', 'viewer' => 'Viewer', 'guest' => 'Guest'];
+                        $availableRoles = ['organization_admin' => $roleLabels['organization_admin'], 'front_desk' => $roleLabels['front_desk'], 'housekeeping' => $roleLabels['housekeeping'], 'viewer' => $roleLabels['viewer'], 'guest' => $roleLabels['guest']];
                         $memberRoleLabel = $roleLabels[$memberRole] ?? 'Guest';
                     @endphp
                     <tr>
                         <td data-label="Staff member"><b>{{ $member->name }}</b></td><td data-label="Email">{{ $member->email }}</td>
-                        @if ($member->is_admin && ! $canElevate)
+                        @if ($member->id === auth()->id())
                             <td data-label="Role" class="staff-role-static">{{ $memberRoleLabel }}</td><td data-label="Save">—</td>
                         @else
                             <td data-label="Role"><form id="staff-{{ $member->id }}" class="staff-role-form" method="POST" action="{{ route('admin.staff.role', $member) }}">

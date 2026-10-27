@@ -134,7 +134,10 @@ class BookingController extends Controller
                 'start' => $booking->check_in->toDateString(),
                 'end' => $booking->check_out->toDateString(),
             ]);
-        $room->blocks()->where('ends_at', '>', now())->get()->each(fn (RoomBlock $block) => $ranges->push(['start' => $block->starts_at->toDateString(), 'end' => $block->ends_at->copy()->addDay()->toDateString()]));
+        $room->blocks()->whereNull('completed_at')
+            ->where(fn ($active) => $active->whereNull('hold_expires_at')->orWhere('hold_expires_at', '>', now()))
+            ->where('ends_at', '>', now())->get()
+            ->each(fn (RoomBlock $block) => $ranges->push(['start' => $block->starts_at->toDateString(), 'end' => $block->ends_at->copy()->addDay()->toDateString()]));
 
         return $ranges;
 
@@ -153,7 +156,10 @@ class BookingController extends Controller
 
                 return ['start' => $start->toIso8601String(), 'end' => $end->toIso8601String(), 'booking_type' => $booking->booking_type, 'nights' => $booking->nights];
             });
-        $room->blocks()->where('ends_at', '>', now())->get()->each(fn (RoomBlock $block) => $slots->push(['start' => $block->starts_at->toIso8601String(), 'end' => $block->ends_at->toIso8601String()]));
+        $room->blocks()->whereNull('completed_at')
+            ->where(fn ($active) => $active->whereNull('hold_expires_at')->orWhere('hold_expires_at', '>', now()))
+            ->where('ends_at', '>', now())->get()
+            ->each(fn (RoomBlock $block) => $slots->push(['start' => $block->starts_at->toIso8601String(), 'end' => $block->ends_at->toIso8601String()]));
 
         return $slots;
     }
@@ -251,10 +257,14 @@ class BookingController extends Controller
             $booking = DB::transaction(function () use ($room, $data, $guestData, $request, $nights, $total, $checkInAt, $checkOutAt) {
                 $lockedRoom = Room::whereKey($room->id)->lockForUpdate()->firstOrFail();
                 abort_if(! $lockedRoom->is_active, 422, 'This room is unavailable.');
+                $maintenanceConflict = $lockedRoom->blocks()->overlapping($checkInAt, $checkOutAt)
+                    ->where('status', 'maintenance')->exists();
                 $taken = $lockedRoom->bookings()->blocking()->overlapping($checkInAt, $checkOutAt)->exists()
                     || $lockedRoom->blocks()->overlapping($checkInAt, $checkOutAt)->exists();
                 if ($taken) {
-                    throw ValidationException::withMessages(['availability' => 'Those dates or hours are reserved. Please choose another time.']);
+                    throw ValidationException::withMessages(['availability' => $maintenanceConflict
+                        ? 'This room is under maintenance during the selected time. Please choose another time.'
+                        : 'Those dates or hours are unavailable. Please choose another time.']);
                 }
 
                 $hours = $data['booking_type'] === 'hourly' ? (int) $data['hours'] : $nights * 24;

@@ -370,11 +370,13 @@ class AdminController extends Controller
     public function frontdesk()
     {
         $today = today();
+        $tomorrow = $today->copy()->addDay();
 
         return view('admin.frontdesk', [
             'arrivals' => Booking::with(['user', 'room'])->where('status', 'confirmed')->whereDate('check_in', $today)->whereNull('checked_in_at')->get(),
             'activeStays' => Booking::with(['user', 'room'])->whereNotNull('checked_in_at')->whereNull('checked_out_at')->get(),
             'departures' => Booking::with(['user', 'room'])->whereNotNull('checked_in_at')->whereNull('checked_out_at')->whereDate('check_out', '<=', $today)->get(),
+            'maintenanceBlocks' => RoomBlock::with('room')->where('status', 'maintenance')->overlapping($today, $tomorrow)->orderBy('starts_at')->get(),
         ]);
     }
 
@@ -452,14 +454,14 @@ class AdminController extends Controller
 
     public function createRoom(Request $request)
     {
-        abort_unless($request->user()->isAdmin(), 403, 'Only administrators can add rooms.');
+        abort_unless($request->user()->isAdmin(), 403, 'Only Organization Admins can add rooms.');
 
         return view('admin.room-form', ['room' => new Room, 'action' => route('admin.rooms.store'), 'method' => 'POST']);
     }
 
     public function storeRoom(Request $request)
     {
-        abort_unless($request->user()->isAdmin(), 403, 'Only administrators can add rooms.');
+        abort_unless($request->user()->isAdmin(), 403, 'Only Organization Admins can add rooms.');
         $room = Room::create($this->roomData($request));
         $this->audit($request->user()->id, 'room_created', 'Room added to the catalog.', $room, [], $room->only(['name', 'room_type', 'price_per_night', 'guests', 'is_active']));
 
@@ -468,14 +470,14 @@ class AdminController extends Controller
 
     public function editRoom(Request $request, Room $room)
     {
-        abort_unless($request->user()->isAdmin(), 403, 'Only administrators can edit room details.');
+        abort_unless($request->user()->isAdmin(), 403, 'Only Organization Admins can edit room details.');
 
         return view('admin.room-form', ['room' => $room, 'action' => route('admin.rooms.update', $room), 'method' => 'PATCH']);
     }
 
     public function updateRoom(Request $request, Room $room)
     {
-        abort_unless($request->user()->isAdmin(), 403, 'Only administrators can edit room details.');
+        abort_unless($request->user()->isAdmin(), 403, 'Only Organization Admins can edit room details.');
         $before = $room->only(['name', 'room_type', 'description', 'price_per_night', 'guests', 'beds', 'amenities', 'image_url', 'is_active']);
         $room->update($this->roomData($request, $room));
         $this->audit($request->user()->id, 'room_updated', 'Room details updated.', $room, $before, $room->fresh()->only(['name', 'room_type', 'description', 'price_per_night', 'guests', 'beds', 'amenities', 'image_url', 'is_active']));
@@ -485,7 +487,7 @@ class AdminController extends Controller
 
     public function archiveRoom(Request $request, Room $room)
     {
-        abort_unless($request->user()->isAdmin(), 403, 'Only administrators can archive rooms.');
+        abort_unless($request->user()->isAdmin(), 403, 'Only Organization Admins can archive rooms.');
         abort_if($room->bookings()->blocking()->where('check_out_at', '>', now())->exists(), 422, 'This room has future or active confirmed stays and cannot be archived yet.');
         $room->update(['is_active' => false]);
         $this->audit($request->user()->id, 'room_archived', 'Room archived without deleting booking history.', $room, ['is_active' => true], ['is_active' => false]);
@@ -680,12 +682,44 @@ class AdminController extends Controller
         abort_unless(in_array($period, ['daily', 'weekly', 'monthly', 'yearly', 'custom'], true), 404);
         abort_unless(in_array($metric, ['payments', 'bookings', 'guests'], true), 404);
 
-        $range = $request->validate(['from' => 'nullable|date', 'to' => 'nullable|date|after_or_equal:from']);
+        try {
+            $range = $request->validate(['from' => 'nullable|date', 'to' => 'nullable|date|after_or_equal:from']);
+        } catch (ValidationException $exception) {
+            if ($period !== 'custom') {
+                throw $exception;
+            }
+
+            return redirect()
+                ->route('admin.reports', ['metric' => $metric, 'period' => 'monthly'])
+                ->withInput($request->only(['from', 'to']))
+                ->withErrors($exception->errors());
+        }
+
         if ($period === 'custom') {
-            abort_unless(! empty($range['from']) && ! empty($range['to']), 422, 'Choose both dates for a custom report.');
+            $rangeErrors = [];
+            if (empty($range['from'])) {
+                $rangeErrors['from'] = 'Choose a start date for the custom report.';
+            }
+            if (empty($range['to'])) {
+                $rangeErrors['to'] = 'Choose an end date for the custom report.';
+            }
+
+            if ($rangeErrors !== []) {
+                return redirect()
+                    ->route('admin.reports', ['metric' => $metric, 'period' => 'monthly'])
+                    ->withInput($request->only(['from', 'to']))
+                    ->withErrors($rangeErrors);
+            }
+
             $from = Carbon::parse($range['from'])->startOfDay();
             $to = Carbon::parse($range['to'])->endOfDay();
-            abort_if($from->diffInDays($to) > 92, 422, 'Custom reports are limited to 93 days.');
+            $lastAllowedDay = $from->copy()->addMonthsNoOverflow(3);
+            if (Carbon::parse($range['to'])->startOfDay()->gt($lastAllowedDay)) {
+                return redirect()
+                    ->route('admin.reports', ['metric' => $metric, 'period' => 'monthly'])
+                    ->withInput($request->only(['from', 'to']))
+                    ->withErrors(['to' => 'Choose a custom report range of three months or less.']);
+            }
             $dates = collect(CarbonPeriod::create($from, '1 day', $to))->map(fn (Carbon $date) => $date->copy());
             $keys = $dates->map(fn (Carbon $date) => $date->toDateString());
             $labels = $dates->map(fn (Carbon $date) => $date->format('M j'));
@@ -767,24 +801,18 @@ class AdminController extends Controller
 
     public function staff(Request $request)
     {
-        abort_unless($request->user()->isAdmin(), 403, 'Only administrators can manage staff roles.');
+        abort_unless($request->user()->isAdmin(), 403, 'Only Organization Admins can manage staff roles.');
 
         return view('admin.staff', ['staff' => User::orderByDesc('is_admin')->orderBy('name')->get()]);
     }
 
     public function updateStaffRole(Request $request, User $user)
     {
-        abort_unless($request->user()->isAdmin(), 403, 'Only administrators can manage staff roles.');
-        $role = $request->validate(['staff_role' => 'required|in:super_admin,admin,front_desk,housekeeping,viewer,guest'])['staff_role'];
-        abort_unless(
-            AdminPermissions::allows($request->user(), 'elevate_staff')
-                || (! $user->isAdmin() && ! in_array($role, ['admin', 'super_admin'], true)),
-            403,
-            'Only a super administrator can change administrator access.',
-        );
-        abort_if($user->id === $request->user()->id && $role !== 'super_admin', 422, 'You cannot remove your own super administrator access.');
+        abort_unless($request->user()->isAdmin(), 403, 'Only Organization Admins can manage staff roles.');
+        $role = $request->validate(['staff_role' => 'required|in:organization_admin,front_desk,housekeeping,viewer,guest'])['staff_role'];
+        abort_if($user->id === $request->user()->id && $role !== 'organization_admin', 422, 'You cannot remove your own Organization Admin access.');
         $before = $user->only(['staff_role', 'is_admin']);
-        $user->update(['staff_role' => $role, 'is_admin' => in_array($role, ['admin', 'super_admin'], true)]);
+        $user->update(['staff_role' => $role, 'is_admin' => $role === 'organization_admin']);
         $this->audit($request->user()->id, 'staff_role_updated', 'Staff role updated.', $user, $before, $user->fresh()->only(['staff_role', 'is_admin']));
 
         return back()->with('success', $user->name."'s staff role was updated.");
@@ -837,11 +865,16 @@ class AdminController extends Controller
             $overlap = $lockedRoom->bookings()->blocking()->overlapping($startsAt, $endsAt)->exists();
 
             if ($overlap && (! $override || ! $request->user()->isAdmin())) {
-                throw ValidationException::withMessages(['operational_until' => 'This operation overlaps a confirmed stay. Choose another time, or have an administrator record an override.']);
+                throw ValidationException::withMessages(['operational_until' => 'This operation overlaps a confirmed stay. Choose another time, or have an Organization Admin record an override.']);
             }
 
-            if ($lockedRoom->blocks()->overlapping($startsAt, $endsAt)->exists()) {
-                throw ValidationException::withMessages(['operational_until' => 'This room already has a cleaning or maintenance operation during that time. Choose another time.']);
+            $existingBlock = $lockedRoom->blocks()->overlapping($startsAt, $endsAt)->orderBy('starts_at')->first();
+            if ($existingBlock) {
+                $existingStatus = ucfirst($existingBlock->status);
+                $existingStart = $existingBlock->starts_at->format('M j, g:i A');
+                $existingEnd = $existingBlock->ends_at->format('M j, g:i A');
+
+                throw ValidationException::withMessages(['operational_until' => "Room {$lockedRoom->name} already has {$existingStatus} scheduled from {$existingStart} to {$existingEnd}. Choose a time outside that window."]);
             }
 
             $blockNotes = $overlap && $override
