@@ -174,6 +174,9 @@ class AdminController extends Controller
         if ($status === 'confirmed') {
             DB::transaction(function () use ($booking) {
                 $lockedRoom = Room::whereKey($booking->room_id)->lockForUpdate()->firstOrFail();
+                if (! $lockedRoom->is_active || $lockedRoom->operational_status !== 'available') {
+                    throw ValidationException::withMessages(['status' => 'This room is not ready to book. Restore it only after the room is active and available.']);
+                }
                 $startsAt = $booking->check_in_at ?? $booking->check_in->copy()->startOfDay();
                 $endsAt = $booking->check_out_at ?? $booking->check_out->copy()->startOfDay();
                 $conflict = $lockedRoom->bookings()->whereKeyNot($booking->id)->blocking()->overlapping($startsAt, $endsAt)->exists()
@@ -219,8 +222,10 @@ class AdminController extends Controller
             if ($hasPayMongoCheckout) {
                 throw ValidationException::withMessages(['payment_status' => 'PayMongo payments must be verified with PayMongo. Use the Verify with PayMongo action instead.']);
             }
-            abort_if(($data['payment_status'] === 'paid' && $lockedBooking->status === 'cancelled')
-                || (in_array($data['payment_status'], ['paid', 'refunded'], true) && $lockedBooking->hasExpiredHold()), 422, 'This hold expired or was cancelled. Confirm availability before recording a new payment.');
+            abort_if($data['payment_status'] === 'paid' && $lockedBooking->status === 'cancelled', 422, 'A cancelled booking cannot be marked paid.');
+            if (in_array($data['payment_status'], ['paid', 'refunded'], true) && $lockedBooking->hasExpiredHold()) {
+                throw ValidationException::withMessages(['payment_status' => 'This booking hold expired. Check room availability and restore the booking before recording cash payment.']);
+            }
             Payment::create(['booking_id' => $lockedBooking->id, 'amount' => $lockedBooking->total_amount, 'method' => $data['payment_method'], 'status' => $data['payment_status'], 'paid_at' => $paidAt, 'recorded_by' => $request->user()->id, 'notes' => 'Manual staff payment record.']);
             $lockedBooking->update($data + ['paid_at' => $paidAt]);
         });

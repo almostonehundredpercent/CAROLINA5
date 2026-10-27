@@ -160,8 +160,65 @@ test('staff cannot record a new paid ledger on an expired slot', function () {
     Mail::fake();
     $booking = heldBooking(holdRoom(), ['hold_expires_at' => now()->subMinute()]);
     $admin = User::factory()->create(['is_admin' => true]);
-    $this->actingAsStaff($admin)->patch(route('admin.bookings.payment', $booking), ['payment_status' => 'paid', 'payment_method' => 'cash'])->assertStatus(422);
+    $this->actingAsStaff($admin)->from(route('admin.bookings'))
+        ->patch(route('admin.bookings.payment', $booking), ['payment_status' => 'paid', 'payment_method' => 'cash'])
+        ->assertRedirect(route('admin.bookings'))->assertSessionHasErrors('payment_status');
     expect($booking->payments()->count())->toBe(0);
+});
+
+test('an expired cash hold can be restored without recording payment when the room is free', function () {
+    Mail::fake();
+    $booking = heldBooking(holdRoom(), ['hold_expires_at' => now()->subMinute()]);
+    $admin = User::factory()->create(['is_admin' => true]);
+
+    $this->actingAsStaff($admin)->patch(route('admin.bookings.update', $booking), ['status' => 'confirmed'])
+        ->assertSessionHasNoErrors();
+
+    expect($booking->fresh()->status)->toBe('confirmed')
+        ->and($booking->fresh()->payment_status)->toBe('pending')
+        ->and($booking->payments()->count())->toBe(0);
+});
+
+test('an expired cash hold cannot be restored over a competing booking', function () {
+    Mail::fake();
+    $room = holdRoom();
+    $booking = heldBooking($room, ['hold_expires_at' => now()->subMinute()]);
+    heldBooking($room, ['status' => 'confirmed']);
+    $admin = User::factory()->create(['is_admin' => true]);
+
+    $this->actingAsStaff($admin)->patch(route('admin.bookings.update', $booking), ['status' => 'confirmed'])
+        ->assertSessionHasErrors('status');
+
+    expect($booking->fresh()->status)->toBe('pending')
+        ->and($booking->payments()->count())->toBe(0);
+});
+
+test('an expired cash hold cannot be restored while the room is manually unavailable', function () {
+    Mail::fake();
+    $room = holdRoom();
+    $room->update(['operational_status' => 'maintenance']);
+    $booking = heldBooking($room, ['hold_expires_at' => now()->subMinute()]);
+    $admin = User::factory()->create(['is_admin' => true]);
+
+    $this->actingAsStaff($admin)->patch(route('admin.bookings.update', $booking), ['status' => 'confirmed'])
+        ->assertSessionHasErrors('status');
+
+    expect($booking->fresh()->status)->toBe('pending')
+        ->and($booking->payments()->count())->toBe(0);
+});
+
+test('an expired cash hold cannot be restored for an archived room', function () {
+    Mail::fake();
+    $room = holdRoom();
+    $booking = heldBooking($room, ['hold_expires_at' => now()->subMinute()]);
+    $room->update(['is_active' => false]);
+    $admin = User::factory()->create(['is_admin' => true]);
+
+    $this->actingAsStaff($admin)->patch(route('admin.bookings.update', $booking), ['status' => 'confirmed'])
+        ->assertSessionHasErrors('status');
+
+    expect($booking->fresh()->status)->toBe('pending')
+        ->and($booking->payments()->count())->toBe(0);
 });
 
 test('legacy migration grants grace only to unpaid requests and is idempotent', function () {
