@@ -6,6 +6,7 @@ use App\Models\Review;
 use App\Models\Room;
 use App\Models\RoomBlock;
 use App\Models\User;
+use App\Support\PropertyTime;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Mail;
 
@@ -108,8 +109,8 @@ test('checkout starts one twenty-minute cleaning timer and cannot be repeated', 
         $block = RoomBlock::where('room_id', $room->id)->where('status', 'cleaning')->firstOrFail();
 
         expect(RoomBlock::where('room_id', $room->id)->where('status', 'cleaning')->count())->toBe(1)
-            ->and($block->starts_at->equalTo(Carbon::parse('2026-10-24 12:00:00')))->toBeTrue()
-            ->and($block->ends_at->equalTo(Carbon::parse('2026-10-24 12:20:00')))->toBeTrue()
+            ->and($block->starts_at->equalTo(PropertyTime::now()))->toBeTrue()
+            ->and($block->ends_at->equalTo(PropertyTime::now()->addMinutes(20)))->toBeTrue()
             ->and($block->completed_at)->toBeNull();
 
         $this->actingAsStaff($admin)
@@ -127,11 +128,12 @@ test('room views show a live cleaning countdown based on the server time', funct
 
     try {
         $room = adminDayRoom('countdown-visible-room');
+        $propertyNow = PropertyTime::now();
         RoomBlock::create([
             'room_id' => $room->id,
             'status' => 'cleaning',
-            'starts_at' => now()->subMinutes(14)->subSeconds(37),
-            'ends_at' => now()->addMinutes(5)->addSeconds(23),
+            'starts_at' => $propertyNow->copy()->subMinutes(14)->subSeconds(37),
+            'ends_at' => $propertyNow->copy()->addMinutes(5)->addSeconds(23),
         ]);
         $admin = User::factory()->create(['is_admin' => true]);
         $housekeeping = User::factory()->create(['staff_role' => 'housekeeping', 'is_admin' => false]);
@@ -164,19 +166,20 @@ test('scheduled cleaning and maintenance blocks do not show a live cleaning coun
     Carbon::setTestNow('2026-10-24 12:00:00');
 
     try {
+        $propertyNow = PropertyTime::now();
         $futureCleaningRoom = adminDayRoom('future-cleaning-room');
         RoomBlock::create([
             'room_id' => $futureCleaningRoom->id,
             'status' => 'cleaning',
-            'starts_at' => now()->addMinutes(10),
-            'ends_at' => now()->addMinutes(30),
+            'starts_at' => $propertyNow->copy()->addMinutes(10),
+            'ends_at' => $propertyNow->copy()->addMinutes(30),
         ]);
         $maintenanceRoom = adminDayRoom('maintenance-room');
         RoomBlock::create([
             'room_id' => $maintenanceRoom->id,
             'status' => 'maintenance',
-            'starts_at' => now()->subMinutes(5),
-            'ends_at' => now()->addMinutes(30),
+            'starts_at' => $propertyNow->copy()->subMinutes(5),
+            'ends_at' => $propertyNow->copy()->addMinutes(30),
         ]);
         $housekeeping = User::factory()->create(['staff_role' => 'housekeeping', 'is_admin' => false]);
 
@@ -415,6 +418,7 @@ test('staff can complete a busy-day booking workflow without creating conflicts'
     $this->post(route('admin.walk-ins.store'), [
         'room_id' => $activeRoom->id,
         'guest_name' => 'Walk-in Guest',
+        'guest_email' => $guest->email,
         'guest_phone' => '09170000000',
         'guests' => 1,
         'check_in' => now()->toDateString(),

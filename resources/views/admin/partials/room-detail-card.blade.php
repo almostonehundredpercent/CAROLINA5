@@ -1,11 +1,12 @@
 @php
     $stay = $room->display_booking;
     $block = $room->display_block;
+    $propertyNow = \App\Support\PropertyTime::now();
     $roomVisualStatus = $room->display_status === 'reserved' ? 'available' : $room->display_status;
-    $stayLabel = $stay ? ($stay->check_in_at?->lte(now()) && $stay->check_out_at?->gt(now()) ? 'Guest in house' : 'Next arrival') : 'Guest stay';
-    $blockLabel = $block ? ($block->starts_at->lte(now()) ? 'Current task' : 'Next task') : 'Operations';
-    $operationStart = now()->second(0)->minute(now()->minute >= 30 ? 30 : 0);
-    if ($operationStart->lt(now())) $operationStart->addMinutes(30);
+    $stayLabel = $stay ? ($stay->check_in_at?->lte($propertyNow) && $stay->check_out_at?->gt($propertyNow) ? 'Guest in house' : 'Next arrival') : 'Guest stay';
+    $blockLabel = $block ? ($block->starts_at->lte($propertyNow) ? 'Current task' : 'Next task') : 'Operations';
+    $operationStart = $propertyNow->copy()->second(0)->minute($propertyNow->minute >= 30 ? 30 : 0);
+    if ($operationStart->lt($propertyNow)) $operationStart->addMinutes(30);
     $operationEnd = $operationStart->copy()->addHour();
     $timeOptions = range(0, 47);
 @endphp
@@ -45,8 +46,8 @@
                 @if($block)
                     <b>{{ ucfirst($block->status) }}</b>
                     <span>{{ $block->starts_at->format('M j, g A') }} – {{ $block->ends_at->format('M j, g A') }}</span>
-                    @if($block->status === 'cleaning' && $block->starts_at->lte(now()) && $block->ends_at->gt(now()))
-                        @include('admin.partials.cleaning-countdown', ['remainingSeconds' => max(0, $block->ends_at->getTimestamp() - now()->getTimestamp())])
+                    @if($block->status === 'cleaning' && $block->starts_at->lte($propertyNow) && $block->ends_at->gt($propertyNow))
+                        @include('admin.partials.cleaning-countdown', ['remainingSeconds' => max(0, $block->ends_at->getTimestamp() - $propertyNow->getTimestamp())])
                     @endif
                 @else
                     <b>No cleaning or maintenance planned</b>

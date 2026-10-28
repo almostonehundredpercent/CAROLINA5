@@ -18,6 +18,7 @@ use App\Services\PayMongoCheckout;
 use App\Services\PayMongoPaymentReconciler;
 use App\Support\AdminPermissions;
 use App\Support\FinancialSummary;
+use App\Support\PropertyTime;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
 use Illuminate\Database\QueryException;
@@ -140,7 +141,7 @@ class AdminController extends Controller
         if ($action === 'check_in') {
             abort_if($booking->status !== 'confirmed' || $booking->checked_out_at, 422, 'Only confirmed bookings can be checked in.');
             abort_if($booking->check_in_at && $booking->check_in_at->isFuture(), 422, 'This guest cannot be checked in before the scheduled arrival time.');
-            $booking->update(['checked_in_at' => now(), 'status' => 'confirmed']);
+            $booking->update(['checked_in_at' => PropertyTime::now(), 'status' => 'confirmed']);
             $this->log($booking, $request->user()->id, 'checked_in', 'Guest checked in by staff.');
             $this->email($booking->fresh('room'), 'Welcome to Carolina', 'You have been checked in. We hope you enjoy your stay.');
 
@@ -150,7 +151,7 @@ class AdminController extends Controller
             abort_if(! $booking->checked_in_at || $booking->checked_out_at, 422, 'This guest is not currently checked in.');
             DB::transaction(function () use ($booking, $request) {
                 $lockedRoom = Room::whereKey($booking->room_id)->lockForUpdate()->firstOrFail();
-                $checkedOutAt = now();
+                $checkedOutAt = PropertyTime::now();
                 $booking->update(['checked_out_at' => $checkedOutAt]);
                 RoomBlock::create([
                     'room_id' => $lockedRoom->id,
@@ -848,7 +849,8 @@ class AdminController extends Controller
             'force_override' => 'nullable|boolean',
         ]);
         if ($data['operational_status'] === 'available') {
-            $room->blocks()->where('ends_at', '>', now())->where('starts_at', '<=', now())->delete();
+            $propertyNow = PropertyTime::now();
+            $room->blocks()->where('ends_at', '>', $propertyNow)->where('starts_at', '<=', $propertyNow)->delete();
             $this->audit($request->user()->id, 'room_block_cleared', 'Active room block cleared.', $room);
 
             return back()->with('success', 'Active room blocks cleared.');
@@ -918,7 +920,7 @@ class AdminController extends Controller
 
     private function roomsWithDisplayStatus()
     {
-        $now = now();
+        $now = PropertyTime::now();
         $today = $now->copy()->startOfDay();
 
         return Room::where('is_active', true)->with(['bookings' => fn ($query) => $query
@@ -947,7 +949,8 @@ class AdminController extends Controller
 
     private function refreshInventory(): void
     {
-        RoomBlock::whereNull('completed_at')->where('ends_at', '<=', now())->update(['completed_at' => now()]);
+        $now = PropertyTime::now();
+        RoomBlock::whereNull('completed_at')->where('ends_at', '<=', $now)->update(['completed_at' => $now]);
     }
 
     /**

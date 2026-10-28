@@ -24,6 +24,7 @@
 
         @include('admin.partials.flash')
 
+        @php($propertyNow = \App\Support\PropertyTime::now())
         @php($workHours = collect(range(6, 22))->mapWithKeys(fn ($hour) => [sprintf('%02d:00', $hour) => \Carbon\Carbon::createFromTime($hour)->format('g A')]))
         <section class="room-board" aria-label="Room housekeeping board">
             @forelse($rooms as $room)
@@ -38,10 +39,10 @@
 
                     <div class="housekeeping-state">
                         @if($room->display_block)
-                            @if($room->display_block->status === 'cleaning' && $room->display_block->starts_at->lte(now()) && $room->display_block->ends_at->gt(now()))
+                            @if($room->display_block->status === 'cleaning' && $room->display_block->starts_at->lte($propertyNow) && $room->display_block->ends_at->gt($propertyNow))
                                 <b>Cleaning in progress</b>
                                 <span>Estimated ready time {{ $room->display_block->ends_at->format('g:i A') }}</span>
-                                @include('admin.partials.cleaning-countdown', ['remainingSeconds' => max(0, $room->display_block->ends_at->getTimestamp() - now()->getTimestamp())])
+                                @include('admin.partials.cleaning-countdown', ['remainingSeconds' => max(0, $room->display_block->ends_at->getTimestamp() - $propertyNow->getTimestamp())])
                             @else
                                 <b>{{ ucfirst($room->display_block->status) }} scheduled</b>
                                 <span>{{ $room->display_block->starts_at->format('M j, g:i A') }} – {{ $room->display_block->ends_at->format('g:i A') }}</span>
@@ -67,8 +68,8 @@
                                 <form method="POST" action="{{ route('admin.rooms.status', $room) }}" onsubmit="return confirm('Start a one-hour cleaning task now?')">
                                     @csrf @method('PATCH')
                                     <input type="hidden" name="operational_status" value="cleaning">
-                                    <input type="hidden" name="operational_starts_at" value="{{ now()->format('Y-m-d H:i') }}">
-                                    <input type="hidden" name="operational_until" value="{{ now()->addHour()->format('Y-m-d H:i') }}">
+                                    <input type="hidden" name="operational_starts_at" value="{{ $propertyNow->format('Y-m-d H:i') }}">
+                                    <input type="hidden" name="operational_until" value="{{ $propertyNow->copy()->addHour()->format('Y-m-d H:i') }}">
                                     <button class="housekeeping-button" type="submit">Start cleaning</button>
                                 </form>
                             @endif
@@ -85,8 +86,8 @@
                                 <div class="housekeeping-form-grid one-day">
                                     <label class="housekeeping-date">Work date
                                         <span class="housekeeping-date-picker" data-date-picker>
-                                            <input name="operational_date" type="hidden" value="{{ now()->toDateString() }}">
-                                            <button class="housekeeping-date-trigger" type="button" aria-expanded="false"><span>{{ now()->format('D, M j') }}</span><b aria-hidden="true">⌄</b></button>
+                                            <input name="operational_date" type="hidden" value="{{ $propertyNow->toDateString() }}">
+                                            <button class="housekeeping-date-trigger" type="button" aria-expanded="false"><span>{{ $propertyNow->format('D, M j') }}</span><b aria-hidden="true">⌄</b></button>
                                             <div class="housekeeping-calendar" hidden></div>
                                         </span>
                                     </label>

@@ -38,6 +38,13 @@ function statusTestBooking(Room $room, $start, $end): void
     ]);
 }
 
+function statusTestPropertyNow(): Carbon\Carbon
+{
+    $propertyClock = Carbon\Carbon::now('Asia/Manila');
+
+    return Carbon\Carbon::parse($propertyClock->format('Y-m-d H:i:s'), 'UTC');
+}
+
 test('guest room results show booked cleaning and maintenance rooms as unavailable for the selected stay', function () {
     $start = now()->addDays(3)->setTime(13, 0);
     $end = $start->copy()->addHours(6);
@@ -102,8 +109,9 @@ test('room detail does not promise an opening for an unscheduled manual closure'
 test('room detail uses its normal stay length when showing the next opening right now', function () {
     $room = statusTestRoom('Current Opening Room');
     $room->update(['rental_hours' => 22]);
-    $start = now()->subHour();
-    $end = now()->addHours(2)->startOfHour();
+    $propertyNow = statusTestPropertyNow();
+    $start = $propertyNow->copy()->subHour();
+    $end = $propertyNow->copy()->addHours(2)->startOfHour();
     statusTestBooking($room, $start, $end);
     $expected = $end->copy();
     if ($expected->hour < 6) {
@@ -131,8 +139,9 @@ test('rooms sold by the night show a bookable check-in date rather than an hourl
 });
 
 test('admin room board marks booked cleaning and maintenance rooms unavailable', function () {
-    $start = now()->subHour();
-    $end = now()->addHours(6);
+    $propertyNow = statusTestPropertyNow();
+    $start = $propertyNow->copy()->subHour();
+    $end = $propertyNow->copy()->addHours(6);
     $booked = statusTestRoom('Booked Room');
     $cleaning = statusTestRoom('Cleaning Room');
     $maintenance = statusTestRoom('Maintenance Room');
@@ -161,8 +170,9 @@ test('admin room board labels a room with an upcoming booking available now', fu
 });
 
 test('guest homepage and housekeeping board identify rooms blocked at the current time', function () {
-    $start = now()->subHour();
-    $end = now()->addHours(3);
+    $propertyNow = statusTestPropertyNow();
+    $start = $propertyNow->copy()->subHour();
+    $end = $propertyNow->copy()->addHours(3);
     $booked = statusTestRoom('Current Guest Room');
     $cleaning = statusTestRoom('Current Cleaning Room');
     $maintenance = statusTestRoom('Current Maintenance Room');
@@ -178,5 +188,6 @@ test('guest homepage and housekeeping board identify rooms blocked at the curren
 
     $housekeeping = User::factory()->create(['staff_role' => 'housekeeping']);
     $this->actingAsStaff($housekeeping)->get(route('admin.rooms'))->assertOk()
-        ->assertSee('Unavailable · Cleaning')->assertSee('Unavailable · Maintenance')->assertSee('Unavailable · Occupied');
+        ->assertSee('Unavailable · Cleaning')->assertSee('Unavailable · Maintenance')->assertSee('Unavailable · Occupied')
+        ->assertSee('Cleaning in progress')->assertSee('Guest stay in progress');
 });
