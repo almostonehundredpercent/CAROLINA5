@@ -34,12 +34,12 @@ class RoomController extends Controller
 
         [$startsAt, $endsAt] = RoomAvailability::window($filters);
 
-        return view('rooms.index', [
+        return response()->view('rooms.index', [
             // Keep the numbered inventory in room-number order (the first six
             // are the original profiles and the following twelve are units).
             'rooms' => RoomAvailability::annotate($rooms->get(), $startsAt, $endsAt),
             'filters' => $filters,
-        ]);
+        ])->header('Cache-Control', 'private, no-store');
     }
 
     public function show(Request $request, Room $room)
@@ -69,6 +69,7 @@ class RoomController extends Controller
             ? RoomAvailability::nextAvailableAt($room, $startsAt, $stayHours, $dateOnly)
             : null;
 
-        return view('rooms.show', compact('room', 'bookingSearch', 'stayHours', 'nextAvailableAt'));
+        return response()->view('rooms.show', compact('room', 'bookingSearch', 'stayHours', 'nextAvailableAt'))
+            ->header('Cache-Control', 'private, no-store');
     }
 }

@@ -56,4 +56,5 @@
     <script id="room-gallery-data" type="application/json">@json(['room' => $room->name, 'images' => $roomGalleryImages])</script>
     <script src="{{ asset('js/room-gallery.js') }}?v={{ filemtime(public_path('js/room-gallery.js')) }}" defer></script>
 @endif
+@include('rooms.partials.refresh-on-property-day-change')
 @endsection

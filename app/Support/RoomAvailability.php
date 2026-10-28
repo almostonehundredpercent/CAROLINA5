@@ -18,7 +18,7 @@ class RoomAvailability
             return [$startsAt, $startsAt->copy()->addHours(BookingSelection::hours($selection))];
         }
 
-        $startsAt = now();
+        $startsAt = PropertyTime::now();
 
         return [$startsAt, $startsAt->copy()->addSecond()];
     }
@@ -51,7 +51,8 @@ class RoomAvailability
     /** Find the next bookable start, including later bookings and room operations. */
     public static function nextAvailableAt(Room $room, Carbon $from, int $hours, bool $dateOnly = false): ?Carbon
     {
-        if ($room->operational_status !== 'available' && (! $room->operational_until || $room->operational_until->lte(now()))) {
+        $propertyNow = PropertyTime::now();
+        if ($room->operational_status !== 'available' && (! $room->operational_until || $room->operational_until->lte($propertyNow))) {
             return null; // A manual closure without a future end cannot be predicted.
         }
 
@@ -71,11 +72,11 @@ class RoomAvailability
             $intervals[] = [$block->starts_at, $block->ends_at];
         }
         if ($room->operational_status !== 'available') {
-            $intervals[] = [now(), $room->operational_until];
+            $intervals[] = [$propertyNow, $room->operational_until];
         }
 
         usort($intervals, fn ($left, $right) => $left[0]->getTimestamp() <=> $right[0]->getTimestamp());
-        $candidate = $from->greaterThan(now()) ? $from->copy() : now();
+        $candidate = $from->greaterThan($propertyNow) ? $from->copy() : $propertyNow;
 
         // Each collision moves past at least one interval; one final pass finds a gap.
         for ($attempt = 0; $attempt <= count($intervals); $attempt++) {

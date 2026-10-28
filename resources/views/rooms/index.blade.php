@@ -47,7 +47,8 @@
                                 <div class="room-card-body">
                                     <span>{{ $room->room_type }} · {{ $room->beds }} bed{{ $room->beds > 1 ? 's' : '' }} · {{ $room->guests }} guests</span>
                                     <h3>{{ $room->name }}</h3>
-                                    <div class="room-availability-line"><span class="room-availability-badge {{ $room->availability_reason ? 'is-unavailable' : 'is-available' }}">{{ $room->availability_reason ? 'Unavailable' : 'Available' }}</span>@if($room->availability_reason)<small>{{ $room->availability_reason === 'Maintenance' ? '(Maintenance)' : $room->availability_reason }}</small>@endif</div>
+                                    @php($hasStaySearch = isset($filters['check_in']))
+                                    <div class="room-availability-line"><span class="room-availability-badge {{ $room->availability_reason ? 'is-unavailable' : 'is-available' }}">{{ $room->availability_reason ? ($hasStaySearch ? 'Unavailable for stay' : 'Unavailable now') : ($hasStaySearch ? 'Available for stay' : 'Available now') }}</span>@if($room->availability_reason)<small>{{ $room->availability_reason === 'Maintenance' ? '(Maintenance)' : $room->availability_reason }}</small>@endif</div>
                                     @if($room->promoCodes->isNotEmpty())<small class="room-promo-badge">{{ $room->promoCodes->first()->name }} · {{ $room->promoCodes->first()->code }}</small>@endif
                                     @include('rooms.partials.card-rating', ['room' => $room])
                                     <p>{{ Str::limit($room->description, 86) }}</p>
@@ -222,4 +223,5 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 </script>
+@include('rooms.partials.refresh-on-property-day-change')
 @endsection
