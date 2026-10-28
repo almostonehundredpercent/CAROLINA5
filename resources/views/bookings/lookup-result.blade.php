@@ -35,16 +35,20 @@
     </div>
 
     <div class="portal-grid">
-        @if($booking->user_id === null && $booking->status !== 'cancelled' && $booking->check_in->isFuture())
+        @if($booking->user_id === null && $booking->status !== 'cancelled')
             <section class="portal-card">
                 <h2>Cancel booking</h2>
-                <p>Online cancellation is available until the day before check-in. Refunds require cancellation at least 3 days before check-in.</p>
-                <form method="POST" action="{{ route('bookings.lookup.cancel', $booking) }}" onsubmit="return confirm('Cancel this booking? The room will become available again for these dates.');">
-                    @csrf @method('PATCH')
-                    <input type="hidden" name="email" value="{{ $lookupEmail }}">
-                    <input type="hidden" name="reference" value="{{ $booking->reference }}">
-                    <button class="button light" type="submit">Cancel booking</button>
-                </form>
+                @if($booking->canCancelOnline())
+                    <p>Cancel at least 3 days before check-in to qualify for a refund. Online cancellation closes once fewer than 3 days remain.</p>
+                    <form method="POST" action="{{ route('bookings.lookup.cancel', $booking) }}" onsubmit="return confirm('Cancel this booking? The room will become available again for these dates.');">
+                        @csrf @method('PATCH')
+                        <input type="hidden" name="email" value="{{ $lookupEmail }}">
+                        <input type="hidden" name="reference" value="{{ $booking->reference }}">
+                        <button class="button light" type="submit">Cancel booking</button>
+                    </form>
+                @else
+                    <p>Online cancellation is closed within 3 days of check-in.</p>
+                @endif
             </section>
         @endif
     </div>

@@ -215,12 +215,12 @@ class AdminController extends Controller
     {
         abort_unless($request->user()->canManageBookings(), 403, 'Your staff role cannot manage payments.');
         $data = $request->validate([
-            'payment_status' => 'required|in:pending,paid,failed,refunded',
+            'payment_status' => 'required|in:pending,paid,failed',
             'payment_method' => 'required|in:cash,gcash',
         ]);
         abort_if($booking->status === 'cancelled' && $data['payment_status'] === 'paid', 422, 'A cancelled booking cannot be marked paid.');
         $before = $booking->only(['payment_status', 'payment_method', 'paid_at']);
-        $paidAt = in_array($data['payment_status'], ['paid', 'refunded'], true) ? now() : null;
+        $paidAt = $data['payment_status'] === 'paid' ? now() : null;
         DB::transaction(function () use ($booking, $data, $paidAt, $request) {
             Room::whereKey($booking->room_id)->lockForUpdate()->firstOrFail();
             $lockedBooking = Booking::whereKey($booking->id)->lockForUpdate()->firstOrFail();
@@ -231,7 +231,7 @@ class AdminController extends Controller
                 throw ValidationException::withMessages(['payment_status' => 'PayMongo payments must be verified with PayMongo. Use the Verify with PayMongo action instead.']);
             }
             abort_if($data['payment_status'] === 'paid' && $lockedBooking->status === 'cancelled', 422, 'A cancelled booking cannot be marked paid.');
-            if (in_array($data['payment_status'], ['paid', 'refunded'], true) && $lockedBooking->hasExpiredHold()) {
+            if ($data['payment_status'] === 'paid' && $lockedBooking->hasExpiredHold()) {
                 throw ValidationException::withMessages(['payment_status' => 'This booking hold expired. Check room availability and restore the booking before recording cash payment.']);
             }
             Payment::create(['booking_id' => $lockedBooking->id, 'amount' => $lockedBooking->total_amount, 'method' => $data['payment_method'], 'status' => $data['payment_status'], 'paid_at' => $paidAt, 'recorded_by' => $request->user()->id, 'notes' => 'Manual staff payment record.']);
@@ -310,6 +310,10 @@ class AdminController extends Controller
             $alreadyRefunded = (float) $payments->where('status', 'refunded')->sum('amount');
             $refundable = max(0.0, $paid - $alreadyRefunded);
             $amount = round((float) $data['amount'], 2);
+
+            if ($lockedBooking->status !== 'cancelled') {
+                throw ValidationException::withMessages(['amount' => 'Cancel the booking before recording a refund.']);
+            }
 
             if (! $lockedBooking->isRefundEligible()) {
                 throw ValidationException::withMessages(['amount' => 'The refund cutoff has passed. Refunds are available only when cancellation is at least 3 days before check-in.']);

@@ -35,7 +35,8 @@ function refundWorkflowBooking(int $daysUntilCheckIn = 4): Booking
         'total_amount' => 1000,
         'payment_method' => 'cash',
         'payment_status' => 'paid',
-        'status' => 'confirmed',
+        'status' => 'cancelled',
+        'cancelled_at' => now(),
     ]);
 }
 

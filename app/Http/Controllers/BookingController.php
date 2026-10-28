@@ -541,9 +541,17 @@ class BookingController extends Controller
 
     private function cancelBeforeCheckIn(Booking $booking): bool
     {
-        abort_if($booking->status === 'cancelled', 422, 'This booking has already been cancelled.');
-        abort_if($booking->check_in->isToday() || $booking->check_in->isPast(), 422, 'This reservation can no longer be cancelled online after check-in day begins.');
-        $booking->update(['status' => 'cancelled', 'cancelled_at' => now(), 'cancellation_reason' => 'Cancelled by guest.']);
+        if ($booking->status === 'cancelled') {
+            throw ValidationException::withMessages(['cancellation' => 'This booking has already been cancelled.']);
+        }
+        if ($booking->checked_in_at || $booking->checked_out_at) {
+            throw ValidationException::withMessages(['cancellation' => 'A stay that has started cannot be cancelled online.']);
+        }
+        $cancelledAt = now();
+        if (PropertyTime::wallClock($cancelledAt)->gt($booking->refundCutoffAt())) {
+            throw ValidationException::withMessages(['cancellation' => 'Online cancellation is only available when at least 3 days remain before check-in.']);
+        }
+        $booking->update(['status' => 'cancelled', 'cancelled_at' => $cancelledAt, 'cancellation_reason' => 'Cancelled by guest.']);
         $refundEligible = $booking->isRefundEligible();
         $this->log($booking, null, 'booking_cancelled', 'Booking cancelled by guest.');
         $this->emailUpdate($booking, 'Your Carolina booking was cancelled', 'Your reservation has been cancelled and the room is available again.'.($refundEligible ? ' If you have already paid, this cancellation is eligible for a refund.' : ' This cancellation is non-refundable because it was made less than 3 days before check-in.'));

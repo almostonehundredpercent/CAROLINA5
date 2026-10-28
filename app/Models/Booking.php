@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\PropertyTime;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -72,9 +73,19 @@ class Booking extends Model
 
     public function isRefundEligible(): bool
     {
-        $cancelledOrRequestedAt = $this->cancelled_at ?? now();
+        $cancelledOrRequestedAt = $this->cancelled_at
+            ? PropertyTime::wallClock($this->cancelled_at)
+            : PropertyTime::now();
 
         return $cancelledOrRequestedAt->lte($this->refundCutoffAt());
+    }
+
+    public function canCancelOnline(): bool
+    {
+        return $this->status !== 'cancelled'
+            && ! $this->checked_in_at
+            && ! $this->checked_out_at
+            && PropertyTime::now()->lte($this->refundCutoffAt());
     }
 
     public function getOperationalStatusAttribute(): string
