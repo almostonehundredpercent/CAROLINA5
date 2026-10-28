@@ -12,6 +12,8 @@
         .dss-page { display: grid; gap: 18px; min-width: 0; }
         .dss-page > *, .dss-settings-grid > *, .dss-grid > * { min-width: 0; }
         .dss-lead { max-width: 850px; color: var(--muted); line-height: 1.6; }
+        .dss-results-count { margin: -3px 0 14px; color: #71645a; font-size: 12px; }
+        .dss-results-count strong { color: #30251d; font-size: 14px; }
         .dss-settings-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
         .dss-settings-card { min-width: 0; padding: 16px; border: 1px solid var(--line); border-radius: 10px; background: var(--paper); }
         .dss-page .panel-heading { flex-wrap: wrap; gap: 12px; }
@@ -28,6 +30,14 @@
         .dss-card h3 { margin: 0; color: #30251d; font-size: 17px; line-height: 1.3; }
         .dss-card-date { margin: 5px 0 0; color: #71645a; font-size: 13px; }
         .dss-tag { display: inline-flex; flex: 0 0 auto; padding: 6px 9px; border-radius: 999px; background: #fff0d8; color: #8d4b0b; font-size: 11px; font-weight: 800; }
+        .dss-utilization { display: grid; gap: 7px; margin-top: 14px; }
+        .dss-utilization-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+        .dss-utilization-head span { color: #71645a; font-size: 12px; font-weight: 650; }
+        .dss-utilization-head strong { color: #30251d; font-size: 15px; }
+        .dss-utilization-track { position: relative; height: 9px; border-radius: 99px; background: #eee5da; }
+        .dss-utilization-track::after { position: absolute; top: -3px; left: var(--dss-threshold); width: 2px; height: 15px; border-radius: 2px; background: #8d4b0b; content: ''; }
+        .dss-utilization-track > span { display: block; width: 0; height: 100%; border-radius: inherit; background: linear-gradient(90deg,#d98914,#b85b00); }
+        .dss-utilization-note { color: #71645a; font-size: 11px; }
         .dss-metrics { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin: 14px 0 0; }
         .dss-metrics > div { display: grid; gap: 5px; padding: 12px; border: 1px solid #eee3d7; border-radius: 10px; background: #f8f4ee; }
         .dss-metrics small { color: #71645a; font-size: 11px; line-height: 1.4; }
@@ -43,6 +53,12 @@
         html.dark-mode .dss-card-date, html.dark-mode .dss-metrics small, html.dark-mode .dss-card > small { color: #cdbbae; }
         html.dark-mode .dss-note { color: #cdbbae; }
         html.dark-mode .dss-tag, html.dark-mode .dss-season-context { background: rgba(215,132,25,.16); color: #ffc16b; }
+        html.dark-mode .dss-utilization-head span, html.dark-mode .dss-utilization-note { color: #cdbbae; }
+        html.dark-mode .dss-utilization-head strong { color: #fff4e8; }
+        html.dark-mode .dss-results-count { color: #cdbbae; }
+        html.dark-mode .dss-results-count strong { color: #fff4e8; }
+        html.dark-mode .dss-utilization-track { background: rgba(255,220,182,.14); }
+        html.dark-mode .dss-utilization-track::after { background: #ffc16b; }
         html.dark-mode .dss-metrics > div { border-color: rgba(255,220,182,.12); background: rgba(17,13,10,.38); }
         .dss-action { display: inline-flex; margin-top: 10px; color: var(--orange-dark); font-size: 12px; font-weight: 700; text-decoration: none; }
         .dss-action:hover { text-decoration: underline; }
@@ -94,22 +110,29 @@
         </header>
         @include('admin.partials.flash')
         <section class="panel">
-            <div class="panel-heading"><div><p class="admin-kicker">NEXT 90 DAYS</p><h2>Rooms with time still open</h2></div><a class="dss-primary" href="{{ route('admin.promos') }}">Review promo codes</a></div>
-            <p class="dss-lead">These are rooms with fewer than {{ $threshold }}% of bookable hours confirmed in a week and at least 6 hours still open. Suggestions use the current booking schedule; they are not forecasts. You decide whether to create a promotion.</p>
+            <div class="panel-heading"><div><p class="admin-kicker">NEXT 90 DAYS</p><h2>Rooms to review for promos</h2></div><a class="dss-primary" href="{{ route('admin.promos') }}">Review promo codes</a></div>
+            <p class="dss-lead">Showing rooms with less than {{ $threshold }}% of their weekly bookable time confirmed and at least 6 hours still open. Figures use confirmed bookings and planned cleaning or maintenance; they are not forecasts. You decide whether to create a promo.</p>
+            <p class="dss-results-count"><strong>{{ $opportunities->count() }}</strong> room{{ $opportunities->count() === 1 ? '' : 's' }} meet this rule.</p>
             @if($opportunities->isNotEmpty())
                 <div class="dss-grid">
                     @foreach($opportunities as $opportunity)
+                        @php($utilizationPercent = max(0, min(100, (int) $opportunity['utilization'])))
                         <article class="dss-card">
                             <div class="dss-card-top">
                                 <div><h3>{{ $opportunity['room']->name }}</h3><p class="dss-card-date">{{ $opportunity['starts_at']->format('M j') }}–{{ $opportunity['ends_at']->format('M j, Y') }}</p></div>
-                                <span class="dss-tag">{{ $opportunity['utilization'] }}% booked</span>
+                                <span class="dss-tag">Low occupancy</span>
                             </div>
                             @if($opportunity['season_names']->isNotEmpty())<p class="dss-season-context">Dates overlap: {{ $opportunity['season_names']->join(', ') }}</p>@endif
+                            <div class="dss-utilization">
+                                <div class="dss-utilization-head"><span>Weekly occupancy</span><strong>{{ $utilizationPercent }}%</strong></div>
+                                <div class="dss-utilization-track" role="progressbar" aria-label="Weekly occupancy for {{ $opportunity['room']->name }}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ $utilizationPercent }}" aria-valuetext="{{ $utilizationPercent }}% booked; promo review threshold {{ $threshold }}%" style="--dss-threshold: {{ $threshold }}%"><span style="width: {{ $utilizationPercent }}%"></span></div>
+                                <small class="dss-utilization-note">Promo review threshold: {{ $threshold }}%</small>
+                            </div>
                             <div class="dss-metrics">
                                 <div><small>Confirmed booking time</small><strong>{{ number_format($opportunity['confirmed_hours'], 1) }} h</strong></div>
-                                <div><small>Room time still open</small><strong>{{ number_format($opportunity['available_hours'], 1) }} h</strong></div>
+                                <div><small>Still available to book</small><strong>{{ number_format($opportunity['available_hours'], 1) }} h</strong></div>
                             </div>
-                            <small>Out of {{ number_format($opportunity['sellable_hours'], 1) }} hours available to book after scheduled cleaning and maintenance.</small>
+                            <small>{{ number_format($opportunity['sellable_hours'], 1) }} h bookable this week after cleaning and maintenance.</small>
                         </article>
                     @endforeach
                 </div>
