@@ -19,7 +19,14 @@
         <div class="amenities">@foreach($room->amenities ?? [] as $amenity)<span><svg class="detail-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="m8.5 12 2.3 2.3 4.8-5"/></svg>{{ $amenity }}</span>@endforeach</div>
         @if($room->availability_reason)
             <div class="room-unavailable"><b>{{ isset($bookingSearch['check_in']) ? 'Unavailable for this stay' : 'Unavailable right now' }}</b><span>{{ $room->availability_reason === 'Booked' ? 'This room is booked for the selected time.' : ($room->availability_reason === 'Maintenance' ? 'This room is under maintenance for the selected time.' : 'This room is unavailable for '.$room->availability_reason.'.') }}</span>@if($nextAvailableAt)<span class="room-next-opening"><strong>Next available for a {{ $stayHours === 24 ? '1-night' : $stayHours.'-hour' }} stay</strong>{{ $nextAvailableAt->format('M j, Y') }} at {{ $nextAvailableAt->format('g:i A') }}</span>@else<span>Next available time has not been scheduled.</span>@endif<span>Choose another date or time to check availability.</span></div>
-            <a class="text-link" href="{{ route('rooms.index') }}">Explore other rooms and dates →</a>
+            @if($nextBookingUrl)
+                <div class="reservation-actions room-future-actions">
+                    <a class="button" href="{{ $nextBookingUrl }}">{{ $nextBookingMode === 'hourly' ? 'Book next available time' : 'Choose another date' }}</a>
+                    <a class="button button-outline" href="{{ route('rooms.index') }}">Explore other rooms</a>
+                </div>
+            @else
+                <a class="text-link" href="{{ route('rooms.index') }}">Explore other rooms and dates →</a>
+            @endif
         @elseif(auth()->check())
             <a class="button" href="{{ route('bookings.create', ['room' => $room] + $bookingSearch) }}">Reserve this room</a>
         @else
