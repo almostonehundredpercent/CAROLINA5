@@ -49,6 +49,20 @@
                                     <h3>{{ $room->name }}</h3>
                                     @php($hasStaySearch = isset($filters['check_in']))
                                     <div class="room-availability-line"><span class="room-availability-badge {{ $room->availability_reason ? 'is-unavailable' : 'is-available' }}">{{ $room->availability_reason ? ($hasStaySearch ? 'Unavailable for stay' : 'Unavailable now') : ($hasStaySearch ? 'Available for stay' : 'Available now') }}</span>@if($room->availability_reason)<small>{{ $room->availability_reason === 'Maintenance' ? '(Maintenance)' : $room->availability_reason }}</small>@endif</div>
+                                    <section class="room-card-availability" data-availability-url="{{ route('rooms.availability', $room) }}">
+                                        <button class="room-availability-toggle" type="button" aria-expanded="false" aria-controls="room-availability-{{ $room->id }}">
+                                            <span><b>View booked dates</b><small>Unavailable dates are marked in red.</small></span><span aria-hidden="true">＋</span>
+                                        </button>
+                                        <div class="room-availability-panel" id="room-availability-{{ $room->id }}" hidden>
+                                            <div class="room-availability-calendar" role="group" aria-label="Availability for {{ $room->name }}">
+                                                <div class="room-availability-head"><button type="button" data-month-prev aria-label="Previous month">‹</button><b data-month-label></b><button type="button" data-month-next aria-label="Next month">›</button></div>
+                                                <div class="room-availability-week" aria-hidden="true"><span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span></div>
+                                                <div class="room-availability-days" data-calendar-days></div>
+                                                <div class="room-availability-detail" aria-live="polite">Choose a date to see its booked times.</div>
+                                                <p class="room-availability-legend"><i aria-hidden="true"></i>Booked or unavailable</p>
+                                            </div>
+                                        </div>
+                                    </section>
                                     @if($room->promoCodes->isNotEmpty())<small class="room-promo-badge">{{ $room->promoCodes->first()->name }} · {{ $room->promoCodes->first()->code }}</small>@endif
                                     @include('rooms.partials.card-rating', ['room' => $room])
                                     <p>{{ Str::limit($room->description, 86) }}</p>
@@ -127,8 +141,10 @@ document.addEventListener('DOMContentLoaded', () => {
 <script>
 document.addEventListener('DOMContentLoaded', () => {
     const iso = date => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+    const nextDate = value => { const date = new Date(`${value}T00:00:00Z`); date.setUTCDate(date.getUTCDate() + 1); return date.toISOString().slice(0, 10); };
+    const wallStamp = value => String(value).replace(' ', 'T').slice(0, 19);
+    const labelTime = value => new Date(`${wallStamp(value)}Z`).toLocaleTimeString('en-PH', { timeZone: 'UTC', hour: 'numeric', minute: '2-digit' });
     const labelDate = value => new Date(`${value}T00:00:00`).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' });
-    const labelTime = value => new Date(value).toLocaleTimeString('en-PH', { hour: 'numeric', minute: '2-digit' });
 
     document.querySelectorAll('.room-card-availability').forEach(card => {
         const toggle = card.querySelector('.room-availability-toggle');
@@ -141,10 +157,9 @@ document.addEventListener('DOMContentLoaded', () => {
         let cursor = new Date(today.getFullYear(), today.getMonth(), 1);
         let ranges = [], slots = [], loaded = false, selectedDate = '';
         const forDate = value => {
-            const start = new Date(`${value}T00:00:00`);
-            const end = new Date(start);
-            end.setDate(end.getDate() + 1);
-            return slots.filter(slot => new Date(slot.start) < end && new Date(slot.end) > start);
+            const start = `${value}T00:00:00`;
+            const end = `${nextDate(value)}T00:00:00`;
+            return slots.filter(slot => wallStamp(slot.start) < end && wallStamp(slot.end) > start);
         };
         const renderDetail = value => {
             selectedDate = value;
@@ -160,16 +175,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
             bookings.forEach(slot => {
-                const dateStart = new Date(`${value}T00:00:00`);
-                const dateEnd = new Date(dateStart);
-                dateEnd.setDate(dateEnd.getDate() + 1);
-                const slotStart = new Date(slot.start), slotEnd = new Date(slot.end);
-                const overlapStart = new Date(Math.max(dateStart.getTime(), slotStart.getTime()));
-                const overlapEnd = new Date(Math.min(dateEnd.getTime(), slotEnd.getTime()));
-                const allDay = overlapStart.getTime() === dateStart.getTime() && overlapEnd.getTime() === dateEnd.getTime();
+                const dateStart = `${value}T00:00:00`;
+                const dateEnd = `${nextDate(value)}T00:00:00`;
+                const slotStart = wallStamp(slot.start), slotEnd = wallStamp(slot.end);
+                const overlapStart = slotStart > dateStart ? slotStart : dateStart;
+                const overlapEnd = slotEnd < dateEnd ? slotEnd : dateEnd;
+                const allDay = overlapStart === dateStart && overlapEnd === dateEnd;
                 const row = document.createElement('span');
                 row.className = 'room-availability-booked';
-                row.textContent = allDay ? 'Unavailable · all day' : `Unavailable · ${labelTime(overlapStart.toISOString())}–${labelTime(overlapEnd.toISOString())}`;
+                row.textContent = allDay ? 'Unavailable · all day' : `Unavailable · ${labelTime(overlapStart)}–${labelTime(overlapEnd)}`;
                 detail.append(row);
             });
         };
@@ -186,6 +200,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const button = document.createElement('button');
                 button.type = 'button';
                 button.className = `room-availability-day${booked ? ' booked' : ''}${selectedDate === value ? ' selected' : ''}`;
+                button.dataset.date = value;
                 button.textContent = String(number);
                 button.setAttribute('aria-label', `${labelDate(value)}${booked ? ', unavailable' : ', no booking recorded'}`);
                 if (booked) button.title = 'Unavailable — reservation or room operation recorded';

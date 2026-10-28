@@ -8,11 +8,11 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 
-function availabilityTestRoom(): Room
+function availabilityTestRoom(string $name = 'Availability Test Room'): Room
 {
     return Room::create([
-        'name' => 'Availability Test Room',
-        'slug' => 'availability-test-room',
+        'name' => $name,
+        'slug' => Str::slug($name),
         'room_type' => 'Standard',
         'description' => 'A room used to test inventory protection.',
         'beds' => 1,
@@ -22,6 +22,20 @@ function availabilityTestRoom(): Room
         'operational_status' => 'available',
     ]);
 }
+
+test('every room card exposes its own booked-date calendar', function () {
+    $rooms = collect([
+        availabilityTestRoom('Availability Room One'),
+        availabilityTestRoom('Availability Room Two'),
+    ]);
+
+    $html = $this->get(route('rooms.index'))->assertOk()->getContent();
+
+    expect(substr_count($html, 'class="room-card-availability"'))->toBe($rooms->count());
+    foreach ($rooms as $room) {
+        expect($html)->toContain('data-availability-url="'.route('rooms.availability', $room).'"');
+    }
+});
 
 function availabilityTestBooking(Room $room, Carbon $start, Carbon $end): Booking
 {
