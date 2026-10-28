@@ -243,9 +243,9 @@
                                     <td data-label="Status">
                                         @php($payMongoPayments = $booking->payments->filter(fn ($payment) => $payment->method === 'gcash' && str_starts_with((string) $payment->reference, 'paymongo:'))->sortByDesc('id'))
                                         @php($payMongoPayment = $payMongoPayments->firstWhere('status', 'pending') ?? $payMongoPayments->first())
-                                        @php($hasPayMongoPayment = $payMongoPayments->isNotEmpty())
+                                        @php($hasPayMongoPayment = $payMongoPayments->contains(fn ($payment) => in_array($payment->status, ['pending', 'paid', 'refunded'], true)))
                                         @php($hasPaidPayMongoPayment = $payMongoPayments->contains(fn ($payment) => $payment->status === 'paid'))
-                                        @php($expiredCashHold = ! $hasPayMongoPayment && ($booking->payment_method === 'cash' || $booking->payment_method === null) && $booking->hasExpiredHold())
+                                        @php($expiredCashHold = $booking->isExpiredHoldRecord() || (! $hasPayMongoPayment && ($booking->payment_method === 'cash' || $booking->payment_method === null) && $booking->hasExpiredHold()))
                                         @php($timeAdjustment = $booking->timeAdjustments->sortByDesc('id')->first())
                                         @php($paymentStatus = $booking->payment_status === 'refunded' ? 'refunded' : ($hasPaidPayMongoPayment ? 'paid' : ($booking->payment_status ?? 'pending')))
                                         @php($paymentStatusClass = match ($paymentStatus) { 'paid' => 'confirmed', 'refunded', 'failed' => 'cancelled', default => '' })

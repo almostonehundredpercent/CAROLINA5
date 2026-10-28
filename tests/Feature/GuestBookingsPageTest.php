@@ -58,3 +58,74 @@ test('a checked-out guest booking renders separate action and review sections', 
         ->and($xpath->query('//input[@type="radio" and @name!="rating" and @required]')->length)->toBe(0)
         ->and($xpath->query('//select[@name="rating" or @name="cleanliness_rating" or @name="comfort_rating" or @name="value_rating"]')->length)->toBe(0);
 });
+
+test('signed-in guest can resume payment for an active unpaid booking', function () {
+    $user = User::factory()->create(['staff_role' => 'guest', 'is_admin' => false]);
+    $room = Room::create([
+        'name' => 'Unpaid account room', 'slug' => 'unpaid-account-room', 'room_type' => 'Standard',
+        'description' => 'A room for payment recovery.', 'beds' => 1, 'guests' => 2,
+        'price_per_night' => 450, 'is_active' => true, 'operational_status' => 'available',
+    ]);
+    $booking = Booking::create([
+        'user_id' => $user->id, 'room_id' => $room->id, 'guest_name' => 'Account Guest',
+        'guest_email' => $user->email, 'guest_phone' => '09XX XXX XXXX',
+        'check_in' => '2026-11-10', 'check_out' => '2026-11-11', 'check_in_at' => '2026-11-10 12:00:00',
+        'check_out_at' => '2026-11-11 12:00:00', 'booking_type' => 'overnight', 'hours' => 24,
+        'guests' => 1, 'nights' => 1, 'total_amount' => 450, 'status' => 'pending',
+        'payment_status' => 'pending', 'payment_method' => 'gcash', 'hold_expires_at' => now()->addMinutes(20),
+    ]);
+
+    $this->actingAs($user)->get(route('bookings.index'))
+        ->assertOk()
+        ->assertSee('Continue payment')
+        ->assertSee(route('bookings.receipt', $booking), false);
+});
+
+test('email and reference lookup can resume an unpaid booking', function () {
+    $room = Room::create([
+        'name' => 'Unpaid lookup room', 'slug' => 'unpaid-lookup-room', 'room_type' => 'Standard',
+        'description' => 'A room for payment lookup.', 'beds' => 1, 'guests' => 2,
+        'price_per_night' => 450, 'is_active' => true, 'operational_status' => 'available',
+    ]);
+    $booking = Booking::create([
+        'room_id' => $room->id, 'guest_name' => 'Lookup Guest', 'guest_email' => 'lookup@example.test',
+        'guest_phone' => '09XX XXX XXXX', 'check_in' => '2026-11-10', 'check_out' => '2026-11-11',
+        'check_in_at' => '2026-11-10 12:00:00', 'check_out_at' => '2026-11-11 12:00:00',
+        'booking_type' => 'overnight', 'hours' => 24, 'guests' => 1, 'nights' => 1,
+        'total_amount' => 450, 'status' => 'pending', 'payment_status' => 'pending',
+        'payment_method' => 'gcash', 'hold_expires_at' => now()->addMinutes(20),
+    ]);
+
+    $this->get(route('bookings.lookup', ['reference' => $booking->reference]))
+        ->assertOk()
+        ->assertSee('name="reference" placeholder="CAR-XXXXXXXX" value="'.$booking->reference.'"', false);
+
+    $this->post(route('bookings.lookup.submit'), ['email' => 'lookup@example.test', 'reference' => $booking->reference])
+        ->assertOk()
+        ->assertSee('Continue payment')
+        ->assertSee(route('bookings.receipt', $booking), false);
+});
+
+test('expired hold recovery shows the released room state without payment controls', function () {
+    $user = User::factory()->create(['staff_role' => 'guest', 'is_admin' => false]);
+    $room = Room::create([
+        'name' => 'Expired guest room', 'slug' => 'expired-guest-room', 'room_type' => 'Standard',
+        'description' => 'An expired guest room.', 'beds' => 1, 'guests' => 2,
+        'price_per_night' => 450, 'is_active' => true, 'operational_status' => 'available',
+    ]);
+    $booking = Booking::create([
+        'user_id' => $user->id, 'room_id' => $room->id, 'guest_name' => 'Expired Guest',
+        'guest_email' => $user->email, 'guest_phone' => '09XX XXX XXXX', 'check_in' => '2026-11-10',
+        'check_out' => '2026-11-11', 'check_in_at' => '2026-11-10 12:00:00', 'check_out_at' => '2026-11-11 12:00:00',
+        'booking_type' => 'overnight', 'hours' => 24, 'guests' => 1, 'nights' => 1, 'total_amount' => 450,
+        'status' => 'cancelled', 'payment_status' => 'failed', 'payment_method' => 'gcash',
+        'hold_expires_at' => now()->subMinute(), 'cancelled_at' => now()->subMinute(),
+        'cancellation_reason' => 'Unpaid reservation hold expired.',
+    ]);
+
+    $this->actingAs($user)->get(route('bookings.index'))
+        ->assertOk()
+        ->assertSee('Payment hold expired')
+        ->assertSee(route('bookings.receipt', $booking), false)
+        ->assertDontSee('Continue payment');
+});

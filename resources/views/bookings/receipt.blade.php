@@ -2,9 +2,11 @@
 
 @section('content')
 @php
-    $expiredHold = $booking->hasExpiredHold();
+    $expiredHold = $booking->hasExpiredHold() || $booking->isExpiredHoldRecord();
     $unavailable = $expiredHold || $booking->status === 'cancelled';
     $temporaryHold = ! $unavailable && $booking->status === 'pending' && ! $booking->hasProtectedInventory();
+    $holdDeadline = $temporaryHold ? $booking->holdDeadline() : null;
+    $remainingHoldSeconds = $holdDeadline ? max(0, $holdDeadline->timestamp - now()->timestamp) : 0;
 @endphp
 <style>.receipt-status.paid{background:#dcfce7;color:#166534}.dark-mode .receipt-status.paid{background:#17432b;color:#b7f7c5}</style>
 <style>.receipt-card{max-width:760px;margin:0 auto 18px}.receipt-summary{max-width:760px;margin:0 auto 28px;padding:22px;border:1px solid var(--line);border-radius:10px;background:#fff;text-align:left}.receipt-summary-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin:16px 0}.receipt-summary-grid div{padding:14px;border-radius:7px;background:var(--sand)}.receipt-summary-grid small{display:block;color:var(--muted);margin-bottom:5px}.receipt-summary-grid b{font-size:1.15rem}.receipt-status{display:inline-flex;padding:6px 10px;border-radius:20px;background:#fff0d4;color:#8d5700;font-size:.8rem;font-weight:700}.receipt-note{margin:0;color:var(--muted)}.paymongo-submit{display:inline-flex;align-items:center;justify-content:center;gap:9px;min-width:220px}.paymongo-submit:disabled{cursor:wait;opacity:.82}.paymongo-spinner{display:none;width:15px;height:15px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:paymongo-spin .7s linear infinite}.paymongo-submit[aria-busy="true"] .paymongo-spinner{display:inline-block}.paymongo-loading-message{display:none;margin:9px 0 0;color:var(--muted);font-size:.9rem}.paymongo-loading-message.visible{display:block}.paymongo-loading-message.error{color:#b42318;font-weight:600}@keyframes paymongo-spin{to{transform:rotate(360deg)}}@media(prefers-reduced-motion:reduce){.paymongo-spinner{animation-duration:1.8s}}@media(max-width:600px){.receipt-summary{padding:17px}.receipt-summary-grid{grid-template-columns:1fr}.paymongo-submit{width:100%}}</style>
@@ -30,7 +32,8 @@
         </div>
         <p class="receipt-note">@if($booking->status === 'confirmed')Your reservation is confirmed. Keep this receipt with your booking reference for your records.@elseif($unavailable)Contact staff before making another payment for this request.@else Please keep your reference number. Carolina will review your reservation and contact you with any next steps.@endif</p>
         @if($temporaryHold)
-            <p class="receipt-note" style="margin-top:12px">New unpaid requests hold their slot for {{ \App\Models\Booking::holdMinutes() }} minutes. Your hold ends <strong>{{ $booking->holdDeadline()->copy()->timezone('Asia/Manila')->format('M j, Y, g:i A') }} Philippine time</strong>. After that, the room is released unless payment is recorded or staff confirms it.</p>
+            <p class="receipt-note" style="margin-top:12px">New unpaid requests hold their slot for {{ \App\Models\Booking::holdMinutes() }} minutes. Your hold ends <strong>{{ $holdDeadline->copy()->timezone('Asia/Manila')->format('M j, Y, g:i A') }} Philippine time</strong>. After that, the room is released unless payment is recorded or staff confirms it.</p>
+            <p class="receipt-note" data-hold-countdown data-deadline="{{ $holdDeadline->timestamp }}" data-server-now="{{ now()->timestamp }}" data-remaining-seconds="{{ $remainingHoldSeconds }}" role="status" aria-live="polite">Payment hold remaining: <strong data-countdown-value>{{ intdiv($remainingHoldSeconds, 60) }}m {{ str_pad((string) ($remainingHoldSeconds % 60), 2, '0', STR_PAD_LEFT) }}s</strong>.</p>
         @endif
         @if(! $unavailable && ! in_array($booking->payment_status, ['paid', 'refunded'], true))
             <form id="paymongo-checkout-form" method="POST" action="{{ route('bookings.paymongo.start', $booking) }}" data-no-loading style="margin-top:16px">
@@ -127,4 +130,39 @@
         }
     });
 </script>
+@if($temporaryHold)
+<script>
+    (() => {
+        const countdown = document.querySelector('[data-hold-countdown]');
+        const value = countdown?.querySelector('[data-countdown-value]');
+        if (!countdown || !value) return;
+
+        const deadline = Number(countdown.dataset.deadline);
+        const serverNow = Number(countdown.dataset.serverNow);
+        const browserStart = Date.now();
+        const button = document.querySelector('#paymongo-checkout-form .paymongo-submit');
+        let refreshing = false;
+
+        const updateCountdown = () => {
+            const elapsed = Math.floor((Date.now() - browserStart) / 1000);
+            const remaining = Math.max(0, deadline - serverNow - elapsed);
+            if (remaining === 0) {
+                value.textContent = 'Time ended';
+                countdown.append(' The server is checking the hold and payment status…');
+                if (button) button.disabled = true;
+                if (!refreshing) {
+                    refreshing = true;
+                    window.setTimeout(() => window.location.reload(), 1000);
+                }
+                return;
+            }
+
+            value.textContent = `${Math.floor(remaining / 60)}m ${String(remaining % 60).padStart(2, '0')}s`;
+        };
+
+        updateCountdown();
+        window.setInterval(updateCountdown, 1000);
+    })();
+</script>
+@endif
 @endsection

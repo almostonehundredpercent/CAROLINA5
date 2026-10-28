@@ -92,6 +92,65 @@ test('a guest can begin an online GCash test checkout', function () {
     expect($booking->fresh()->payment_method)->toBe('gcash');
 });
 
+test('starting payment reuses an active PayMongo checkout session', function () {
+    $booking = payMongoBooking();
+    Payment::create(['booking_id' => $booking->id, 'amount' => 1000, 'method' => 'gcash', 'status' => 'pending', 'reference' => 'paymongo:cs_existing']);
+    Http::fake(['https://api.paymongo.com/v1/checkout_sessions/cs_existing' => Http::response([
+        'data' => ['id' => 'cs_existing', 'attributes' => [
+            'status' => 'active',
+            'checkout_url' => 'https://checkout.paymongo.test/cs_existing',
+        ]],
+    ])]);
+
+    $this->withSession(['guest_booking_reference' => $booking->reference])
+        ->post(route('bookings.paymongo.start', $booking))
+        ->assertRedirect('https://checkout.paymongo.test/cs_existing');
+
+    Http::assertSentCount(1);
+    expect(Payment::where('booking_id', $booking->id)->count())->toBe(1);
+});
+
+test('starting payment creates a new session only after the previous session expired', function () {
+    $booking = payMongoBooking();
+    $oldPayment = Payment::create(['booking_id' => $booking->id, 'amount' => 1000, 'method' => 'gcash', 'status' => 'pending', 'reference' => 'paymongo:cs_expired']);
+    Http::fake([
+        'https://api.paymongo.com/v1/checkout_sessions/cs_expired' => Http::response([
+            'data' => ['id' => 'cs_expired', 'attributes' => ['status' => 'expired']],
+        ]),
+        'https://api.paymongo.com/v1/checkout_sessions' => Http::response([
+            'data' => ['id' => 'cs_restarted', 'attributes' => ['checkout_url' => 'https://checkout.paymongo.test/cs_restarted']],
+        ]),
+    ]);
+
+    $this->withSession(['guest_booking_reference' => $booking->reference])
+        ->post(route('bookings.paymongo.start', $booking))
+        ->assertRedirect('https://checkout.paymongo.test/cs_restarted');
+
+    expect($oldPayment->fresh()->status)->toBe('failed')
+        ->and(Payment::where('booking_id', $booking->id)->count())->toBe(2)
+        ->and(Payment::where('reference', 'paymongo:cs_restarted')->value('status'))->toBe('pending');
+});
+
+test('starting payment does not create a duplicate when PayMongo cannot be reached', function () {
+    $booking = payMongoBooking();
+    Payment::create(['booking_id' => $booking->id, 'amount' => 1000, 'method' => 'gcash', 'status' => 'pending', 'reference' => 'paymongo:cs_unavailable']);
+    Http::fake([
+        'https://api.paymongo.com/v1/checkout_sessions/cs_unavailable' => Http::response(['errors' => [['detail' => 'Unavailable']]], 503),
+        'https://api.paymongo.com/v1/checkout_sessions' => Http::response([
+            'data' => ['id' => 'cs_duplicate', 'attributes' => ['checkout_url' => 'https://checkout.paymongo.test/cs_duplicate']],
+        ]),
+    ]);
+
+    $this->withSession(['guest_booking_reference' => $booking->reference])
+        ->withHeaders(['Accept' => 'application/json', 'X-Requested-With' => 'XMLHttpRequest'])
+        ->post(route('bookings.paymongo.start', $booking))
+        ->assertStatus(503)
+        ->assertJsonPath('message', 'Online GCash checkout is unavailable right now. Please try again shortly.');
+
+    Http::assertSentCount(1);
+    expect(Payment::where('booking_id', $booking->id)->count())->toBe(1);
+});
+
 test('hosted checkout identifies the merchant as Carolina instead of the account owner', function () {
     $booking = payMongoBooking();
     Http::fake(['https://api.paymongo.com/v1/checkout_sessions' => Http::response([

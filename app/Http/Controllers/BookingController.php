@@ -351,7 +351,7 @@ class BookingController extends Controller
 
     public function index(Request $request)
     {
-        return view('bookings.index', ['bookings' => $request->user()->bookings()->with(['room', 'review'])->latest()->get()]);
+        return view('bookings.index', ['bookings' => $request->user()->bookings()->with(['room', 'review', 'payments'])->latest()->get()]);
     }
 
     public function submitReview(Request $request, Booking $booking)
@@ -396,7 +396,7 @@ class BookingController extends Controller
         return view('bookings.confirmation', compact('booking'));
     }
 
-    public function startPayMongoCheckout(Request $request, Booking $booking, PayMongoCheckout $checkout)
+    public function startPayMongoCheckout(Request $request, Booking $booking, PayMongoCheckout $checkout, PayMongoPaymentReconciler $payments)
     {
         $this->authorizeBookingAccess($request, $booking);
         abort_if($booking->hasExpiredHold(), 422, 'This reservation hold expired. Please choose an available stay or contact Carolina before paying.');
@@ -404,6 +404,54 @@ class BookingController extends Controller
         abort_if($booking->payment_status === 'paid', 422, 'This reservation has already been paid.');
 
         $attemptId = (string) Str::uuid();
+
+        foreach ($booking->payments()->where('method', 'gcash')->where('status', 'pending')->where('reference', 'like', 'paymongo:%')->latest('id')->get() as $pendingPayment) {
+            try {
+                $providerSession = $checkout->retrieve(substr($pendingPayment->reference, strlen('paymongo:')));
+            } catch (\Throwable $exception) {
+                Log::warning('Existing PayMongo checkout could not be checked before resuming.', [
+                    'attempt_id' => $attemptId,
+                    'booking_id' => $booking->id,
+                    'payment_id' => $pendingPayment->id,
+                    'exception' => $exception::class,
+                ]);
+
+                return $request->expectsJson()
+                    ? response()->json(['message' => 'Online GCash checkout is unavailable right now. Please try again shortly.'], 503)
+                    : back()->withErrors(['payment' => 'Online GCash checkout is unavailable right now. Please try again later.']);
+            }
+
+            if ($payments->isMatchingPaidCheckout($booking, $pendingPayment, $providerSession)) {
+                $payments->recordPaid($booking, $pendingPayment, $request->user()?->id);
+
+                return $request->expectsJson()
+                    ? response()->json(['message' => 'PayMongo has already received this payment. Refresh the receipt for its latest status.'], 409)
+                    : redirect()->route('bookings.receipt', $booking)->with('success', 'PayMongo has already received this payment. The receipt now shows its latest status.');
+            }
+
+            $providerStatus = strtolower((string) data_get($providerSession, 'data.attributes.status'));
+            if (in_array($providerStatus, ['expired', 'failed'], true)) {
+                $pendingPayment->update([
+                    'status' => 'failed',
+                    'notes' => 'PayMongo checkout session '.$providerStatus.'.',
+                ]);
+
+                continue;
+            }
+
+            if ($providerStatus === 'active' && is_string(data_get($providerSession, 'data.attributes.checkout_url'))) {
+                $checkoutUrl = data_get($providerSession, 'data.attributes.checkout_url');
+                $this->log($booking, $request->user()?->id, 'payment_checkout_resumed', 'Guest resumed an active PayMongo GCash checkout.');
+
+                return $request->expectsJson()
+                    ? response()->json(['checkout_url' => $checkoutUrl])
+                    : redirect()->away($checkoutUrl);
+            }
+
+            return $request->expectsJson()
+                ? response()->json(['message' => 'PayMongo is still processing this checkout. Please wait a moment and refresh your receipt before trying again.'], 409)
+                : back()->withErrors(['payment' => 'PayMongo is still processing this checkout. Please wait a moment and refresh your receipt before trying again.']);
+        }
 
         try {
             $session = $checkout->create($booking->loadMissing(['room', 'user']), $attemptId);
@@ -552,7 +600,7 @@ class BookingController extends Controller
         if ($request->filled('email')) {
             $request->merge(['email' => strtolower(trim((string) $request->input('email')))]);
         } $data = $request->validate(['email' => 'required|email:rfc|max:255', 'reference' => 'required|string']);
-        $booking = Booking::with('room')->where('reference', strtoupper(trim($data['reference'])))->where(function ($query) use ($data) {
+        $booking = Booking::with(['room', 'payments'])->where('reference', strtoupper(trim($data['reference'])))->where(function ($query) use ($data) {
             $query->where('guest_email', $data['email'])->orWhereHas('user', fn ($user) => $user->where('email', $data['email']));
         })->first();
         if (! $booking) {

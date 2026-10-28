@@ -28,11 +28,26 @@
     <p>Manage your reservation with reference <strong>{{ $booking->reference }}</strong>.</p>
 
     <div class="confirmation-card">
-        <div><small>Status</small><b>{{ ucfirst($booking->status) }}</b></div>
+        <div><small>Status</small><b>{{ $booking->hasExpiredHold() || $booking->isExpiredHoldRecord() ? 'Payment hold expired' : ucfirst($booking->status) }}</b></div>
         <div><small>Stay</small><b>{{ $booking->check_in_at ? $booking->check_in_at->format('M j, g A') . ' – ' . $booking->check_out_at->format('M j, g A') : $booking->check_in->format('M j') . ' – ' . $booking->check_out->format('M j, Y') }}</b></div>
         <div><small>Total</small><b>₱{{ number_format($booking->total_amount, 2) }}</b></div>
         <div><small>Check-in</small><b>{{ $booking->checked_in_at ? 'Checked in' : 'Awaiting arrival' }}</b></div>
     </div>
+
+    @if($booking->hasExpiredHold() || $booking->isExpiredHoldRecord())
+        <section class="portal-card" role="status">
+            <h2>Payment hold expired</h2>
+            <p>This reservation no longer holds the room for these dates. You can check other available rooms and times.</p>
+            <a class="button" href="{{ route('rooms.index') }}">Find another room</a>
+            <a class="button light" href="{{ route('bookings.receipt', $booking) }}">View payment status</a>
+        </section>
+    @elseif($booking->status === 'pending' && ! $booking->hasProtectedInventory())
+        <section class="portal-card">
+            <h2>Finish your reservation</h2>
+            <p>Your room is temporarily held. Continue to the secure PayMongo checkout before the hold expires.</p>
+            <a class="button" href="{{ route('bookings.receipt', $booking) }}">Continue payment</a>
+        </section>
+    @endif
 
     <div class="portal-grid">
         @if($booking->user_id === null && $booking->status !== 'cancelled')

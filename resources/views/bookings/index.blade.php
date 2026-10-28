@@ -6,7 +6,8 @@
     <article class="booking-row">
         <img src="{{ $booking->room->image_url }}" alt="{{ $booking->room->name }}">
         <div class="booking-details">
-            <span class="status {{ $booking->status }}">{{ ucfirst($booking->status) }}</span>
+            @php($holdExpired = $booking->hasExpiredHold() || $booking->isExpiredHoldRecord())
+            <span class="status {{ $holdExpired ? 'cancelled' : $booking->status }}">{{ $holdExpired ? 'Payment hold expired' : ucfirst($booking->status) }}</span>
             <h3>{{ $booking->room->name }}</h3>
             <p>{{ $booking->check_in->format('M j, Y') }} - {{ $booking->check_out->format('M j, Y') }} · {{ $booking->nights }} {{ Str::plural('night', $booking->nights) }} · {{ $booking->guests }} {{ Str::plural('guest', $booking->guests) }}</p>
             <small>Reference: {{ $booking->reference }}</small>
@@ -14,6 +15,11 @@
         <div class="booking-actions">
             <strong>₱{{ number_format($booking->total_amount) }}</strong>
             <a class="text-link" href="{{ route('bookings.confirmation', $booking) }}">View details</a>
+            @if($holdExpired)
+                <a class="button button-outline booking-receipt-link" href="{{ route('bookings.receipt', $booking) }}">View payment status</a>
+            @elseif($booking->status === 'pending' && ! $booking->hasProtectedInventory())
+                <a class="button booking-receipt-link" href="{{ route('bookings.receipt', $booking) }}">Continue payment</a>
+            @endif
             @if($booking->status === 'confirmed' || in_array($booking->payment_status, ['paid', 'refunded'], true))
                 <a class="button button-outline booking-receipt-link" href="{{ route('bookings.receipt', $booking) }}">View receipt</a>
             @endif

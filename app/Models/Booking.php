@@ -122,6 +122,13 @@ class Booking extends Model
         return $this->status === 'pending' && ! $this->hasProtectedInventory() && $deadline && $deadline->lte(now());
     }
 
+    public function isExpiredHoldRecord(): bool
+    {
+        return $this->status === 'cancelled'
+            && $this->cancellation_reason === 'Unpaid reservation hold expired.'
+            && ! $this->hasProtectedInventory();
+    }
+
     public function holdDeadline()
     {
         return $this->hold_expires_at ?? $this->created_at?->copy()->addMinutes(static::holdMinutes());

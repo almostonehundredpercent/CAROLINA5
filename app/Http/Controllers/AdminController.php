@@ -175,7 +175,7 @@ class AdminController extends Controller
             $lockedBooking = Booking::whereKey($booking->id)->lockForUpdate()->firstOrFail();
             $before = $lockedBooking->only(['status', 'staff_notes', 'cancelled_at', 'cancelled_by', 'cancellation_reason']);
             if ($status === 'confirmed') {
-                if ($lockedBooking->status !== 'pending') {
+                if ($lockedBooking->status !== 'pending' && ! $lockedBooking->isExpiredHoldRecord()) {
                     throw ValidationException::withMessages(['status' => 'This booking is no longer pending. Refresh the bookings page before taking action.']);
                 }
                 if (! $lockedRoom->is_active || $lockedRoom->operational_status !== 'available') {
@@ -226,6 +226,7 @@ class AdminController extends Controller
             $lockedBooking = Booking::whereKey($booking->id)->lockForUpdate()->firstOrFail();
             $hasPayMongoCheckout = Payment::where('booking_id', $lockedBooking->id)
                 ->where('reference', 'like', 'paymongo:%')
+                ->whereIn('status', ['pending', 'paid', 'refunded'])
                 ->exists();
             if ($hasPayMongoCheckout) {
                 throw ValidationException::withMessages(['payment_status' => 'PayMongo payments must be verified with PayMongo. Use the Verify with PayMongo action instead.']);

@@ -107,6 +107,22 @@ class PayMongoCheckout
         return $response->json();
     }
 
+    /** Request expiry of a hosted checkout session after Carolina's booking hold ends. */
+    public function expire(string $checkoutId): array
+    {
+        $response = Http::acceptJson()
+            ->timeout(15)
+            ->withBasicAuth($this->secretKey(), '')
+            ->post(self::BASE_URL.'/checkout_sessions/'.$checkoutId.'/expire');
+
+        if ($response->failed() || ! is_array($response->json('data'))) {
+            report(new RuntimeException('PayMongo checkout expiry failed: '.$response->status()));
+            throw new RuntimeException('PayMongo could not expire this checkout session yet.');
+        }
+
+        return $response->json();
+    }
+
     private function secretKey(): string
     {
         $mode = config('services.paymongo.mode');

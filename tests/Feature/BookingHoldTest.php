@@ -62,6 +62,96 @@ test('payment backed confirmed and checked in inventory does not expire', functi
     'checked in' => [['checked_in_at' => '2026-10-03 00:30:00']],
 ]);
 
+test('scheduled hold expiry cancels an unpaid request with no checkout', function () {
+    $booking = heldBooking(holdRoom(), ['hold_expires_at' => now()->subMinute()]);
+
+    $this->artisan('bookings:expire-holds')->assertExitCode(0);
+
+    expect($booking->fresh()->status)->toBe('cancelled')
+        ->and($booking->fresh()->cancellation_reason)->toBe('Unpaid reservation hold expired.')
+        ->and($booking->room->bookings()->blocking()->whereKey($booking->id)->exists())->toBeFalse();
+});
+
+test('minute scheduler includes automatic unpaid hold expiry', function () {
+    $this->artisan('schedule:list')
+        ->expectsOutputToContain('bookings:expire-holds')
+        ->assertExitCode(0);
+});
+
+test('scheduled hold expiry closes PayMongo before cancelling', function () {
+    config()->set('services.paymongo.mode', 'test');
+    config()->set('services.paymongo.secret_key', 'sk_test_example');
+    $booking = heldBooking(holdRoom(), ['hold_expires_at' => now()->subMinute()]);
+    $payment = Payment::create(['booking_id' => $booking->id, 'amount' => 450, 'method' => 'gcash', 'status' => 'pending', 'reference' => 'paymongo:cs_hold']);
+    Http::fake(['https://api.paymongo.com/v1/checkout_sessions/cs_hold/expire' => Http::response([
+        'data' => ['id' => 'cs_hold', 'attributes' => ['status' => 'expired']],
+    ])]);
+
+    $this->artisan('bookings:expire-holds')->assertExitCode(0);
+
+    Http::assertSent(fn ($request) => $request->method() === 'POST' && str_ends_with($request->url(), '/checkout_sessions/cs_hold/expire'));
+    expect($payment->fresh()->status)->toBe('failed')
+        ->and($booking->fresh()->status)->toBe('cancelled')
+        ->and($booking->fresh()->payment_status)->toBe('failed');
+});
+
+test('scheduled hold expiry reconciles a paid provider session', function () {
+    Mail::fake();
+    config()->set('services.paymongo.mode', 'test');
+    config()->set('services.paymongo.secret_key', 'sk_test_example');
+    $booking = heldBooking(holdRoom(), ['hold_expires_at' => now()->subMinute()]);
+    $payment = Payment::create(['booking_id' => $booking->id, 'amount' => 450, 'method' => 'gcash', 'status' => 'pending', 'reference' => 'paymongo:cs_paid_during_expiry']);
+    Http::fake([
+        'https://api.paymongo.com/v1/checkout_sessions/cs_paid_during_expiry/expire' => Http::response(['errors' => [['detail' => 'Checkout is already paid.']]], 422),
+        'https://api.paymongo.com/v1/checkout_sessions/cs_paid_during_expiry' => Http::response(['data' => ['id' => 'cs_paid_during_expiry', 'attributes' => [
+            'livemode' => false,
+            'reference_number' => $booking->reference,
+            'payments' => [['attributes' => ['amount' => 45000, 'currency' => 'PHP', 'status' => 'paid']]],
+        ]]]),
+    ]);
+
+    $this->artisan('bookings:expire-holds')->assertExitCode(0);
+
+    expect($payment->fresh()->status)->toBe('paid')
+        ->and($booking->fresh()->payment_status)->toBe('paid')
+        ->and($booking->fresh()->cancellation_reason)->toBe('Payment was confirmed after the reservation hold expired; staff resolution required.');
+});
+
+test('scheduled hold expiry leaves processing provider sessions pending', function () {
+    config()->set('services.paymongo.mode', 'test');
+    config()->set('services.paymongo.secret_key', 'sk_test_example');
+    $booking = heldBooking(holdRoom(), ['hold_expires_at' => now()->subMinute()]);
+    $payment = Payment::create(['booking_id' => $booking->id, 'amount' => 450, 'method' => 'gcash', 'status' => 'pending', 'reference' => 'paymongo:cs_processing']);
+    Http::fake([
+        'https://api.paymongo.com/v1/checkout_sessions/cs_processing/expire' => Http::response(['errors' => [['detail' => 'Payment is processing.']]], 422),
+        'https://api.paymongo.com/v1/checkout_sessions/cs_processing' => Http::response(['data' => ['id' => 'cs_processing', 'attributes' => [
+            'status' => 'active',
+            'payments' => [['attributes' => ['status' => 'processing']]],
+        ]]]),
+    ]);
+
+    $this->artisan('bookings:expire-holds')->assertExitCode(0);
+
+    expect($payment->fresh()->status)->toBe('pending')
+        ->and($booking->fresh()->status)->toBe('pending');
+});
+
+test('scheduled hold expiry leaves unreachable provider sessions pending', function () {
+    config()->set('services.paymongo.mode', 'test');
+    config()->set('services.paymongo.secret_key', 'sk_test_example');
+    $booking = heldBooking(holdRoom(), ['hold_expires_at' => now()->subMinute()]);
+    $payment = Payment::create(['booking_id' => $booking->id, 'amount' => 450, 'method' => 'gcash', 'status' => 'pending', 'reference' => 'paymongo:cs_unreachable']);
+    Http::fake([
+        'https://api.paymongo.com/v1/checkout_sessions/cs_unreachable/expire' => Http::response(['errors' => [['detail' => 'Unavailable']]], 503),
+        'https://api.paymongo.com/v1/checkout_sessions/cs_unreachable' => Http::response(['errors' => [['detail' => 'Unavailable']]], 503),
+    ]);
+
+    $this->artisan('bookings:expire-holds')->assertExitCode(0);
+
+    expect($payment->fresh()->status)->toBe('pending')
+        ->and($booking->fresh()->status)->toBe('pending');
+});
+
 test('paid ledger and verified legacy deposit protect pending inventory', function () {
     $room = holdRoom();
     $booking = heldBooking($room, ['hold_expires_at' => now()->addMinute()]);
@@ -140,6 +230,42 @@ test('expired receipt explains availability and removes the payment action', fun
         ->assertOk()->assertSee('Reservation hold expired')->assertDontSee('id="paymongo-checkout-form"', false);
 });
 
+test('receipt shows a server-authoritative live countdown for an active hold', function () {
+    $booking = heldBooking(holdRoom(), ['hold_expires_at' => now()->addMinutes(30)]);
+
+    $this->withSession(['guest_booking_reference' => $booking->reference])->get(route('bookings.receipt', $booking))
+        ->assertOk()
+        ->assertSee('data-hold-countdown', false)
+        ->assertSee('data-remaining-seconds="1800"', false)
+        ->assertSee('30 minutes');
+});
+
+test('booking confirmation email explains the hold and links to secure booking lookup', function () {
+    config()->set('services.paymongo.mode', 'test');
+    $booking = heldBooking(holdRoom(), ['hold_expires_at' => now()->addMinutes(30)]);
+
+    $this->view('emails.booking-confirmation', ['booking' => $booking])
+        ->assertSee('30 minutes')
+        ->assertSee(route('bookings.lookup', ['reference' => $booking->reference]))
+        ->assertSee('test mode')
+        ->assertDontSee('No online payment is collected');
+});
+
+test('receipt recognizes a hold already expired by the scheduler', function () {
+    $booking = heldBooking(holdRoom(), [
+        'status' => 'cancelled',
+        'hold_expires_at' => now()->subMinute(),
+        'cancelled_at' => now()->subMinute(),
+        'cancellation_reason' => 'Unpaid reservation hold expired.',
+    ]);
+
+    $this->withSession(['guest_booking_reference' => $booking->reference])->get(route('bookings.receipt', $booking))
+        ->assertOk()
+        ->assertSee('Reservation hold expired')
+        ->assertSee('This request no longer reserves the room.')
+        ->assertDontSee('id="paymongo-checkout-form"', false);
+});
+
 test('receipt and terms describe the same finite unpaid hold', function () {
     $booking = heldBooking(holdRoom());
     $this->withSession(['guest_booking_reference' => $booking->reference])->get(route('bookings.receipt', $booking))
@@ -198,6 +324,45 @@ test('an expired cash hold can be restored without recording payment when the ro
 
     expect($booking->fresh()->payment_status)->toBe('paid')
         ->and($booking->payments()->where('status', 'paid')->count())->toBe(1);
+});
+
+test('staff can restore a system-expired hold after the availability check', function () {
+    Mail::fake();
+    $booking = heldBooking(holdRoom(), [
+        'status' => 'cancelled',
+        'hold_expires_at' => now()->subMinute(),
+        'cancelled_at' => now()->subMinute(),
+        'cancellation_reason' => 'Unpaid reservation hold expired.',
+    ]);
+    $admin = User::factory()->create(['is_admin' => true]);
+
+    $this->actingAsStaff($admin)->patch(route('admin.bookings.update', $booking), ['status' => 'confirmed'])
+        ->assertSessionHasNoErrors();
+
+    expect($booking->fresh()->status)->toBe('confirmed')
+        ->and($booking->fresh()->cancellation_reason)->toBeNull();
+});
+
+test('staff can record cash after restoring a booking whose PayMongo checkout expired', function () {
+    Mail::fake();
+    $booking = heldBooking(holdRoom(), [
+        'status' => 'cancelled',
+        'payment_status' => 'failed',
+        'payment_method' => 'gcash',
+        'hold_expires_at' => now()->subMinute(),
+        'cancelled_at' => now()->subMinute(),
+        'cancellation_reason' => 'Unpaid reservation hold expired.',
+    ]);
+    Payment::create(['booking_id' => $booking->id, 'amount' => 450, 'method' => 'gcash', 'status' => 'failed', 'reference' => 'paymongo:cs_expired_cash']);
+    $admin = User::factory()->create(['is_admin' => true]);
+
+    $this->actingAsStaff($admin)->patch(route('admin.bookings.update', $booking), ['status' => 'confirmed'])->assertSessionHasNoErrors();
+    $this->actingAsStaff($admin)->get(route('admin.bookings'))->assertOk()->assertSee('Mark paid');
+    $this->actingAsStaff($admin)->patch(route('admin.bookings.payment', $booking), ['payment_status' => 'paid', 'payment_method' => 'cash'])
+        ->assertSessionHasNoErrors();
+
+    expect($booking->fresh()->payment_status)->toBe('paid')
+        ->and($booking->payments()->where('method', 'cash')->where('status', 'paid')->exists())->toBeTrue();
 });
 
 test('an expired cash hold cannot be restored over a competing booking', function () {
