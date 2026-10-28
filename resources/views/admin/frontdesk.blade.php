@@ -18,6 +18,9 @@
         .today-schedule dd+dd{margin-top:2px}
         .today-actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:2px}
         .today-actions form{margin:0}
+        .today-panel-note{margin:0 0 10px;color:var(--muted);font-size:.78rem;line-height:1.45}
+        .today-arrival-status{display:inline-flex;width:max-content;padding:4px 7px;border-radius:99px;background:rgba(63,143,91,.14);color:#7bc293;font-size:.66rem;font-weight:800;letter-spacing:.04em;text-transform:uppercase}
+        .today-arrival-status.is-overdue{background:rgba(201,75,60,.14);color:#f08d80}
         .today-maintenance-item{border-left:3px solid #d78419}
         .today-maintenance-label{display:inline-flex;width:max-content;padding:4px 7px;border-radius:99px;background:rgba(215,132,25,.14);color:#efaa4c;font-size:.66rem;font-weight:800;letter-spacing:.04em;text-transform:uppercase}
         .today-maintenance-note{margin:0;color:var(--muted);font-size:.82rem;line-height:1.4}
@@ -33,7 +36,7 @@
             <div>
                 <p class="admin-kicker">FRONT DESK</p>
                 <h1>Today</h1>
-                <p class="admin-subtitle">Arrivals, stays, departures, and room maintenance for today.</p>
+                <p class="admin-subtitle">Arrivals, stays, departures, cleaning, and maintenance for today.</p>
             </div>
             <a class="frontdesk-walkin" href="{{ route('admin.walk-ins.create') }}">+ New walk-in</a>
         </header>
@@ -41,11 +44,17 @@
 
         <section class="today-grid">
             <section class="panel">
-                <div class="panel-heading"><div><p class="admin-kicker">ARRIVALS</p><h2>{{ $arrivals->count() }} expected today</h2></div></div>
+                <div class="panel-heading"><div><p class="admin-kicker">ARRIVALS</p><h2>{{ $arrivals->count() }} awaiting check-in</h2></div></div>
+                <p class="today-panel-note">A guest appears under In house after staff records their actual arrival.</p>
                 <div class="today-list">
                     @forelse($arrivals as $booking)
                         <article class="today-item">
                             <b>{{ $booking->reference }} · {{ $booking->guest_name ?? $booking->user?->name ?? 'Guest' }}</b>
+                            @if($booking->check_in_at && $booking->check_in_at->lte(now()))
+                                <span class="today-arrival-status is-overdue">Check-in time passed · confirm arrival</span>
+                            @else
+                                <span class="today-arrival-status">Expected today</span>
+                            @endif
                             <small>{{ $booking->room?->name }} · Payment: {{ ucfirst($booking->payment_status) }}</small>
                             <dl class="today-schedule">
                                 <div><dt>Check-in</dt><dd><time datetime="{{ $booking->check_in_at?->toIso8601String() }}">{{ $booking->check_in_at?->format('M j, Y') ?? $booking->check_in?->format('M j, Y') }}</time></dd><dd>{{ $booking->check_in_at?->format('g:i A') ?? 'Time not recorded' }}</dd></div>
@@ -108,17 +117,17 @@
             </section>
 
             <section class="panel">
-                <div class="panel-heading"><div><p class="admin-kicker">ROOM MAINTENANCE</p><h2>{{ $maintenanceBlocks->count() }} maintenance item{{ $maintenanceBlocks->count() === 1 ? '' : 's' }} today</h2></div></div>
+                <div class="panel-heading"><div><p class="admin-kicker">ROOM OPERATIONS</p><h2>{{ $roomOperationBlocks->count() }} item{{ $roomOperationBlocks->count() === 1 ? '' : 's' }} today</h2></div></div>
                 <div class="today-list">
-                    @forelse($maintenanceBlocks as $block)
+                    @forelse($roomOperationBlocks as $block)
                         <article class="today-item today-maintenance-item">
-                            <span class="today-maintenance-label">{{ $block->starts_at->lte(now()) && $block->ends_at->gt(now()) ? 'In progress' : 'Scheduled today' }}</span>
+                            <span class="today-maintenance-label">{{ ucfirst($block->status) }} · {{ $block->starts_at->lte(now()) && $block->ends_at->gt(now()) ? 'In progress' : 'Scheduled today' }}</span>
                             <b>{{ $block->room?->name ?? 'Room' }}</b>
                             <small>{{ $block->starts_at->format('M j · g:i A') }} – {{ $block->ends_at->format('M j · g:i A') }}</small>
                             @if($block->notes)<p class="today-maintenance-note">{{ $block->notes }}</p>@endif
                         </article>
                     @empty
-                        <p class="empty-copy">No rooms are scheduled for maintenance today.</p>
+                        <p class="empty-copy">No cleaning or maintenance items overlap today.</p>
                     @endforelse
                 </div>
             </section>

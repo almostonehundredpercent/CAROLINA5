@@ -3,6 +3,7 @@
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BookingController;
+use App\Http\Controllers\DecisionSupportController;
 use App\Http\Controllers\PayMongoWebhookController;
 use App\Http\Controllers\PromoCodeController;
 use App\Http\Controllers\RoomController;
@@ -124,6 +125,10 @@ Route::middleware(['auth', 'admin', 'staff.mfa'])->prefix('admin')->name('admin.
     Route::get('/walk-ins', [AdminController::class, 'walkInForm'])->middleware('admin.permission:frontdesk')->name('walk-ins.create');
     Route::post('/walk-ins', [AdminController::class, 'storeWalkIn'])->middleware('admin.permission:frontdesk')->name('walk-ins.store');
     Route::get('/reports', [AdminController::class, 'reports'])->middleware('admin.permission:reports')->name('reports');
+    Route::get('/decision-support', [DecisionSupportController::class, 'index'])->middleware('admin.permission:decision_support')->name('decision-support');
+    Route::patch('/decision-support/settings', [DecisionSupportController::class, 'updateSettings'])->middleware('admin.permission:decision_support')->name('decision-support.settings');
+    Route::post('/decision-support/seasons', [DecisionSupportController::class, 'storeSeason'])->middleware('admin.permission:decision_support')->name('decision-support.seasons.store');
+    Route::delete('/decision-support/seasons/{season}', [DecisionSupportController::class, 'destroySeason'])->middleware('admin.permission:decision_support')->name('decision-support.seasons.destroy');
     Route::get('/promos', [PromoCodeController::class, 'index'])->middleware('admin.permission:promos')->name('promos');
     Route::post('/promos', [PromoCodeController::class, 'store'])->middleware('admin.permission:promos')->name('promos.store');
     Route::patch('/promos/{promo}', [PromoCodeController::class, 'update'])->middleware('admin.permission:promos')->name('promos.update');
