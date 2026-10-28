@@ -71,7 +71,7 @@
 .home-review-rating small { color:var(--muted); font-size:.72rem; font-weight:700; }
 .home-review-comment { margin:0; color:var(--ink)!important; font-size:.96rem; line-height:1.65; }
 .home-review-no-comment { color:var(--muted)!important; font-style:italic; }
-.home-review-author { display:flex; align-items:end; justify-content:space-between; gap:12px; margin-top:auto; padding-top:15px; border-top:1px solid var(--line); }
+.home-review-card .home-review-author { display:flex; grid-template-columns:none; align-items:end; justify-content:space-between; gap:12px; margin-top:auto; padding:15px 0 0; border-top:1px solid var(--line); background:transparent; color:var(--ink); }
 .home-review-author > div { display:grid; gap:4px; }
 .home-review-author b { color:var(--ink); font-size:.88rem; }
 .home-review-author small,.home-review-author time { color:var(--muted); font-size:.74rem; }
