@@ -68,8 +68,27 @@ class RoomController extends Controller
         $nextAvailableAt = $room->availability_reason
             ? RoomAvailability::nextAvailableAt($room, $startsAt, $stayHours, $dateOnly)
             : null;
+        $nextBookingMode = $room->rental_hours
+            ? 'hourly'
+            : ($bookingSearch['mode'] ?? (isset($bookingSearch['stay']) ? 'hourly' : 'dates'));
+        $nextBookingUrl = null;
+        if ($nextAvailableAt) {
+            $nextBookingParams = [
+                'room' => $room,
+                'mode' => $nextBookingMode,
+                'check_in' => $nextAvailableAt->toDateString(),
+            ];
+            if ($nextBookingMode === 'hourly') {
+                $nextBookingParams['check_in_time'] = $nextAvailableAt->format('H:i');
+                $nextBookingParams['stay'] = $stayHours;
+            }
+            if (! auth()->check()) {
+                $nextBookingParams['guest'] = 1;
+            }
+            $nextBookingUrl = route('bookings.create', $nextBookingParams);
+        }
 
-        return response()->view('rooms.show', compact('room', 'bookingSearch', 'stayHours', 'nextAvailableAt'))
+        return response()->view('rooms.show', compact('room', 'bookingSearch', 'stayHours', 'nextAvailableAt', 'nextBookingUrl', 'nextBookingMode'))
             ->header('Cache-Control', 'private, no-store');
     }
 }
