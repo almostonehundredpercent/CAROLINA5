@@ -222,6 +222,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             days.querySelectorAll('.hourly-calendar-day:not([disabled])').forEach(button => button.addEventListener('click', () => {
                 value.value = button.dataset.date;
+                value.dispatchEvent(new Event('change', { bubbles: true }));
                 trigger.textContent = pretty(new Date(`${value.value}T00:00:00`));
                 picker.hidden = true;
                 syncTimeOptions();
@@ -263,7 +264,7 @@ document.addEventListener('DOMContentLoaded', () => {
             renderBookedSummary();
         };
         hourlyHours.addEventListener('change', syncTimeOptions);
-        timeTrigger.textContent = prettyTime(timeValue.value); timeTrigger.addEventListener('click', () => { const opening = timeMenu.hidden; closeOpenPickers(timeMenu); timeMenu.hidden = !opening; if (opening) { syncTimeOptions(); refreshHourlyAvailability(); } }); timeMenu.querySelectorAll('[data-time]').forEach(button => button.addEventListener('click', () => { timeValue.value = button.dataset.time; timeTrigger.textContent = prettyTime(timeValue.value); syncTimeOptions(); timeMenu.hidden = true; })); const refreshHourlyAvailability = async () => { try { const response = await fetch(@json(route('rooms.availability', $room)), { headers: { Accept: 'application/json' }, cache: 'no-store' }); if (!response.ok) return; const data = await response.json(); hourlyBlockedSlots = data.slots ?? []; if (!picker.hidden) renderHourlyCalendar(); syncTimeOptions(); if (timeMenu.querySelector(`[data-time="${timeValue.value}"]`)?.disabled) { timeValue.value = ''; timeTrigger.textContent = 'Choose time'; } } catch (error) { /* Keep the current availability if the connection is unavailable. */ } }; syncTimeOptions(); setInterval(refreshHourlyAvailability, 15000); document.addEventListener('visibilitychange', () => { if (!document.hidden) refreshHourlyAvailability(); }); return;
+        timeTrigger.textContent = prettyTime(timeValue.value); timeTrigger.addEventListener('click', () => { const opening = timeMenu.hidden; closeOpenPickers(timeMenu); timeMenu.hidden = !opening; if (opening) { syncTimeOptions(); refreshHourlyAvailability(); } }); timeMenu.querySelectorAll('[data-time]').forEach(button => button.addEventListener('click', () => { timeValue.value = button.dataset.time; timeValue.dispatchEvent(new Event('change', { bubbles: true })); timeTrigger.textContent = prettyTime(timeValue.value); syncTimeOptions(); timeMenu.hidden = true; })); const refreshHourlyAvailability = async () => { try { const response = await fetch(@json(route('rooms.availability', $room)), { headers: { Accept: 'application/json' }, cache: 'no-store' }); if (!response.ok) return; const data = await response.json(); hourlyBlockedSlots = data.slots ?? []; if (!picker.hidden) renderHourlyCalendar(); syncTimeOptions(); if (timeMenu.querySelector(`[data-time="${timeValue.value}"]`)?.disabled) { timeValue.value = ''; timeTrigger.textContent = 'Choose time'; } } catch (error) { /* Keep the current availability if the connection is unavailable. */ } }; syncTimeOptions(); setInterval(refreshHourlyAvailability, 15000); document.addEventListener('visibilitychange', () => { if (!document.hidden) refreshHourlyAvailability(); }); return;
     }
     const ranges = @json($blockedRanges);
     const checkIn = document.getElementById('check-in');
@@ -287,6 +288,8 @@ document.addEventListener('DOMContentLoaded', () => {
         else if (overlap(checkIn.value, value)) { note.textContent = 'Those dates include an unavailable stay. Please choose dates outside the red period.'; return; }
         else { checkOut.value = value; note.textContent = 'Your selected dates are available.'; }
         refreshInputs(); render();
+        checkIn.dispatchEvent(new Event('change', { bubbles: true }));
+        checkOut.dispatchEvent(new Event('change', { bubbles: true }));
     };
     const render = () => {
         days.innerHTML = '';
@@ -329,6 +332,7 @@ document.addEventListener('DOMContentLoaded', () => {
     refreshInputs(); render();
 });
 </script>
+<script src="{{ asset('js/booking-validation.js') }}"></script>
 @endif
 <script>
 document.addEventListener('DOMContentLoaded', () => {
