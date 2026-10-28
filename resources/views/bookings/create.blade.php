@@ -113,7 +113,7 @@
                     <div class="promo-entry-row"><input id="promo-code" name="promo_code" value="{{ old('promo_code') }}" maxlength="40" placeholder="Enter promo code" autocomplete="off"><button id="apply-promo" type="button">Apply</button></div>
                     <p class="promo-message" id="promo-message" role="status" aria-live="polite">Choose your stay, enter a code, then tap Apply to see the discounted total.</p>
                 </section>
-                <label class="checkbox"><input name="terms_accepted" type="checkbox" value="1" @checked(old('terms_accepted')) required><span><strong>Accept reservation terms</strong><small>I understand this is a reservation request, subject to staff confirmation, and refunds require cancellation at least 3 days before check-in. <a href="{{ route('terms') }}" target="_blank">Read terms</a>.</small></span></label>
+                <label class="checkbox"><input name="terms_accepted" type="checkbox" value="1" @checked(old('terms_accepted')) required><span><strong>Accept reservation terms</strong><small>I understand this is a reservation request, subject to staff confirmation. Online cancellation and refund eligibility require at least 3 days before check-in. <a href="{{ route('terms') }}" target="_blank">Read terms</a>.</small></span></label>
 
                 <label>Special request<textarea name="special_request" rows="3" placeholder="e.g., Extra pillow, if available.">{{ old('special_request') }}</textarea></label>
                 <x-contact-card class="booking-contact-help" />

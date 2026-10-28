@@ -18,8 +18,12 @@
                 <a class="button button-outline booking-receipt-link" href="{{ route('bookings.receipt', $booking) }}">View receipt</a>
             @endif
             @if($booking->status !== 'cancelled' && $booking->check_in->isFuture())
-                <small>Refundable only when cancelled at least 3 days before check-in.</small>
-                <form method="POST" action="{{ route('bookings.cancel', $booking) }}">@csrf @method('PATCH')<button class="link-danger">Cancel</button></form>
+                @if($booking->canCancelOnline())
+                    <small>Cancel at least 3 days before check-in to qualify for a refund.</small>
+                    <form method="POST" action="{{ route('bookings.cancel', $booking) }}">@csrf @method('PATCH')<button class="link-danger">Cancel booking</button></form>
+                @else
+                    <small>Online cancellation is closed within 3 days of check-in.</small>
+                @endif
             @endif
         </div>
         @if($booking->checked_out_at)

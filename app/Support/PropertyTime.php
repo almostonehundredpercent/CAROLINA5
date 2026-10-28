@@ -13,9 +13,15 @@ class PropertyTime
 {
     public static function now(): Carbon
     {
-        $localNow = Carbon::now('Asia/Manila');
+        return self::wallClock(Carbon::now('UTC'));
+    }
 
-        return Carbon::parse($localNow->format('Y-m-d H:i:s'), 'UTC');
+    /** Convert a real UTC instant to the property's wall clock stored as UTC. */
+    public static function wallClock(Carbon $instant): Carbon
+    {
+        $localTime = $instant->copy()->setTimezone('Asia/Manila');
+
+        return Carbon::parse($localTime->format('Y-m-d H:i:s'), 'UTC');
     }
 
     public static function today(): string
