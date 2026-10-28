@@ -2,6 +2,7 @@
 
 use App\Models\PromoCode;
 use App\Models\Room;
+use App\Models\User;
 use App\Support\PromoPricing;
 use Illuminate\Validation\ValidationException;
 
@@ -20,6 +21,31 @@ function promoRoom(string $suffix = ''): Room
         'is_active' => true,
     ]);
 }
+
+test('promo editor groups setup into clear steps and summarizes each offer room scope', function () {
+    $admin = User::factory()->create(['is_admin' => true]);
+    $firstRoom = promoRoom('first');
+    $secondRoom = promoRoom('second');
+    $promo = PromoCode::create([
+        'code' => 'CAROLATEST',
+        'name' => 'Carolina test offer',
+        'discount_type' => 'percentage',
+        'discount_value' => 10,
+        'is_active' => true,
+    ]);
+    $promo->rooms()->sync([$firstRoom->id, $secondRoom->id]);
+
+    $this->actingAsStaff($admin)
+        ->get(route('admin.promos'))
+        ->assertOk()
+        ->assertSee('Offer details')
+        ->assertSee('Discount rules')
+        ->assertSee('Schedule &amp; usage', false)
+        ->assertSee('Select the rooms where this offer can be used.')
+        ->assertSee('View eligible rooms')
+        ->assertSee($firstRoom->name)
+        ->assertSee($secondRoom->name);
+});
 
 test('monthly promo sets a selected room thirty-day stay to six thousand pesos', function () {
     $room = promoRoom('eligible');
