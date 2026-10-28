@@ -9,9 +9,11 @@
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ asset('css/admin.css') }}?v={{ filemtime(public_path('css/admin.css')) }}">
     <style>
-        .dss-page { display: grid; gap: 18px; }
+        .dss-page { display: grid; gap: 18px; min-width: 0; }
+        .dss-page > *, .dss-settings-grid > *, .dss-grid > * { min-width: 0; }
         .dss-lead { max-width: 850px; color: var(--muted); line-height: 1.6; }
         .dss-settings-grid { display: grid; grid-template-columns: minmax(240px, .8fr) minmax(0, 1.2fr); gap: 18px; }
+        .dss-page .panel-heading { flex-wrap: wrap; gap: 12px; }
         .dss-form { display: grid; gap: 11px; }
         .dss-form label { display: grid; gap: 5px; color: var(--muted); font-size: 12px; font-weight: 700; }
         .dss-form input { width: 100%; min-height: 42px; padding: 9px 11px; border: 1px solid var(--line); border-radius: 8px; background: var(--paper); color: var(--ink); font: inherit; }
@@ -29,13 +31,27 @@
         .dss-action:hover { text-decoration: underline; }
         .dss-season-list { display: grid; gap: 8px; margin-top: 14px; }
         .dss-season-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 9px 0; border-top: 1px solid var(--line); }
+        .dss-season-row > span { min-width: 0; overflow-wrap: anywhere; }
         .dss-season-row form { margin: 0; }
-        .dss-table-wrap { overflow-x: auto; }
+        .dss-table-wrap { max-width: 100%; overflow-x: auto; overscroll-behavior-x: contain; -webkit-overflow-scrolling: touch; }
         .dss-table { width: 100%; min-width: 620px; border-collapse: collapse; }
         .dss-table th, .dss-table td { padding: 11px 9px; border-bottom: 1px solid var(--line); text-align: left; font-size: 12px; }
         .dss-table th { color: var(--muted); font-size: 10px; letter-spacing: .06em; text-transform: uppercase; }
         .dss-error { color: #b42318; font-size: 11px; }
-        @media(max-width: 850px) { .dss-settings-grid, .dss-grid { grid-template-columns: 1fr; } }
+        @media(max-width: 850px) {
+            .dss-settings-grid, .dss-grid { grid-template-columns: minmax(0, 1fr); }
+        }
+        @media(max-width: 600px) {
+            .dss-page { gap: 14px; }
+            .dss-page .panel { padding: 14px; }
+            .dss-lead { font-size: 13px; }
+            .dss-settings-grid { gap: 12px; }
+            .dss-card { padding: 13px; }
+            .dss-card-head { flex-wrap: wrap; align-items: center; }
+            .dss-season-row { align-items: flex-start; }
+            .dss-page .panel-heading > .dss-primary { width: 100%; justify-content: center; text-align: center; }
+            .dss-table-wrap::after { content: 'Swipe horizontally to see all promo results'; display: block; padding: 8px 2px 0; color: var(--muted); font-size: 10px; }
+        }
     </style>
 </head>
 <body>
@@ -111,7 +127,7 @@
         <section class="panel">
             <div class="panel-heading"><div><p class="admin-kicker">RECORDED REDEMPTIONS · LAST 90 DAYS</p><h2>Promo booking outcomes</h2></div></div>
             <p class="dss-note">These counts describe bookings created in the last 90 days that had a promo code saved. They do not prove that a promotion caused a booking or increased revenue.</p>
-            <div class="dss-table-wrap"><table class="dss-table"><thead><tr><th>Promo code</th><th>Applied</th><th>Confirmed</th><th>Paid</th><th>Completed</th><th>Cancelled</th><th>Refunded</th></tr></thead><tbody>
+            <div class="dss-table-wrap" role="region" aria-label="Promo outcomes table. Swipe horizontally on small screens." tabindex="0"><table class="dss-table"><thead><tr><th>Promo code</th><th>Applied</th><th>Confirmed</th><th>Paid</th><th>Completed</th><th>Cancelled</th><th>Refunded</th></tr></thead><tbody>
                 @forelse($promoOutcomes as $outcome)
                     <tr><td><b>{{ $outcome['code'] }}</b></td><td>{{ $outcome['applied'] }}</td><td>{{ $outcome['confirmed'] }}</td><td>{{ $outcome['paid'] }}</td><td>{{ $outcome['completed'] }}</td><td>{{ $outcome['cancelled'] }}</td><td>{{ $outcome['refunded'] }}</td></tr>
                 @empty
