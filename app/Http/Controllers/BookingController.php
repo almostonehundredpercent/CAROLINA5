@@ -75,9 +75,26 @@ class BookingController extends Controller
     public function availability(Request $request, Room $room)
     {
         if ($request->filled('start')) {
-            $data = $request->validate(['start' => 'required|date', 'end' => 'required|date|after:start']);
+            $data = $request->validate([
+                'start' => 'required|date',
+                'end' => 'required|date|after:start',
+                'booking_type' => 'sometimes|in:dates,hourly',
+            ]);
             $start = Carbon::parse($data['start']);
             $end = Carbon::parse($data['end']);
+            $bookingType = $data['booking_type'] ?? 'dates';
+            $past = $bookingType === 'hourly'
+                ? $start->lt(PropertyTime::now())
+                : $start->toDateString() < PropertyTime::today();
+
+            if ($past) {
+                return response()->json([
+                    'available' => false,
+                    'reason' => 'past',
+                    'message' => 'The selected check-in date or time has already passed.',
+                ])->header('Cache-Control', 'no-store');
+            }
+
             $available = $room->is_active && ! $room->bookings()->blocking()->overlapping($start, $end)->exists()
                 && ! $room->blocks()->overlapping($start, $end)->exists();
 
@@ -214,9 +231,9 @@ class BookingController extends Controller
         }
         $rules = ['booking_type' => 'required|in:dates,hourly', 'guests' => 'required|integer|min:1|max:'.$room->guests, 'children_count' => 'nullable|integer|min:0|max:10|lte:guests', 'pets_count' => 'nullable|integer|min:0|max:5', 'special_request' => 'nullable|string|max:500', 'promo_code' => 'nullable|string|max:40', 'checkout_type' => 'required|in:guest,account', 'submission_token' => 'required|uuid', 'terms_accepted' => 'accepted'];
         if ($request->input('booking_type') === 'hourly') {
-            $rules += ['hourly_date' => 'required|date|after_or_equal:'.Carbon::now('Asia/Manila')->toDateString(), 'check_in_time' => ['required', 'date_format:H:i', 'regex:/^(0[6-9]|1[0-9]|2[0-3]):00$/'], 'hours' => 'required|integer|in:'.($room->rental_hours ? implode(',', array_unique([$room->rental_hours, 48, 72, 96, 120, 168, 720])) : '3,6,12,24,48,72,96,120,168,720')];
+            $rules += ['hourly_date' => 'required|date|after_or_equal:'.PropertyTime::today(), 'check_in_time' => ['required', 'date_format:H:i', 'regex:/^(0[6-9]|1[0-9]|2[0-3]):00$/'], 'hours' => 'required|integer|in:'.($room->rental_hours ? implode(',', array_unique([$room->rental_hours, 48, 72, 96, 120, 168, 720])) : '3,6,12,24,48,72,96,120,168,720')];
         } else {
-            $rules += ['check_in' => 'required|date|after_or_equal:'.Carbon::now('Asia/Manila')->toDateString(), 'check_out' => 'required|date|after:check_in'];
+            $rules += ['check_in' => 'required|date|after_or_equal:'.PropertyTime::today(), 'check_out' => 'required|date|after:check_in'];
         }
         if ($request->input('checkout_type') === 'guest') {
             $rules += ['guest_name' => 'required|string|max:255', 'guest_email' => 'required|email:rfc|max:255', 'guest_phone' => ['required', 'regex:/^(?:\\+63|63|0)9\\d{9}$/'], 'terms_accepted' => 'accepted'];
@@ -234,7 +251,7 @@ class BookingController extends Controller
             return redirect()->route('login')->with('success', 'Please sign in to use account checkout.');
         }
         if ($data['booking_type'] === 'hourly') {
-            $checkInAt = Carbon::parse($data['hourly_date'].' '.$data['check_in_time']);
+            $checkInAt = Carbon::parse($data['hourly_date'].' '.$data['check_in_time'], 'UTC');
             $checkOutAt = $checkInAt->copy()->addHours((int) $data['hours']);
             $nights = max(1, (int) ceil($data['hours'] / 24));
             $total = $room->rental_hours
@@ -259,6 +276,12 @@ class BookingController extends Controller
             $booking = DB::transaction(function () use ($room, $data, $guestData, $request, $nights, $total, $checkInAt, $checkOutAt) {
                 $lockedRoom = Room::whereKey($room->id)->lockForUpdate()->firstOrFail();
                 abort_if(! $lockedRoom->is_active, 422, 'This room is unavailable.');
+                if ($data['booking_type'] === 'hourly' && $checkInAt->lt(PropertyTime::now())) {
+                    throw ValidationException::withMessages(['check_in_time' => 'That check-in time has already passed. Choose a future time.']);
+                }
+                if ($data['booking_type'] === 'dates' && $checkInAt->toDateString() < PropertyTime::today()) {
+                    throw ValidationException::withMessages(['check_in' => 'That check-in date has already passed. Choose a future date.']);
+                }
                 $maintenanceConflict = $lockedRoom->blocks()->overlapping($checkInAt, $checkOutAt)
                     ->where('status', 'maintenance')->exists();
                 $taken = $lockedRoom->bookings()->blocking()->overlapping($checkInAt, $checkOutAt)->exists()

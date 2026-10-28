@@ -162,9 +162,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const refresh = () => { const hours = Number(hourlyHours.value); const multiplier = ({48:2,72:3,96:4,120:5,168:7,720:30})[hours] ?? 1; total.textContent = `Estimated total: ₱${(packageRate ? packageRate * multiplier : rate * hours).toLocaleString('en-PH', { minimumFractionDigits: 2 })}`; };
         hourlyHours.addEventListener('change', refresh); refresh();
         const value = document.getElementById('hourly-date'), trigger = document.getElementById('hourly-date-trigger'), picker = document.getElementById('hourly-calendar'), days = document.getElementById('hourly-calendar-days'), month = document.getElementById('hourly-calendar-month');
-        const todayParts = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Manila', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(new Date());
-        const todayValue = `${todayParts.find(part => part.type === 'year').value}-${todayParts.find(part => part.type === 'month').value}-${todayParts.find(part => part.type === 'day').value}`;
-        const today = new Date(`${todayValue}T00:00:00`); today.setHours(0, 0, 0, 0); let cursor = new Date(today.getFullYear(), today.getMonth(), 1);
+        const propertyClock = () => { const parts = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Manila', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).formatToParts(new Date()); const part = type => parts.find(item => item.type === type).value; return { date: `${part('year')}-${part('month')}-${part('day')}`, time: `${part('hour')}:${part('minute')}` }; };
+        let propertyNow = propertyClock(), todayValue = propertyNow.date;
+        let today = new Date(`${todayValue}T00:00:00`); today.setHours(0, 0, 0, 0); let cursor = new Date(today.getFullYear(), today.getMonth(), 1);
         const iso = date => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
         const pretty = date => date.toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' });
         const bookedSummary = document.getElementById('hourly-booked-summary');
@@ -206,7 +206,10 @@ document.addEventListener('DOMContentLoaded', () => {
             return new Date(Date.UTC(year, month - 1, day, hour, minute));
         };
         const isTimeBooked = (dateValue, time, duration) => { const start = dateAtBookingTime(dateValue, time), end = new Date(start.getTime() + duration * 60 * 60 * 1000); return hourlyBlockedSlots.some(slot => start < new Date(slot.end) && end > new Date(slot.start)); };
-        const hasAvailableStartTime = dateValue => candidateTimes.some(button => !isTimeBooked(dateValue, button.dataset.time, Number(hourlyHours.value)));
+        const hasAvailableStartTime = dateValue => candidateTimes.some(button => {
+            const past = dateValue < todayValue || (dateValue === todayValue && button.dataset.time <= propertyNow.time);
+            return !past && !isTimeBooked(dateValue, button.dataset.time, Number(hourlyHours.value));
+        });
         const renderHourlyCalendar = () => {
             days.innerHTML = '';
             month.textContent = cursor.toLocaleDateString('en-PH', { month: 'long', year: 'numeric' });
@@ -216,7 +219,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const date = new Date(cursor.getFullYear(), cursor.getMonth(), day), dateValue = iso(date);
                 const dayStart = dateAtBookingTime(dateValue, '00:00'), dayEnd = dateAtBookingTime(iso(new Date(date.getFullYear(), date.getMonth(), day + 1)), '00:00');
                 const booked = hourlyBlockedSlots.some(slot => dayStart < new Date(slot.end) && dayEnd > new Date(slot.start));
-                const noAvailableTime = !hasAvailableStartTime(dateValue), disabled = date < today || noAvailableTime;
+                const noAvailableTime = !hasAvailableStartTime(dateValue), disabled = dateValue < todayValue || noAvailableTime;
                 const title = noAvailableTime ? 'No check-in time fits this stay length' : booked ? 'Some times unavailable — select the date to see available hours' : '';
                 days.insertAdjacentHTML('beforeend', `<button class="hourly-calendar-day${booked ? ' booked' : ''}${dateValue === value.value ? ' selected' : ''}" type="button" data-date="${dateValue}" ${disabled ? 'disabled' : ''} ${title ? `title="${title}"` : ''}>${day}</button>`);
             }
@@ -244,17 +247,29 @@ document.addEventListener('DOMContentLoaded', () => {
             const endLabel = end.toLocaleString('en-PH', localClock);
             return `${startLabel}–${endLabel}`;
         };
+        const updatePropertyClock = () => {
+            propertyNow = propertyClock();
+            if (propertyNow.date !== todayValue) {
+                todayValue = propertyNow.date;
+                today = new Date(`${todayValue}T00:00:00`); today.setHours(0, 0, 0, 0);
+                if (cursor < new Date(today.getFullYear(), today.getMonth(), 1)) cursor = new Date(today.getFullYear(), today.getMonth(), 1);
+                if (value.value && value.value < todayValue) { value.value = ''; trigger.textContent = 'Choose date'; }
+            }
+            return propertyNow;
+        };
         const syncTimeOptions = () => {
+            updatePropertyClock();
             const selectedDate = value.value, duration = Number(hourlyHours.value);
             timeMenu.querySelectorAll('[data-time]').forEach(button => {
                 const conflicts = conflictingSlots(selectedDate, button.dataset.time, duration);
                 const booked = conflicts.length > 0;
-                button.disabled = booked;
-                button.dataset.statusLabel = booked ? 'Overlaps stay' : '';
-                button.title = booked ? `Unavailable — overlaps ${conflicts.map(describeSlot).join('; ')}` : '';
-                button.setAttribute('aria-label', booked ? `${button.textContent.trim()}, unavailable because the stay overlaps ${conflicts.map(describeSlot).join('; ')}` : button.textContent.trim());
+                const past = selectedDate < todayValue || (selectedDate === todayValue && button.dataset.time <= propertyNow.time);
+                button.disabled = booked || past;
+                button.dataset.statusLabel = booked ? 'Overlaps stay' : past ? 'Time passed' : '';
+                button.title = booked ? `Unavailable — overlaps ${conflicts.map(describeSlot).join('; ')}` : past ? 'This check-in time has already passed.' : '';
+                button.setAttribute('aria-label', booked ? `${button.textContent.trim()}, unavailable because the stay overlaps ${conflicts.map(describeSlot).join('; ')}` : past ? `${button.textContent.trim()}, unavailable because this time has passed` : button.textContent.trim());
                 button.classList.toggle('booked', booked);
-                button.classList.toggle('selected', !booked && button.dataset.time === timeValue.value);
+                button.classList.toggle('selected', !button.disabled && button.dataset.time === timeValue.value);
             });
             if (timeValue.value && timeMenu.querySelector(`[data-time="${timeValue.value}"]`)?.disabled) {
                 timeValue.value = '';
@@ -264,7 +279,45 @@ document.addEventListener('DOMContentLoaded', () => {
             renderBookedSummary();
         };
         hourlyHours.addEventListener('change', syncTimeOptions);
-        timeTrigger.textContent = prettyTime(timeValue.value); timeTrigger.addEventListener('click', () => { const opening = timeMenu.hidden; closeOpenPickers(timeMenu); timeMenu.hidden = !opening; if (opening) { syncTimeOptions(); refreshHourlyAvailability(); } }); timeMenu.querySelectorAll('[data-time]').forEach(button => button.addEventListener('click', () => { timeValue.value = button.dataset.time; timeValue.dispatchEvent(new Event('change', { bubbles: true })); timeTrigger.textContent = prettyTime(timeValue.value); syncTimeOptions(); timeMenu.hidden = true; })); const refreshHourlyAvailability = async () => { try { const response = await fetch(@json(route('rooms.availability', $room)), { headers: { Accept: 'application/json' }, cache: 'no-store' }); if (!response.ok) return; const data = await response.json(); hourlyBlockedSlots = data.slots ?? []; if (!picker.hidden) renderHourlyCalendar(); syncTimeOptions(); if (timeMenu.querySelector(`[data-time="${timeValue.value}"]`)?.disabled) { timeValue.value = ''; timeTrigger.textContent = 'Choose time'; } } catch (error) { /* Keep the current availability if the connection is unavailable. */ } }; syncTimeOptions(); setInterval(refreshHourlyAvailability, 15000); document.addEventListener('visibilitychange', () => { if (!document.hidden) refreshHourlyAvailability(); }); return;
+        timeTrigger.textContent = prettyTime(timeValue.value);
+        timeTrigger.addEventListener('click', () => {
+            const opening = timeMenu.hidden;
+            closeOpenPickers(timeMenu);
+            timeMenu.hidden = !opening;
+            if (opening) {
+                syncTimeOptions();
+                refreshHourlyAvailability();
+            }
+        });
+        timeMenu.querySelectorAll('[data-time]').forEach(button => button.addEventListener('click', () => {
+            timeValue.value = button.dataset.time;
+            timeValue.dispatchEvent(new Event('change', { bubbles: true }));
+            timeTrigger.textContent = prettyTime(timeValue.value);
+            syncTimeOptions();
+            timeMenu.hidden = true;
+        }));
+        const refreshHourlyAvailability = async () => {
+            syncTimeOptions();
+            try {
+                const response = await fetch(@json(route('rooms.availability', $room)), { headers: { Accept: 'application/json' }, cache: 'no-store' });
+                if (!response.ok) return;
+                const data = await response.json();
+                hourlyBlockedSlots = data.slots ?? [];
+                if (!picker.hidden) renderHourlyCalendar();
+                syncTimeOptions();
+                if (timeMenu.querySelector(`[data-time="${timeValue.value}"]`)?.disabled) {
+                    timeValue.value = '';
+                    timeTrigger.textContent = 'Choose time';
+                }
+            } catch (error) {
+                syncTimeOptions();
+                /* Keep the current availability if the connection is unavailable. */
+            }
+        };
+        syncTimeOptions();
+        setInterval(refreshHourlyAvailability, 15000);
+        document.addEventListener('visibilitychange', () => { if (!document.hidden) refreshHourlyAvailability(); });
+        return;
     }
     const ranges = @json($blockedRanges);
     const checkIn = document.getElementById('check-in');
@@ -274,7 +327,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const days = document.getElementById('calendar-days');
     const monthLabel = document.getElementById('calendar-month');
     const note = document.getElementById('calendar-note');
-    const today = new Date(@json($propertyToday) + 'T00:00:00'); today.setHours(0, 0, 0, 0);
+    const propertyDate = () => { const parts = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Manila', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(new Date()); const part = type => parts.find(item => item.type === type).value; return `${part('year')}-${part('month')}-${part('day')}`; };
+    let todayValue = propertyDate();
+    let today = new Date(`${todayValue}T00:00:00`); today.setHours(0, 0, 0, 0);
     let cursor = new Date(today.getFullYear(), today.getMonth(), 1);
     const iso = (date) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
     const pretty = (value) => value ? new Date(`${value}T00:00:00`).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' }) : '';
@@ -299,12 +354,12 @@ document.addEventListener('DOMContentLoaded', () => {
         for (let blank = 0; blank < first.getDay(); blank++) days.insertAdjacentHTML('beforeend', '<span class="calendar-blank"></span>');
         for (let number = 1; number <= last.getDate(); number++) {
             const date = new Date(cursor.getFullYear(), cursor.getMonth(), number);
-            const value = iso(date); const isPast = date < today; const isBooked = occupied(value);
+            const value = iso(date); const isPast = value < todayValue; const isBooked = occupied(value);
             const previous = new Date(date); previous.setDate(previous.getDate() - 1);
             const next = new Date(date); next.setDate(next.getDate() + 1);
             const bookedRange = isBooked ? ` booked${occupied(iso(previous)) ? '' : ' booked-start'}${occupied(iso(next)) ? '' : ' booked-end'}` : '';
             const selected = value === checkIn.value ? ' selected start' : value === checkOut.value ? ' selected end' : checkIn.value && checkOut.value && value > checkIn.value && value < checkOut.value ? ' selected range' : '';
-            const disabled = isPast || isBooked ? ' disabled' : '';
+            const disabled = value < todayValue || isBooked ? ' disabled' : '';
             const state = isBooked ? bookedRange : isPast ? ' past' : '';
             days.insertAdjacentHTML('beforeend', `<button type="button" class="calendar-day${state}${selected}" data-date="${value}"${disabled}>${number}</button>`);
         }
@@ -315,7 +370,30 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('next-month').addEventListener('click', () => { cursor = new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1); render(); });
     checkInDisplay.addEventListener('click', () => document.querySelector('.availability-calendar').scrollIntoView({ behavior: 'smooth', block: 'center' }));
     checkOutDisplay.addEventListener('click', () => document.querySelector('.availability-calendar').scrollIntoView({ behavior: 'smooth', block: 'center' }));
+    const updatePropertyDate = () => {
+        const currentDate = propertyDate();
+        const dayChanged = currentDate !== todayValue;
+        let selectionChanged = false;
+        if (dayChanged) {
+            todayValue = currentDate;
+            today = new Date(`${todayValue}T00:00:00`); today.setHours(0, 0, 0, 0);
+            if (cursor < new Date(today.getFullYear(), today.getMonth(), 1)) cursor = new Date(today.getFullYear(), today.getMonth(), 1);
+        }
+        if (checkIn.value && checkIn.value < todayValue) {
+            checkIn.value = ''; checkOut.value = '';
+            note.textContent = 'The selected check-in date has passed. Please choose new dates.';
+            refreshInputs();
+            selectionChanged = true;
+        } else if (checkOut.value && checkOut.value < todayValue) {
+            checkOut.value = '';
+            note.textContent = 'The selected check-out date has passed. Please choose a new check-out date.';
+            refreshInputs();
+            selectionChanged = true;
+        }
+        if (dayChanged || selectionChanged) render();
+    };
     const refreshAvailability = async () => {
+        updatePropertyDate();
         try {
             const response = await fetch(document.querySelector('.availability-calendar').dataset.availabilityUrl, { headers: { Accept: 'application/json' }, cache: 'no-store' });
             if (!response.ok) return;
@@ -329,7 +407,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     setInterval(refreshAvailability, 15000);
     document.addEventListener('visibilitychange', () => { if (!document.hidden) refreshAvailability(); });
-    refreshInputs(); render();
+    updatePropertyDate(); refreshInputs(); render();
 });
 </script>
 <script src="{{ asset('js/booking-validation.js') }}"></script>
@@ -384,12 +462,12 @@ document.addEventListener('DOMContentLoaded', () => {
         status.textContent = 'Checking your selected stay…';
         try {
             const url = new URL(@json(route('rooms.availability', $room)));
-            url.searchParams.set('start', start); url.searchParams.set('end', end);
+            url.searchParams.set('start', start); url.searchParams.set('end', end); url.searchParams.set('booking_type', data.get('booking_type'));
             const response = await fetch(url, {headers:{Accept:'application/json'},cache:'no-store'});
             if (!response.ok) throw new Error('Availability unavailable');
             const result = await response.json();
             if (run !== sequence) return false;
-            status.textContent = result.available ? '✓ Available now. We will reserve this time when you submit.' : 'This stay overlaps an existing reservation or room operation. Choose another date or time.';
+            status.textContent = result.available ? '✓ Available now. We will reserve this time when you submit.' : result.reason === 'past' ? 'That check-in date or time has already passed. Choose a future date or time.' : 'This stay overlaps an existing reservation or room operation. Choose another date or time.';
             return result.available;
         } catch (error) {
             if (run === sequence) status.textContent = 'We could not refresh availability. Please try again.';
