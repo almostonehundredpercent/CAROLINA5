@@ -59,5 +59,5 @@
 - Verify: `tests/Feature/GuestBookingFormTest.php`, `tests/js/booking-field-validation.test.mjs`, full existing test suites.
 
 - [x] Run PHP and JavaScript test suites; record any unrelated existing failures. PHP: 175 passed. JavaScript: 78 passed with `--test-concurrency=1`; the default parallel runner intermittently fails the unrelated room-gallery navigation timing test (which passes in isolation).
-- [ ] Run `git diff --check` and commit the verified change.
-- [ ] Push `main` to trigger Render auto-deploy.
+- [x] Run `git diff --check` and commit the verified change.
+- [x] Push `main` to trigger Render auto-deploy.
