@@ -18,6 +18,15 @@
 <style>.hourly-time-option.booked,.hourly-time-option.booked:disabled{background:#f8dcd9;color:#8f332d;cursor:not-allowed;opacity:1}.hourly-time-option.booked::after{content:'Overlaps stay';font-size:.54rem}.dark-mode .hourly-time-option.booked,.dark-mode .hourly-time-option.booked:disabled{background:#492522;color:#ffc1b9}</style>
 <style>.hourly-booked-summary{grid-column:1/-1;padding:12px 14px;border:1px solid #efc4be;border-radius:8px;background:#fff3f1;color:#762e28;font-size:.8rem;line-height:1.45}.hourly-booked-summary strong{display:block;margin-bottom:5px;font-size:.82rem}.hourly-booked-summary ul{display:flex;flex-wrap:wrap;gap:6px;margin:0;padding:0;list-style:none}.hourly-booked-summary li{padding:5px 9px;border:1px solid #efc4be;border-radius:999px;background:#fff;color:#762e28;font-weight:700}.hourly-booked-summary.is-clear{border-color:var(--line);background:var(--sand);color:var(--muted)}.hourly-booked-summary.is-clear li{border-color:var(--line);background:transparent;color:var(--ink);font-weight:500}.dark-mode .hourly-booked-summary{border-color:#653a33;background:#382320;color:#ffd5ce}.dark-mode .hourly-booked-summary li{border-color:#70443c;background:#492522;color:#ffd5ce}.dark-mode .hourly-booked-summary.is-clear{border-color:var(--line);background:#211a15;color:var(--muted)}.dark-mode .hourly-booked-summary.is-clear li{background:transparent;color:var(--ink)}.hourly-calendar-hint{display:block;margin-top:9px;color:var(--muted);font-size:.68rem;line-height:1.4}</style>
 <style>.promo-entry{display:grid;gap:10px;padding:16px;border:1px solid #efc47d;border-radius:10px;background:#fff8ec}.promo-entry>strong{font-size:.94rem}.promo-entry-row{display:grid;grid-template-columns:1fr auto;gap:8px}.promo-entry-row input{min-width:0;text-transform:uppercase}.promo-entry-row button{padding:0 16px;border:0;border-radius:7px;background:var(--gold);color:#fff;font-weight:800;cursor:pointer}.promo-message{margin:0;color:var(--muted);font-size:.78rem;line-height:1.45}.promo-message.success{color:#1f7a42;font-weight:700}.promo-message.error{color:#a23d2e;font-weight:700}.promo-offer{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 12px;border-radius:7px;background:#fff}.promo-offer b{color:var(--deep)}.promo-offer small{color:var(--muted)}.promo-offer code{color:var(--orange-dark);font-weight:800}.dark-mode .promo-entry{background:#30251f;border-color:#76552e}.dark-mode .promo-offer{background:#211a15}@media(max-width:520px){.promo-entry-row{grid-template-columns:1fr}.promo-entry-row button{min-height:42px}.promo-offer{align-items:flex-start;flex-direction:column}}</style>
+<style>
+.booking-validation-summary{margin:0 0 16px;padding:14px 16px;border:1px solid #d98c82;border-radius:10px;background:#fff1ef;color:#6e2d27;line-height:1.45}
+.booking-validation-summary strong{display:block;margin-bottom:6px}
+.booking-validation-summary ul{margin:0;padding-left:20px}
+.booking-field-error{display:block;margin-top:5px;color:#a02d27;font-size:.76rem;font-weight:650;line-height:1.4}
+.booking-form [aria-invalid="true"]{border-color:#b93832!important;box-shadow:0 0 0 2px rgba(185,56,50,.14)}
+.dark-mode .booking-validation-summary{border-color:#74413c;background:#3b2421;color:#ffd8d2}
+.dark-mode .booking-field-error{color:#ffb8ae}
+</style>
 <section class="booking-page">
     <div class="booking-form">
         <span class="eyebrow">RESERVE {{ strtoupper($room->name) }}</span>
@@ -42,6 +51,10 @@
             @if($selectionNotice)<p class="alert" role="status">{{ $selectionNotice }}</p>@endif
             <form method="POST" action="{{ route('bookings.store', $room) }}">
                 @csrf
+                <section class="booking-validation-summary" id="booking-validation-summary" role="alert" tabindex="-1" aria-labelledby="booking-validation-title" @if(!$errors->any()) hidden @endif>
+                    <strong id="booking-validation-title">Please correct these details before continuing.</strong>
+                    <ul>@foreach($errors->getMessages() as $field => $messages)@foreach($messages as $message)<li data-validation-field="{{ $field }}">{{ $message }}</li>@endforeach @endforeach</ul>
+                </section>
                 <input type="hidden" name="checkout_type" value="{{ $isGuest ? 'guest' : 'account' }}">
                 <input type="hidden" name="booking_type" value="{{ $bookingMode === 'hourly' ? 'hourly' : 'dates' }}">
                 <input type="hidden" name="submission_token" value="{{ $submissionToken }}">
@@ -101,9 +114,9 @@
                 @if($isGuest)
                     <hr>
                     <h3>Guest contact information</h3>
-                    <label>Full name<input name="guest_name" value="{{ old('guest_name') }}" placeholder="e.g., Maria Santos" required></label>
-                    <label>Email address<input type="email" name="guest_email" value="{{ old('guest_email') }}" placeholder="e.g., maria@example.com" required></label>
-                    <label>Phone number<input type="tel" name="guest_phone" value="{{ old('guest_phone') }}" placeholder="09XX XXX XXXX" pattern="[0-9+() -]+" title="Replace X with digits; include your country code if needed." required></label>
+                    <label>Full name<input id="guest-name" name="guest_name" value="{{ old('guest_name') }}" placeholder="e.g., Maria Santos" autocomplete="name" maxlength="255" required @error('guest_name') aria-invalid="true" aria-describedby="guest-name-error" @enderror>@error('guest_name')<small class="booking-field-error" id="guest-name-error">{{ $message }}</small>@enderror</label>
+                    <label>Email address<input id="guest-email" type="email" name="guest_email" value="{{ old('guest_email') }}" placeholder="e.g., maria@example.com" autocomplete="email" inputmode="email" autocapitalize="none" spellcheck="false" maxlength="255" required @error('guest_email') aria-invalid="true" aria-describedby="guest-email-error" @enderror>@error('guest_email')<small class="booking-field-error" id="guest-email-error">{{ $message }}</small>@enderror</label>
+                    <label>Phone number<input id="guest-phone" type="tel" name="guest_phone" value="{{ old('guest_phone') }}" placeholder="09XX XXX XXXX" autocomplete="tel" inputmode="tel" maxlength="20" title="Enter a Philippine mobile number, such as 09XX XXX XXXX or +63 9XX XXX XXXX." required @error('guest_phone') aria-invalid="true" aria-describedby="guest-phone-error" @enderror>@error('guest_phone')<small class="booking-field-error" id="guest-phone-error">{{ $message }}</small>@enderror</label>
                 @endif
                 <section class="promo-entry" data-promo-quote-url="{{ route('rooms.promos.quote', $room) }}">
                     <strong>Promo code</strong>
