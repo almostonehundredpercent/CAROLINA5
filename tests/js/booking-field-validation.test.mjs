@@ -5,6 +5,8 @@ import { chromium } from 'playwright';
 
 const view = await readFile(new URL('../../resources/views/bookings/create.blade.php', import.meta.url), 'utf8');
 assert.match(view, /asset\('js\/booking-validation\.js'\)/, 'the booking form should load its client-side validator');
+assert.match(view, /name="check_in"[^>]*required/, 'the submitted overnight check-in field should be required');
+assert.match(view, /name="check_out"[^>]*required/, 'the submitted overnight check-out field should be required');
 const validator = await readFile(new URL('../../public/js/booking-validation.js', import.meta.url), 'utf8');
 
 test('booking validation blocks invalid contact/details and clears messages after correction', async () => {
@@ -19,8 +21,8 @@ test('booking validation blocks invalid contact/details and clears messages afte
             <label>Full name<input id="guest-name" name="guest_name" required></label>
             <label>Email<input id="guest-email" type="email" name="guest_email" required></label>
             <label>Phone<input id="guest-phone" type="tel" name="guest_phone" required></label>
-            <label>Check-in<input type="hidden" name="check_in" required><button type="button">Choose date</button></label>
-            <label>Check-out<input type="hidden" name="check_out" required><button type="button">Choose date</button></label>
+            <label>Check-in<input id="check-in-display" type="text" readonly required><input type="hidden" name="check_in" required><button type="button">Choose date</button></label>
+            <label>Check-out<input id="check-out-display" type="text" readonly required><input type="hidden" name="check_out" required><button type="button">Choose date</button></label>
             <label><input type="checkbox" name="terms_accepted" required> Accept terms</label>
             <button id="booking-submit" type="submit">Continue</button>
         </form></div>`);

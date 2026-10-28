@@ -48,15 +48,16 @@
 
 **Interfaces:** A page-scoped script attaches to `.booking-form form`, validates required form fields and guest contact formats, renders inline errors and a summary, and prevents submission until valid.
 
-- [ ] Add a failing Playwright test against the actual page-scoped validator for invalid phone, required selections, and recovery after correction.
-- [ ] Run it and confirm invalid input still submits or lacks inline feedback.
-- [ ] Implement only the failing behavior and connect the script to the booking page.
-- [ ] Run the focused test and confirm invalid input is blocked and corrected input clears its message.
+- [x] Add a failing Playwright test against the actual page-scoped validator for invalid phone, required selections, and recovery after correction.
+- [x] Run it and confirm invalid input still submits or lacks inline feedback.
+- [x] Implement only the failing behavior and connect the script to the booking page.
+- [x] Run the focused test and confirm invalid input is blocked and corrected input clears its message.
 
 ### Task 3: Regression verification and delivery
 
 **Files:**
 - Verify: `tests/Feature/GuestBookingFormTest.php`, `tests/js/booking-field-validation.test.mjs`, full existing test suites.
 
-- [ ] Run PHP and JavaScript test suites; record any unrelated existing failures.
-- [ ] Run `git diff --check`, commit, and push `main` to trigger Render auto-deploy.
+- [x] Run PHP and JavaScript test suites; record any unrelated existing failures. PHP: 175 passed. JavaScript: 78 passed with `--test-concurrency=1`; the default parallel runner intermittently fails the unrelated room-gallery navigation timing test (which passes in isolation).
+- [ ] Run `git diff --check` and commit the verified change.
+- [ ] Push `main` to trigger Render auto-deploy.
