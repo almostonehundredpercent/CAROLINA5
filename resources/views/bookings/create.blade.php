@@ -180,6 +180,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 copy.textContent = 'No reservations overlap this date; choose any enabled check-in time.';
                 bookedSummary.append(copy);
             }
+            if (value.value && !hasAvailableStartTime(value.value)) {
+                const warning = document.createElement('p');
+                warning.textContent = 'No check-in times are available for this date and stay length. Choose another date or a shorter stay.';
+                bookedSummary.append(warning);
+            }
         };
         const candidateTimes = [...document.querySelectorAll('#hourly-time-menu [data-time]')];
         const dateAtBookingTime = (dateValue, time) => {
@@ -189,7 +194,26 @@ document.addEventListener('DOMContentLoaded', () => {
         };
         const isTimeBooked = (dateValue, time, duration) => { const start = dateAtBookingTime(dateValue, time), end = new Date(start.getTime() + duration * 60 * 60 * 1000); return hourlyBlockedSlots.some(slot => start < new Date(slot.end) && end > new Date(slot.start)); };
         const hasAvailableStartTime = dateValue => candidateTimes.some(button => !isTimeBooked(dateValue, button.dataset.time, Number(hourlyHours.value)));
-        const renderHourlyCalendar = () => { days.innerHTML = ''; month.textContent = cursor.toLocaleDateString('en-PH', { month: 'long', year: 'numeric' }); const first = new Date(cursor.getFullYear(), cursor.getMonth(), 1), last = new Date(cursor.getFullYear(), cursor.getMonth() + 1, 0); for (let i = 0; i < first.getDay(); i++) days.insertAdjacentHTML('beforeend', '<span class="hourly-calendar-blank"></span>'); for (let day = 1; day <= last.getDate(); day++) { const date = new Date(cursor.getFullYear(), cursor.getMonth(), day), dateValue = iso(date), dayStart = dateAtBookingTime(dateValue, '00:00'), dayEnd = dateAtBookingTime(iso(new Date(date.getFullYear(), date.getMonth(), day + 1)), '00:00'), booked = hourlyBlockedSlots.some(slot => dayStart < new Date(slot.end) && dayEnd > new Date(slot.start)), disabled = date < today; days.insertAdjacentHTML('beforeend', `<button class="hourly-calendar-day${booked ? ' booked' : ''}${dateValue === value.value ? ' selected' : ''}" type="button" data-date="${dateValue}" ${disabled ? 'disabled' : ''} ${booked ? 'title="Some times unavailable — select the date to see available hours"' : ''}>${day}</button>`); } days.querySelectorAll('.hourly-calendar-day:not([disabled])').forEach(button => button.addEventListener('click', () => { value.value = button.dataset.date; trigger.textContent = pretty(new Date(`${value.value}T00:00:00`)); picker.hidden = true; syncTimeOptions(); })); };
+        const renderHourlyCalendar = () => {
+            days.innerHTML = '';
+            month.textContent = cursor.toLocaleDateString('en-PH', { month: 'long', year: 'numeric' });
+            const first = new Date(cursor.getFullYear(), cursor.getMonth(), 1), last = new Date(cursor.getFullYear(), cursor.getMonth() + 1, 0);
+            for (let i = 0; i < first.getDay(); i++) days.insertAdjacentHTML('beforeend', '<span class="hourly-calendar-blank"></span>');
+            for (let day = 1; day <= last.getDate(); day++) {
+                const date = new Date(cursor.getFullYear(), cursor.getMonth(), day), dateValue = iso(date);
+                const dayStart = dateAtBookingTime(dateValue, '00:00'), dayEnd = dateAtBookingTime(iso(new Date(date.getFullYear(), date.getMonth(), day + 1)), '00:00');
+                const booked = hourlyBlockedSlots.some(slot => dayStart < new Date(slot.end) && dayEnd > new Date(slot.start));
+                const noAvailableTime = !hasAvailableStartTime(dateValue), disabled = date < today || noAvailableTime;
+                const title = noAvailableTime ? 'No check-in time fits this stay length' : booked ? 'Some times unavailable — select the date to see available hours' : '';
+                days.insertAdjacentHTML('beforeend', `<button class="hourly-calendar-day${booked ? ' booked' : ''}${dateValue === value.value ? ' selected' : ''}" type="button" data-date="${dateValue}" ${disabled ? 'disabled' : ''} ${title ? `title="${title}"` : ''}>${day}</button>`);
+            }
+            days.querySelectorAll('.hourly-calendar-day:not([disabled])').forEach(button => button.addEventListener('click', () => {
+                value.value = button.dataset.date;
+                trigger.textContent = pretty(new Date(`${value.value}T00:00:00`));
+                picker.hidden = true;
+                syncTimeOptions();
+            }));
+        };
         trigger.textContent = value.value ? pretty(new Date(`${value.value}T00:00:00`)) : 'Choose date'; trigger.addEventListener('click', () => { const opening = picker.hidden; closeOpenPickers(picker); picker.hidden = !opening; if (!picker.hidden) renderHourlyCalendar(); }); document.getElementById('hourly-calendar-prev').addEventListener('click', () => { const previous = new Date(cursor.getFullYear(), cursor.getMonth() - 1, 1); if (previous >= new Date(today.getFullYear(), today.getMonth(), 1)) { cursor = previous; renderHourlyCalendar(); } }); document.getElementById('hourly-calendar-next').addEventListener('click', () => { cursor = new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1); renderHourlyCalendar(); });
         const timeValue = document.getElementById('hourly-time'), timeTrigger = document.getElementById('hourly-time-trigger'), timeMenu = document.getElementById('hourly-time-menu');
         if (!/^(0[6-9]|1[0-9]|2[0-3]):00$/.test(timeValue.value)) timeValue.value = '06:00';
@@ -218,6 +242,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 button.classList.toggle('booked', booked);
                 button.classList.toggle('selected', !booked && button.dataset.time === timeValue.value);
             });
+            if (timeValue.value && timeMenu.querySelector(`[data-time="${timeValue.value}"]`)?.disabled) {
+                timeValue.value = '';
+                timeTrigger.textContent = 'Choose time';
+            }
             if (!picker.hidden) renderHourlyCalendar();
             renderBookedSummary();
         };
