@@ -170,4 +170,34 @@ document.addEventListener('DOMContentLoaded', () => {
 <section class="section home-location" aria-labelledby="booking-location-title">
     @include('bookings.partials.location-map', ['locationEyebrow' => 'HOW TO FIND US'])
 </section>
+<section class="section home-reviews" aria-labelledby="home-reviews-title">
+    <div class="section-heading">
+        <div>
+            <span class="eyebrow">GUEST REVIEWS</span>
+            <h2 id="home-reviews-title">Experiences shared by our guests.</h2>
+            <p>Recent reviews from completed Carolina stays.</p>
+        </div>
+    </div>
+    <div class="review-list">
+        @forelse($publishedReviews as $review)
+            <article class="public-review home-review-card">
+                <div class="home-review-rating">
+                    <span class="review-stars" role="img" aria-label="{{ $review->rating }} out of 5 stars">{{ str_repeat('★', $review->rating) }}{{ str_repeat('☆', 5 - $review->rating) }}</span>
+                    <small>Verified stay</small>
+                </div>
+                @if(filled($review->comment))
+                    <p class="home-review-comment">{{ $review->comment }}</p>
+                @else
+                    <p class="home-review-comment home-review-no-comment">Guest shared a {{ $review->rating }}-star rating.</p>
+                @endif
+                <footer class="home-review-author">
+                    <div><b>{{ $review->guest_name ?: 'Verified guest' }}</b><small>{{ $review->room?->name ?? 'Carolina stay' }}</small></div>
+                    @if($review->approved_at)<time datetime="{{ $review->approved_at->toDateString() }}">{{ $review->approved_at->format('M Y') }}</time>@endif
+                </footer>
+            </article>
+        @empty
+            <p class="empty-review home-review-empty">Guest reviews will appear here after they are approved.</p>
+        @endforelse
+    </div>
+</section>
 @endsection
