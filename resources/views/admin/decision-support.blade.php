@@ -21,19 +21,29 @@
         .dss-form input[type="number"] { max-width: 170px; }
         .dss-primary, .dss-secondary { width: fit-content; padding: 10px 14px; border: 0; border-radius: 8px; background: var(--orange); color: #fff; font: inherit; font-weight: 700; text-decoration: none; cursor: pointer; }
         .dss-secondary { padding: 7px 10px; background: transparent; color: var(--orange-dark); }
-        .dss-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
-        .dss-card { min-width: 0; padding: 15px; border: 1px solid var(--line); border-radius: 10px; background: color-mix(in srgb, var(--paper) 72%, var(--white)); }
+        .dss-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+        .dss-card { min-width: 0; padding: 18px; border: 1px solid #eadbca; border-radius: 14px; background: #fffdf9; color: #30251d; box-shadow: 0 7px 20px rgba(48,31,14,.06); transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease; }
+        .dss-card:hover { transform: translateY(-2px); border-color: #d9b78f; box-shadow: 0 12px 26px rgba(48,31,14,.1); }
         .dss-card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
-        .dss-card h3 { margin: 0; font-size: 16px; }
-        .dss-card-date { margin: 4px 0 0; color: var(--muted); font-size: 12px; }
-        .dss-tag { display: inline-flex; flex: 0 0 auto; padding: 5px 8px; border-radius: 999px; background: color-mix(in srgb, var(--orange) 16%, var(--paper)); color: var(--orange-dark); font-size: 10px; font-weight: 800; }
-        .dss-metrics { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; margin: 14px 0 9px; }
-        .dss-metrics > div { display: grid; gap: 4px; padding: 10px; border-radius: 8px; background: var(--paper); }
-        .dss-metrics small { color: var(--muted); font-size: 10px; }
-        .dss-metrics strong { font-size: 16px; }
-        .dss-card p { margin: 8px 0; line-height: 1.55; }
-        .dss-season-context { color: var(--orange-dark); font-size: 12px; font-weight: 700; }
-        .dss-card small, .dss-note { color: var(--muted); font-size: 11px; line-height: 1.5; }
+        .dss-card h3 { margin: 0; color: #30251d; font-size: 17px; line-height: 1.3; }
+        .dss-card-date { margin: 5px 0 0; color: #71645a; font-size: 13px; }
+        .dss-tag { display: inline-flex; flex: 0 0 auto; padding: 6px 9px; border-radius: 999px; background: #fff0d8; color: #8d4b0b; font-size: 11px; font-weight: 800; }
+        .dss-metrics { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin: 14px 0 0; }
+        .dss-metrics > div { display: grid; gap: 5px; padding: 12px; border: 1px solid #eee3d7; border-radius: 10px; background: #f8f4ee; }
+        .dss-metrics small { color: #71645a; font-size: 11px; line-height: 1.4; }
+        .dss-metrics strong { color: #30251d; font-size: 19px; line-height: 1.2; }
+        .dss-card p { margin: 10px 0 0; line-height: 1.5; }
+        .dss-card .dss-card-date { margin: 5px 0 0; }
+        .dss-season-context { display: inline-flex; width: fit-content; padding: 6px 10px; border-radius: 999px; background: #fff4e1; color: #8d4b0b; font-size: 12px; font-weight: 700; }
+        .dss-card small, .dss-note { color: #71645a; font-size: 12px; line-height: 1.5; }
+        .dss-card > small { display: block; margin-top: 11px; }
+        html.dark-mode .dss-card { border-color: rgba(255,220,182,.16); background: linear-gradient(145deg,#30231b,#241a15); color: #fff4e8; box-shadow: 0 10px 26px rgba(0,0,0,.2); }
+        html.dark-mode .dss-card:hover { border-color: rgba(255,193,107,.4); box-shadow: 0 14px 30px rgba(0,0,0,.3); }
+        html.dark-mode .dss-card h3, html.dark-mode .dss-metrics strong { color: #fff4e8; }
+        html.dark-mode .dss-card-date, html.dark-mode .dss-metrics small, html.dark-mode .dss-card > small { color: #cdbbae; }
+        html.dark-mode .dss-note { color: #cdbbae; }
+        html.dark-mode .dss-tag, html.dark-mode .dss-season-context { background: rgba(215,132,25,.16); color: #ffc16b; }
+        html.dark-mode .dss-metrics > div { border-color: rgba(255,220,182,.12); background: rgba(17,13,10,.38); }
         .dss-action { display: inline-flex; margin-top: 10px; color: var(--orange-dark); font-size: 12px; font-weight: 700; text-decoration: none; }
         .dss-action:hover { text-decoration: underline; }
         .dss-season-list { display: grid; gap: 8px; margin-top: 14px; }
