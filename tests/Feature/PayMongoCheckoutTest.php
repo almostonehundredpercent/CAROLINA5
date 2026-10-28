@@ -344,6 +344,20 @@ test('the bookings screen distinguishes staff confirmation from a paid PayMongo 
         ->assertDontSee('Mark unpaid');
 });
 
+test('a paid PayMongo payment suppresses verification for a stale pending checkout attempt', function () {
+    $booking = payMongoBooking();
+    $booking->update(['payment_method' => 'gcash', 'payment_status' => 'paid']);
+    Payment::create(['booking_id' => $booking->id, 'amount' => 1000, 'method' => 'gcash', 'status' => 'pending', 'reference' => 'paymongo:cs_stale_pending']);
+    Payment::create(['booking_id' => $booking->id, 'amount' => 1000, 'method' => 'gcash', 'status' => 'paid', 'reference' => 'paymongo:cs_confirmed_paid']);
+    $admin = User::factory()->create(['staff_role' => 'admin', 'is_admin' => true]);
+
+    $this->actingAsStaff($admin)->get(route('admin.bookings'))
+        ->assertOk()
+        ->assertSee('Payment Paid')
+        ->assertSee('Verified through PayMongo')
+        ->assertDontSee('Verify with PayMongo');
+});
+
 test('manual payments require an explicit confirmation before marking them unpaid', function () {
     $booking = payMongoBooking();
     $booking->update(['payment_method' => 'cash', 'payment_status' => 'paid']);
