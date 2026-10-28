@@ -52,7 +52,7 @@
                                     @if($room->promoCodes->isNotEmpty())<small class="room-promo-badge">{{ $room->promoCodes->first()->name }} · {{ $room->promoCodes->first()->code }}</small>@endif
                                     @include('rooms.partials.card-rating', ['room' => $room])
                                     <p>{{ Str::limit($room->description, 86) }}</p>
-                                    <div class="rooms-card-footer"><strong>₱{{ number_format($room->price_per_night) }} <small>{{ $room->rate_label }}</small></strong><a class="button small" href="{{ route('rooms.show', ['room' => $room] + $filters) }}">View room <span aria-hidden="true">→</span></a></div>
+                                    <div class="rooms-card-footer"><strong>₱{{ number_format($room->price_per_night) }} <small>{{ $room->rate_label }}</small></strong><a class="button small" href="{{ route('rooms.show', ['room' => $room] + $filters) }}">{{ $room->availability_reason ? ($hasStaySearch ? 'Try other dates' : 'Check dates') : 'View room' }} <span aria-hidden="true">→</span></a></div>
                                 </div>
                             </article>
                         @endforeach

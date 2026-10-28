@@ -26,10 +26,10 @@ Route::get('/', function () {
     [$startsAt, $endsAt] = RoomAvailability::window([]);
     RoomAvailability::annotate($rooms, $startsAt, $endsAt);
 
-    return view('home', [
+    return response()->view('home', [
         'featuredRooms' => $rooms->sortBy(fn (Room $room) => (float) $room->price_per_night)->take(6)->values(),
         'availabilityRooms' => $rooms,
-    ]);
+    ])->header('Cache-Control', 'private, no-store');
 })->name('home');
 Route::get('/sitemap.xml', function () {
     $urls = collect([route('home'), route('rooms.index'), route('bookings.lookup'), route('privacy'), route('terms')])->merge(Room::where('is_active', true)->pluck('slug')->map(fn ($slug) => route('rooms.show', $slug)));

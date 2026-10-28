@@ -13,7 +13,9 @@ class RoomAvailability
     public static function window(array $selection): array
     {
         if (isset($selection['check_in'])) {
-            $startsAt = Carbon::parse($selection['check_in'].' '.($selection['check_in_time'] ?? '12:00'));
+            $startsAt = ($selection['mode'] ?? null) === 'dates'
+                ? Carbon::parse($selection['check_in'])->startOfDay()
+                : Carbon::parse($selection['check_in'].' '.($selection['check_in_time'] ?? '12:00'));
 
             return [$startsAt, $startsAt->copy()->addHours(BookingSelection::hours($selection))];
         }
@@ -40,7 +42,9 @@ class RoomAvailability
             $block = $blocks->get($room->id);
             $room->availability_reason = $block ? ucfirst($block->status)
                 : ($bookedIds->has($room->id) ? 'Booked' : null);
-            if (! $room->availability_reason && $room->operational_status !== 'available') {
+            $operationalWindowOverlaps = ! $room->operational_until
+                || ($room->operational_until->gt($startsAt) && PropertyTime::now()->lt($endsAt));
+            if (! $room->availability_reason && $room->operational_status !== 'available' && $operationalWindowOverlaps) {
                 $room->availability_reason = ucfirst($room->operational_status);
             }
         }
@@ -52,7 +56,7 @@ class RoomAvailability
     public static function nextAvailableAt(Room $room, Carbon $from, int $hours, bool $dateOnly = false): ?Carbon
     {
         $propertyNow = PropertyTime::now();
-        if ($room->operational_status !== 'available' && (! $room->operational_until || $room->operational_until->lte($propertyNow))) {
+        if ($room->operational_status !== 'available' && ! $room->operational_until) {
             return null; // A manual closure without a future end cannot be predicted.
         }
 
@@ -71,7 +75,7 @@ class RoomAvailability
         foreach ($blocks as $block) {
             $intervals[] = [$block->starts_at, $block->ends_at];
         }
-        if ($room->operational_status !== 'available') {
+        if ($room->operational_status !== 'available' && $room->operational_until->gt($propertyNow)) {
             $intervals[] = [$propertyNow, $room->operational_until];
         }
 

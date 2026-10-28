@@ -60,17 +60,16 @@ class RoomController extends Controller
         [$startsAt, $endsAt] = RoomAvailability::window($bookingSearch);
         RoomAvailability::annotate(collect([$room]), $startsAt, $endsAt);
 
-        $stayHours = isset($bookingSearch['check_in'])
-            ? BookingSelection::hours($bookingSearch, $room)
-            : ($room->rental_hours ?: 24);
-        $dateOnly = ! $room->rental_hours && ! isset($bookingSearch['stay'])
-            && ($bookingSearch['mode'] ?? 'dates') === 'dates';
-        $nextAvailableAt = $room->availability_reason
-            ? RoomAvailability::nextAvailableAt($room, $startsAt, $stayHours, $dateOnly)
-            : null;
         $nextBookingMode = $room->rental_hours
             ? 'hourly'
             : ($bookingSearch['mode'] ?? (isset($bookingSearch['stay']) ? 'hourly' : 'dates'));
+        $stayHours = isset($bookingSearch['check_in'])
+            ? BookingSelection::hours($bookingSearch, $room)
+            : ($room->rental_hours ?: 24);
+        $dateOnly = ! $room->rental_hours && $nextBookingMode === 'dates';
+        $nextAvailableAt = $room->availability_reason
+            ? RoomAvailability::nextAvailableAt($room, $startsAt, $stayHours, $dateOnly)
+            : null;
         $nextBookingUrl = null;
         if ($nextAvailableAt) {
             $nextBookingParams = [
