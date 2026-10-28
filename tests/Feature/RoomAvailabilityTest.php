@@ -144,3 +144,73 @@ test('hourly bookings align property wall time with availability checks', functi
         'end' => '2026-09-29T20:00:00Z',
     ]))->assertJson(['available' => false]);
 });
+
+test('availability rejects past check-in dates and times using property time', function () {
+    $this->travelTo(Carbon::parse('2026-10-28 12:00:00', 'UTC'));
+    $room = availabilityTestRoom();
+
+    $this->get(route('rooms.availability', [
+        'room' => $room,
+        'start' => '2026-10-27T00:00:00Z',
+        'end' => '2026-10-28T00:00:00Z',
+        'booking_type' => 'dates',
+    ]))->assertJson(['available' => false, 'reason' => 'past']);
+
+    $this->get(route('rooms.availability', [
+        'room' => $room,
+        'start' => '2026-10-28T18:00:00Z',
+        'end' => '2026-10-28T21:00:00Z',
+        'booking_type' => 'hourly',
+    ]))->assertJson(['available' => false, 'reason' => 'past']);
+
+    $this->get(route('rooms.availability', [
+        'room' => $room,
+        'start' => '2026-10-28T00:00:00Z',
+        'end' => '2026-10-29T00:00:00Z',
+        'booking_type' => 'dates',
+    ]))->assertJson(['available' => true]);
+});
+
+test('booking submission rejects an hourly check-in time that has passed today', function () {
+    Mail::fake();
+    $this->travelTo(Carbon::parse('2026-10-28 12:00:00', 'UTC'));
+    $room = availabilityTestRoom();
+    $room->update(['rental_hours' => 6]);
+
+    $this->post(route('bookings.store', $room), [
+        'checkout_type' => 'guest',
+        'booking_type' => 'hourly',
+        'hourly_date' => '2026-10-28',
+        'check_in_time' => '18:00',
+        'hours' => 6,
+        'guests' => 1,
+        'guest_name' => 'Past Time Guest',
+        'guest_email' => 'pasttime@example.com',
+        'guest_phone' => '09171234567',
+        'terms_accepted' => '1',
+        'submission_token' => (string) Str::uuid(),
+    ])->assertSessionHasErrors('check_in_time');
+
+    expect(Booking::where('guest_email', 'pasttime@example.com')->exists())->toBeFalse();
+});
+
+test('booking submission rejects a check-in date that has already passed', function () {
+    Mail::fake();
+    $this->travelTo(Carbon::parse('2026-10-28 12:00:00', 'UTC'));
+    $room = availabilityTestRoom();
+
+    $this->post(route('bookings.store', $room), [
+        'checkout_type' => 'guest',
+        'booking_type' => 'dates',
+        'check_in' => '2026-10-27',
+        'check_out' => '2026-10-29',
+        'guests' => 1,
+        'guest_name' => 'Past Date Guest',
+        'guest_email' => 'pastdate@example.com',
+        'guest_phone' => '09171234567',
+        'terms_accepted' => '1',
+        'submission_token' => (string) Str::uuid(),
+    ])->assertSessionHasErrors('check_in');
+
+    expect(Booking::where('guest_email', 'pastdate@example.com')->exists())->toBeFalse();
+});
