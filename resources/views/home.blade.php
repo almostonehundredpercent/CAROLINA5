@@ -190,10 +190,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 @else
                     <p class="home-review-comment home-review-no-comment">Guest shared a {{ $review->rating }}-star rating.</p>
                 @endif
-                <footer class="home-review-author">
+                <div class="home-review-author">
                     <div><b>{{ $review->guest_name ?: 'Verified guest' }}</b><small>{{ $review->room?->name ?? 'Carolina stay' }}</small></div>
                     @if($review->approved_at)<time datetime="{{ $review->approved_at->toDateString() }}">{{ $review->approved_at->format('M Y') }}</time>@endif
-                </footer>
+                </div>
             </article>
         @empty
             <p class="empty-review home-review-empty">Guest reviews will appear here after they are approved.</p>
