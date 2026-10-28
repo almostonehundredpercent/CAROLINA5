@@ -97,6 +97,13 @@
             text-decoration: underline;
         }
 
+        .dss-brand-expansion {
+            margin: 4px 0 0;
+            color: var(--muted);
+            font-size: 11px;
+            line-height: 1.4;
+        }
+
         .metric-grid .metric-card .metric-icon {
             color: #fff !important;
             background: var(--orange);
@@ -145,10 +152,14 @@
             <article class="panel chart-panel"><div class="panel-heading"><div><p class="admin-kicker">LAST 7 DAYS</p><h2>Booking activity</h2></div><span class="pill">Live data</span></div><div class="bar-chart">@foreach($chartValues as $index => $value)<div class="bar-item"><span class="bar" style="height: {{ max(8, $value * 22) }}px" title="{{ $value }} booking{{ $value === 1 ? '' : 's' }}"></span><b>{{ $value }}</b><small>{{ $chartLabels[$index] }}</small></div>@endforeach</div></article>
             <article class="panel status-panel"><div class="panel-heading"><div><p class="admin-kicker">AT A GLANCE</p><h2>Reservation status</h2></div></div><div class="status-row"><span>Pending review</span><b>{{ $pendingCount }}</b><i style="--value: {{ $bookingCount ? min(100, round($pendingCount / $bookingCount * 100)) : 0 }}%"></i></div><div class="status-row"><span>Confirmed stays</span><b>{{ $confirmedCount }}</b><i class="green" style="--value: {{ $bookingCount ? min(100, round($confirmedCount / $bookingCount * 100)) : 0 }}%"></i></div><div class="status-row"><span>Active rooms</span><b>{{ $roomCount }}</b><i class="blue" style="--value: 100%"></i></div></article>
         </section>
-        <section class="decision-support-grid" aria-label="Operational decision support">
+        <section class="decision-support-grid" aria-label="CAROL operational decision support">
             <article class="panel">
                 <div class="panel-heading">
-                    <div><p class="admin-kicker">DECISION SUPPORT</p><h2>Operational signals</h2></div>
+                    <div>
+                        <p class="admin-kicker">CAROL · DECISION SUPPORT</p>
+                        <h2>Operational signals</h2>
+                        <p class="dss-brand-expansion">Carolina Assistant for Reservations, Operations &amp; Lodging</p>
+                    </div>
                 </div>
                 <div class="dss-list">
                     @forelse($recommendations as $recommendation)

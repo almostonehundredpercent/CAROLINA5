@@ -59,6 +59,8 @@ test('dashboard explains operational recommendations with evidence and a next ac
     $this->actingAsStaff($admin)
         ->get(route('admin.dashboard'))
         ->assertOk()
+        ->assertSee('CAROL')
+        ->assertSee('Carolina Assistant for Reservations, Operations &amp; Lodging', false)
         ->assertSee('3 of 5 decided bookings were cancelled (60%)')
         ->assertSee('Review booking requests');
 });
