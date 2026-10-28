@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Decision Support · Carolina Admin</title>
+    <title>CAROL · Decision Support · Carolina Admin</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
@@ -105,7 +105,7 @@
     @include('admin.partials.sidebar')
     <main class="admin-main dss-page">
         <header class="admin-topbar">
-            <div><p class="admin-kicker">ADMIN TOOLS</p><h1>Room suggestions</h1><p class="admin-subtitle">A quick way to spot rooms that may be worth promoting.</p></div>
+            <div><p class="admin-kicker">CAROL · DECISION SUPPORT</p><h1>Room suggestions</h1><p class="admin-subtitle">Carolina Assistant for Reservations, Operations &amp; Lodging helps you spot rooms that may be worth promoting.</p></div>
             <div class="admin-user"><span class="avatar">{{ strtoupper(substr(auth()->user()->name, 0, 1)) }}</span><div><b>{{ auth()->user()->name }}</b><small>Organization Admin</small></div></div>
         </header>
         @include('admin.partials.flash')

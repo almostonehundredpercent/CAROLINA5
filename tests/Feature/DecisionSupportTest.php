@@ -45,6 +45,18 @@ function decisionSupportTestBooking(User $guest, Room $room, Carbon\Carbon $chec
     ]);
 }
 
+test('room suggestions are branded as CAROL across the page and staff navigation', function () {
+    $admin = User::factory()->create(['is_admin' => true]);
+
+    $this->actingAsStaff($admin)
+        ->get(route('admin.decision-support'))
+        ->assertOk()
+        ->assertSee('<title>CAROL · Decision Support · Carolina Admin</title>', false)
+        ->assertSee('CAROL · DECISION SUPPORT')
+        ->assertSee('Carolina Assistant for Reservations, Operations &amp; Lodging', false)
+        ->assertSee('CAROL · Decision support');
+});
+
 test('dashboard explains operational recommendations with evidence and a next action', function () {
     $admin = User::factory()->create(['is_admin' => true]);
     $guest = User::factory()->create();

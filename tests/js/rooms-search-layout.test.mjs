@@ -217,20 +217,19 @@ test('price sort choices use a high-contrast, touch-friendly dark menu', async (
 });
 
 test('price sort options remain above room cards where the dropdown overlaps them', async () => {
-    const page = await render({ width: 1162, height: 700 }, { darkMode: true });
+    const page = await render({ width: 960, height: 700 }, { darkMode: true });
     try {
         await page.locator('#rooms-sort-trigger').click();
         const option = await page.locator('#rooms-sort-menu [data-sort="price_desc"]').boundingBox();
-        const point = { x: option.x + option.width / 2, y: option.y + option.height / 2 };
+        const card = await page.locator('.room-grid .rooms-card:last-child').boundingBox();
+        const point = { x: Math.max(option.x, card.x) + 1, y: Math.max(option.y, card.y) + 1 };
+        assert.ok(point.x < Math.min(option.x + option.width, card.x + card.width)
+            && point.y < Math.min(option.y + option.height, card.y + card.height),
+        'the test viewport should place part of the option over a room card');
         const layering = await page.evaluate(({ x, y }) => {
-            const card = document.querySelector('.room-grid .rooms-card:last-child').getBoundingClientRect();
-            return {
-                overlapsCard: x >= card.left && x <= card.right && y >= card.top && y <= card.bottom,
-                hit: document.elementFromPoint(x, y)?.closest('#rooms-sort-menu') !== null,
-            };
+            return document.elementFromPoint(x, y)?.closest('#rooms-sort-menu') !== null;
         }, point);
-        assert.equal(layering.overlapsCard, true, 'test point should exercise the dropdown directly over a room card');
-        assert.equal(layering.hit, true, 'the option should be clickable instead of hidden behind the card');
+        assert.equal(layering, true, 'the option should be clickable instead of hidden behind the card');
     } finally {
         await page.close();
     }

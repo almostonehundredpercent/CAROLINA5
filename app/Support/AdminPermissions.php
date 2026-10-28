@@ -69,7 +69,7 @@ final class AdminPermissions
             ['label' => 'Guests', 'route' => 'admin.guests', 'icon' => '♙', 'ability' => 'guests', 'group' => 'primary'],
             ['label' => 'Overview', 'route' => 'admin.dashboard', 'icon' => '▦', 'ability' => 'dashboard', 'group' => 'more'],
             ['label' => 'Reports', 'route' => 'admin.reports', 'icon' => '⌁', 'ability' => 'reports', 'group' => 'more'],
-            ['label' => 'Decision support', 'route' => 'admin.decision-support', 'icon' => '◈', 'ability' => 'decision_support', 'group' => 'more'],
+            ['label' => 'CAROL · Decision support', 'route' => 'admin.decision-support', 'icon' => '◈', 'ability' => 'decision_support', 'group' => 'more'],
             ['label' => 'Promo codes', 'route' => 'admin.promos', 'icon' => '%', 'ability' => 'promos', 'group' => 'more'],
             ['label' => 'Activity log', 'route' => 'admin.activity', 'icon' => '◷', 'ability' => 'activity', 'group' => 'more'],
             ['label' => 'Staff access', 'route' => 'admin.staff', 'icon' => '♙', 'ability' => 'staff', 'group' => 'more'],
