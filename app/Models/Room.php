@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\PropertyTime;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -68,7 +69,7 @@ class Room extends Model
     public static function releaseExpiredOperationalBlocks(): void
     {
         static::whereIn('operational_status', ['cleaning', 'maintenance'])
-            ->whereNotNull('operational_until')->where('operational_until', '<=', now())
+            ->whereNotNull('operational_until')->where('operational_until', '<=', PropertyTime::now())
             ->update(['operational_status' => 'available', 'operational_until' => null]);
     }
 }

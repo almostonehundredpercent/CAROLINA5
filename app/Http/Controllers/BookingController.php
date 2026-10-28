@@ -16,6 +16,7 @@ use App\Services\BookingTimeAdjustmentService;
 use App\Services\PayMongoCheckout;
 use App\Services\PayMongoPaymentReconciler;
 use App\Support\BookingSelection;
+use App\Support\PropertyTime;
 use App\Support\PromoPricing;
 use Carbon\Carbon;
 use Illuminate\Database\QueryException;
@@ -83,7 +84,8 @@ class BookingController extends Controller
             return response()->json(['available' => $available])->header('Cache-Control', 'no-store');
         }
 
-        return response()->json(['ranges' => $this->blockedRanges($room)->values(), 'slots' => $this->hourlyBlockedSlots($room)->values()]);
+        return response()->json(['ranges' => $this->blockedRanges($room)->values(), 'slots' => $this->hourlyBlockedSlots($room)->values()])
+            ->header('Cache-Control', 'private, no-store');
     }
 
     public function promoQuote(Request $request, Room $room)
@@ -136,7 +138,7 @@ class BookingController extends Controller
             ]);
         $room->blocks()->whereNull('completed_at')
             ->where(fn ($active) => $active->whereNull('hold_expires_at')->orWhere('hold_expires_at', '>', now()))
-            ->where('ends_at', '>', now())->get()
+            ->where('ends_at', '>', PropertyTime::now())->get()
             ->each(fn (RoomBlock $block) => $ranges->push(['start' => $block->starts_at->toDateString(), 'end' => $block->ends_at->copy()->addDay()->toDateString()]));
 
         return $ranges;
@@ -158,7 +160,7 @@ class BookingController extends Controller
             });
         $room->blocks()->whereNull('completed_at')
             ->where(fn ($active) => $active->whereNull('hold_expires_at')->orWhere('hold_expires_at', '>', now()))
-            ->where('ends_at', '>', now())->get()
+            ->where('ends_at', '>', PropertyTime::now())->get()
             ->each(fn (RoomBlock $block) => $slots->push(['start' => $block->starts_at->toIso8601String(), 'end' => $block->ends_at->toIso8601String()]));
 
         return $slots;

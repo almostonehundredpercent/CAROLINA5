@@ -223,4 +223,5 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 </script>
+@include('rooms.partials.refresh-on-property-day-change')
 @endsection
