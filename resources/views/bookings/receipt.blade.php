@@ -11,14 +11,24 @@
     $remainingHoldSeconds = $holdDeadline ? max(0, $holdDeadline->timestamp - now()->timestamp) : 0;
 @endphp
 <style>
-    .receipt-card,.receipt-summary{max-width:760px;margin-right:auto;margin-left:auto;text-align:left}
-    .receipt-card{margin-bottom:18px}
-    .receipt-summary{margin-bottom:18px;padding:24px;border:1px solid #e3b35d;border-radius:14px;background:linear-gradient(135deg,#fff8eb,#fffdf9);box-shadow:0 12px 30px rgba(104,64,16,.08)}
+    .confirmation.receipt-page{width:min(100%,1260px);max-width:1260px;padding:24px 28px 42px;text-align:center}
+    .receipt-page>.eyebrow{margin-bottom:6px}
+    .receipt-page>h1{max-width:1120px;margin:0 auto 6px;font-size:clamp(2.2rem,3.5vw,3.25rem);line-height:1.02}
+    .receipt-page>h1+p{max-width:900px;margin:0 auto 18px;font-size:.95rem;line-height:1.45}
+    .receipt-layout{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(320px,.8fr);align-items:start;gap:16px;max-width:1120px;margin:0 auto 18px;text-align:left}
+    .receipt-card,.receipt-summary{width:100%;max-width:none;margin:0;text-align:left}
+    .receipt-card{grid-template-columns:repeat(2,minmax(0,1fr));align-content:start;gap:13px 16px;padding:18px;border-radius:14px;background:var(--paper)}
+    .receipt-card .receipt-details-title{grid-column:1/-1;margin:0 0 2px;font:700 1.05rem 'DM Sans',sans-serif;color:var(--ink)}
+    .receipt-card .receipt-reference{grid-column:1/-1;padding-bottom:10px;border-bottom:1px solid var(--line)}
+    .receipt-card>div:not(.receipt-reference){padding-bottom:8px;border-bottom:1px solid var(--line)}
+    .receipt-card small{margin-bottom:3px;font-size:.75rem}
+    .receipt-card b{font-size:.9rem;line-height:1.4}
+    .receipt-summary{padding:20px;border:1px solid #e3b35d;border-radius:14px;background:linear-gradient(135deg,#fff8eb,#fffdf9);box-shadow:0 12px 30px rgba(104,64,16,.08)}
     .receipt-payment-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
     .receipt-payment-heading>span:first-child{color:#935300;font-size:.72rem;font-weight:800;letter-spacing:.12em}
     .receipt-payment-title{margin:0 0 14px;color:var(--ink);font-size:1.25rem}
-    .receipt-summary-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:0 0 16px}
-    .receipt-summary-grid div{min-width:0;padding:15px;border:1px solid rgba(116,81,42,.1);border-radius:9px;background:#fff}
+    .receipt-summary-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:0 0 12px}
+    .receipt-summary-grid div{min-width:0;padding:12px;border:1px solid rgba(116,81,42,.1);border-radius:9px;background:#fff}
     .receipt-summary-grid small{display:block;margin-bottom:5px;color:var(--muted)}
     .receipt-summary-grid b{font-size:1.12rem}
     .receipt-summary-grid .receipt-amount-card b{display:block;color:#7d4300;font-size:clamp(1.8rem,4vw,2.25rem);line-height:1.1;letter-spacing:-.035em}
@@ -28,7 +38,7 @@
     .receipt-hold-alert{margin-top:13px;padding:12px 14px;border:1px solid #e9c17e;border-radius:9px;background:#fff3d9;color:#65400d}
     .receipt-hold-alert>p{margin:5px 0 0;font-size:.9rem;line-height:1.5}
     .receipt-hold-alert strong{color:#50320b}
-    .paymongo-submit{display:flex;align-items:center;justify-content:center;gap:9px;width:100%;min-height:56px;margin-top:16px;padding:14px 20px;font-size:1rem;font-weight:800}
+    .paymongo-submit{display:flex;align-items:center;justify-content:center;gap:9px;width:100%;min-height:52px;margin-top:12px;padding:12px 18px;font-size:1rem;font-weight:800}
     .paymongo-submit:disabled{cursor:wait;opacity:.82}
     .paymongo-spinner{display:none;width:17px;height:17px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:paymongo-spin .7s linear infinite}
     .paymongo-submit[aria-busy="true"] .paymongo-spinner{display:inline-block}
@@ -45,13 +55,17 @@
     .dark-mode .receipt-hold-alert strong{color:#ffe1a9}
     @keyframes paymongo-spin{to{transform:rotate(360deg)}}
     @media(prefers-reduced-motion:reduce){.paymongo-spinner{animation-duration:1.8s}}
-    @media(max-width:600px){.receipt-summary{padding:18px}.receipt-summary-grid{grid-template-columns:1fr}.receipt-payment-heading{align-items:flex-start}.receipt-hold-alert{padding:11px 12px}}
+    .receipt-actions{margin:14px auto 0}
+    @media(max-width:900px){.receipt-layout{grid-template-columns:minmax(0,1fr) minmax(280px,.85fr);gap:12px}}
+    @media(max-width:800px){.confirmation.receipt-page{padding:34px 20px 42px}.receipt-page>h1{font-size:clamp(2.15rem,6vw,3rem)}.receipt-layout{grid-template-columns:1fr;max-width:700px}.receipt-card{grid-template-columns:repeat(2,minmax(0,1fr))}}
+    @media(max-width:600px){.confirmation.receipt-page{padding:24px 16px 34px}.receipt-page>h1{font-size:clamp(2rem,9vw,2.6rem)}.receipt-summary{padding:17px}.receipt-summary-grid{grid-template-columns:1fr}.receipt-payment-heading{align-items:flex-start}.receipt-hold-alert{padding:11px 12px}.receipt-card{padding:16px;gap:11px 12px}.receipt-card b{overflow-wrap:anywhere}}
 </style>
 <section class="confirmation receipt-page">
     <span class="eyebrow">{{ $booking->payment_status === 'refunded' ? 'REFUND RECORD' : ($booking->payment_status === 'paid' ? 'PAYMENT RECEIPT' : ($booking->status === 'confirmed' ? 'BOOKING CONFIRMED' : 'REQUEST RECEIVED')) }}</span>
     <h1>{{ $expiredHold ? 'Reservation hold expired' : ($booking->status === 'confirmed' ? 'Your reservation is confirmed.' : ($booking->status === 'cancelled' ? 'This reservation was cancelled.' : 'Your reservation request is in.')) }}</h1>
     <p>@if($unavailable)This request no longer reserves the room. Choose another available stay or contact Carolina for help. This page keeps your booking and payment details for your records.@elseif($booking->status === 'confirmed')Carolina has confirmed your reservation.@else Keep your reference below. Staff confirmation is required before your stay is final.@endif</p>
 
+    <div class="receipt-layout">
     <section class="receipt-summary receipt-payment-primary">
         <div class="receipt-payment-heading">
             <span>PAYMENT</span>
@@ -103,12 +117,14 @@
     </section>
 
     <div class="confirmation-card receipt-card">
-        <div><small>Booking reference</small><b>{{ $booking->reference }}</b></div>
+        <h2 class="receipt-details-title">Booking information</h2>
+        <div class="receipt-reference"><small>Booking reference</small><b>{{ $booking->reference }}</b></div>
         <div><small>Stay type</small><b>{{ $booking->booking_type === 'hourly' ? $booking->hours . ' hours' : $booking->nights . ' night' . ($booking->nights === 1 ? '' : 's') }}</b></div>
         <div><small>Room</small><b>{{ $booking->room->name }}</b></div>
         <div><small>Stay</small><b>{{ $booking->check_in_at && $booking->check_out_at ? $booking->check_in_at->format('M j, g A') . ' – ' . $booking->check_out_at->format('M j, g A') : $booking->check_in->format('M j') . ' – ' . $booking->check_out->format('M j, Y') }}</b></div>
         <div><small>Guests</small><b>{{ $booking->guests }} total{{ $booking->children_count ? ' · ' . $booking->children_count . ' child' . ($booking->children_count > 1 ? 'ren' : '') : '' }}</b></div>
         <div><small>Pets</small><b>{{ $booking->pets_count ? $booking->pets_count . ' pet' . ($booking->pets_count > 1 ? 's' : '') : 'None' }}</b></div>
+    </div>
     </div>
     @include('bookings.partials.location-map', ['booking' => $booking])
     <div class="receipt-actions">

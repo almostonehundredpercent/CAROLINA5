@@ -329,6 +329,21 @@ test('unpaid booking receipt leads with the amount due and payment action', func
         ->toBeLessThan(strpos($response->getContent(), 'class="confirmation-card receipt-card"'));
 });
 
+test('receipt groups payment and reservation details in one compact layout', function () {
+    $booking = heldBooking(holdRoom(), ['hold_expires_at' => now()->addMinutes(30)]);
+    $response = $this->withSession(['guest_booking_reference' => $booking->reference])->get(route('bookings.receipt', $booking))->assertOk();
+
+    $document = new DOMDocument;
+    @$document->loadHTML($response->getContent());
+    $xpath = new DOMXPath($document);
+    $layouts = $xpath->query('//div[contains(concat(" ", normalize-space(@class), " "), " receipt-layout ")]');
+
+    expect($layouts->length)->toBe(1);
+    $layout = $layouts->item(0);
+    expect($xpath->query('.//*[contains(concat(" ", normalize-space(@class), " "), " receipt-payment-primary ")]', $layout)->length)->toBe(1)
+        ->and($xpath->query('.//*[contains(concat(" ", normalize-space(@class), " "), " receipt-card ")]', $layout)->length)->toBe(1);
+});
+
 test('booking confirmation email explains the hold and links to secure booking lookup', function () {
     config()->set('services.paymongo.mode', 'test');
     $booking = heldBooking(holdRoom(), ['hold_expires_at' => now()->addMinutes(30)]);
