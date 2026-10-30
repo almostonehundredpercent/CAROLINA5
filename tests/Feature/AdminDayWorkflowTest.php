@@ -88,6 +88,45 @@ test('check-in confirmation is rendered in the admin interface on front desk and
     }
 });
 
+test('Manila check-in time enables and accepts check-in even while UTC is earlier', function () {
+    Carbon::setTestNow(Carbon::parse('2026-10-30 13:00:00', 'UTC'));
+
+    try {
+        Mail::fake();
+        $admin = User::factory()->create(['is_admin' => true]);
+        $guest = User::factory()->create(['name' => 'Jordan Lee']);
+        $room = adminDayRoom('manila-evening-check-in-room');
+        $booking = adminDayBooking($room, $guest, [
+            'check_in' => '2026-10-30',
+            'check_out' => '2026-10-30',
+            'check_in_at' => Carbon::parse('2026-10-30 16:00:00', 'UTC'),
+            'check_out_at' => Carbon::parse('2026-10-30 22:00:00', 'UTC'),
+            'status' => 'confirmed',
+            'payment_status' => 'paid',
+        ]);
+
+        expect(PropertyTime::now()->format('Y-m-d H:i:s'))->toBe('2026-10-30 21:00:00');
+
+        $this->actingAsStaff($admin)
+            ->get(route('admin.frontdesk'))
+            ->assertOk()
+            ->assertSee('Check-in time passed · confirm arrival')
+            ->assertSee('Check in');
+
+        $this->get(route('admin.bookings'))
+            ->assertOk()
+            ->assertSee('Check in');
+
+        $this->post(route('admin.bookings.check-in', $booking), ['action' => 'check_in'])
+            ->assertRedirect()
+            ->assertSessionHas('success', 'Guest checked in and notified.');
+
+        expect($booking->fresh()->checked_in_at->format('Y-m-d H:i:s'))->toBe('2026-10-30 21:00:00');
+    } finally {
+        Carbon::setTestNow();
+    }
+});
+
 test('checkout starts one twenty-minute cleaning timer and cannot be repeated', function () {
     Carbon::setTestNow('2026-10-24 12:00:00');
 

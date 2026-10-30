@@ -76,10 +76,10 @@ class AdminController extends Controller
                     'maintenance' => $rooms->whereIn('display_status', ['maintenance', 'cleaning'])->count(),
                 ],
                 'alerts' => [
-                    'arrivals' => Booking::where('status', 'confirmed')->whereNull('checked_in_at')->where('check_in_at', '<=', now())->count(),
-                    'departures' => Booking::whereNotNull('checked_in_at')->whereNull('checked_out_at')->where('check_out_at', '<=', now())->count(),
+                    'arrivals' => Booking::where('status', 'confirmed')->whereNull('checked_in_at')->where('check_in_at', '<=', PropertyTime::now())->count(),
+                    'departures' => Booking::whereNotNull('checked_in_at')->whereNull('checked_out_at')->where('check_out_at', '<=', PropertyTime::now())->count(),
                     'pending' => Booking::where('status', 'pending')->count(),
-                    'roomBlocks' => RoomBlock::where('starts_at', '<=', now()->addDay())->where('ends_at', '>', now())->count(),
+                    'roomBlocks' => RoomBlock::where('starts_at', '<=', PropertyTime::now()->addDay())->where('ends_at', '>', PropertyTime::now())->count(),
                 ],
                 'bookings' => $recentBookings,
                 'recentActivity' => ActivityLog::with(['booking.room', 'user'])->latest()->take(6)->get(),
@@ -140,7 +140,7 @@ class AdminController extends Controller
 
         if ($action === 'check_in') {
             abort_if($booking->status !== 'confirmed' || $booking->checked_out_at, 422, 'Only confirmed bookings can be checked in.');
-            abort_if($booking->check_in_at && $booking->check_in_at->isFuture(), 422, 'This guest cannot be checked in before the scheduled arrival time.');
+            abort_if($booking->check_in_at && $booking->check_in_at->gt(PropertyTime::now()), 422, 'This guest cannot be checked in before the scheduled arrival time.');
             $booking->update(['checked_in_at' => PropertyTime::now(), 'status' => 'confirmed']);
             $this->log($booking, $request->user()->id, 'checked_in', 'Guest checked in by staff.');
             $this->email($booking->fresh('room'), 'Welcome to Carolina', 'You have been checked in. We hope you enjoy your stay.');
@@ -375,14 +375,16 @@ class AdminController extends Controller
 
     public function frontdesk()
     {
-        $today = today();
-        $tomorrow = $today->copy()->addDay();
+        $today = PropertyTime::today();
+        $tomorrow = Carbon::parse($today, 'UTC')->addDay();
+        $propertyNow = PropertyTime::now();
 
         return view('admin.frontdesk', [
             'arrivals' => Booking::with(['user', 'room'])->where('status', 'confirmed')->whereDate('check_in', $today)->whereNull('checked_in_at')->get(),
             'activeStays' => Booking::with(['user', 'room'])->whereNotNull('checked_in_at')->whereNull('checked_out_at')->get(),
             'departures' => Booking::with(['user', 'room'])->whereNotNull('checked_in_at')->whereNull('checked_out_at')->whereDate('check_out', '<=', $today)->get(),
             'roomOperationBlocks' => RoomBlock::with('room')->whereIn('status', ['cleaning', 'maintenance'])->overlapping($today, $tomorrow)->orderBy('starts_at')->get(),
+            'propertyNow' => $propertyNow,
         ]);
     }
 
@@ -494,7 +496,7 @@ class AdminController extends Controller
     public function archiveRoom(Request $request, Room $room)
     {
         abort_unless($request->user()->isAdmin(), 403, 'Only Organization Admins can archive rooms.');
-        abort_if($room->bookings()->blocking()->where('check_out_at', '>', now())->exists(), 422, 'This room has future or active confirmed stays and cannot be archived yet.');
+        abort_if($room->bookings()->blocking()->where('check_out_at', '>', PropertyTime::now())->exists(), 422, 'This room has future or active confirmed stays and cannot be archived yet.');
         $room->update(['is_active' => false]);
         $this->audit($request->user()->id, 'room_archived', 'Room archived without deleting booking history.', $room, ['is_active' => true], ['is_active' => false]);
 
@@ -540,8 +542,9 @@ class AdminController extends Controller
             'maintenanceRooms' => $rooms->where('display_status', 'maintenance')->count(),
             'newCustomers' => Booking::with(['user', 'room'])->latest()->take(5)->get(),
             'individualBookings' => $bookingQuery->paginate($perPage, ['*'], 'booking_page')->withQueryString(),
-            'arrivalsToday' => Booking::with('room')->where('status', 'confirmed')->whereDate('check_in', today())->whereNull('checked_in_at')->where('check_in_at', '<=', now())->get(),
-            'departuresToday' => Booking::with('room')->whereNotNull('checked_in_at')->whereNull('checked_out_at')->whereDate('check_out', '<=', today())->get(),
+            'arrivalsToday' => Booking::with('room')->where('status', 'confirmed')->whereDate('check_in', PropertyTime::today())->whereNull('checked_in_at')->where('check_in_at', '<=', PropertyTime::now())->get(),
+            'departuresToday' => Booking::with('room')->whereNotNull('checked_in_at')->whereNull('checked_out_at')->whereDate('check_out', '<=', PropertyTime::today())->get(),
+            'propertyNow' => PropertyTime::now(),
             'recentActivity' => ActivityLog::with(['booking.room', 'user'])->latest()->take(8)->get(),
             'pendingReviews' => Review::with(['booking.room', 'user'])->where('status', '!=', 'approved')->latest()->take(10)->get(),
             'recentReviews' => Review::with(['booking.room'])->whereIn('status', ['approved', 'hidden'])->latest()->take(8)->get(),

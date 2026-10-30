@@ -26,7 +26,7 @@
             <article class="panel">
                 <p class="admin-kicker">STATS</p>
                 <h2>{{ $bookings->count() }} booking{{ $bookings->count() === 1 ? '' : 's' }}</h2>
-                <p>{{ $bookings->where('status','confirmed')->count() }} confirmed · {{ $bookings->where('status','cancelled')->count() }} cancelled · {{ $bookings->filter(fn($booking) => $booking->check_in_at?->isFuture())->count() }} upcoming</p>
+                <p>{{ $bookings->where('status','confirmed')->count() }} confirmed · {{ $bookings->where('status','cancelled')->count() }} cancelled · {{ $bookings->filter(fn($booking) => $booking->check_in_at?->gt(\App\Support\PropertyTime::now()))->count() }} upcoming</p>
             </article>
             <article class="panel">
                 <p class="admin-kicker">BOOKING RESTRICTION</p>

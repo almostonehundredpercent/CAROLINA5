@@ -50,7 +50,7 @@
                     @forelse($arrivals as $booking)
                         <article class="today-item">
                             <b>{{ $booking->reference }} · {{ $booking->guest_name ?? $booking->user?->name ?? 'Guest' }}</b>
-                            @if($booking->check_in_at && $booking->check_in_at->lte(now()))
+                            @if($booking->check_in_at && $booking->check_in_at->lte($propertyNow))
                                 <span class="today-arrival-status is-overdue">Check-in time passed · confirm arrival</span>
                             @else
                                 <span class="today-arrival-status">Expected today</span>
@@ -62,7 +62,7 @@
                             </dl>
                             <div class="today-actions">
                                 <a class="status-select" href="{{ route('admin.bookings.show', $booking) }}">View booking</a>
-                                @if($booking->check_in_at?->lte(now()))
+                                @if($booking->check_in_at?->lte($propertyNow))
                                     <form method="POST" action="{{ route('admin.bookings.check-in', $booking) }}" data-admin-confirm data-confirm-title="Check in this guest?" data-confirm-message="Check in {{ $booking->guest_name ?? $booking->user?->name ?? 'this guest' }} now? This marks the reservation as checked in." data-confirm-action="Check in guest">
                                         @csrf<input type="hidden" name="action" value="check_in"><button class="status-select confirmed">Check in</button>
                                     </form>
