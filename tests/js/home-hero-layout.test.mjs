@@ -83,6 +83,7 @@ test('Explore rooms is the visible brand-primary action and fits the phone layou
                     height: rect.height,
                     width: rect.width,
                     right: rect.right,
+                    radius: Number.parseFloat(getComputedStyle(element).borderTopLeftRadius),
                 };
             });
             const copy = await page.locator('.home-hero .hero-copy').boundingBox();
@@ -93,6 +94,7 @@ test('Explore rooms is the visible brand-primary action and fits the phone layou
             const contrast = (Math.max(luminance(action.background), luminance(action.color)) + 0.05) / (Math.min(luminance(action.background), luminance(action.color)) + 0.05);
             assert.ok(contrast >= 4.5, `the primary action text should meet normal-text contrast: ${contrast.toFixed(2)}:1`);
             assert.ok(action.height >= 54, `${viewport.width}px action should have a comfortable tap target`);
+            assert.ok(action.radius <= 16, `${viewport.width}px primary action should have softly rounded, not pill-shaped, corners: ${action.radius}px`);
             assert.ok(action.right <= copy.x + copy.width + 1, `${viewport.width}px action should stay inside the copy column`);
             assert.ok(secondary.x >= copy.x && secondary.x + secondary.width <= copy.x + copy.width + 1, `${viewport.width}px secondary link should stay inside the copy column`);
             if (viewport.width <= 460) {
