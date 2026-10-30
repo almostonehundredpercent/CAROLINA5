@@ -287,7 +287,21 @@ test('a failed payment can be recorded on an expired request without reclaiming 
 test('expired receipt explains availability and removes the payment action', function () {
     $booking = heldBooking(holdRoom(), ['hold_expires_at' => now()->subMinute()]);
     $this->withSession(['guest_booking_reference' => $booking->reference])->get(route('bookings.receipt', $booking))
-        ->assertOk()->assertSee('Reservation hold expired')->assertDontSee('id="paymongo-checkout-form"', false);
+        ->assertOk()
+        ->assertSee('Reservation hold expired')
+        ->assertSee('Online checkout is unavailable for this request')
+        ->assertDontSee('Pay online with')
+        ->assertDontSee('id="paymongo-checkout-form"', false);
+});
+
+test('cancelled unpaid receipt does not advertise unavailable online checkout', function () {
+    $booking = heldBooking(holdRoom(), ['status' => 'cancelled', 'cancelled_at' => now()]);
+    $this->withSession(['guest_booking_reference' => $booking->reference])->get(route('bookings.receipt', $booking))
+        ->assertOk()
+        ->assertSee('This reservation was cancelled.')
+        ->assertSee('Online checkout is unavailable for this request')
+        ->assertDontSee('Pay online with')
+        ->assertDontSee('id="paymongo-checkout-form"', false);
 });
 
 test('receipt shows a server-authoritative live countdown for an active hold', function () {
@@ -298,6 +312,21 @@ test('receipt shows a server-authoritative live countdown for an active hold', f
         ->assertSee('data-hold-countdown', false)
         ->assertSee('data-remaining-seconds="1800"', false)
         ->assertSee('30 minutes');
+});
+
+test('unpaid booking receipt leads with the amount due and payment action', function () {
+    $booking = heldBooking(holdRoom(), ['hold_expires_at' => now()->addMinutes(30)]);
+
+    $response = $this->withSession(['guest_booking_reference' => $booking->reference])->get(route('bookings.receipt', $booking))
+        ->assertOk()
+        ->assertSee('Amount to pay')
+        ->assertSee('₱450.00')
+        ->assertSee('Payment Pending')
+        ->assertSee('Pay ₱450.00 with GCash')
+        ->assertSee('For thesis testing only. No real money is collected.');
+
+    expect(strpos($response->getContent(), 'class="receipt-summary receipt-payment-primary"'))
+        ->toBeLessThan(strpos($response->getContent(), 'class="confirmation-card receipt-card"'));
 });
 
 test('booking confirmation email explains the hold and links to secure booking lookup', function () {

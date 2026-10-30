@@ -133,7 +133,7 @@ test('email and reference lookup lets an account guest open the payment receipt'
     $this->get(route('bookings.receipt', $booking))
         ->assertOk()
         ->assertSee('id="paymongo-checkout-form"', false)
-        ->assertSee('Pay with GCash test mode');
+        ->assertSee('Pay ₱450.00 with GCash');
 
     Http::fake(['https://api.paymongo.com/v1/checkout_sessions' => Http::response([
         'data' => ['id' => 'cs_account_lookup', 'attributes' => ['checkout_url' => 'https://checkout.paymongo.test/cs_account_lookup']],

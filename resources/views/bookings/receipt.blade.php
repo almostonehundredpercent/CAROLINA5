@@ -4,16 +4,103 @@
 @php
     $expiredHold = $booking->hasExpiredHold() || $booking->isExpiredHoldRecord();
     $unavailable = $expiredHold || $booking->status === 'cancelled';
+    $paymentComplete = in_array($booking->payment_status, ['paid', 'refunded'], true);
+    $canPayOnline = ! $unavailable && ! $paymentComplete;
     $temporaryHold = ! $unavailable && $booking->status === 'pending' && ! $booking->hasProtectedInventory();
     $holdDeadline = $temporaryHold ? $booking->holdDeadline() : null;
     $remainingHoldSeconds = $holdDeadline ? max(0, $holdDeadline->timestamp - now()->timestamp) : 0;
 @endphp
-<style>.receipt-status.paid{background:#dcfce7;color:#166534}.dark-mode .receipt-status.paid{background:#17432b;color:#b7f7c5}</style>
-<style>.receipt-card{max-width:760px;margin:0 auto 18px}.receipt-summary{max-width:760px;margin:0 auto 28px;padding:22px;border:1px solid var(--line);border-radius:10px;background:#fff;text-align:left}.receipt-summary-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin:16px 0}.receipt-summary-grid div{padding:14px;border-radius:7px;background:var(--sand)}.receipt-summary-grid small{display:block;color:var(--muted);margin-bottom:5px}.receipt-summary-grid b{font-size:1.15rem}.receipt-status{display:inline-flex;padding:6px 10px;border-radius:20px;background:#fff0d4;color:#8d5700;font-size:.8rem;font-weight:700}.receipt-note{margin:0;color:var(--muted)}.paymongo-submit{display:inline-flex;align-items:center;justify-content:center;gap:9px;min-width:220px}.paymongo-submit:disabled{cursor:wait;opacity:.82}.paymongo-spinner{display:none;width:15px;height:15px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:paymongo-spin .7s linear infinite}.paymongo-submit[aria-busy="true"] .paymongo-spinner{display:inline-block}.paymongo-loading-message{display:none;margin:9px 0 0;color:var(--muted);font-size:.9rem}.paymongo-loading-message.visible{display:block}.paymongo-loading-message.error{color:#b42318;font-weight:600}@keyframes paymongo-spin{to{transform:rotate(360deg)}}@media(prefers-reduced-motion:reduce){.paymongo-spinner{animation-duration:1.8s}}@media(max-width:600px){.receipt-summary{padding:17px}.receipt-summary-grid{grid-template-columns:1fr}.paymongo-submit{width:100%}}</style>
+<style>
+    .receipt-card,.receipt-summary{max-width:760px;margin-right:auto;margin-left:auto;text-align:left}
+    .receipt-card{margin-bottom:18px}
+    .receipt-summary{margin-bottom:18px;padding:24px;border:1px solid #e3b35d;border-radius:14px;background:linear-gradient(135deg,#fff8eb,#fffdf9);box-shadow:0 12px 30px rgba(104,64,16,.08)}
+    .receipt-payment-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
+    .receipt-payment-heading>span:first-child{color:#935300;font-size:.72rem;font-weight:800;letter-spacing:.12em}
+    .receipt-payment-title{margin:0 0 14px;color:var(--ink);font-size:1.25rem}
+    .receipt-summary-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:0 0 16px}
+    .receipt-summary-grid div{min-width:0;padding:15px;border:1px solid rgba(116,81,42,.1);border-radius:9px;background:#fff}
+    .receipt-summary-grid small{display:block;margin-bottom:5px;color:var(--muted)}
+    .receipt-summary-grid b{font-size:1.12rem}
+    .receipt-summary-grid .receipt-amount-card b{display:block;color:#7d4300;font-size:clamp(1.8rem,4vw,2.25rem);line-height:1.1;letter-spacing:-.035em}
+    .receipt-status{display:inline-flex;padding:7px 11px;border-radius:999px;background:#fff0d4;color:#805000;font-size:.78rem;font-weight:800}
+    .receipt-status.paid{background:#dcfce7;color:#166534}
+    .receipt-note{margin:0;color:var(--muted);line-height:1.55}
+    .receipt-hold-alert{margin-top:13px;padding:12px 14px;border:1px solid #e9c17e;border-radius:9px;background:#fff3d9;color:#65400d}
+    .receipt-hold-alert>p{margin:5px 0 0;font-size:.9rem;line-height:1.5}
+    .receipt-hold-alert strong{color:#50320b}
+    .paymongo-submit{display:flex;align-items:center;justify-content:center;gap:9px;width:100%;min-height:56px;margin-top:16px;padding:14px 20px;font-size:1rem;font-weight:800}
+    .paymongo-submit:disabled{cursor:wait;opacity:.82}
+    .paymongo-spinner{display:none;width:17px;height:17px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:paymongo-spin .7s linear infinite}
+    .paymongo-submit[aria-busy="true"] .paymongo-spinner{display:inline-block}
+    .paymongo-loading-message{display:none;margin:9px 0 0;color:var(--muted);font-size:.9rem}
+    .paymongo-loading-message.visible{display:block}
+    .paymongo-loading-message.error{color:#b42318;font-weight:600}
+    .dark-mode .receipt-summary{border-color:#80602e;background:linear-gradient(145deg,#33271c,#251d17);box-shadow:0 16px 32px rgba(0,0,0,.24)}
+    .dark-mode .receipt-payment-heading>span:first-child{color:#ffc16b}
+    .dark-mode .receipt-summary-grid div{border-color:rgba(255,220,182,.1);background:#1d1713;color:#fff4e8}
+    .dark-mode .receipt-summary-grid small,.dark-mode .receipt-note{color:#d4c3b2}
+    .dark-mode .receipt-summary-grid .receipt-amount-card b{color:#ffd18a}
+    .dark-mode .receipt-status.paid{background:#17432b;color:#b7f7c5}
+    .dark-mode .receipt-hold-alert{border-color:#8b622b;background:#3c2d1a;color:#f3d8a7}
+    .dark-mode .receipt-hold-alert strong{color:#ffe1a9}
+    @keyframes paymongo-spin{to{transform:rotate(360deg)}}
+    @media(prefers-reduced-motion:reduce){.paymongo-spinner{animation-duration:1.8s}}
+    @media(max-width:600px){.receipt-summary{padding:18px}.receipt-summary-grid{grid-template-columns:1fr}.receipt-payment-heading{align-items:flex-start}.receipt-hold-alert{padding:11px 12px}}
+</style>
 <section class="confirmation receipt-page">
     <span class="eyebrow">{{ $booking->payment_status === 'refunded' ? 'REFUND RECORD' : ($booking->payment_status === 'paid' ? 'PAYMENT RECEIPT' : ($booking->status === 'confirmed' ? 'BOOKING CONFIRMED' : 'REQUEST RECEIVED')) }}</span>
     <h1>{{ $expiredHold ? 'Reservation hold expired' : ($booking->status === 'confirmed' ? 'Your reservation is confirmed.' : ($booking->status === 'cancelled' ? 'This reservation was cancelled.' : 'Your reservation request is in.')) }}</h1>
     <p>@if($unavailable)This request no longer reserves the room. Choose another available stay or contact Carolina for help. This page keeps your booking and payment details for your records.@elseif($booking->status === 'confirmed')Carolina has confirmed your reservation.@else Keep your reference below. Staff confirmation is required before your stay is final.@endif</p>
+
+    <section class="receipt-summary receipt-payment-primary">
+        <div class="receipt-payment-heading">
+            <span>PAYMENT</span>
+            <span class="receipt-status {{ $booking->payment_status ?? 'pending' }}">{{ $expiredHold ? 'Hold expired' : 'Payment ' . ucfirst($booking->payment_status ?? 'pending') }}</span>
+        </div>
+        <h2 class="receipt-payment-title">{{ $booking->payment_status === 'paid' ? 'Payment recorded' : ($booking->payment_status === 'refunded' ? 'Refund recorded' : ($unavailable ? 'Payment summary' : 'Complete your payment')) }}</h2>
+        <div class="receipt-summary-grid">
+            <div class="receipt-amount-card"><small>{{ $booking->payment_status === 'paid' ? 'Amount paid' : ($booking->payment_status === 'refunded' || $unavailable ? 'Booking total' : 'Amount to pay') }}</small><b>₱{{ number_format($booking->total_amount, 2) }}</b>@if($booking->discount_amount > 0)<small><s>₱{{ number_format($booking->original_amount, 2) }}</s> · {{ $booking->promo_code }} saved ₱{{ number_format($booking->discount_amount, 2) }}</small>@endif</div>
+            <div>
+                @if($paymentComplete)
+                    <small>Payment method</small><b>{{ strtoupper($booking->payment_method ?? 'payment') }}</b><small>{{ $booking->payment_status === 'paid' ? 'Payment complete' : 'Refund complete' }}@if($booking->paid_at) · {{ $booking->paid_at->format('M j, Y g:i A') }}@endif</small>
+                @elseif($unavailable)
+                    <small>Payment</small><b>{{ ucfirst($booking->payment_status ?? 'pending') }}</b><small>Online checkout is unavailable for this request</small>
+                @else
+                    <small>Pay online with</small><b>GCash</b><small>Secure checkout via PayMongo</small>
+                @endif
+            </div>
+        </div>
+        @if($canPayOnline)
+            <form id="paymongo-checkout-form" method="POST" action="{{ route('bookings.paymongo.start', $booking) }}" data-no-loading>
+                @csrf
+                <button class="button paymongo-submit" type="submit" aria-busy="false" data-loading-text="Opening the secure PayMongo checkout…">
+                    <span class="paymongo-spinner" aria-hidden="true"></span>
+                    <span class="paymongo-submit-label">Pay ₱{{ number_format($booking->total_amount, 2) }} with GCash</span>
+                    <span class="paymongo-submit-arrow" aria-hidden="true">→</span>
+                </button>
+                <p id="paymongo-loading-message" class="paymongo-loading-message" role="status" aria-live="polite">Connecting to PayMongo securely… Keep this page open.</p>
+                <small style="display:block;margin-top:9px;color:var(--muted)">For thesis testing only. No real money is collected.</small>
+            </form>
+        @endif
+        @if($temporaryHold)
+            <div class="receipt-hold-alert">
+                <strong>Pay before your room hold expires</strong>
+                <p>New unpaid requests hold their slot for {{ \App\Models\Booking::holdMinutes() }} minutes. Your hold ends <strong>{{ $holdDeadline->copy()->timezone('Asia/Manila')->format('M j, Y, g:i A') }} Philippine time</strong>. After that, the room is released unless payment is recorded or staff confirms it.</p>
+                <p data-hold-countdown data-deadline="{{ $holdDeadline->timestamp }}" data-server-now="{{ now()->timestamp }}" data-remaining-seconds="{{ $remainingHoldSeconds }}" role="status" aria-live="polite">Time remaining: <strong data-countdown-value>{{ intdiv($remainingHoldSeconds, 60) }}m {{ str_pad((string) ($remainingHoldSeconds % 60), 2, '0', STR_PAD_LEFT) }}s</strong>.</p>
+            </div>
+        @endif
+        @if($booking->payment_status === 'paid')
+            <p class="receipt-note"><strong>Payment recorded.</strong> {{ $unavailable ? 'The room was not re-reserved. Contact staff to resolve this payment before making another one.' : ($booking->status === 'confirmed' ? 'Your reservation is confirmed.' : 'Your slot remains reserved while staff reviews your request.') }}</p>
+            <p class="receipt-note">Paid via {{ strtoupper($booking->payment_method ?? 'payment') }}@if($booking->paid_at) on {{ $booking->paid_at->format('M j, Y g:i A') }}@endif.</p>
+        @elseif($booking->payment_status === 'refunded')
+            <p class="receipt-note">This page keeps your booking and payment details for your records.</p>
+            <p class="receipt-note" style="margin-top:16px"><strong>Refund recorded.</strong> Your {{ strtoupper($booking->payment_method ?? 'payment') }} refund was recorded @if($booking->paid_at) on {{ $booking->paid_at->format('M j, Y g:i A') }}@endif.</p>
+        @elseif($unavailable)
+            <p class="receipt-note">Contact staff before making another payment for this request.</p>
+        @else
+            <p class="receipt-note">Please keep your reference number. Carolina will review your reservation and contact you with any next steps.</p>
+        @endif
+    </section>
 
     <div class="confirmation-card receipt-card">
         <div><small>Booking reference</small><b>{{ $booking->reference }}</b></div>
@@ -23,36 +110,6 @@
         <div><small>Guests</small><b>{{ $booking->guests }} total{{ $booking->children_count ? ' · ' . $booking->children_count . ' child' . ($booking->children_count > 1 ? 'ren' : '') : '' }}</b></div>
         <div><small>Pets</small><b>{{ $booking->pets_count ? $booking->pets_count . ' pet' . ($booking->pets_count > 1 ? 's' : '') : 'None' }}</b></div>
     </div>
-
-    <section class="receipt-summary">
-        <span class="receipt-status {{ $booking->payment_status ?? 'pending' }}">{{ $expiredHold ? 'Hold expired' : ucfirst($booking->status) }} · Payment {{ ucfirst($booking->payment_status ?? 'pending') }}</span>
-        <div class="receipt-summary-grid">
-            <div><small>Booking total</small><b>₱{{ number_format($booking->total_amount, 2) }}</b>@if($booking->discount_amount > 0)<small><s>₱{{ number_format($booking->original_amount, 2) }}</s> · {{ $booking->promo_code }} saved ₱{{ number_format($booking->discount_amount, 2) }}</small>@endif</div>
-            <div><small>Payment</small><b>{{ ucfirst($booking->payment_status ?? 'pending') }}</b><small>{{ strtoupper($booking->payment_method ?? 'cash') }}@if($booking->paid_at) · {{ $booking->paid_at->format('M j, Y g:i A') }}@endif</small></div>
-        </div>
-        <p class="receipt-note">@if($booking->status === 'confirmed')Your reservation is confirmed. Keep this receipt with your booking reference for your records.@elseif($unavailable)Contact staff before making another payment for this request.@else Please keep your reference number. Carolina will review your reservation and contact you with any next steps.@endif</p>
-        @if($temporaryHold)
-            <p class="receipt-note" style="margin-top:12px">New unpaid requests hold their slot for {{ \App\Models\Booking::holdMinutes() }} minutes. Your hold ends <strong>{{ $holdDeadline->copy()->timezone('Asia/Manila')->format('M j, Y, g:i A') }} Philippine time</strong>. After that, the room is released unless payment is recorded or staff confirms it.</p>
-            <p class="receipt-note" data-hold-countdown data-deadline="{{ $holdDeadline->timestamp }}" data-server-now="{{ now()->timestamp }}" data-remaining-seconds="{{ $remainingHoldSeconds }}" role="status" aria-live="polite">Payment hold remaining: <strong data-countdown-value>{{ intdiv($remainingHoldSeconds, 60) }}m {{ str_pad((string) ($remainingHoldSeconds % 60), 2, '0', STR_PAD_LEFT) }}s</strong>.</p>
-        @endif
-        @if(! $unavailable && ! in_array($booking->payment_status, ['paid', 'refunded'], true))
-            <form id="paymongo-checkout-form" method="POST" action="{{ route('bookings.paymongo.start', $booking) }}" data-no-loading style="margin-top:16px">
-                @csrf
-                <button class="button paymongo-submit" type="submit" aria-busy="false" data-loading-text="Opening the secure PayMongo checkout…">
-                    <span class="paymongo-spinner" aria-hidden="true"></span>
-                    <span class="paymongo-submit-label">Pay with GCash test mode</span>
-                    <span class="paymongo-submit-arrow" aria-hidden="true">→</span>
-                </button>
-                <p id="paymongo-loading-message" class="paymongo-loading-message" role="status" aria-live="polite">Connecting to PayMongo securely… Keep this page open.</p>
-                <small style="display:block;margin-top:9px;color:var(--muted)">For thesis testing only. No real money is collected.</small>
-            </form>
-        @elseif($booking->payment_status === 'paid')
-            <p class="receipt-note" style="margin-top:16px"><strong>Payment recorded.</strong> {{ $unavailable ? 'The room was not re-reserved. Contact staff to resolve this payment before making another one.' : ($booking->status === 'confirmed' ? 'Your reservation is confirmed.' : 'Your slot remains reserved while staff reviews your request.') }}</p>
-            <p class="receipt-note">Paid via {{ strtoupper($booking->payment_method ?? 'payment') }}@if($booking->paid_at) on {{ $booking->paid_at->format('M j, Y g:i A') }}@endif.</p>
-        @elseif($booking->payment_status === 'refunded')
-            <p class="receipt-note" style="margin-top:16px"><strong>Refund recorded.</strong> Your {{ strtoupper($booking->payment_method ?? 'payment') }} refund was recorded @if($booking->paid_at) on {{ $booking->paid_at->format('M j, Y g:i A') }}@endif.</p>
-        @endif
-    </section>
     @include('bookings.partials.location-map', ['booking' => $booking])
     <div class="receipt-actions">
         <a class="button" href="{{ \App\Http\Controllers\StayController::link($booking) }}">Your arrival page</a>
