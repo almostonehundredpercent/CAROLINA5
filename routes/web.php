@@ -11,6 +11,7 @@ use App\Http\Controllers\StaffMfaController;
 use App\Http\Controllers\StayController;
 use App\Http\Middleware\RequireStaffMfaEnabled;
 use App\Models\Room;
+use App\Models\Review;
 use App\Support\RoomAvailability;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use Illuminate\Http\Request;
@@ -23,12 +24,19 @@ Route::get('/', function () {
         ->withCount('approvedReviews')
         ->orderBy('id')
         ->get();
+    $publishedReviews = Review::where('status', 'approved')
+        ->with('room:id,name')
+        ->orderByDesc('approved_at')
+        ->orderByDesc('created_at')
+        ->limit(3)
+        ->get();
     [$startsAt, $endsAt] = RoomAvailability::window([]);
     RoomAvailability::annotate($rooms, $startsAt, $endsAt);
 
     return response()->view('home', [
         'featuredRooms' => $rooms->sortBy(fn (Room $room) => (float) $room->price_per_night)->take(6)->values(),
         'availabilityRooms' => $rooms,
+        'publishedReviews' => $publishedReviews,
     ])->header('Cache-Control', 'private, no-store');
 })->name('home');
 Route::get('/sitemap.xml', function () {

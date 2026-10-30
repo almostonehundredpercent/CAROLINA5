@@ -701,6 +701,8 @@ class AdminController extends Controller
                 ->withErrors($exception->errors());
         }
 
+        $customWeeklyBuckets = false;
+        $customBucketKeyForDate = null;
         if ($period === 'custom') {
             $rangeErrors = [];
             if (empty($range['from'])) {
@@ -726,13 +728,31 @@ class AdminController extends Controller
                     ->withInput($request->only(['from', 'to']))
                     ->withErrors(['to' => 'Choose a custom report range of three months or less.']);
             }
-            $dates = collect(CarbonPeriod::create($from, '1 day', $to))->map(fn (Carbon $date) => $date->copy());
-            $keys = $dates->map(fn (Carbon $date) => $date->toDateString());
-            $labels = $dates->map(fn (Carbon $date) => $date->format('M j'));
+            $customWeeklyBuckets = $from->copy()->startOfDay()->diffInDays($to->copy()->startOfDay()) > 13;
+            if ($customWeeklyBuckets) {
+                $customBucketKeyForDate = static function (Carbon $date) use ($from): string {
+                    $start = $from->copy()->startOfDay();
+                    $daysFromStart = (int) $start->diffInDays($date->copy()->startOfDay());
+
+                    return $start->addDays(intdiv($daysFromStart, 7) * 7)->toDateString();
+                };
+                $bucketStarts = collect();
+                for ($bucketStart = $from->copy()->startOfDay(); $bucketStart->lte($to); $bucketStart->addDays(7)) {
+                    $bucketStarts->push($bucketStart->copy());
+                }
+                $keys = $bucketStarts->map(fn (Carbon $date) => $date->toDateString());
+                $labels = $bucketStarts->map(fn (Carbon $date) => $date->format('M j'));
+            } else {
+                $dates = collect(CarbonPeriod::create($from, '1 day', $to))->map(fn (Carbon $date) => $date->copy());
+                $keys = $dates->map(fn (Carbon $date) => $date->toDateString());
+                $labels = $dates->map(fn (Carbon $date) => $date->format('M j'));
+            }
             $periodStart = $from;
             $periodEnd = $to;
             $bookings = Booking::with(['user', 'room', 'payments'])->whereBetween('created_at', [$periodStart, $periodEnd])->get();
-            $grouped = $bookings->groupBy(fn (Booking $booking) => $booking->created_at->toDateString());
+            $grouped = $bookings->groupBy(fn (Booking $booking) => $customWeeklyBuckets
+                ? $customBucketKeyForDate($booking->created_at)
+                : $booking->created_at->toDateString());
         } else {
             [$dates, $keys, $labels] = $this->reportPeriods($period);
             $periodStart = $dates->first();
@@ -743,7 +763,9 @@ class AdminController extends Controller
         $paymentStart = $periodStart;
         $paymentEnd = $periodEnd;
         $paymentGroups = Payment::whereIn('status', ['paid', 'refunded'])->whereBetween('paid_at', [$paymentStart, $paymentEnd])->get()
-            ->groupBy(fn (Payment $payment) => $period === 'custom' ? $payment->paid_at->toDateString() : $this->reportKey($payment->paid_at, $period));
+            ->groupBy(fn (Payment $payment) => $period === 'custom'
+                ? ($customWeeklyBuckets ? $customBucketKeyForDate($payment->paid_at) : $payment->paid_at->toDateString())
+                : $this->reportKey($payment->paid_at, $period));
         $values = $keys->map(function (string $key) use ($grouped, $paymentGroups, $metric) {
             $items = $grouped->get($key, collect());
 
@@ -778,6 +800,7 @@ class AdminController extends Controller
             'total' => $values->sum(),
             'chartLabels' => $labels,
             'chartValues' => $values,
+            'chartGrouping' => $period === 'custom' ? ($customWeeklyBuckets ? 'weekly' : 'daily') : $period,
             'latestBookings' => $bookings->sortByDesc('created_at')->take(5)->values(),
             'bookingReportMetrics' => $metric === 'bookings' ? [
                 'total' => $bookings->count(),

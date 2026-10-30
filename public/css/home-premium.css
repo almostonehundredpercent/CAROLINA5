@@ -63,6 +63,20 @@
 .home-location { width:100%; max-width:none; padding:0 24px 64px; }
 .home-location .booking-location { max-width:none; margin:0; }
 .home-location .booking-location iframe { height:clamp(400px,34vw,580px); }
+.home-reviews { padding-top:24px; padding-bottom:clamp(58px,7vw,92px); }
+.home-reviews .section-heading { margin-bottom:25px; }
+.home-reviews .section-heading h2 { max-width:760px; letter-spacing:-.035em; }
+.home-review-card { min-height:230px; align-content:start; gap:14px; padding:22px; border-radius:15px; box-shadow:0 5px 20px rgba(48,35,21,.07); }
+.home-review-rating { display:flex!important; align-items:center; justify-content:space-between; gap:12px; }
+.home-review-rating small { color:var(--muted); font-size:.72rem; font-weight:700; }
+.home-review-comment { margin:0; color:var(--ink)!important; font-size:.96rem; line-height:1.65; }
+.home-review-no-comment { color:var(--muted)!important; font-style:italic; }
+.home-review-card .home-review-author { display:flex; grid-template-columns:none; align-items:end; justify-content:space-between; gap:12px; margin-top:auto; padding:15px 0 0; border-top:1px solid var(--line); background:transparent; color:var(--ink); }
+.home-review-author > div { display:grid; gap:4px; }
+.home-review-author b { color:var(--ink); font-size:.88rem; }
+.home-review-author small,.home-review-author time { color:var(--muted); font-size:.74rem; }
+.home-review-author time { white-space:nowrap; }
+.home-review-empty { margin:0; }
 .home-rooms .section-heading h2 { max-width:640px; letter-spacing:-.04em; }
 .home-rooms .text-link { display:inline-flex; align-items:center; gap:7px; border:1px solid var(--line); border-radius:999px; padding:11px 15px; color:var(--ink); font-size:.88rem; transition:border-color .2s ease,background .2s ease; }
 .home-rooms .text-link:hover { border-color:#d8b27f; background:#fff8ee; }
@@ -199,6 +213,7 @@
 .dark-mode .home-benefits { background:#211a15; }
 .dark-mode .home-benefits .benefit-grid b { background:#2b211b; border-color:#4a382c; color:#f1a234; }
 @media (max-width:800px) { .home-hero { min-height:640px; padding:78px 7% 54px; background-position:62% center; background-image:linear-gradient(90deg, rgba(20,17,14,.87) 0%, rgba(25,20,16,.64) 46%, rgba(30,23,17,.2) 100%), url('https://images.unsplash.com/photo-1601918774946-25832a4be0d6?auto=format&fit=crop&w=900&q=75'); }.home-hero h1 { font-size:clamp(3rem,14vw,4.4rem); }.home-hero-details { margin-top:49px; }.home-availability-wrap { margin-top:-30px; padding:0 5%; }.home-availability { padding:22px 19px; border-radius:15px; }.home-rooms { padding:65px 6% 54px; }.home-rooms .section-heading { align-items:flex-start; gap:18px; flex-direction:column; }.home-room-carousel .room-card img { height:215px; }.home-lookup { padding:0 6% 57px; }.home-lookup .empty-state { padding:31px 25px; align-items:flex-start; flex-direction:column; }.home-benefits { padding:55px 6%; } }
+@media (max-width:800px) { .home-reviews { padding:14px 6% 54px; }.home-reviews .section-heading { margin-bottom:20px; }.home-review-card { min-height:0; padding:19px; } }
 @media (max-width:650px) { .home-location { padding:0 12px 48px; }.home-location .booking-location iframe { height:420px; } }
 @media (max-width:460px) { .home-hero { min-height:570px; padding-top:62px; }.home-hero p { font-size:1rem; }.home-hero-actions { gap:17px; margin-top:26px; }.home-hero-actions .button.light { flex:1 1 auto; min-width:0; justify-content:space-between; }.home-hero-details { gap:13px 0; margin-top:40px; }.home-hero-details span { padding:0 12px; font-size:.7rem; }.home-hero-details span:first-child { padding-left:0; }.home-hero-details span:last-child { border-left:0; padding-left:0; flex-basis:100%; }.home-lookup .empty-state { padding:28px 21px; }.home-lookup .button { width:100%; justify-content:center; } }
 @media (max-width:620px) { .home-benefits { padding:46px 20px; }.home-benefits .section-heading { margin-bottom:20px; }.home-benefits .benefit-grid { grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }.home-benefits .benefit-grid > div { min-height:116px; padding:15px 9px 11px; border:1px solid #eadfD3; border-radius:15px; background:rgba(255,253,249,.7); }.home-benefits .benefit-grid b { width:44px; height:44px; }.home-benefits .benefit-grid h3 { margin:10px 0 0; font-size:.83rem; line-height:1.22; }.home-benefits .benefit-grid > div:last-child { grid-column:1 / -1; width:calc(50% - 5px); justify-self:center; }.dark-mode .home-benefits .benefit-grid > div { border-color:#4a382c; background:#2a211b; } }
