@@ -311,7 +311,7 @@
                                                             <input type="hidden" name="status" value="confirmed">
                                                             <button class="status-select confirmed restore-booking-button" type="submit">Check availability &amp; restore</button>
                                                         </form>
-                                                    @elseif($payMongoPayment?->status === 'pending')
+                                                    @elseif(! $hasPaidPayMongoPayment && $payMongoPayment?->status === 'pending')
                                                         <form method="POST" action="{{ route('admin.bookings.payment.recheck-paymongo', $booking) }}" onsubmit="return confirm('Check this GCash checkout directly with PayMongo?')">
                                                             @csrf
                                                             <button class="status-select confirmed" type="submit">Verify with PayMongo</button>

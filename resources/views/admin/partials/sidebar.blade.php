@@ -1,9 +1,6 @@
 @php
     $adminNavigation = collect(\App\Support\AdminPermissions::navigation(auth()->user()))
         ->filter(fn ($item) => \App\Support\AdminPermissions::allows(auth()->user(), $item['ability']));
-    $primaryNavigation = $adminNavigation->where('group', 'primary');
-    $moreNavigation = $adminNavigation->where('group', 'more');
-    $moreIsActive = $moreNavigation->contains(fn ($item) => request()->routeIs($item['route']));
 @endphp
 <style>
     .admin-nav a > .admin-nav-icon {
@@ -29,24 +26,14 @@
 <aside class="admin-sidebar">
     <a class="admin-brand" href="{{ route('home') }}"><img src="{{ asset('images/carolina-logo.jpg') }}" alt="Carolina logo"><b>Carolina</b><small>TRANSIENT & AIRBNB</small></a>
     <nav class="admin-nav" aria-label="Staff navigation">
-        @foreach($primaryNavigation as $item)
+        <a class="admin-home-link" href="{{ route('home') }}">@include('admin.partials.sidebar-icon', ['route' => 'home'])Home</a>
+        @foreach($adminNavigation as $item)
             <a class="{{ request()->routeIs($item['route']) ? 'active' : '' }}" href="{{ route($item['route']) }}">@include('admin.partials.sidebar-icon', ['route' => $item['route']]){{ $item['label'] }}</a>
         @endforeach
-        @if($moreNavigation->isNotEmpty())
-            <details class="admin-more" {{ $moreIsActive ? 'open' : '' }}>
-                <summary>More <span aria-hidden="true">⌄</span></summary>
-                <div class="admin-more-links">
-                    @foreach($moreNavigation as $item)
-                        <a class="{{ request()->routeIs($item['route']) ? 'active' : '' }}" href="{{ route($item['route']) }}">@include('admin.partials.sidebar-icon', ['route' => $item['route']]){{ $item['label'] }}</a>
-                    @endforeach
-                </div>
-            </details>
-        @endif
     </nav>
     <button class="admin-theme-toggle" type="button" data-admin-theme-toggle aria-pressed="false">
         <span aria-hidden="true">◐</span><span data-admin-theme-label>Dark mode</span>
     </button>
-    <a href="{{ route('home') }}" class="admin-home"><i aria-hidden="true">⌂</i>Go to home page</a>
     <form method="POST" action="{{ route('logout') }}" class="admin-logout">@csrf<button class="logout-button" type="submit"><i aria-hidden="true">⎋</i>Log out</button></form>
 </aside>
 <script>

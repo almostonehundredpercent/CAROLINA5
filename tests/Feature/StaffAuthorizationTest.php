@@ -46,6 +46,29 @@ test('role boundaries are enforced on direct administrative URLs', function () {
     $this->get(route('admin.dashboard'))->assertRedirect(route('login'));
 });
 
+test('admin navigation shows every section and a home link without a More menu', function () {
+    $admin = staffAccount('admin');
+
+    $response = $this->actingAsStaff($admin)->get(route('admin.frontdesk'));
+
+    $response->assertOk()
+        ->assertSee(route('home'), false)
+        ->assertSee('class="admin-home-link"', false)
+        ->assertSee('Home</a>', false)
+        ->assertSee('Today')
+        ->assertSee('Bookings')
+        ->assertSee('Rooms')
+        ->assertSee('Guests')
+        ->assertSee('Overview')
+        ->assertSee('Reports')
+        ->assertSee('CAROL · Decision support')
+        ->assertSee('Promo codes')
+        ->assertSee('Activity log')
+        ->assertSee('Staff access')
+        ->assertDontSee('admin-more', false)
+        ->assertDontSee('<summary>More', false);
+});
+
 test('only operational staff can change room operations', function () {
     $room = Room::create(['name' => 'Authorization room', 'slug' => 'authorization-room', 'room_type' => 'Test', 'description' => 'Test room.', 'beds' => 1, 'guests' => 2, 'price_per_night' => 500, 'is_active' => true]);
     $frontDesk = staffAccount('front_desk');

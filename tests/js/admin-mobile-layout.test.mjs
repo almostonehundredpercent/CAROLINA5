@@ -15,11 +15,15 @@ function pageMarkup(dark = false) {
         <div class="admin-shell"><aside class="admin-sidebar">
             <a class="admin-brand" href="#">Carolina</a>
             <nav class="admin-nav" aria-label="Staff navigation">
-                <a href="#"><i>▦</i>Overview</a><a href="#"><i>▤</i>Bookings</a>
+                <a class="admin-home-link" href="#"><i>⌂</i>Home</a>
+                <a href="#"><i>◷</i>Today</a><a href="#"><i>▤</i>Bookings</a>
                 <a href="#"><i>⌂</i>Rooms</a><a href="#"><i>♙</i>Guests</a>
-                <details class="admin-more"><summary>More <span>⌄</span></summary><div class="admin-more-links"><a href="#">Reports</a><a href="#">Activity log</a></div></details>
+                <a href="#"><i>▦</i>Overview</a><a href="#"><i>⌁</i>Reports</a>
+                <a href="#"><i>◈</i>CAROL · Decision support</a>
+                <a href="#"><i>%</i>Promo codes</a><a href="#"><i>◷</i>Activity log</a>
+                <a href="#"><i>♙</i>Staff access</a>
             </nav><button class="admin-theme-toggle">Dark mode</button>
-            <a class="admin-home" href="#">Go to home page</a><form class="admin-logout"><button class="logout-button">Log out</button></form>
+            <form class="admin-logout"><button class="logout-button">Log out</button></form>
         </aside><main class="admin-main"><section class="panel"><div class="admin-table-wrap">
             <table><thead><tr><th>Guest</th><th>Stay</th><th>Actions</th></tr></thead><tbody>
                 <tr><td data-label="Guest"><b>Carolina Guest</b><small>guest@example.test</small></td><td data-label="Stay">Oct 24, 2026 · Room 11</td><td data-label="Actions"><a class="status-select" href="#">Open profile</a></td></tr>
@@ -38,7 +42,7 @@ async function enhanceAdminTables(page) {
     await page.addScriptTag({ content: script });
 }
 
-test('small-screen admin navigation remains visible without horizontal overflow', async () => {
+test('small-screen admin navigation shows Home and every section without a More menu or horizontal overflow', async () => {
     const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
     try {
         await page.setContent(pageMarkup());
@@ -48,11 +52,22 @@ test('small-screen admin navigation remains visible without horizontal overflow'
             scrollWidth: nav.scrollWidth,
             clientWidth: nav.clientWidth,
             columns: getComputedStyle(nav).gridTemplateColumns,
+            links: [...nav.querySelectorAll(':scope > a')].map(link => ({
+                label: [...link.childNodes].filter(node => node.nodeType === Node.TEXT_NODE).map(node => node.textContent).join('').trim(),
+                visible: getComputedStyle(link).display !== 'none' && link.getBoundingClientRect().height > 0,
+            })),
+            hasMoreMenu: Boolean(nav.querySelector('details, summary')),
         }));
 
         assert.equal(metrics.display, 'grid', 'mobile navigation should use the two-column layout configured for small screens');
         assert.ok(metrics.scrollWidth <= metrics.clientWidth, 'navigation should not hide links behind horizontal scrolling');
         assert.equal(metrics.columns.split(' ').length, 2, 'primary navigation should be arranged in two columns');
+        assert.equal(metrics.hasMoreMenu, false, 'navigation should not be hidden behind a More menu');
+        assert.deepEqual(metrics.links.map(link => link.label), [
+            'Home', 'Today', 'Bookings', 'Rooms', 'Guests', 'Overview', 'Reports',
+            'CAROL · Decision support', 'Promo codes', 'Activity log', 'Staff access',
+        ]);
+        assert.ok(metrics.links.every(link => link.visible), 'every navigation link should be visible and tappable');
     } finally {
         await page.close();
     }

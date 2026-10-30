@@ -1,5 +1,8 @@
 <i class="admin-nav-icon" aria-hidden="true">
     @switch($route)
+        @case('home')
+            <svg viewBox="0 0 24 24"><path d="m12 2.8 9 7.9a1 1 0 0 1-.66 1.75H19V20a2 2 0 0 1-2 2h-3v-6h-4v6H7a2 2 0 0 1-2-2v-7.55H3.66A1 1 0 0 1 3 10.7l9-7.9Z"/></svg>
+            @break
         @case('admin.frontdesk')
             <svg viewBox="0 0 24 24"><path fill-rule="evenodd" d="M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20Zm1-15a1 1 0 1 0-2 0v5c0 .38.21.72.55.9l3.5 1.75a1 1 0 1 0 .9-1.8L13 11.38V7Z" clip-rule="evenodd"/></svg>
             @break
