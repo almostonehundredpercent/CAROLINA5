@@ -16,19 +16,25 @@ test('the room catalogue seeds and displays eighteen numbered rooms in groups of
     expect(substr_count($response->getContent(), 'data-room-page='))->toBe(3);
 });
 
-test('the rooms page keeps the finder compact and places the promotion after the first room row', function () {
+test('the rooms page places the promotion between the booking finder and room results', function () {
     $this->seed(RoomSeeder::class);
 
-    $this->get(route('rooms.index'))
+    $response = $this->get(route('rooms.index'))
         ->assertOk()
         ->assertSeeInOrder([
             '<h1>Find a room</h1>',
             '<p>Choose your dates and stay length.</p>',
             '<form class="filter-bar rooms-search" method="GET">',
+            '<h2 id="rooms-ber-promo-title">Fan Room Solo—with free breakfast.</h2>',
             '<p class="result-count">',
             '<h3>Room 1</h3>',
-            '<h3>Room 3</h3>',
-            '<h2 id="rooms-ber-promo-title">Fan Room Solo—with free breakfast.</h2>',
-            '<h3>Room 4</h3>',
         ], false);
+
+    $document = new DOMDocument;
+    @$document->loadHTML($response->getContent());
+    $xpath = new DOMXPath($document);
+    $promotion = $xpath->query('//section[contains(concat(" ", normalize-space(@class), " "), " rooms-results ")]/section[contains(concat(" ", normalize-space(@class), " "), " ber-promo-rooms ")]')->item(0);
+
+    expect($promotion)->not->toBeNull()
+        ->and($xpath->query('//section[contains(concat(" ", normalize-space(@class), " "), " room-grid ")]//section[contains(concat(" ", normalize-space(@class), " "), " ber-promo-rooms ")]')->length)->toBe(0);
 });

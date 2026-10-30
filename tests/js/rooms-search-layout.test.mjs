@@ -4,9 +4,10 @@ import { after, before } from 'node:test';
 import { readFile } from 'node:fs/promises';
 import { chromium } from 'playwright';
 
-const [baseStyles, roomsStyles, roomsView] = await Promise.all([
+const [baseStyles, roomsStyles, promoStyles, roomsView] = await Promise.all([
     readFile(new URL('../../public/css/site.css', import.meta.url), 'utf8'),
     readFile(new URL('../../public/css/rooms-premium.css', import.meta.url), 'utf8'),
+    readFile(new URL('../../public/css/promo-campaign.css', import.meta.url), 'utf8'),
     readFile(new URL('../../resources/views/rooms/index.blade.php', import.meta.url), 'utf8'),
 ]);
 const roomsSearchScript = roomsView.match(/<script>([\s\S]*?)<\/script>/)?.[1];
@@ -40,7 +41,7 @@ async function render(viewport, { darkMode = false } = {}) {
     return page;
 }
 
-test('rooms page keeps its compact intro and inserts the promotion after featured rooms on desktop and mobile', async () => {
+test('rooms promotion stays near the top, between the finder and results, on desktop and mobile', async () => {
     const cards = Array.from({ length: 6 }, (_, index) => `
         <article class="room-card rooms-card">
             <img src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" alt="Room ${index + 1}">
@@ -52,12 +53,12 @@ test('rooms page keeps its compact intro and inserts the promotion after feature
     for (const width of [1440, 390]) {
         const page = await browser.newPage({ viewport: { width, height: 900 } });
         try {
-            await page.setContent(`<html><head><style>${baseStyles}\n${roomsStyles}\n@media(min-width:901px){.rooms-grid-with-promo{grid-template-columns:repeat(3,minmax(0,1fr));}}</style></head><body>
+            await page.setContent(`<html><head><style>${baseStyles}\n${roomsStyles}\n${promoStyles}</style></head><body>
                 <header class="nav"><a class="brand" href="#">Carolina</a><nav><a>Rooms</a><a>About</a><a>Contact</a><a>My bookings</a><a>Admin</a><a class="nav-button">Book now</a><button class="theme-toggle">Dark mode</button><a class="nav-button">Sign out</a></nav></header>
                 <section class="page-hero rooms-hero"><div><h1>Find a room</h1><p>Choose your dates and stay length.</p></div></section>
-                <section class="section compact rooms-results"><form class="filter-bar rooms-search"><button class="rooms-date-trigger">Check-in</button><div class="rooms-choice">Stay length</div><div class="rooms-time-field">Check-in time</div><div class="rooms-choice">Guests</div><div class="rooms-sort-control">Sort by price</div><button class="button">Check availability</button></form>
+                <section class="section compact rooms-results"><form class="filter-bar rooms-search"><button class="rooms-date-trigger">Check-in</button><div class="rooms-choice">Stay length</div><div class="rooms-time-field">Check-in time</div><div class="rooms-choice">Guests</div><div class="rooms-sort-control">Sort by price</div><button class="button">Check availability</button></form>${promo}
                     <p class="result-count">16 available · 2 unavailable</p>
-                    <div class="rooms-carousel"><p class="rooms-page-status">Showing rooms 1–6 of 18 · Group 1 of 3</p><div class="room-grid rooms-grid-with-promo">${cards.slice(0, 3).join('')}${promo}${cards.slice(3).join('')}</div></div>
+                    <div class="rooms-carousel"><p class="rooms-page-status">Showing rooms 1–6 of 18 · Group 1 of 3</p><div class="room-grid">${cards.join('')}</div></div>
                 </section></body></html>`, { waitUntil: 'domcontentloaded' });
 
             const layout = await page.evaluate(() => {
@@ -71,9 +72,10 @@ test('rooms page keeps its compact intro and inserts the promotion after feature
                     backgroundImage: getComputedStyle(document.querySelector('.rooms-hero')).backgroundImage,
                     search: rect('.rooms-search'),
                     resultCount: rect('.result-count'),
-                    grid: rect('.rooms-grid-with-promo'),
+                    grid: rect('.room-grid'),
                     promo: rect('.ber-promo-rooms'),
-                    cards: [...document.querySelectorAll('.rooms-grid-with-promo .rooms-card')].map(card => {
+                    promoParent: document.querySelector('.ber-promo-rooms').parentElement.className,
+                    cards: [...document.querySelectorAll('.room-grid .rooms-card')].map(card => {
                         const { y, width, bottom } = card.getBoundingClientRect();
                         return { y, width, bottom };
                     }),
@@ -88,16 +90,14 @@ test('rooms page keeps its compact intro and inserts the promotion after feature
             assert.ok([layout.heading.x, layout.search.x, layout.resultCount.x].every(left => Math.abs(left - layout.grid.x) < 2),
                 `the heading, search, result count, and room cards should share a left edge at ${width}px`);
             assert.ok(layout.promo.width >= layout.grid.width - 2, `the promotion should span the room grid at ${width}px`);
+            assert.ok(Math.abs(layout.promo.x - layout.grid.x) < 2, `the promotion should align with the room cards at ${width}px`);
+            assert.equal(layout.promoParent, 'section compact rooms-results', `the promotion should sit outside the room-card grid at ${width}px`);
+            assert.ok(layout.promo.y >= layout.search.bottom, `the promotion should follow the booking controls at ${width}px`);
+            assert.ok(layout.resultCount.y >= layout.promo.bottom, `room availability should follow the promotion at ${width}px`);
+            assert.ok(layout.promo.height < (width > 650 ? 190 : 285), `the promotion should stay compact at ${width}px`);
             assert.ok(layout.bookNow.includes('Book now'), 'the existing header booking action should remain');
             assert.ok(layout.controls.includes('Check availability'), 'the existing availability search should remain');
-
-            if (width > 650) {
-                assert.ok(layout.cards[2].bottom <= layout.promo.y, 'desktop promotion should follow the first three room cards');
-                assert.ok(layout.cards[3].y >= layout.promo.bottom, 'remaining desktop cards should follow the promotion');
-            } else {
-                assert.ok(layout.cards[0].bottom <= layout.promo.y, 'mobile promotion should follow the first room card');
-                assert.ok(layout.cards[1].y >= layout.promo.bottom, 'remaining mobile cards should follow the promotion');
-            }
+            assert.ok(layout.cards[0].y >= layout.resultCount.bottom, `room cards should follow the availability count at ${width}px`);
         } finally {
             await page.close();
         }

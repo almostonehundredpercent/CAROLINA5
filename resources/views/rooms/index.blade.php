@@ -29,6 +29,7 @@
         </section>
     </form>
 
+    @include('rooms.partials.promo-banner')
     <p class="result-count">{{ $rooms->whereNull('availability_reason')->count() }} available · {{ $rooms->whereNotNull('availability_reason')->count() }} unavailable{{ isset($filters['check_in']) ? ' for your stay' : ' right now' }}</p>
     @php($roomPages = $rooms->chunk(6)->values())
     <div class="rooms-carousel" id="rooms-carousel">
@@ -39,7 +40,7 @@
         <div class="rooms-page-track" id="rooms-page-track">
             @forelse($roomPages as $pageIndex => $roomPage)
                 <div class="rooms-page" role="group" data-room-page="{{ $pageIndex + 1 }}" aria-label="Rooms {{ $pageIndex * 6 + 1 }} to {{ min(($pageIndex + 1) * 6, $rooms->count()) }}">
-                    <div class="room-grid {{ $pageIndex === 0 ? 'rooms-grid-with-promo' : '' }}">
+                    <div class="room-grid">
                         @foreach($roomPage as $room)
                             <article class="room-card rooms-card">
                                 <img src="{{ $room->image_url }}" alt="{{ $room->name }}" @if($roomSrcset = $room->responsiveImageSrcset()) srcset="{{ $roomSrcset }}" sizes="(max-width: 650px) 82vw, (max-width: 900px) 45vw, 30vw" @endif @if(($pageIndex * 6 + $loop->index) > 2) loading="lazy" @endif decoding="async">
@@ -68,9 +69,6 @@
                                     <div class="rooms-card-footer"><strong>₱{{ number_format($room->price_per_night) }} <small>{{ $room->rate_label }}</small></strong><a class="button small" href="{{ route('rooms.show', ['room' => $room] + $filters) }}">{{ $room->availability_reason ? ($hasStaySearch ? 'Try other dates' : 'Check dates') : 'View room' }} <span aria-hidden="true">→</span></a></div>
                                 </div>
                             </article>
-                            @if($pageIndex === 0 && ($loop->iteration === 3 || ($loop->last && $loop->iteration < 3)))
-                                @include('rooms.partials.promo-banner')
-                            @endif
                         @endforeach
                     </div>
                 </div>
