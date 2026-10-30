@@ -67,8 +67,10 @@ test('rooms page keeps its compact intro and inserts the promotion after feature
                 };
                 return {
                     intro: rect('.rooms-hero'),
+                    heading: rect('.rooms-hero h1'),
                     backgroundImage: getComputedStyle(document.querySelector('.rooms-hero')).backgroundImage,
                     search: rect('.rooms-search'),
+                    resultCount: rect('.result-count'),
                     grid: rect('.rooms-grid-with-promo'),
                     promo: rect('.ber-promo-rooms'),
                     cards: [...document.querySelectorAll('.rooms-grid-with-promo .rooms-card')].map(card => {
@@ -83,6 +85,8 @@ test('rooms page keeps its compact intro and inserts the promotion after feature
             assert.ok(layout.intro.height < 170, `the rooms intro should stay compact at ${width}px`);
             assert.equal(layout.backgroundImage, 'none', `the compact intro should not retain the tall decorative hero at ${width}px`);
             assert.ok(layout.search.y - layout.intro.bottom < 45, `the booking controls should follow the intro closely at ${width}px`);
+            assert.ok([layout.heading.x, layout.search.x, layout.resultCount.x].every(left => Math.abs(left - layout.grid.x) < 2),
+                `the heading, search, result count, and room cards should share a left edge at ${width}px`);
             assert.ok(layout.promo.width >= layout.grid.width - 2, `the promotion should span the room grid at ${width}px`);
             assert.ok(layout.bookNow.includes('Book now'), 'the existing header booking action should remain');
             assert.ok(layout.controls.includes('Check availability'), 'the existing availability search should remain');
@@ -271,6 +275,22 @@ test('price sort choices use a high-contrast, touch-friendly dark menu', async (
         assert.equal(menu.choices.length, 3);
         assert.ok(menu.choices.every(choice => choice.height >= 44), 'each option should be easy to tap');
         assert.ok(menu.choices.every(choice => choice.color.startsWith('rgb(255,')), 'option text should remain light against the dark menu');
+    } finally {
+        await page.close();
+    }
+});
+
+test('the price sort menu stays inside a narrow phone viewport', async () => {
+    const page = await render({ width: 320, height: 740 }, { darkMode: true });
+    try {
+        await page.locator('#rooms-sort-trigger').click();
+        const geometry = await page.locator('#rooms-sort-menu').evaluate(element => {
+            const { left, right, width } = element.getBoundingClientRect();
+            return { left, right, width, viewport: innerWidth, document: document.documentElement.scrollWidth };
+        });
+        assert.ok(geometry.left >= 0 && geometry.right <= geometry.viewport,
+            `the menu should fit the phone viewport (${JSON.stringify(geometry)})`);
+        assert.ok(geometry.document <= geometry.viewport, 'opening the sort menu should not introduce horizontal scrolling');
     } finally {
         await page.close();
     }
