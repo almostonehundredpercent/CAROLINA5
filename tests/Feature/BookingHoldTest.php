@@ -309,9 +309,20 @@ test('receipt shows a server-authoritative live countdown for an active hold', f
 
     $this->withSession(['guest_booking_reference' => $booking->reference])->get(route('bookings.receipt', $booking))
         ->assertOk()
+        ->assertSee('30-minute payment window')
         ->assertSee('data-hold-countdown', false)
         ->assertSee('data-remaining-seconds="1800"', false)
         ->assertSee('30 minutes');
+});
+
+test('confirmed unpaid receipt explains that the request hold timer no longer applies', function () {
+    $booking = heldBooking(holdRoom(), ['status' => 'confirmed', 'payment_status' => 'pending']);
+
+    $this->withSession(['guest_booking_reference' => $booking->reference])->get(route('bookings.receipt', $booking))
+        ->assertOk()
+        ->assertSee('The 30-minute hold does not apply to this confirmed booking')
+        ->assertSee('This limit applies only to unpaid requests awaiting confirmation.')
+        ->assertDontSee('data-hold-countdown', false);
 });
 
 test('unpaid booking receipt leads with the amount due and payment action', function () {
@@ -373,7 +384,7 @@ test('receipt recognizes a hold already expired by the scheduler', function () {
 test('receipt and terms describe the same finite unpaid hold', function () {
     $booking = heldBooking(holdRoom());
     $this->withSession(['guest_booking_reference' => $booking->reference])->get(route('bookings.receipt', $booking))
-        ->assertOk()->assertSee('30 minutes')->assertSee('Oct 3, 2026, 9:30 AM');
+        ->assertOk()->assertSee('30-minute payment window')->assertSee('Oct 3, 2026, 9:30 AM');
     $this->get('/terms')->assertOk()->assertSee('30 minutes')->assertDontSee('Pending requests do not prevent');
 });
 

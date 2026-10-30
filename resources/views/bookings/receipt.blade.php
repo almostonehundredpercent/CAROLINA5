@@ -35,7 +35,7 @@
     .receipt-status{display:inline-flex;padding:7px 11px;border-radius:999px;background:#fff0d4;color:#805000;font-size:.78rem;font-weight:800}
     .receipt-status.paid{background:#dcfce7;color:#166534}
     .receipt-note{margin:0;color:var(--muted);line-height:1.55}
-    .receipt-hold-alert{margin-top:13px;padding:12px 14px;border:1px solid #e9c17e;border-radius:9px;background:#fff3d9;color:#65400d}
+    .receipt-hold-alert{margin:12px 0 0;padding:12px 14px;border:1px solid #e9c17e;border-radius:9px;background:#fff3d9;color:#65400d}
     .receipt-hold-alert>p{margin:5px 0 0;font-size:.9rem;line-height:1.5}
     .receipt-hold-alert strong{color:#50320b}
     .paymongo-submit{display:flex;align-items:center;justify-content:center;gap:9px;width:100%;min-height:52px;margin-top:12px;padding:12px 18px;font-size:1rem;font-weight:800}
@@ -84,6 +84,18 @@
                 @endif
             </div>
         </div>
+        @if($temporaryHold)
+            <div class="receipt-hold-alert" role="note">
+                <strong>{{ \App\Models\Booking::holdMinutes() }}-minute payment window</strong>
+                <p>Your room is held for up to {{ \App\Models\Booking::holdMinutes() }} minutes, until <strong>{{ $holdDeadline->copy()->timezone('Asia/Manila')->format('M j, Y, g:i A') }} Philippine time</strong>. If payment is not recorded by then, the room will be released.</p>
+                <p data-hold-countdown data-deadline="{{ $holdDeadline->timestamp }}" data-server-now="{{ now()->timestamp }}" data-remaining-seconds="{{ $remainingHoldSeconds }}" role="status" aria-live="polite">Time remaining: <strong data-countdown-value>{{ intdiv($remainingHoldSeconds, 60) }}m {{ str_pad((string) ($remainingHoldSeconds % 60), 2, '0', STR_PAD_LEFT) }}s</strong>.</p>
+            </div>
+        @elseif($canPayOnline && $booking->status === 'confirmed')
+            <div class="receipt-hold-alert receipt-payment-window-info" role="note">
+                <strong>The 30-minute hold does not apply to this confirmed booking</strong>
+                <p>This limit applies only to unpaid requests awaiting confirmation.</p>
+            </div>
+        @endif
         @if($canPayOnline)
             <form id="paymongo-checkout-form" method="POST" action="{{ route('bookings.paymongo.start', $booking) }}" data-no-loading>
                 @csrf
@@ -95,13 +107,6 @@
                 <p id="paymongo-loading-message" class="paymongo-loading-message" role="status" aria-live="polite">Connecting to PayMongo securely… Keep this page open.</p>
                 <small style="display:block;margin-top:9px;color:var(--muted)">For thesis testing only. No real money is collected.</small>
             </form>
-        @endif
-        @if($temporaryHold)
-            <div class="receipt-hold-alert">
-                <strong>Pay before your room hold expires</strong>
-                <p>New unpaid requests hold their slot for {{ \App\Models\Booking::holdMinutes() }} minutes. Your hold ends <strong>{{ $holdDeadline->copy()->timezone('Asia/Manila')->format('M j, Y, g:i A') }} Philippine time</strong>. After that, the room is released unless payment is recorded or staff confirms it.</p>
-                <p data-hold-countdown data-deadline="{{ $holdDeadline->timestamp }}" data-server-now="{{ now()->timestamp }}" data-remaining-seconds="{{ $remainingHoldSeconds }}" role="status" aria-live="polite">Time remaining: <strong data-countdown-value>{{ intdiv($remainingHoldSeconds, 60) }}m {{ str_pad((string) ($remainingHoldSeconds % 60), 2, '0', STR_PAD_LEFT) }}s</strong>.</p>
-            </div>
         @endif
         @if($booking->payment_status === 'paid')
             <p class="receipt-note"><strong>Payment recorded.</strong> {{ $unavailable ? 'The room was not re-reserved. Contact staff to resolve this payment before making another one.' : ($booking->status === 'confirmed' ? 'Your reservation is confirmed.' : 'Your slot remains reserved while staff reviews your request.') }}</p>
