@@ -49,7 +49,9 @@ function initCalendar() {
         days.replaceChildren();
         month.textContent = cursor.toLocaleDateString('en-US', { month: 'long', year: 'numeric', timeZone: 'UTC' });
         if (availabilityState !== 'ready') {
-            message(availabilityState === 'error' ? 'Availability could not be loaded. Select the room again to retry.' : 'Checking reserved dates and hours…');
+            message(availabilityState === 'limited'
+                ? 'Too many availability checks. Please wait a minute, then choose the room again.'
+                : availabilityState === 'error' ? 'Availability could not be loaded. Select the room again to retry.' : 'Checking reserved dates and hours…');
             return;
         }
         for (let i = 0; i < cursor.getUTCDay(); i++) {
@@ -94,6 +96,7 @@ function initCalendar() {
         calendar.setAttribute('aria-busy', 'true');
         try {
             const response = await fetch(url, { headers: { Accept: 'application/json' }, cache: 'no-store' });
+            if (response.status === 429) throw new Error('rate-limited');
             if (!response.ok) throw new Error('Availability unavailable');
             const data = await response.json();
             if (!Array.isArray(data.slots)) throw new Error('Availability unavailable');
@@ -102,11 +105,11 @@ function initCalendar() {
             loadedRoom = room;
             availabilityState = 'ready';
             render();
-        } catch {
+        } catch (error) {
             if (id !== requestId) return;
             slots = [];
             loadedRoom = '';
-            availabilityState = 'error';
+            availabilityState = error.message === 'rate-limited' ? 'limited' : 'error';
             render();
         } finally {
             if (id === requestId) calendar.setAttribute('aria-busy', 'false');

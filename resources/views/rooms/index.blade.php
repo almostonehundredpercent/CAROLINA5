@@ -213,6 +213,7 @@ document.addEventListener('DOMContentLoaded', () => {
             detail.textContent = 'Loading this room’s schedule…';
             try {
                 const response = await fetch(card.dataset.availabilityUrl, { headers: { Accept: 'application/json' }, cache: 'no-store' });
+                if (response.status === 429) throw new Error('rate-limited');
                 if (!response.ok) throw new Error('Availability unavailable');
                 const data = await response.json();
                 ranges = Array.isArray(data.ranges) ? data.ranges : [];
@@ -221,7 +222,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 render();
                 renderDetail(selectedDate || iso(today));
             } catch (error) {
-                detail.textContent = 'This room’s availability could not be loaded. Please try again.';
+                detail.textContent = error.message === 'rate-limited'
+                    ? 'Too many availability checks. Please wait a minute and try again.'
+                    : 'This room’s availability could not be loaded. Please try again.';
             }
         };
         toggle.addEventListener('click', () => {

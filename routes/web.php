@@ -53,7 +53,7 @@ Route::view('/privacy', 'legal.privacy')->name('privacy');
 Route::view('/terms', 'legal.terms')->name('terms');
 Route::get('/rooms', [RoomController::class, 'index'])->name('rooms.index');
 Route::get('/rooms/{room:slug}', [RoomController::class, 'show'])->name('rooms.show');
-Route::get('/rooms/{room:slug}/availability', [BookingController::class, 'availability'])->name('rooms.availability');
+Route::get('/rooms/{room:slug}/availability', [BookingController::class, 'availability'])->middleware('throttle:30,1')->name('rooms.availability');
 Route::post('/rooms/{room:slug}/promo-quote', [BookingController::class, 'promoQuote'])->middleware('throttle:20,1')->name('rooms.promos.quote');
 Route::get('/booking-lookup', [BookingController::class, 'lookupForm'])->name('bookings.lookup');
 Route::get('/stay/{booking}', [StayController::class, 'show'])->middleware(['signed', 'throttle:60,1'])->name('stay.show');
