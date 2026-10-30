@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\AdminMiddleware;
+use App\Http\Middleware\LogRateLimitedRequests;
 use App\Http\Middleware\PreventAuthenticatedPageCaching;
 use App\Http\Middleware\RequireAdminPermission;
 use App\Http\Middleware\RequireStaffMfa;
@@ -24,6 +25,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // Render terminates HTTPS before requests reach Laravel. Trust its forwarded
         // protocol headers so redirects and secure session cookies stay on HTTPS.
         $middleware->trustProxies(at: '*');
+        $middleware->append(LogRateLimitedRequests::class);
         $middleware->validateCsrfTokens(except: ['webhooks/paymongo']);
 
         $middleware->alias([
