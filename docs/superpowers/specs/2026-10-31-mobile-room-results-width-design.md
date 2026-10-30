@@ -1,0 +1,3 @@
+# Mobile Room Results Width Design
+
+The mobile room results page feels narrow because its hero uses 50px side padding and the filters, promo banner, result count, and room carousel each add 34px gutters inside a section that already has 16px padding. Reduce those extra mobile gutters to 8px and align the hero at 24px, giving the card content roughly 52px more width on a 390px phone while keeping the heading, search, promo, result count, and cards on the same left edge. Keep all changes inside the existing 650px media query; desktop spacing and content order remain unchanged. A less invasive alternative would widen only the cards, but it would leave the filter and promotion visually misaligned; the broader mobile-only gutter adjustment is more consistent.
