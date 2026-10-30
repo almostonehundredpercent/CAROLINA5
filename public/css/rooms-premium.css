@@ -165,3 +165,10 @@
     .room-availability-toggle > span:last-child { width:34px; height:34px; flex:0 0 34px; }
     .room-availability-toggle:focus-visible { outline:2px solid #c97900; outline-offset:2px; }
 }
+
+@media (max-width:650px) {
+    .rooms-page-status { min-height:32px; margin:0 88px 15px 0; text-align:left; }
+    .rooms-page-arrow { top:0; }
+    .rooms-page-arrow-previous { right:40px; left:auto; }
+    .rooms-page-arrow-next { right:0; }
+}

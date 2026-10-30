@@ -20,6 +20,7 @@
 
 - At 320px, room cards and controls fit without horizontal overflow.
 - At 390px, room cards gain the expected width.
+- Visible previous/next pagination controls never cover room titles or booked-date controls.
 - At desktop width, computed gutters stay at their existing 48px/desktop values.
 
 ---
@@ -34,8 +35,8 @@
 - Consumes: Existing room-results markup and CSS classes.
 - Produces: Wider mobile room cards and aligned search/promo content; unchanged desktop layout.
 
-- [x] Add a Playwright regression test asserting mobile content gutters are <=24px and the room card width is at least viewport minus 48px at 320px and 390px; assert desktop gutter values remain unchanged at 1440px.
+- [x] Add a Playwright regression test asserting mobile content gutters are <=24px, room card width is at least viewport minus 48px, and visible pagination arrows do not cover room titles or booked-date controls at 320px and 390px; assert desktop gutter values remain unchanged at 1440px.
 - [x] Run the test and confirm it fails against current mobile spacing.
-- [x] Reduce the listed margins/padding only in the existing <=650px CSS rule.
-- [x] Run the focused test, full JavaScript test suite (86/86 on retry), and production build.
+- [x] Reduce the listed margins/padding only in the existing <=650px CSS rule and move mobile pagination arrows beside the room-results status.
+- [x] Run the focused test, full JavaScript test suite, and production build.
 - [ ] Capture and inspect a live mobile-width screenshot; verify desktop computed gutters remain unchanged.
