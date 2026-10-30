@@ -39,4 +39,4 @@
 - [x] Run the test and confirm it fails against current mobile spacing.
 - [x] Reduce the listed margins/padding only in the existing <=650px CSS rule and move mobile pagination arrows beside the room-results status.
 - [x] Run the focused test, full JavaScript test suite, and production build.
-- [ ] Capture and inspect a live mobile-width screenshot; verify desktop computed gutters remain unchanged.
+- [x] Capture and inspect the live room page at 320px, 390px, and 1440px; confirm no mobile overflow or arrow overlap, the booked-dates calendar expands, no browser console errors, and desktop gutters remain 48px.
