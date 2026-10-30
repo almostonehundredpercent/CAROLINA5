@@ -101,7 +101,7 @@
 .rooms-card .button.small { float:none; min-height:40px; border:1px solid rgba(246,186,97,.58); border-radius:999px; padding:10px 13px; background:linear-gradient(135deg,#e9951c,#bd6505); color:#fffaf2; font-size:.8rem; white-space:nowrap; }
 .rooms-card .button.small span { font-size:1rem; }
 .room-card-availability { margin:0 0 17px; border:1px solid #eadbca; border-radius:13px; background:rgba(255,255,255,.58); }
-.room-availability-toggle { display:flex; width:100%; align-items:center; justify-content:space-between; gap:12px; padding:12px 14px; border:0; border-radius:inherit; background:transparent; color:#35271e; text-align:left; cursor:pointer; }
+.room-availability-toggle { display:flex; width:100%; align-items:center; justify-content:space-between; gap:12px; padding:12px 14px; border:0; border-radius:inherit; background:transparent; color:#35271e; font:inherit; text-align:left; cursor:pointer; }
 .room-availability-toggle b,.room-availability-toggle small { display:block; }
 .room-availability-toggle b { font-size:.85rem; }
 .room-availability-toggle small { margin-top:3px; color:#786a5d; font-size:.72rem; }

@@ -43,6 +43,39 @@ function roomCard(slug, id) {
     </article>`;
 }
 
+test('booked-date toggle uses the same typeface as the room card copy', async () => {
+    const browser = await chromium.launch({ headless: true });
+
+    try {
+        for (const width of [1440, 390]) {
+            const page = await browser.newPage({ viewport: { width, height: 844 } });
+            try {
+                await page.setContent(`<html><head><style>${baseStyles}\n${roomsStyles}</style></head><body>
+                    <article class="room-card rooms-card"><div class="room-card-body">
+                        <p>Room description in the established typeface.</p>
+                        ${roomCard('room-one', 'room-calendar-one')}
+                    </div></article>
+                </body></html>`);
+
+                const fonts = await page.locator('.room-availability-toggle').evaluate(button => ({
+                    button: getComputedStyle(button).fontFamily,
+                    label: getComputedStyle(button.querySelector('b')).fontFamily,
+                    helper: getComputedStyle(button.querySelector('small')).fontFamily,
+                    roomCopy: getComputedStyle(document.querySelector('.room-card-body > p')).fontFamily,
+                }));
+
+                assert.equal(fonts.button, fonts.roomCopy, `toggle button should match the room copy at ${width}px`);
+                assert.equal(fonts.label, fonts.roomCopy, `toggle label should match the room copy at ${width}px`);
+                assert.equal(fonts.helper, fonts.roomCopy, `toggle helper text should match the room copy at ${width}px`);
+            } finally {
+                await page.close();
+            }
+        }
+    } finally {
+        await browser.close();
+    }
+});
+
 test('each room calendar marks its own booked dates red, including cross-midnight hourly stays', async () => {
     const browser = await chromium.launch({ headless: true });
     const context = await browser.newContext({ viewport: { width: 390, height: 844 }, timezoneId: 'Asia/Singapore' });
