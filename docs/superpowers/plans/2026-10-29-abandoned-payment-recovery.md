@@ -99,5 +99,5 @@
 - [x] **Step 1: Run `php artisan test --compact`** and confirm the full PHP suite passes.
 - [x] **Step 2: Run `node --test --test-concurrency=1 tests/js/*.test.mjs` and `git diff --check`**; confirm both complete without errors.
 - [x] **Step 3: Create a local review commit and request a read-only code review** of the committed diff, address Critical/Important findings with a failing test first, then rerun the affected and full suites.
-- [ ] **Step 4: Push to `origin main`** without force-pushing; integrate any new upstream commit safely before push.
-- [ ] **Step 5: Confirm the push result** and report the deployment trigger accurately; do not claim Render deployment completed unless its status is verified.
+- [x] **Step 4: Push to `origin main`** without force-pushing; integrate any new upstream commit safely before push.
+- [x] **Step 5: Confirm the push result** and report the deployment trigger accurately; do not claim Render deployment completed unless its status is verified.
