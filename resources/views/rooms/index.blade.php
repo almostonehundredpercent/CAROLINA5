@@ -5,8 +5,7 @@
 @endpush
 @section('content')
 <style>.room-promo-badge{display:inline-flex;margin:8px 0 0;padding:6px 9px;border-radius:999px;background:#fff0d8;color:#a05200;font-size:.72rem;font-weight:800}.dark-mode .room-promo-badge{background:#4a3220;color:#ffd391}</style>
-<section class="page-hero rooms-hero"><div><span class="eyebrow">CAROLINA ROOMS</span><h1>Find a stay that feels right.</h1><p>Start with your arrival date, choose how long you’ll stay, and we’ll take care of the timing.</p></div></section>
-<section class="ber-promo ber-promo-rooms" aria-labelledby="rooms-ber-promo-title"><div class="ber-promo-layout"><div class="ber-promo-copy"><span class="ber-promo-kicker">Ber-Months Promo · Code CAROLINA</span><h2 id="rooms-ber-promo-title">Fan Room Solo—with free breakfast.</h2><p>Book the 22-hour stay for only <strong>₱450</strong> and enter <strong>CAROLINA</strong> at checkout to save 10%.</p><div class="ber-promo-highlights"><span>Smart TV</span><span>WiFi</span><span>Pet-friendly</span></div></div><a class="button" href="{{ route('rooms.show', 'fan-room-solo') }}">See Fan Room Solo <span aria-hidden="true">→</span></a></div></section>
+<section class="page-hero rooms-hero"><div><h1>Find a room</h1><p>Choose your dates and stay length.</p></div></section>
 <section class="section compact rooms-results">
     <form class="filter-bar rooms-search" method="GET">
         <input id="rooms-check-in" type="hidden" name="check_in" value="{{ $filters['check_in'] ?? '' }}">
@@ -40,7 +39,7 @@
         <div class="rooms-page-track" id="rooms-page-track">
             @forelse($roomPages as $pageIndex => $roomPage)
                 <div class="rooms-page" role="group" data-room-page="{{ $pageIndex + 1 }}" aria-label="Rooms {{ $pageIndex * 6 + 1 }} to {{ min(($pageIndex + 1) * 6, $rooms->count()) }}">
-                    <div class="room-grid">
+                    <div class="room-grid {{ $pageIndex === 0 ? 'rooms-grid-with-promo' : '' }}">
                         @foreach($roomPage as $room)
                             <article class="room-card rooms-card">
                                 <img src="{{ $room->image_url }}" alt="{{ $room->name }}" @if($roomSrcset = $room->responsiveImageSrcset()) srcset="{{ $roomSrcset }}" sizes="(max-width: 650px) 82vw, (max-width: 900px) 45vw, 30vw" @endif @if(($pageIndex * 6 + $loop->index) > 2) loading="lazy" @endif decoding="async">
@@ -69,6 +68,9 @@
                                     <div class="rooms-card-footer"><strong>₱{{ number_format($room->price_per_night) }} <small>{{ $room->rate_label }}</small></strong><a class="button small" href="{{ route('rooms.show', ['room' => $room] + $filters) }}">{{ $room->availability_reason ? ($hasStaySearch ? 'Try other dates' : 'Check dates') : 'View room' }} <span aria-hidden="true">→</span></a></div>
                                 </div>
                             </article>
+                            @if($pageIndex === 0 && ($loop->iteration === 3 || ($loop->last && $loop->iteration < 3)))
+                                @include('rooms.partials.promo-banner')
+                            @endif
                         @endforeach
                     </div>
                 </div>

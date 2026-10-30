@@ -40,6 +40,66 @@ async function render(viewport, { darkMode = false } = {}) {
     return page;
 }
 
+test('rooms page keeps its compact intro and inserts the promotion after featured rooms on desktop and mobile', async () => {
+    const cards = Array.from({ length: 6 }, (_, index) => `
+        <article class="room-card rooms-card">
+            <img src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" alt="Room ${index + 1}">
+            <div class="room-card-body"><h3>Room ${index + 1}</h3><p>Preview room information.</p></div>
+        </article>
+    `);
+    const promo = `<section class="ber-promo ber-promo-rooms" aria-label="Current room promotion"><div class="ber-promo-layout"><div class="ber-promo-copy"><span class="ber-promo-kicker">Ber-Months Promo · Code CAROLINA</span><h2>Fan Room Solo—with free breakfast.</h2><p>Book the 22-hour stay for only ₱450 and enter CAROLINA at checkout to save 10%.</p><div class="ber-promo-highlights"><span>Smart TV</span><span>WiFi</span><span>Pet-friendly</span></div></div><a class="button" href="#book">See Fan Room Solo →</a></div></section>`;
+
+    for (const width of [1440, 390]) {
+        const page = await browser.newPage({ viewport: { width, height: 900 } });
+        try {
+            await page.setContent(`<html><head><style>${baseStyles}\n${roomsStyles}\n@media(min-width:901px){.rooms-grid-with-promo{grid-template-columns:repeat(3,minmax(0,1fr));}}</style></head><body>
+                <header class="nav"><a class="brand" href="#">Carolina</a><nav><a>Rooms</a><a>About</a><a>Contact</a><a>My bookings</a><a>Admin</a><a class="nav-button">Book now</a><button class="theme-toggle">Dark mode</button><a class="nav-button">Sign out</a></nav></header>
+                <section class="page-hero rooms-hero"><div><h1>Find a room</h1><p>Choose your dates and stay length.</p></div></section>
+                <section class="section compact rooms-results"><form class="filter-bar rooms-search"><button class="rooms-date-trigger">Check-in</button><div class="rooms-choice">Stay length</div><div class="rooms-time-field">Check-in time</div><div class="rooms-choice">Guests</div><div class="rooms-sort-control">Sort by price</div><button class="button">Check availability</button></form>
+                    <p class="result-count">16 available · 2 unavailable</p>
+                    <div class="rooms-carousel"><p class="rooms-page-status">Showing rooms 1–6 of 18 · Group 1 of 3</p><div class="room-grid rooms-grid-with-promo">${cards.slice(0, 3).join('')}${promo}${cards.slice(3).join('')}</div></div>
+                </section></body></html>`, { waitUntil: 'domcontentloaded' });
+
+            const layout = await page.evaluate(() => {
+                const rect = selector => {
+                    const { x, y, width, height, bottom } = document.querySelector(selector).getBoundingClientRect();
+                    return { x, y, width, height, bottom };
+                };
+                return {
+                    intro: rect('.rooms-hero'),
+                    backgroundImage: getComputedStyle(document.querySelector('.rooms-hero')).backgroundImage,
+                    search: rect('.rooms-search'),
+                    grid: rect('.rooms-grid-with-promo'),
+                    promo: rect('.ber-promo-rooms'),
+                    cards: [...document.querySelectorAll('.rooms-grid-with-promo .rooms-card')].map(card => {
+                        const { y, width, bottom } = card.getBoundingClientRect();
+                        return { y, width, bottom };
+                    }),
+                    bookNow: document.querySelector('.nav .nav-button')?.textContent.trim(),
+                    controls: [...document.querySelectorAll('.rooms-search button')].map(button => button.textContent.trim()),
+                };
+            });
+
+            assert.ok(layout.intro.height < 170, `the rooms intro should stay compact at ${width}px`);
+            assert.equal(layout.backgroundImage, 'none', `the compact intro should not retain the tall decorative hero at ${width}px`);
+            assert.ok(layout.search.y - layout.intro.bottom < 45, `the booking controls should follow the intro closely at ${width}px`);
+            assert.ok(layout.promo.width >= layout.grid.width - 2, `the promotion should span the room grid at ${width}px`);
+            assert.ok(layout.bookNow.includes('Book now'), 'the existing header booking action should remain');
+            assert.ok(layout.controls.includes('Check availability'), 'the existing availability search should remain');
+
+            if (width > 650) {
+                assert.ok(layout.cards[2].bottom <= layout.promo.y, 'desktop promotion should follow the first three room cards');
+                assert.ok(layout.cards[3].y >= layout.promo.bottom, 'remaining desktop cards should follow the promotion');
+            } else {
+                assert.ok(layout.cards[0].bottom <= layout.promo.y, 'mobile promotion should follow the first room card');
+                assert.ok(layout.cards[1].y >= layout.promo.bottom, 'remaining mobile cards should follow the promotion');
+            }
+        } finally {
+            await page.close();
+        }
+    }
+});
+
 test('price sorting keeps all room search controls readable on desktop and mobile', async () => {
     for (const width of [1274, 1024, 901, 768, 390]) {
         const page = await render({ width, height: 850 });
@@ -217,7 +277,8 @@ test('price sort choices use a high-contrast, touch-friendly dark menu', async (
 });
 
 test('price sort options remain above room cards where the dropdown overlaps them', async () => {
-    const page = await render({ width: 960, height: 700 }, { darkMode: true });
+    // At this width the menu clips the right edge of a card while the search still has three columns.
+    const page = await render({ width: 930, height: 700 }, { darkMode: true });
     try {
         await page.locator('#rooms-sort-trigger').click();
         const option = await page.locator('#rooms-sort-menu [data-sort="price_desc"]').boundingBox();
@@ -225,7 +286,7 @@ test('price sort options remain above room cards where the dropdown overlaps the
         const point = { x: Math.max(option.x, card.x) + 1, y: Math.max(option.y, card.y) + 1 };
         assert.ok(point.x < Math.min(option.x + option.width, card.x + card.width)
             && point.y < Math.min(option.y + option.height, card.y + card.height),
-        'the test viewport should place part of the option over a room card');
+        `the test viewport should place part of the option over a room card (option ${JSON.stringify(option)}, card ${JSON.stringify(card)})`);
         const layering = await page.evaluate(({ x, y }) => {
             return document.elementFromPoint(x, y)?.closest('#rooms-sort-menu') !== null;
         }, point);
