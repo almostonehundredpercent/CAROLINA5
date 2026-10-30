@@ -127,7 +127,8 @@
 }
 
 .nav--over-hero + main .home-hero {
-    min-height: min(800px, 100vh);
+    min-height: 100vh;
+    min-height: 100svh;
     padding-top: 176px;
 }
 
@@ -147,14 +148,16 @@
     }
 
     .nav--over-hero + main .home-hero {
-        min-height: 720px;
+        min-height: 100vh;
+        min-height: 100svh;
         padding-top: 158px;
     }
 }
 
 @media (max-width: 460px) {
     .nav--over-hero + main .home-hero {
-        min-height: 650px;
+        min-height: 100vh;
+        min-height: 100svh;
         padding-top: 142px;
     }
 }
