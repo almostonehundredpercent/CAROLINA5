@@ -107,6 +107,27 @@
             text-align: center;
         }
         .booking-note { color: var(--muted); font-size: 12px; margin: 5px 0; }
+        .booking-payment-proof {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            width: fit-content;
+            max-width: 100%;
+            padding: 5px 9px;
+            border: 1px solid #c6dbc8;
+            border-radius: 999px;
+            background: #e6f1e7;
+            color: #285c36;
+            font-size: 12px;
+            font-weight: 700;
+            line-height: 1.25;
+        }
+        .booking-payment-proof-icon { font-size: 13px; }
+        html.dark-mode .booking-payment-proof {
+            border-color: #476b4e;
+            background: #26392a;
+            color: #cfe5d1;
+        }
         .hold-expiry { display: block; color: #9d6100; font-size: 11px; margin-top: 5px; }
         .status-select { cursor: pointer; }
         .booking-filters { display:flex; flex-wrap:wrap; gap:8px; margin:0 0 16px; }
@@ -271,6 +292,12 @@
                                         <div class="booking-actions">
                                             @php($refundableAmount = max(0, (float) $booking->payments->where('status', 'paid')->sum('amount') - (float) $booking->payments->where('status', 'refunded')->sum('amount')))
                                             @php($refundPolicyEligible = $booking->isRefundEligible())
+                                            @if($hasPaidPayMongoPayment && ! $expiredCashHold)
+                                                <div class="booking-payment-proof" role="status">
+                                                    <span class="booking-payment-proof-icon" aria-hidden="true">✓</span>
+                                                    <span>Verified through PayMongo</span>
+                                                </div>
+                                            @endif
                                                 <div class="booking-action-buttons">
                                                     @if($expiredCashHold)
                                                         <form method="POST" action="{{ route('admin.bookings.update', $booking) }}"
@@ -284,8 +311,6 @@
                                                             <input type="hidden" name="status" value="confirmed">
                                                             <button class="status-select confirmed restore-booking-button" type="submit">Check availability &amp; restore</button>
                                                         </form>
-                                                    @elseif($hasPaidPayMongoPayment)
-                                                        <span class="booking-note">Verified through PayMongo</span>
                                                     @elseif($payMongoPayment?->status === 'pending')
                                                         <form method="POST" action="{{ route('admin.bookings.payment.recheck-paymongo', $booking) }}" onsubmit="return confirm('Check this GCash checkout directly with PayMongo?')">
                                                             @csrf
