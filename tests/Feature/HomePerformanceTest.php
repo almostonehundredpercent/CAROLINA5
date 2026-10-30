@@ -3,6 +3,24 @@
 use App\Models\Room;
 use Illuminate\Support\Facades\DB;
 
+test('public header places a Book now button between Contact and the dark mode toggle', function () {
+    $response = $this->get(route('home'))->assertOk();
+    $navigationStart = strpos($response->getContent(), '<nav id="primary-navigation">');
+    $navigationEnd = strpos($response->getContent(), '</nav>', $navigationStart);
+    $navigation = substr($response->getContent(), $navigationStart, $navigationEnd - $navigationStart);
+
+    $contactPosition = strpos($navigation, '>Contact</a>');
+    $bookNowPosition = strpos($navigation, '>Book now</a>');
+    $themeTogglePosition = strpos($navigation, 'class="theme-toggle nav-theme-toggle"');
+
+    expect($navigation)->toContain('class="nav-button" href="'.route('rooms.index').'"')
+        ->and($contactPosition)->not->toBeFalse()
+        ->and($bookNowPosition)->not->toBeFalse()
+        ->and($themeTogglePosition)->not->toBeFalse()
+        ->and($contactPosition)->toBeLessThan($bookNowPosition)
+        ->and($bookNowPosition)->toBeLessThan($themeTogglePosition);
+});
+
 test('homepage renders its room picker and featured cards from one room query', function () {
     foreach ([700, 450, 900] as $index => $price) {
         Room::create([
