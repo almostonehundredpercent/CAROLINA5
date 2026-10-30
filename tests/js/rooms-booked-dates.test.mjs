@@ -125,3 +125,66 @@ test('each room calendar marks its own booked dates red, including cross-midnigh
         await browser.close();
     }
 });
+
+test('mobile calendars are exclusive while desktop calendars remain independent', async () => {
+    const browser = await chromium.launch({ headless: true });
+
+    try {
+        for (const width of [320, 390, 1440]) {
+            const page = await browser.newPage({ viewport: { width, height: 844 } });
+            try {
+                await page.route('**/rooms/*/availability', route => route.fulfill({
+                    contentType: 'application/json',
+                    body: JSON.stringify({ ranges: [], slots: [] }),
+                }));
+                await page.setContent(`<html><head><base href="http://localhost/"><style>${baseStyles}\n${roomsStyles}</style></head><body>
+                    ${roomCard('room-one', 'room-calendar-one')}${roomCard('room-two', 'room-calendar-two')}
+                </body></html>`);
+                await page.addScriptTag({ content: availabilityScript });
+                await page.evaluate(() => document.dispatchEvent(new Event('DOMContentLoaded')));
+
+                const first = page.locator('[data-availability-url="/rooms/room-one/availability"]');
+                const second = page.locator('[data-availability-url="/rooms/room-two/availability"]');
+                const firstToggle = first.locator('.room-availability-toggle');
+                const firstPanel = first.locator('.room-availability-panel');
+                const secondToggle = second.locator('.room-availability-toggle');
+                const secondPanel = second.locator('.room-availability-panel');
+                const metrics = await firstToggle.evaluate(button => ({
+                    height: button.getBoundingClientRect().height,
+                    paddingTop: getComputedStyle(button).paddingTop,
+                    paddingLeft: getComputedStyle(button).paddingLeft,
+                }));
+
+                if (width <= 650) {
+                    assert.ok(metrics.height >= 56, `mobile disclosure should be at least 56px high; got ${metrics.height}px`);
+                } else {
+                    assert.equal(metrics.paddingTop, '12px', 'desktop top padding should remain unchanged');
+                    assert.equal(metrics.paddingLeft, '14px', 'desktop side padding should remain unchanged');
+                }
+
+                await firstToggle.click();
+                await secondToggle.click();
+
+                assert.equal(await secondPanel.evaluate(panel => panel.hidden), false, `second calendar should open at ${width}px`);
+                assert.equal(await secondToggle.getAttribute('aria-expanded'), 'true');
+                assert.equal(await firstPanel.evaluate(panel => panel.hidden), width <= 650, `first calendar should ${width <= 650 ? 'close' : 'remain open'} at ${width}px`);
+                assert.equal(await firstToggle.getAttribute('aria-expanded'), String(width > 650));
+
+                if (width <= 650) {
+                    assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth), `expanded calendar should not cause horizontal overflow at ${width}px`);
+                    await page.locator('body').evaluate(body => body.classList.add('dark-mode'));
+                    const darkText = await secondToggle.evaluate(button => ({
+                        label: getComputedStyle(button).color,
+                        helper: getComputedStyle(button.querySelector('small')).color,
+                    }));
+                    assert.equal(darkText.label, 'rgb(255, 242, 228)', 'mobile toggle label should remain readable in dark mode');
+                    assert.equal(darkText.helper, 'rgb(204, 185, 168)', 'mobile toggle helper should remain readable in dark mode');
+                }
+            } finally {
+                await page.close();
+            }
+        }
+    } finally {
+        await browser.close();
+    }
+});

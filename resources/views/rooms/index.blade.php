@@ -146,7 +146,33 @@ document.addEventListener('DOMContentLoaded', () => {
     const labelTime = value => new Date(`${wallStamp(value)}Z`).toLocaleTimeString('en-PH', { timeZone: 'UTC', hour: 'numeric', minute: '2-digit' });
     const labelDate = value => new Date(`${value}T00:00:00`).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' });
 
-    document.querySelectorAll('.room-card-availability').forEach(card => {
+    const mobileViewport = window.matchMedia('(max-width: 650px)');
+    const roomCards = [...document.querySelectorAll('.room-card-availability')];
+    const closeCalendar = card => {
+        const panel = card.querySelector('.room-availability-panel');
+        if (panel.hidden) return;
+        panel.hidden = true;
+        const toggle = card.querySelector('.room-availability-toggle');
+        toggle.setAttribute('aria-expanded', 'false');
+        toggle.lastElementChild.textContent = '＋';
+    };
+    const closeOtherCalendars = activeCard => {
+        if (!mobileViewport.matches) return;
+        roomCards.forEach(card => { if (card !== activeCard) closeCalendar(card); });
+    };
+    const limitOpenCalendarsOnMobile = () => {
+        if (!mobileViewport.matches) return;
+        let keptOpenCalendar = false;
+        roomCards.forEach(card => {
+            const panel = card.querySelector('.room-availability-panel');
+            if (panel.hidden) return;
+            if (keptOpenCalendar) closeCalendar(card);
+            else keptOpenCalendar = true;
+        });
+    };
+    mobileViewport.addEventListener('change', limitOpenCalendarsOnMobile);
+
+    roomCards.forEach(card => {
         const toggle = card.querySelector('.room-availability-toggle');
         const panel = card.querySelector('.room-availability-panel');
         const days = card.querySelector('[data-calendar-days]');
@@ -228,6 +254,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         };
         toggle.addEventListener('click', () => {
+            if (panel.hidden) closeOtherCalendars(card);
             panel.hidden = !panel.hidden;
             toggle.setAttribute('aria-expanded', String(!panel.hidden));
             toggle.lastElementChild.textContent = panel.hidden ? '＋' : '−';
