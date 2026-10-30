@@ -19,7 +19,7 @@ const pageMarkup = `
                 <h1>Stay well.<br>Spend less.</h1>
                 <p>Affordable bed &amp; breakfast and boarding-house stays in Tabaco City.</p>
                 <div class="home-hero-actions">
-                    <a class="button home-hero-primary" href="/rooms">Explore rooms <span aria-hidden="true">→</span></a>
+                    <a class="button home-hero-primary" href="/rooms">Book now <span aria-hidden="true">→</span></a>
                     <a class="home-hero-link" href="/bookings/lookup">Already booked?</a>
                 </div>
             </div>
@@ -67,7 +67,7 @@ test('the home hero fills the viewport without clipping its overlapping availabi
     }
 });
 
-test('Explore rooms is the visible brand-primary action and fits the phone layout', async () => {
+test('Book now is the visible brand-primary action and fits the phone layout', async () => {
     const browser = await chromium.launch();
     try {
         for (const viewport of [{ width: 390, height: 844 }, { width: 320, height: 740 }, { width: 1440, height: 900 }]) {
@@ -89,7 +89,7 @@ test('Explore rooms is the visible brand-primary action and fits the phone layou
             const copy = await page.locator('.home-hero .hero-copy').boundingBox();
             const secondary = await page.locator('.home-hero-link').boundingBox();
 
-            assert.match(action.label, /^Explore rooms/);
+            assert.match(action.label, /^Book now/);
             assert.equal(action.background, 'rgb(201, 121, 0)', 'the primary action should use Carolina gold');
             const contrast = (Math.max(luminance(action.background), luminance(action.color)) + 0.05) / (Math.min(luminance(action.background), luminance(action.color)) + 0.05);
             assert.ok(contrast >= 4.5, `the primary action text should meet normal-text contrast: ${contrast.toFixed(2)}:1`);
