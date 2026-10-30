@@ -10,7 +10,7 @@ use Illuminate\Validation\ValidationException;
 
 class Booking extends Model
 {
-    protected $fillable = ['user_id', 'guest_name', 'guest_email', 'guest_phone', 'room_id', 'promo_code_id', 'reference', 'submission_token', 'check_in', 'check_out', 'check_in_at', 'check_out_at', 'booking_type', 'hours', 'guests', 'children_count', 'pets_count', 'nights', 'total_amount', 'promo_code', 'original_amount', 'discount_amount', 'hold_expires_at', 'status', 'payment_method', 'payment_status', 'paid_at', 'special_request', 'add_ons', 'staff_notes', 'checked_in_at', 'checked_out_at', 'cancelled_at', 'cancelled_by', 'cancellation_reason'];
+    protected $fillable = ['user_id', 'guest_name', 'guest_email', 'guest_phone', 'room_id', 'promo_code_id', 'reference', 'submission_token', 'check_in', 'check_out', 'check_in_at', 'check_out_at', 'booking_type', 'hours', 'guests', 'children_count', 'pets_count', 'nights', 'total_amount', 'promo_code', 'original_amount', 'discount_amount', 'hold_expires_at', 'paymongo_checkout_attempt_id', 'status', 'payment_method', 'payment_status', 'paid_at', 'special_request', 'add_ons', 'staff_notes', 'checked_in_at', 'checked_out_at', 'cancelled_at', 'cancelled_by', 'cancellation_reason'];
 
     protected function casts(): array
     {

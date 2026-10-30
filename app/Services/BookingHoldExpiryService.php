@@ -12,6 +12,8 @@ use Throwable;
 
 class BookingHoldExpiryService
 {
+    private const MAX_PROVIDER_CHECKS_PER_RUN = 10;
+
     public function __construct(
         private readonly PayMongoCheckout $checkout,
         private readonly PayMongoPaymentReconciler $payments,
@@ -21,14 +23,31 @@ class BookingHoldExpiryService
     public function expireExpiredHolds(): int
     {
         $finalized = 0;
+        $providerChecks = 0;
 
-        Booking::unpaidUnconfirmed()
-            ->whereNotNull('hold_expires_at')
-            ->where('hold_expires_at', '<=', now())
+        Booking::query()
+            ->where(function ($query): void {
+                $query->where(function ($expired): void {
+                    $expired->unpaidUnconfirmed()
+                        ->whereNotNull('hold_expires_at')
+                        ->where('hold_expires_at', '<=', now());
+                })->orWhere(function ($orphaned): void {
+                    $orphaned->whereHas('payments', fn ($payments) => $payments
+                        ->where('method', 'gcash')
+                        ->where('status', 'pending')
+                        ->where('reference', 'like', 'paymongo:%')
+                        ->whereDoesntHave('timeAdjustment'))
+                        ->where(function ($inactive): void {
+                            $inactive->where('status', 'cancelled')
+                                ->orWhereNotNull('checked_out_at')
+                                ->orWhereIn('payment_status', ['paid', 'refunded']);
+                        });
+                });
+            })
             ->orderBy('id')
-            ->chunkById(100, function ($bookings) use (&$finalized): void {
+            ->chunkById(100, function ($bookings) use (&$finalized, &$providerChecks): void {
                 foreach ($bookings as $booking) {
-                    if ($this->expireBooking($booking)) {
+                    if ($this->expireBooking($booking, $providerChecks)) {
                         $finalized++;
                     }
                 }
@@ -37,21 +56,27 @@ class BookingHoldExpiryService
         return $finalized;
     }
 
-    private function expireBooking(Booking $booking): bool
+    private function expireBooking(Booking $booking, int &$providerChecks): bool
     {
         $pendingPayments = $booking->payments()
             ->where('method', 'gcash')
             ->where('status', 'pending')
             ->where('reference', 'like', 'paymongo:%')
+            ->whereDoesntHave('timeAdjustment')
             ->orderBy('id')
             ->get();
 
         foreach ($pendingPayments as $payment) {
+            if ($providerChecks >= self::MAX_PROVIDER_CHECKS_PER_RUN) {
+                break;
+            }
+
             $checkoutId = substr((string) $payment->reference, strlen('paymongo:'));
             if ($checkoutId === '') {
                 continue;
             }
 
+            $providerChecks++;
             try {
                 $providerSession = $this->checkout->expire($checkoutId);
             } catch (Throwable $exception) {
@@ -61,6 +86,11 @@ class BookingHoldExpiryService
                     'exception' => $exception::class,
                 ]);
 
+                if ($providerChecks >= self::MAX_PROVIDER_CHECKS_PER_RUN) {
+                    continue;
+                }
+
+                $providerChecks++;
                 try {
                     $providerSession = $this->checkout->retrieve($checkoutId);
                 } catch (Throwable $lookupException) {
@@ -102,8 +132,9 @@ class BookingHoldExpiryService
     private function markProviderPaymentFailed(Booking $booking, Payment $payment, string $providerStatus): void
     {
         DB::transaction(function () use ($booking, $payment, $providerStatus): void {
-            Room::whereKey($booking->room_id)->lockForUpdate()->firstOrFail();
-            Booking::whereKey($booking->id)->lockForUpdate()->firstOrFail();
+            $snapshot = Booking::findOrFail($booking->id);
+            Room::whereKey($snapshot->room_id)->lockForUpdate()->firstOrFail();
+            $lockedBooking = Booking::whereKey($booking->id)->lockForUpdate()->firstOrFail();
             $lockedPayment = Payment::whereKey($payment->id)->lockForUpdate()->first();
 
             if ($lockedPayment?->status === 'pending') {
@@ -111,6 +142,9 @@ class BookingHoldExpiryService
                     'status' => 'failed',
                     'notes' => 'PayMongo checkout session '.$providerStatus.'.',
                 ]);
+            }
+            if ($lockedBooking->payment_method === 'gcash' && $lockedBooking->payment_status === 'pending') {
+                $lockedBooking->update(['payment_status' => 'failed']);
             }
         });
     }
@@ -127,13 +161,14 @@ class BookingHoldExpiryService
             $booking = Booking::whereKey($bookingId)->lockForUpdate()->firstOrFail();
 
             if (! $booking->hasExpiredHold()
-                || $booking->payments()->where('method', 'gcash')->where('status', 'pending')->where('reference', 'like', 'paymongo:%')->exists()) {
+                || $booking->payments()->where('method', 'gcash')->where('status', 'pending')->where('reference', 'like', 'paymongo:%')->whereDoesntHave('timeAdjustment')->exists()) {
                 return false;
             }
 
             $hasPayMongoSession = $booking->payments()
                 ->where('method', 'gcash')
                 ->where('reference', 'like', 'paymongo:%')
+                ->whereDoesntHave('timeAdjustment')
                 ->exists();
 
             $booking->update([

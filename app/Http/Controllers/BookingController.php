@@ -14,6 +14,7 @@ use App\Models\Room;
 use App\Models\RoomBlock;
 use App\Services\BookingTimeAdjustmentService;
 use App\Services\PayMongoCheckout;
+use App\Services\PayMongoCheckoutCreationException;
 use App\Services\PayMongoPaymentReconciler;
 use App\Support\BookingSelection;
 use App\Support\PropertyTime;
@@ -399,18 +400,16 @@ class BookingController extends Controller
     public function startPayMongoCheckout(Request $request, Booking $booking, PayMongoCheckout $checkout, PayMongoPaymentReconciler $payments)
     {
         $this->authorizeBookingAccess($request, $booking);
-        abort_if($booking->hasExpiredHold(), 422, 'This reservation hold expired. Please choose an available stay or contact Carolina before paying.');
-        abort_if($booking->status === 'cancelled', 422, 'Cancelled reservations cannot be paid online.');
-        abort_if($booking->payment_status === 'paid', 422, 'This reservation has already been paid.');
+        $state = $this->reservePayMongoCheckoutAttempt($request, $booking->id);
 
-        $attemptId = (string) Str::uuid();
-
-        foreach ($booking->payments()->where('method', 'gcash')->where('status', 'pending')->where('reference', 'like', 'paymongo:%')->latest('id')->get() as $pendingPayment) {
+        while ($state['kind'] === 'existing') {
+            $booking = $state['booking'];
+            $pendingPayment = $state['payment'];
             try {
                 $providerSession = $checkout->retrieve(substr($pendingPayment->reference, strlen('paymongo:')));
             } catch (\Throwable $exception) {
                 Log::warning('Existing PayMongo checkout could not be checked before resuming.', [
-                    'attempt_id' => $attemptId,
+                    'attempt_id' => $booking->paymongo_checkout_attempt_id,
                     'booking_id' => $booking->id,
                     'payment_id' => $pendingPayment->id,
                     'exception' => $exception::class,
@@ -431,15 +430,20 @@ class BookingController extends Controller
 
             $providerStatus = strtolower((string) data_get($providerSession, 'data.attributes.status'));
             if (in_array($providerStatus, ['expired', 'failed'], true)) {
-                $pendingPayment->update([
-                    'status' => 'failed',
-                    'notes' => 'PayMongo checkout session '.$providerStatus.'.',
-                ]);
-
+                $state = $this->reservePayMongoCheckoutAttempt($request, $booking->id, $pendingPayment->id, $providerStatus);
                 continue;
             }
 
             if ($providerStatus === 'active' && is_string(data_get($providerSession, 'data.attributes.checkout_url'))) {
+                $booking = Booking::findOrFail($booking->id);
+                if ($booking->status === 'cancelled' || $booking->hasExpiredHold() || in_array($booking->payment_status, ['paid', 'refunded'], true)) {
+                    $this->expireUnusableCheckout($checkout, $booking, $pendingPayment, $payments);
+
+                    return $request->expectsJson()
+                        ? response()->json(['message' => 'This reservation hold expired. Please choose an available stay or contact Carolina before paying.'], 422)
+                        : redirect()->route('bookings.receipt', $booking)->withErrors(['payment' => 'This reservation hold expired. Please choose an available stay or contact Carolina before paying.']);
+                }
+
                 $checkoutUrl = data_get($providerSession, 'data.attributes.checkout_url');
                 $this->log($booking, $request->user()?->id, 'payment_checkout_resumed', 'Guest resumed an active PayMongo GCash checkout.');
 
@@ -453,8 +457,25 @@ class BookingController extends Controller
                 : back()->withErrors(['payment' => 'PayMongo is still processing this checkout. Please wait a moment and refresh your receipt before trying again.']);
         }
 
+        $booking = $state['booking'];
+        $attemptId = $state['attempt_id'];
         try {
             $session = $checkout->create($booking->loadMissing(['room', 'user']), $attemptId);
+        } catch (PayMongoCheckoutCreationException $exception) {
+            if ($exception->definitive) {
+                $this->rotatePayMongoCheckoutAttempt($booking->id, $attemptId);
+            }
+
+            Log::warning('PayMongo checkout could not be started.', [
+                'attempt_id' => $attemptId,
+                'booking_id' => $booking->id,
+                'exception' => $exception::class,
+                'definitive' => $exception->definitive,
+            ]);
+
+            return $request->expectsJson()
+                ? response()->json(['message' => 'Online GCash checkout is unavailable right now. Please try again shortly.'], 503)
+                : back()->withErrors(['payment' => 'Online GCash checkout is unavailable right now. Please try again later.']);
         } catch (\Throwable $exception) {
             Log::warning('PayMongo checkout could not be started.', [
                 'attempt_id' => $attemptId,
@@ -469,15 +490,16 @@ class BookingController extends Controller
             return back()->withErrors(['payment' => 'Online GCash checkout is unavailable right now. Please try again later.']);
         }
 
-        Payment::create([
-            'booking_id' => $booking->id,
-            'amount' => $booking->total_amount,
-            'method' => 'gcash',
-            'status' => 'pending',
-            'reference' => 'paymongo:'.$session['id'],
-            'notes' => 'PayMongo test checkout session.',
-        ]);
-        $booking->update(['payment_method' => 'gcash', 'payment_status' => 'pending']);
+        $stored = $this->storePayMongoCheckoutSession($booking, $attemptId, $session);
+        $booking = $stored['booking'];
+        if ($stored['unusable']) {
+            $this->expireUnusableCheckout($checkout, $booking, $stored['payment'], $payments);
+
+            return $request->expectsJson()
+                ? response()->json(['message' => 'This reservation hold expired. Please choose an available stay or contact Carolina before paying.'], 422)
+                : redirect()->route('bookings.receipt', $booking)->withErrors(['payment' => 'This reservation hold expired. Please choose an available stay or contact Carolina before paying.']);
+        }
+
         $this->log($booking, $request->user()?->id, 'payment_checkout_started', 'Guest started a PayMongo test GCash checkout.');
 
         if ($request->expectsJson()) {
@@ -487,11 +509,160 @@ class BookingController extends Controller
         return redirect()->away($session['url']);
     }
 
+    private function reservePayMongoCheckoutAttempt(Request $request, int $bookingId, ?int $expiredPaymentId = null, ?string $providerStatus = null): array
+    {
+        return DB::transaction(function () use ($request, $bookingId, $expiredPaymentId, $providerStatus): array {
+            $snapshot = Booking::findOrFail($bookingId);
+            Room::whereKey($snapshot->room_id)->lockForUpdate()->firstOrFail();
+            $booking = Booking::with(['room', 'user'])->whereKey($bookingId)->lockForUpdate()->firstOrFail();
+            $this->authorizeBookingAccess($request, $booking);
+
+            abort_if($booking->hasExpiredHold(), 422, 'This reservation hold expired. Please choose an available stay or contact Carolina before paying.');
+            abort_if($booking->status === 'cancelled', 422, 'Cancelled reservations cannot be paid online.');
+            abort_if(in_array($booking->payment_status, ['paid', 'refunded'], true), 422, 'This reservation has already been paid.');
+
+            if ($expiredPaymentId !== null) {
+                $expiredPayment = Payment::where('booking_id', $booking->id)->whereKey($expiredPaymentId)->lockForUpdate()->first();
+                if ($expiredPayment?->status === 'pending') {
+                    $expiredPayment->update([
+                        'status' => 'failed',
+                        'notes' => 'PayMongo checkout session '.($providerStatus ?? 'expired').'.',
+                    ]);
+                }
+            }
+
+            $pendingPayment = $booking->payments()
+                ->where('method', 'gcash')
+                ->where('status', 'pending')
+                ->where('reference', 'like', 'paymongo:%')
+                ->latest('id')
+                ->lockForUpdate()
+                ->first();
+
+            if ($pendingPayment) {
+                return ['kind' => 'existing', 'booking' => $booking, 'payment' => $pendingPayment];
+            }
+
+            $attemptId = $booking->paymongo_checkout_attempt_id;
+            if (! is_string($attemptId) || $attemptId === '') {
+                $attemptId = (string) Str::uuid();
+                $booking->update(['paymongo_checkout_attempt_id' => $attemptId]);
+            }
+
+            return ['kind' => 'create', 'booking' => $booking, 'attempt_id' => $attemptId];
+        });
+    }
+
+    private function storePayMongoCheckoutSession(Booking $booking, string $attemptId, array $session): array
+    {
+        return DB::transaction(function () use ($booking, $attemptId, $session): array {
+            $snapshot = Booking::findOrFail($booking->id);
+            Room::whereKey($snapshot->room_id)->lockForUpdate()->firstOrFail();
+            $lockedBooking = Booking::whereKey($booking->id)->lockForUpdate()->firstOrFail();
+            $reference = 'paymongo:'.$session['id'];
+            $payment = Payment::where('booking_id', $lockedBooking->id)
+                ->where('reference', $reference)
+                ->lockForUpdate()
+                ->first();
+
+            if (! $payment) {
+                $payment = Payment::create([
+                    'booking_id' => $lockedBooking->id,
+                    'amount' => $lockedBooking->total_amount,
+                    'method' => 'gcash',
+                    'status' => 'pending',
+                    'reference' => $reference,
+                    'notes' => 'PayMongo test checkout session.',
+                ]);
+            }
+
+            if ($lockedBooking->paymongo_checkout_attempt_id === $attemptId) {
+                $lockedBooking->update(['paymongo_checkout_attempt_id' => null]);
+            }
+
+            $unusable = $lockedBooking->status === 'cancelled'
+                || $lockedBooking->hasExpiredHold()
+                || in_array($lockedBooking->payment_status, ['paid', 'refunded'], true);
+
+            if ($payment->status === 'pending' && ! in_array($lockedBooking->payment_status, ['paid', 'refunded'], true)) {
+                $lockedBooking->update(['payment_method' => 'gcash', 'payment_status' => 'pending']);
+            }
+
+            return ['booking' => $lockedBooking, 'payment' => $payment, 'unusable' => $unusable];
+        });
+    }
+
+    private function rotatePayMongoCheckoutAttempt(int $bookingId, string $attemptId): void
+    {
+        DB::transaction(function () use ($bookingId, $attemptId): void {
+            $snapshot = Booking::findOrFail($bookingId);
+            Room::whereKey($snapshot->room_id)->lockForUpdate()->firstOrFail();
+            $booking = Booking::whereKey($bookingId)->lockForUpdate()->firstOrFail();
+            if ($booking->paymongo_checkout_attempt_id !== $attemptId) {
+                return;
+            }
+
+            $hasPendingSession = $booking->payments()
+                ->where('method', 'gcash')
+                ->where('status', 'pending')
+                ->where('reference', 'like', 'paymongo:%')
+                ->whereDoesntHave('timeAdjustment')
+                ->exists();
+            if (! $hasPendingSession) {
+                $booking->update(['paymongo_checkout_attempt_id' => (string) Str::uuid()]);
+            }
+        });
+    }
+
+    private function expireUnusableCheckout(PayMongoCheckout $checkout, Booking $booking, Payment $payment, PayMongoPaymentReconciler $payments): void
+    {
+        $checkoutId = substr((string) $payment->reference, strlen('paymongo:'));
+        if ($checkoutId === '') {
+            return;
+        }
+
+        try {
+            $providerSession = $checkout->expire($checkoutId);
+            if ($payments->isMatchingPaidCheckout($booking, $payment, $providerSession)) {
+                $payments->recordPaid($booking, $payment);
+
+                return;
+            }
+
+            $providerStatus = strtolower((string) data_get($providerSession, 'data.attributes.status'));
+            if (in_array($providerStatus, ['expired', 'failed'], true)) {
+                DB::transaction(function () use ($booking, $payment, $providerStatus): void {
+                    $snapshot = Booking::findOrFail($booking->id);
+                    Room::whereKey($snapshot->room_id)->lockForUpdate()->firstOrFail();
+                    $lockedBooking = Booking::whereKey($booking->id)->lockForUpdate()->firstOrFail();
+                    $lockedPayment = Payment::whereKey($payment->id)->lockForUpdate()->first();
+
+                    if ($lockedPayment?->status === 'pending') {
+                        $lockedPayment->update([
+                            'status' => 'failed',
+                            'notes' => 'PayMongo checkout session '.$providerStatus.'.',
+                        ]);
+                    }
+                    if ($lockedBooking->payment_method === 'gcash' && $lockedBooking->payment_status === 'pending') {
+                        $lockedBooking->update(['payment_status' => 'failed']);
+                    }
+                });
+            }
+        } catch (\Throwable $exception) {
+            Log::warning('Unusable PayMongo checkout could not be expired and will be retried by the hold cleanup.', [
+                'booking_id' => $booking->id,
+                'payment_id' => $payment->id,
+                'exception' => $exception::class,
+            ]);
+        }
+    }
+
     public function returnFromPayMongo(Request $request, Booking $booking, PayMongoCheckout $checkout, PayMongoPaymentReconciler $payments, BookingTimeAdjustmentService $adjustments)
     {
         abort_unless($request->user()?->canManageBookings()
             || ($booking->user_id && $request->user()?->id === $booking->user_id)
-            || ($booking->user_id === null && $request->session()->get('guest_booking_reference') === $booking->reference), 403);
+            || ($booking->user_id === null && $request->session()->get('guest_booking_reference') === $booking->reference)
+            || $request->session()->get('booking_lookup_reference') === $booking->reference, 403);
         $adjustment = $request->integer('adjustment')
             ? $booking->timeAdjustments()->whereKey($request->integer('adjustment'))->first()
             : null;
@@ -605,7 +776,11 @@ class BookingController extends Controller
         })->first();
         if (! $booking) {
             return back()->withErrors(['reference' => 'No booking matches that email and reference code.']);
-        } $request->session()->put('guest_booking_reference', $booking->reference);
+        }
+        $request->session()->put('booking_lookup_reference', $booking->reference);
+        if ($booking->user_id === null) {
+            $request->session()->put('guest_booking_reference', $booking->reference);
+        }
 
         return view('bookings.lookup-result', ['booking' => $booking, 'lookupEmail' => $data['email']]);
     }
@@ -634,7 +809,8 @@ class BookingController extends Controller
     {
         $isOwner = $booking->user_id && $request->user() && $booking->user_id === $request->user()->id;
         $isGuestSession = $booking->user_id === null && $request->session()->get('guest_booking_reference') === $booking->reference;
-        abort_unless($isOwner || $isGuestSession || $request->user()?->is_admin, 403);
+        $isVerifiedLookup = $request->session()->get('booking_lookup_reference') === $booking->reference;
+        abort_unless($isOwner || $isGuestSession || $isVerifiedLookup || $request->user()?->is_admin, 403);
     }
 
     private function log(Booking $booking, ?int $userId, string $event, string $description): void

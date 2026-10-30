@@ -24,9 +24,14 @@ class PayMongoCheckout
         ]);
 
         try {
-            $response = Http::acceptJson()
+            $request = Http::acceptJson()
                 ->connectTimeout(5)
-                ->timeout(15)
+                ->timeout(15);
+            if (is_string($attemptId) && $attemptId !== '') {
+                $request = $request->withHeaders(['Idempotency-Key' => $attemptId]);
+            }
+
+            $response = $request
                 ->withBasicAuth($secretKey, '')
                 ->post(self::BASE_URL.'/checkout_sessions', [
                     'data' => [
@@ -76,8 +81,14 @@ class PayMongoCheckout
         ]);
 
         if ($response->failed()) {
-            report(new RuntimeException('PayMongo checkout creation failed: '.$response->status()));
-            throw new RuntimeException('Online checkout is temporarily unavailable. Please try again shortly.');
+            $status = $response->status();
+            $definitive = $response->clientError() && ! in_array($status, [408, 409, 429], true);
+            $exception = new PayMongoCheckoutCreationException(
+                'PayMongo checkout creation failed: '.$status,
+                $definitive,
+            );
+            report($exception);
+            throw $exception;
         }
 
         $checkout = $response->json('data');

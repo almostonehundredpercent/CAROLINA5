@@ -151,6 +151,124 @@ test('starting payment does not create a duplicate when PayMongo cannot be reach
     expect(Payment::where('booking_id', $booking->id)->count())->toBe(1);
 });
 
+test('a retry after an uncertain PayMongo response reuses its idempotency key', function () {
+    $booking = payMongoBooking();
+    $attemptKeys = [];
+    $createCount = 0;
+    Http::fake(function (Request $request) use (&$attemptKeys, &$createCount) {
+        $attemptKeys[] = $request->header('Idempotency-Key')[0] ?? null;
+        $createCount++;
+
+        return $createCount === 1
+            ? Http::response(['errors' => [['detail' => 'Gateway timeout']]], 503)
+            : Http::response(['data' => ['id' => 'cs_retry_safe', 'attributes' => ['checkout_url' => 'https://checkout.paymongo.test/cs_retry_safe']]]);
+    });
+
+    $this->withSession(['guest_booking_reference' => $booking->reference])
+        ->withHeaders(['Accept' => 'application/json', 'X-Requested-With' => 'XMLHttpRequest'])
+        ->post(route('bookings.paymongo.start', $booking))
+        ->assertStatus(503);
+
+    $attemptId = $booking->fresh()->paymongo_checkout_attempt_id;
+    expect($attemptId)->toBeString()->not->toBe('');
+
+    $this->withSession(['guest_booking_reference' => $booking->reference])
+        ->post(route('bookings.paymongo.start', $booking))
+        ->assertOk()
+        ->assertJsonPath('checkout_url', 'https://checkout.paymongo.test/cs_retry_safe');
+
+    expect($attemptKeys)->toBe([$attemptId, $attemptId]);
+});
+
+test('a definitive PayMongo checkout rejection rotates the retry key', function () {
+    $booking = payMongoBooking();
+    $attemptKeys = [];
+    $createCount = 0;
+    Http::fake(function (Request $request) use (&$attemptKeys, &$createCount) {
+        $attemptKeys[] = $request->header('Idempotency-Key')[0] ?? null;
+        $createCount++;
+
+        return $createCount === 1
+            ? Http::response(['errors' => [['code' => 'invalid_request_error', 'detail' => 'Request rejected.']]], 422)
+            : Http::response(['data' => ['id' => 'cs_after_rejection', 'attributes' => ['checkout_url' => 'https://checkout.paymongo.test/cs_after_rejection']]]);
+    });
+
+    $headers = ['Accept' => 'application/json', 'X-Requested-With' => 'XMLHttpRequest'];
+    $this->withSession(['guest_booking_reference' => $booking->reference])
+        ->withHeaders($headers)
+        ->post(route('bookings.paymongo.start', $booking))
+        ->assertStatus(503);
+
+    $nextAttemptId = $booking->fresh()->paymongo_checkout_attempt_id;
+    $this->withSession(['guest_booking_reference' => $booking->reference])
+        ->post(route('bookings.paymongo.start', $booking))
+        ->assertOk()
+        ->assertJsonPath('checkout_url', 'https://checkout.paymongo.test/cs_after_rejection');
+
+    expect($attemptKeys[0])->not->toBe($attemptKeys[1])
+        ->and($attemptKeys[1])->toBe($nextAttemptId);
+});
+
+test('overlapping checkout starts converge on one idempotent PayMongo session and payment record', function () {
+    $booking = payMongoBooking();
+    $attemptKeys = [];
+    $createCount = 0;
+    Http::fake(function (Request $request) use (&$attemptKeys, &$createCount, $booking) {
+        $attemptKeys[] = $request->header('Idempotency-Key')[0] ?? null;
+        $createCount++;
+
+        if ($createCount === 1) {
+            $this->withSession(['guest_booking_reference' => $booking->reference])
+                ->withHeaders(['Accept' => 'application/json', 'X-Requested-With' => 'XMLHttpRequest'])
+                ->post(route('bookings.paymongo.start', $booking))
+                ->assertOk()
+                ->assertJsonPath('checkout_url', 'https://checkout.paymongo.test/cs_concurrent');
+        }
+
+        return Http::response(['data' => ['id' => 'cs_concurrent', 'attributes' => ['checkout_url' => 'https://checkout.paymongo.test/cs_concurrent']]]);
+    });
+
+    $this->withSession(['guest_booking_reference' => $booking->reference])
+        ->withHeaders(['Accept' => 'application/json', 'X-Requested-With' => 'XMLHttpRequest'])
+        ->post(route('bookings.paymongo.start', $booking))
+        ->assertOk()
+        ->assertJsonPath('checkout_url', 'https://checkout.paymongo.test/cs_concurrent');
+
+    expect($createCount)->toBe(2)
+        ->and($attemptKeys[0])->not->toBeNull()
+        ->and($attemptKeys[1])->toBe($attemptKeys[0])
+        ->and(Payment::where('booking_id', $booking->id)->count())->toBe(1);
+});
+
+test('a checkout created after its hold expires is recorded and expired instead of being offered', function () {
+    $booking = payMongoBooking();
+    $booking->update(['hold_expires_at' => now()->addMinute()]);
+    Http::fake(function (Request $request) use ($booking) {
+        if (str_ends_with($request->url(), '/checkout_sessions')) {
+            $booking->update([
+                'status' => 'cancelled',
+                'hold_expires_at' => now()->subSecond(),
+                'cancelled_at' => now(),
+                'cancellation_reason' => 'Unpaid reservation hold expired.',
+            ]);
+
+            return Http::response(['data' => ['id' => 'cs_late', 'attributes' => ['checkout_url' => 'https://checkout.paymongo.test/cs_late']]]);
+        }
+
+        return Http::response(['data' => ['id' => 'cs_late', 'attributes' => ['status' => 'expired']]]);
+    });
+
+    $this->withSession(['guest_booking_reference' => $booking->reference])
+        ->withHeaders(['Accept' => 'application/json', 'X-Requested-With' => 'XMLHttpRequest'])
+        ->post(route('bookings.paymongo.start', $booking))
+        ->assertStatus(422)
+        ->assertDontSee('https://checkout.paymongo.test/cs_late');
+
+    Http::assertSentCount(2);
+    expect(Payment::where('booking_id', $booking->id)->firstOrFail()->status)->toBe('failed')
+        ->and($booking->fresh()->payment_status)->toBe('failed');
+});
+
 test('hosted checkout identifies the merchant as Carolina instead of the account owner', function () {
     $booking = payMongoBooking();
     Http::fake(['https://api.paymongo.com/v1/checkout_sessions' => Http::response([

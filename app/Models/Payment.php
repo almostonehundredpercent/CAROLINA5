@@ -22,4 +22,9 @@ class Payment extends Model
     {
         return $this->belongsTo(User::class, 'recorded_by');
     }
+
+    public function timeAdjustment()
+    {
+        return $this->hasOne(BookingTimeAdjustment::class, 'payment_id');
+    }
 }

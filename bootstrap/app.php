@@ -18,7 +18,7 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withSchedule(function (Schedule $schedule): void {
-        $schedule->command('bookings:expire-holds')->everyMinute()->withoutOverlapping(5);
+        $schedule->command('bookings:expire-holds')->everyMinute()->withoutOverlapping(10);
     })
     ->withMiddleware(function (Middleware $middleware): void {
         // Render terminates HTTPS before requests reach Laravel. Trust its forwarded

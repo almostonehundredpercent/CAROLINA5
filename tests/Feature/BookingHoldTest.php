@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Booking;
+use App\Models\BookingTimeAdjustment;
 use App\Models\Payment;
 use App\Models\Room;
 use App\Models\RoomBlock;
@@ -93,6 +94,65 @@ test('scheduled hold expiry closes PayMongo before cancelling', function () {
     expect($payment->fresh()->status)->toBe('failed')
         ->and($booking->fresh()->status)->toBe('cancelled')
         ->and($booking->fresh()->payment_status)->toBe('failed');
+});
+
+test('scheduled cleanup retries a PayMongo checkout linked to an already expired booking', function () {
+    config()->set('services.paymongo.mode', 'test');
+    config()->set('services.paymongo.secret_key', 'sk_test_example');
+    $booking = heldBooking(holdRoom(), [
+        'status' => 'cancelled',
+        'hold_expires_at' => now()->subMinute(),
+        'payment_method' => 'gcash',
+        'payment_status' => 'pending',
+        'cancelled_at' => now()->subMinute(),
+        'cancellation_reason' => 'Unpaid reservation hold expired.',
+    ]);
+    $payment = Payment::create(['booking_id' => $booking->id, 'amount' => 450, 'method' => 'gcash', 'status' => 'pending', 'reference' => 'paymongo:cs_late_session']);
+    Http::fake(['https://api.paymongo.com/v1/checkout_sessions/cs_late_session/expire' => Http::response([
+        'data' => ['id' => 'cs_late_session', 'attributes' => ['status' => 'expired']],
+    ])]);
+
+    $this->artisan('bookings:expire-holds')->assertExitCode(0);
+
+    Http::assertSent(fn ($request) => $request->method() === 'POST' && str_ends_with($request->url(), '/checkout_sessions/cs_late_session/expire'));
+    expect($payment->fresh()->status)->toBe('failed')
+        ->and($booking->fresh()->payment_status)->toBe('failed')
+        ->and($booking->fresh()->status)->toBe('cancelled');
+});
+
+test('hold cleanup does not expire a pending GCash payment for a valid time adjustment', function () {
+    config()->set('services.paymongo.mode', 'test');
+    config()->set('services.paymongo.secret_key', 'sk_test_example');
+    $room = holdRoom();
+    $booking = heldBooking($room, [
+        'status' => 'confirmed',
+        'payment_status' => 'paid',
+        'payment_method' => 'gcash',
+        'paid_at' => now()->subHour(),
+        'hold_expires_at' => null,
+    ]);
+    $payment = Payment::create(['booking_id' => $booking->id, 'amount' => 75, 'method' => 'gcash', 'status' => 'pending', 'reference' => 'paymongo:cs_time_adjustment']);
+    $adjustment = BookingTimeAdjustment::create([
+        'booking_id' => $booking->id,
+        'payment_id' => $payment->id,
+        'type' => 'late_checkout',
+        'hours' => 1,
+        'amount' => 75,
+        'previous_start' => now()->subHours(2),
+        'previous_end' => now()->addHours(2),
+        'proposed_start' => now()->subHours(2),
+        'proposed_end' => now()->addHours(3),
+        'status' => 'pending',
+        'expires_at' => now()->addMinutes(20),
+    ]);
+    Http::fake();
+
+    $this->artisan('bookings:expire-holds')->assertExitCode(0);
+
+    Http::assertNothingSent();
+    expect($payment->fresh()->status)->toBe('pending')
+        ->and($adjustment->fresh()->status)->toBe('pending')
+        ->and($booking->fresh()->status)->toBe('confirmed');
 });
 
 test('scheduled hold expiry reconciles a paid provider session', function () {

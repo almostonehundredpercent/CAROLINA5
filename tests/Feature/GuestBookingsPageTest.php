@@ -3,6 +3,7 @@
 use App\Models\Booking;
 use App\Models\Room;
 use App\Models\User;
+use Illuminate\Support\Facades\Http;
 
 test('a checked-out guest booking renders separate action and review sections', function () {
     $user = User::factory()->create(['staff_role' => 'guest', 'is_admin' => false]);
@@ -104,6 +105,44 @@ test('email and reference lookup can resume an unpaid booking', function () {
         ->assertOk()
         ->assertSee('Continue payment')
         ->assertSee(route('bookings.receipt', $booking), false);
+});
+
+test('email and reference lookup lets an account guest open the payment receipt', function () {
+    config()->set('services.paymongo.mode', 'test');
+    config()->set('services.paymongo.secret_key', 'sk_test_example');
+    $user = User::factory()->create(['staff_role' => 'guest', 'is_admin' => false]);
+    $room = Room::create([
+        'name' => 'Account lookup room', 'slug' => 'account-lookup-room', 'room_type' => 'Standard',
+        'description' => 'A room for account booking recovery.', 'beds' => 1, 'guests' => 2,
+        'price_per_night' => 450, 'is_active' => true, 'operational_status' => 'available',
+    ]);
+    $booking = Booking::create([
+        'user_id' => $user->id, 'room_id' => $room->id, 'guest_name' => 'Account Lookup Guest',
+        'guest_email' => $user->email, 'guest_phone' => '09XX XXX XXXX',
+        'check_in' => '2026-11-10', 'check_out' => '2026-11-11',
+        'check_in_at' => '2026-11-10 12:00:00', 'check_out_at' => '2026-11-11 12:00:00',
+        'booking_type' => 'overnight', 'hours' => 24, 'guests' => 1, 'nights' => 1,
+        'total_amount' => 450, 'status' => 'pending', 'payment_status' => 'pending',
+        'payment_method' => 'gcash', 'hold_expires_at' => now()->addMinutes(20),
+    ]);
+
+    $this->post(route('bookings.lookup.submit'), ['email' => $user->email, 'reference' => $booking->reference])
+        ->assertOk()
+        ->assertSee('Continue payment');
+
+    $this->get(route('bookings.receipt', $booking))
+        ->assertOk()
+        ->assertSee('id="paymongo-checkout-form"', false)
+        ->assertSee('Pay with GCash test mode');
+
+    Http::fake(['https://api.paymongo.com/v1/checkout_sessions' => Http::response([
+        'data' => ['id' => 'cs_account_lookup', 'attributes' => ['checkout_url' => 'https://checkout.paymongo.test/cs_account_lookup']],
+    ])]);
+
+    $this->withHeaders(['Accept' => 'application/json', 'X-Requested-With' => 'XMLHttpRequest'])
+        ->post(route('bookings.paymongo.start', $booking))
+        ->assertOk()
+        ->assertJsonPath('checkout_url', 'https://checkout.paymongo.test/cs_account_lookup');
 });
 
 test('expired hold recovery shows the released room state without payment controls', function () {
