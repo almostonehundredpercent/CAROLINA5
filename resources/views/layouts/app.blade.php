@@ -48,7 +48,7 @@
             @guest<a href="{{ route('bookings.lookup') }}">Find booking</a>@endguest
             <a href="{{ route('home') }}#about">About</a>
             <a href="#contact">Contact</a>
-            <a class="nav-button" href="{{ route('rooms.index') }}">Book now</a>
+            <a class="nav-button nav-book-now" href="{{ route('rooms.index') }}">Book now</a>
             @auth
                 <a href="{{ route('bookings.index') }}">My bookings</a>
                 @if(auth()->user()->is_admin)

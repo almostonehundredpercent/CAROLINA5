@@ -13,7 +13,7 @@ test('public header places a Book now button between Contact and the dark mode t
     $bookNowPosition = strpos($navigation, '>Book now</a>');
     $themeTogglePosition = strpos($navigation, 'class="theme-toggle nav-theme-toggle"');
 
-    expect($navigation)->toContain('class="nav-button" href="'.route('rooms.index').'"')
+    expect($navigation)->toContain('class="nav-button nav-book-now" href="'.route('rooms.index').'"')
         ->and($contactPosition)->not->toBeFalse()
         ->and($bookNowPosition)->not->toBeFalse()
         ->and($themeTogglePosition)->not->toBeFalse()
