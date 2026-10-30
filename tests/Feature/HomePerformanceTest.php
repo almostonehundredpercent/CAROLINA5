@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Room;
+use App\Models\User;
 use Illuminate\Support\Facades\DB;
 
 test('public header places a Book now button between Contact and the dark mode toggle', function () {
@@ -11,7 +12,7 @@ test('public header places a Book now button between Contact and the dark mode t
 
     $contactPosition = strpos($navigation, '>Contact</a>');
     $bookNowPosition = strpos($navigation, '>Book now</a>');
-    $themeTogglePosition = strpos($navigation, 'class="theme-toggle nav-theme-toggle"');
+    $themeTogglePosition = strpos($navigation, '<button class="theme-toggle nav-theme-toggle"');
 
     expect($navigation)->toContain('class="nav-button nav-book-now" href="'.route('rooms.index').'"')
         ->and($contactPosition)->not->toBeFalse()
@@ -20,6 +21,26 @@ test('public header places a Book now button between Contact and the dark mode t
         ->and($contactPosition)->toBeLessThan($bookNowPosition)
         ->and($bookNowPosition)->toBeLessThan($themeTogglePosition);
 });
+
+test('signed-in header keeps Book now directly beside the dark mode toggle', function (array $attributes, bool $isAdmin) {
+    $user = User::factory()->create($attributes);
+    $response = $this->actingAs($user)->get(route('home'))->assertOk()->assertSee('My bookings');
+    $navigationStart = strpos($response->getContent(), '<nav id="primary-navigation">');
+    $navigationEnd = strpos($response->getContent(), '</nav>', $navigationStart);
+    $navigation = substr($response->getContent(), $navigationStart, $navigationEnd - $navigationStart);
+    $bookNowPosition = strpos($navigation, '>Book now</a>');
+    $bookNowEnd = $bookNowPosition + strlen('>Book now</a>');
+    $themeTogglePosition = strpos($navigation, '<button class="theme-toggle nav-theme-toggle"');
+
+    expect(trim(substr($navigation, $bookNowEnd, $themeTogglePosition - $bookNowEnd)))->toBe('');
+
+    if ($isAdmin) {
+        $response->assertSee('>Admin</a>', false);
+    }
+})->with([
+    'signed-in guest' => [['is_admin' => false, 'staff_role' => 'guest'], false],
+    'administrator' => [['is_admin' => true, 'staff_role' => 'admin'], true],
+]);
 
 test('homepage renders its room picker and featured cards from one room query', function () {
     foreach ([700, 450, 900] as $index => $price) {
