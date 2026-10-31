@@ -379,7 +379,7 @@ test('price sort options remain above room cards where the dropdown overlaps the
     }
 });
 
-test('room pagination sits below the cards and clearly marks the active page on desktop and mobile', async () => {
+test('room pagination sits below the cards, is centered, and clearly marks the active page', async () => {
     assert.ok(roomsPaginationScript, 'the rooms page should provide its pagination behavior');
     assert.match(roomsView, /<nav class="rooms-pagination"[^>]*aria-label="Room pages"/,
         'the page selector should be an accessible navigation group');
@@ -407,11 +407,27 @@ test('room pagination sits below the cards and clearly marks the active page on 
             const positions = await page.evaluate(() => {
                 const track = document.querySelector('#rooms-page-track').getBoundingClientRect();
                 const pager = document.querySelector('.rooms-pagination').getBoundingClientRect();
-                return { trackBottom: track.bottom, pagerTop: pager.top, pageWidth: document.documentElement.scrollWidth, viewport: innerWidth };
+                const summary = document.querySelector('.rooms-page-summary').getBoundingClientRect();
+                const controls = document.querySelector('.rooms-pagination-controls');
+                const first = controls.firstElementChild.getBoundingClientRect();
+                const last = controls.lastElementChild.getBoundingClientRect();
+                return {
+                    trackBottom: track.bottom,
+                    pagerTop: pager.top,
+                    pageWidth: document.documentElement.scrollWidth,
+                    viewport: innerWidth,
+                    pagerCenter: pager.left + pager.width / 2,
+                    summaryCenter: summary.left + summary.width / 2,
+                    controlsCenter: (first.left + last.right) / 2,
+                };
             });
             assert.ok(positions.pagerTop >= positions.trackBottom,
                 `pagination should be below the room cards at ${width}px (${JSON.stringify(positions)})`);
             assert.equal(positions.pageWidth, positions.viewport, 'pagination should not introduce horizontal scrolling');
+            assert.ok(Math.abs(positions.summaryCenter - positions.pagerCenter) <= 2,
+                `the page summary should be centered within its bar at ${width}px (${JSON.stringify(positions)})`);
+            assert.ok(Math.abs(positions.controlsCenter - positions.pagerCenter) <= 2,
+                `the page controls should be centered within their bar at ${width}px (${JSON.stringify(positions)})`);
             assert.equal(await page.locator('#rooms-page-summary').textContent(), 'Showing rooms 1–6 of 18 · Page 1 of 3');
             assert.equal(await page.locator('#rooms-page-numbers [aria-current="page"]').textContent(), '1');
             assert.equal(await page.locator('#rooms-page-previous').isDisabled(), true);
