@@ -24,13 +24,13 @@ async function render(viewport, { darkMode = false } = {}) {
         <section class="section compact rooms-results">
             <form class="filter-bar rooms-search" method="GET">
                 <input id="rooms-check-in" type="hidden" name="check_in" value="">
-                <button class="rooms-date-trigger" id="rooms-check-in-trigger" type="button" aria-expanded="false"><span>Check-in date</span><b>Choose date</b></button>
+                <div class="rooms-date-control" id="rooms-date-control"><button class="rooms-date-trigger" id="rooms-check-in-trigger" type="button" aria-expanded="false" aria-controls="rooms-search-calendar"><span>Check-in date</span><b>Choose date</b></button>
+                <section class="rooms-search-calendar" id="rooms-search-calendar" hidden aria-label="Choose check-in date"><div class="rooms-calendar-head"><button type="button" id="rooms-calendar-prev" aria-label="Previous month">‹</button><b id="rooms-calendar-month"></b><button type="button" id="rooms-calendar-next" aria-label="Next month">›</button></div><div class="rooms-calendar-week"><span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span></div><div class="rooms-calendar-days" id="rooms-calendar-days"></div><p class="rooms-calendar-note" id="rooms-calendar-note" aria-live="polite">Choose your check-in date.</p></section></div>
                 <div class="rooms-choice" id="rooms-stay-choice"><span>Stay length</span><input id="rooms-stay" type="hidden" name="stay" value="day"><button id="rooms-stay-trigger" type="button" aria-expanded="false">1 day stay</button><div class="rooms-choice-menu" id="rooms-stay-menu" hidden><button type="button" data-stay="day">1 day stay</button><button type="button" data-stay="6">6 hours</button></div></div>
                 <div class="rooms-time-field" id="rooms-time-field" hidden><span>Check-in time</span><input id="rooms-check-in-time" name="check_in_time" type="hidden" value="12:00"><button id="rooms-time-trigger" type="button" aria-expanded="false">Choose time</button><div class="rooms-time-menu" id="rooms-time-menu" hidden><button type="button" data-time="14:00">2 PM</button></div></div>
                 <div class="rooms-choice" id="rooms-guests-choice"><span>Guests</span><input id="rooms-guests" type="hidden" name="guests" value=""><button id="rooms-guests-trigger" type="button" aria-expanded="false">Any guests</button><div class="rooms-choice-menu" id="rooms-guests-menu" hidden><button type="button" data-guests="">Any guests</button><button type="button" data-guests="2">2+ guests</button></div></div>
                 <div class="rooms-sort-control" id="rooms-sort-control"><span id="rooms-sort-label">Sort by price</span><input id="rooms-sort" type="hidden" name="sort" value="recommended"><button id="rooms-sort-trigger" type="button" aria-labelledby="rooms-sort-label rooms-sort-current" aria-expanded="false" aria-controls="rooms-sort-menu"><span id="rooms-sort-current">Recommended</span></button><div class="rooms-sort-menu" id="rooms-sort-menu" role="group" aria-label="Sort by price" hidden><button type="button" data-sort="recommended" aria-pressed="true"><span>Recommended</span><small>Best overall match</small><b class="rooms-sort-check" aria-hidden="true">✓</b></button><button type="button" data-sort="price_asc" aria-pressed="false"><span>Lowest first</span><small>Lower price to higher</small><b class="rooms-sort-check" aria-hidden="true">✓</b></button><button type="button" data-sort="price_desc" aria-pressed="false"><span>Highest first</span><small>Higher price to lower</small><b class="rooms-sort-check" aria-hidden="true">✓</b></button></div></div>
                 <button class="button">Check availability</button>
-                <section class="rooms-search-calendar" id="rooms-search-calendar" hidden aria-label="Choose check-in date"><div class="rooms-calendar-head"><button type="button" id="rooms-calendar-prev" aria-label="Previous month">‹</button><b id="rooms-calendar-month"></b><button type="button" id="rooms-calendar-next" aria-label="Next month">›</button></div><div class="rooms-calendar-week"><span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span></div><div class="rooms-calendar-days" id="rooms-calendar-days"></div><p class="rooms-calendar-note" id="rooms-calendar-note" aria-live="polite">Choose your check-in date.</p></section>
             </form>
             <p class="result-count">16 available · 2 unavailable right now</p>
             <div class="rooms-carousel"><p class="rooms-page-status">Showing rooms 1–6 of 18 · Group 1 of 3</p><div class="room-grid"><article class="room-card rooms-card"><img src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" alt=""><div class="room-card-body">Room preview</div></article><article class="room-card rooms-card"><img src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" alt=""><div class="room-card-body">Room preview</div></article><article class="room-card rooms-card"><img src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" alt=""><div class="room-card-body">Room preview</div></article></div></div>
@@ -186,9 +186,12 @@ test('date calendar and filter dropdowns never stay open over one another', asyn
         try {
             await page.locator('#rooms-check-in-trigger').click();
             assert.equal(await page.locator('#rooms-search-calendar').isVisible(), true);
+            await page.mouse.click(width - 5, 820);
+            assert.equal(await page.locator('#rooms-search-calendar').isVisible(), false,
+                'clicking outside should close the dropdown');
             await page.locator('#rooms-guests-trigger').click();
             assert.equal(await page.locator('#rooms-search-calendar').isVisible(), false,
-                'opening a filter menu should close the calendar');
+                'opening a filter menu should keep the calendar closed');
             assert.equal(await page.locator('#rooms-guests-menu').isVisible(), true);
             await page.locator('#rooms-check-in-trigger').click();
             assert.equal(await page.locator('#rooms-guests-menu').isVisible(), false,
@@ -200,23 +203,79 @@ test('date calendar and filter dropdowns never stay open over one another', asyn
     }
 });
 
-test('opening the calendar expands the search panel instead of covering room results', async () => {
-    for (const width of [1274, 390]) {
+test('check-in calendar opens as an anchored dropdown without expanding the search panel', async () => {
+    assert.match(roomsView, /class="rooms-date-control" id="rooms-date-control"/,
+        'the live rooms page should group the date selector and its calendar');
+    assert.match(roomsView, /aria-controls="rooms-search-calendar"/,
+        'the date selector should identify its dropdown for assistive technology');
+    for (const width of [1274, 390, 320]) {
         const page = await render({ width, height: 850 });
         try {
-            await page.locator('#rooms-check-in-trigger').click();
-            const bounds = await page.evaluate(() => ({
-                calendarBottom: document.querySelector('#rooms-search-calendar').getBoundingClientRect().bottom,
-                resultTop: document.querySelector('.result-count').getBoundingClientRect().top,
-                formBottom: document.querySelector('.rooms-search').getBoundingClientRect().bottom,
+            const before = await page.evaluate(() => ({
+                form: document.querySelector('.rooms-search').getBoundingClientRect().toJSON(),
+                results: document.querySelector('.result-count').getBoundingClientRect().toJSON(),
             }));
-            assert.ok(bounds.calendarBottom <= bounds.resultTop,
-                `calendar should not cover the results on a ${width}px viewport`);
-            assert.ok(bounds.formBottom >= bounds.calendarBottom,
-                `calendar should remain within the expanded search panel on a ${width}px viewport`);
+            await page.locator('#rooms-check-in-trigger').click();
+            const layout = await page.evaluate(() => {
+                const trigger = document.querySelector('#rooms-check-in-trigger').getBoundingClientRect();
+                const calendar = document.querySelector('#rooms-search-calendar');
+                const bounds = calendar.getBoundingClientRect();
+                return {
+                    position: getComputedStyle(calendar).position,
+                    zIndex: Number(getComputedStyle(calendar).zIndex),
+                    trigger,
+                    calendar: bounds.toJSON(),
+                    form: document.querySelector('.rooms-search').getBoundingClientRect().toJSON(),
+                    results: document.querySelector('.result-count').getBoundingClientRect().toJSON(),
+                    scrollWidth: document.documentElement.scrollWidth,
+                    viewport: innerWidth,
+                    isOpen: document.querySelector('#rooms-date-control').classList.contains('is-open'),
+                    overlapTarget: (() => {
+                        const lower = document.querySelector('#rooms-stay-choice').getBoundingClientRect();
+                        const x = Math.max(bounds.left, lower.left) + 8;
+                        const y = Math.max(bounds.top, lower.top) + 8;
+                        return bounds.right > lower.left && bounds.left < lower.right && bounds.bottom > lower.top && bounds.top < lower.bottom
+                            ? document.elementFromPoint(x, y)?.closest('#rooms-search-calendar') !== null
+                            : false;
+                    })(),
+                };
+            });
+            assert.equal(layout.position, 'absolute', 'the calendar should float instead of taking form layout space');
+            assert.equal(layout.isOpen, true, 'the date control should use its open stacking state');
+            assert.ok(Math.abs(layout.calendar.left - layout.trigger.left) < 2, 'the calendar should align with the date field');
+            assert.ok(Math.abs(layout.calendar.top - layout.trigger.bottom - 8) < 2, 'the calendar should open just below the date field');
+            assert.ok(layout.zIndex >= 20, 'the calendar should stack above the filter controls');
+            assert.ok(Math.abs(layout.form.height - before.form.height) < 1, 'opening the calendar should not expand the search form');
+            assert.ok(Math.abs(layout.results.top - before.results.top) < 1, 'opening the calendar should not move the results');
+            if (width === 390) assert.equal(layout.overlapTarget, true, 'the calendar should stay clickable above lower filter controls');
+            if (width === 320) {
+                assert.ok(layout.calendar.left >= 0 && layout.calendar.right <= layout.viewport, 'calendar should fit inside the phone viewport');
+                assert.ok(layout.scrollWidth <= layout.viewport, 'opening the calendar should not create horizontal scrolling');
+            }
         } finally {
             await page.close();
         }
+    }
+});
+
+test('check-in date selection updates the filter and dismisses the dropdown', async () => {
+    const page = await render({ width: 390, height: 850 });
+    try {
+        await page.locator('#rooms-check-in-trigger').click();
+        await page.keyboard.press('Escape');
+        assert.equal(await page.locator('#rooms-search-calendar').isVisible(), false, 'Escape should dismiss the dropdown');
+        assert.equal(await page.locator('#rooms-check-in-trigger').evaluate(element => element === document.activeElement), true,
+            'Escape should return focus to the date selector');
+        await page.locator('#rooms-check-in-trigger').click();
+        const date = await page.locator('.rooms-calendar-day:not([disabled])').first().getAttribute('data-date');
+        await page.locator(`.rooms-calendar-day[data-date="${date}"]`).click();
+        assert.equal(await page.locator('#rooms-check-in').inputValue(), date);
+        assert.notEqual(await page.locator('#rooms-check-in-trigger b').textContent(), 'Choose date');
+        assert.equal(await page.locator('#rooms-search-calendar').isVisible(), false);
+        assert.equal(await page.locator('#rooms-check-in-trigger').getAttribute('aria-expanded'), 'false');
+        assert.equal(await page.locator('#rooms-date-control').evaluate(element => element.classList.contains('is-open')), false);
+    } finally {
+        await page.close();
     }
 });
 
