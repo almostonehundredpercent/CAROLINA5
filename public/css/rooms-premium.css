@@ -49,7 +49,7 @@
 .rooms-choice-menu { max-height:345px; overflow:auto; }
 .rooms-choice-menu button,.rooms-time-menu button { border-radius:8px; }
 .rooms-choice-menu button:hover,.rooms-time-menu button:hover { background:#fff0dc; color:#7b4108; }
-.rooms-search-calendar { position:absolute; z-index:22; top:calc(100% + 8px); left:0; width:min(505px,100%); max-height:min(70vh,460px); overflow:auto; padding:21px; border-color:#e5d9cc; border-radius:16px; background:#fffdfa; box-shadow:0 20px 48px rgba(48,31,14,.18); }
+.rooms-search-calendar { position:absolute; z-index:22; top:calc(100% + 8px); left:0; width:min(505px,calc(100vw - 40px)); max-height:min(70vh,460px); overflow:auto; padding:21px; border-color:#e5d9cc; border-radius:16px; background:#fffdfa; box-shadow:0 20px 48px rgba(48,31,14,.18); }
 .rooms-calendar-head { margin-bottom:17px; }
 .rooms-calendar-head b { font-size:1rem; }
 .rooms-calendar-head button { width:34px; height:34px; border-radius:50%; }

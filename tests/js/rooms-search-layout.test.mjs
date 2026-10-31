@@ -245,6 +245,7 @@ test('check-in calendar opens as an anchored dropdown without expanding the sear
             assert.ok(Math.abs(layout.calendar.left - layout.trigger.left) < 2, 'the calendar should align with the date field');
             assert.ok(Math.abs(layout.calendar.top - layout.trigger.bottom - 8) < 2, 'the calendar should open just below the date field');
             assert.ok(layout.zIndex >= 20, 'the calendar should stack above the filter controls');
+            if (width === 1274) assert.ok(layout.calendar.width >= 450, 'the desktop calendar should remain wide enough for a readable week grid');
             assert.ok(Math.abs(layout.form.height - before.form.height) < 1, 'opening the calendar should not expand the search form');
             assert.ok(Math.abs(layout.results.top - before.results.top) < 1, 'opening the calendar should not move the results');
             if (width === 390) assert.equal(layout.overlapTarget, true, 'the calendar should stay clickable above lower filter controls');
