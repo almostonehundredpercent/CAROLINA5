@@ -151,7 +151,7 @@ export function mountReportDateCalendars(root) {
             return `<button type="button" class="report-calendar-day${isSelected ? ' selected' : ''}${today ? ' today' : ''}" data-date-value="${date}" aria-label="${accessibleDateFormatter.format(toUTCDate(date))}" aria-pressed="${isSelected}"${disabled ? ' disabled' : ''}>${Number(date.slice(-2))}</button>`;
         }).join('');
 
-        field.calendar.innerHTML = `<div class="report-calendar-head"><button type="button" data-month-shift="-1" aria-label="Previous month"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="m12.5 4.5-5 5.5 5 5.5"/></svg></button><strong aria-live="polite">${monthLabel}</strong><button type="button" data-month-shift="1" aria-label="Next month"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="m7.5 4.5 5 5.5-5 5.5"/></svg></button></div><div class="report-calendar-week" aria-hidden="true">${['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => `<span>${day}</span>`).join('')}</div><div class="report-calendar-days">${cells}</div><div class="report-calendar-foot"><button type="button" data-select-today${((min && utcDay(todayISO()) < utcDay(min)) || (max && utcDay(todayISO()) > utcDay(max))) ? ' disabled' : ''}>Today</button><span>${min && max ? 'Up to 3 months' : 'Choose a date'}</span></div>`;
+        field.calendar.innerHTML = `<div class="report-calendar-head"><button type="button" data-month-shift="-1" aria-label="Previous month"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="m12.5 4.5-5 5.5 5 5.5"/></svg></button><strong aria-live="polite">${monthLabel}</strong><button type="button" data-month-shift="1" aria-label="Next month"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="m7.5 4.5 5 5.5-5 5.5"/></svg></button><button type="button" data-calendar-close aria-label="Close calendar"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="m5 5 10 10M15 5 5 15"/></svg></button></div><div class="report-calendar-week" aria-hidden="true">${['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => `<span>${day}</span>`).join('')}</div><div class="report-calendar-days">${cells}</div><div class="report-calendar-foot"><button type="button" data-select-today${((min && utcDay(todayISO()) < utcDay(min)) || (max && utcDay(todayISO()) > utcDay(max))) ? ' disabled' : ''}>Today</button><span>${min && max ? 'Up to 3 months' : 'Choose a date'}</span></div>`;
         field.calendar.setAttribute('aria-label', `Choose ${key === 'from' ? 'start' : 'end'} date`);
     };
 
@@ -189,6 +189,10 @@ export function mountReportDateCalendars(root) {
     for (const key of ['from', 'to']) {
         fields[key].trigger.addEventListener('click', () => open(key));
         fields[key].calendar.addEventListener('click', (event) => {
+            if (event.target.closest('[data-calendar-close]')) {
+                close(true);
+                return;
+            }
             const day = event.target.closest('[data-date-value]');
             if (day && !day.disabled) {
                 handleSelect(key, day.dataset.dateValue);

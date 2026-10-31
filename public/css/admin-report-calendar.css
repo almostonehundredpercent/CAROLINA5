@@ -43,6 +43,11 @@
     box-shadow: 0 0 0 3px rgba(201, 121, 0, .13);
 }
 
+.booking-filters .report-date-field .report-date-trigger {
+    background: var(--paper) !important;
+    color: var(--ink) !important;
+}
+
 .report-date-trigger:focus-visible,
 .report-calendar-head button:focus-visible,
 .report-calendar-day:focus-visible,
@@ -88,10 +93,20 @@
 
 .report-date-calendar[hidden] { display: none; }
 .report-date-field-to .report-date-calendar { right: 0; left: auto; }
+.booking-filters .report-date-calendar button {
+    width: auto !important;
+    min-height: 0 !important;
+    padding: 0 !important;
+    border: 1px solid transparent !important;
+    border-radius: 9px !important;
+    background: transparent !important;
+    color: var(--ink) !important;
+    box-shadow: none !important;
+}
 
 .report-calendar-head {
     display: grid;
-    grid-template-columns: 38px 1fr 38px;
+    grid-template-columns: 38px minmax(0, 1fr) 38px 38px;
     align-items: center;
     gap: 8px;
     margin-bottom: 15px;
@@ -116,7 +131,22 @@
     cursor: pointer;
 }
 
-.booking-filters .report-calendar-head button { padding: 0; border: 1px solid var(--line); border-radius: 10px; background: transparent; color: var(--ink); }
+.report-calendar-head [data-calendar-close] {
+    border-color: rgba(201, 121, 0, .3);
+    background: rgba(201, 121, 0, .08);
+    color: #9d4f00;
+}
+
+.booking-filters .report-date-calendar .report-calendar-head button {
+    width: 38px !important;
+    min-width: 38px;
+    min-height: 38px !important;
+    padding: 0 !important;
+    border: 1px solid var(--line) !important;
+    border-radius: 10px !important;
+    background: transparent !important;
+    color: var(--ink) !important;
+}
 
 .report-calendar-head button:hover { background: rgba(201, 121, 0, .12); }
 .report-calendar-head svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
@@ -152,7 +182,11 @@
     cursor: pointer;
 }
 
-.booking-filters .report-calendar-day { padding: 0; border: 1px solid transparent; border-radius: 9px; background: transparent; color: var(--ink); }
+.booking-filters .report-date-calendar .report-calendar-day:not(.selected) { background: transparent !important; color: var(--ink) !important; }
+.booking-filters .report-date-calendar .report-calendar-day:hover:not(:disabled) { border-color: rgba(201, 121, 0, .3) !important; background: rgba(201, 121, 0, .12) !important; color: var(--ink) !important; }
+.booking-filters .report-date-calendar .report-calendar-day.today:not(.selected) { border-color: #c97900 !important; color: #b45b00 !important; }
+.booking-filters .report-date-calendar .report-calendar-day.selected { border-color: #b96100 !important; background: linear-gradient(135deg, #d67a00, #ad5100) !important; color: #fff !important; }
+.booking-filters .report-date-calendar .report-calendar-day:disabled { color: #a9a098 !important; cursor: not-allowed; opacity: .5; }
 
 .report-calendar-day:hover:not(:disabled) { border-color: rgba(201, 121, 0, .3); background: rgba(201, 121, 0, .12); }
 .report-calendar-day.today:not(.selected) { border-color: #c97900; color: #b45b00; }
@@ -182,7 +216,7 @@
     cursor: pointer;
 }
 
-.booking-filters .report-calendar-foot button { padding: 5px 10px; border: 1px solid var(--line); border-radius: 8px; background: transparent; color: #a65300; }
+.booking-filters .report-calendar-foot button { min-height: 34px !important; padding: 5px 10px !important; border: 1px solid var(--line) !important; border-radius: 8px !important; background: transparent !important; color: #a65300 !important; }
 
 .report-calendar-foot button:hover:not(:disabled) { background: rgba(201, 121, 0, .1); }
 .report-calendar-foot button:disabled { color: var(--muted); opacity: .5; cursor: not-allowed; }
@@ -194,11 +228,15 @@ html.dark-mode .report-date-calendar { border-color: rgba(255, 220, 182, .24); b
 html.dark-mode .report-calendar-day.today:not(.selected),
 html.dark-mode .report-calendar-foot button { color: #f3b155; }
 html.dark-mode .report-calendar-day:disabled { color: #a99b8e; opacity: 1; }
+html.dark-mode .report-calendar-head [data-calendar-close] { border-color: rgba(255, 181, 84, .35); background: rgba(201, 121, 0, .14); color: #f3b155; }
+html.dark-mode .booking-filters .report-date-calendar .report-calendar-day.today:not(.selected) { color: #f3b155 !important; }
+html.dark-mode .booking-filters .report-date-calendar .report-calendar-day:disabled { color: #a99b8e !important; opacity: 1; }
+html.dark-mode .booking-filters .report-date-calendar .report-calendar-foot button { color: #f3b155 !important; }
 
 @media (max-width: 600px) {
     .report-range-fields { flex-basis: 100%; grid-template-columns: 1fr 1fr; gap: 8px; }
     .report-date-field { font-size: 10px; }
-    .report-date-trigger { min-height: 46px; padding: 8px 9px; }
+    .booking-filters .report-date-field .report-date-trigger { min-height: 46px !important; padding: 8px 9px !important; }
     .report-date-value { font-size: 12px; }
     .report-date-calendar { position: fixed; top: 0; right: 12px; left: 12px; width: auto; max-height: calc(100dvh - 24px); overflow-y: auto; }
     .report-date-field-to .report-date-calendar { right: 12px; left: 12px; }
