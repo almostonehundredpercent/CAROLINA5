@@ -65,6 +65,7 @@ export function mountReportDateCalendars(root) {
         to: { input: form.querySelector('[name="to"]'), trigger: root.querySelector('[data-date-trigger="to"]'), calendar: root.querySelector('[data-date-calendar="to"]') },
     };
     if (Object.values(fields).some(({ input, trigger, calendar }) => !input || !trigger || !calendar)) return;
+    for (const field of Object.values(fields)) field.container = field.calendar.parentElement;
 
     const submit = form.querySelector('button[type="submit"]');
     const error = form.querySelector('#report-range-error');
@@ -102,8 +103,11 @@ export function mountReportDateCalendars(root) {
     const close = (returnFocus = false) => {
         if (!openField) return;
         const key = openField;
-        fields[key].calendar.hidden = true;
-        fields[key].calendar.style.removeProperty('top');
+        const calendar = fields[key].calendar;
+        calendar.hidden = true;
+        if (calendar.parentElement !== fields[key].container) fields[key].container.append(calendar);
+        calendar.classList.remove('report-date-calendar-viewport');
+        for (const property of ['position', 'top', 'left', 'right', 'width', 'max-width']) calendar.style.removeProperty(property);
         fields[key].trigger.setAttribute('aria-expanded', 'false');
         openField = null;
         if (returnFocus) fields[key].trigger.focus();
@@ -112,17 +116,26 @@ export function mountReportDateCalendars(root) {
     const positionOpenCalendar = () => {
         if (!openField) return;
         const field = fields[openField];
-        if (!window.matchMedia('(max-width: 600px)').matches) {
-            field.calendar.style.removeProperty('top');
-            return;
-        }
+        const calendar = field.calendar;
+        const viewportWidth = document.documentElement.clientWidth || window.innerWidth;
+        const isMobile = window.matchMedia('(max-width: 700px)').matches;
+        if (calendar.parentElement !== document.body) document.body.append(calendar);
+        calendar.classList.add('report-date-calendar-viewport');
         const triggerRect = field.trigger.getBoundingClientRect();
-        const calendarHeight = field.calendar.getBoundingClientRect().height;
+        const width = Math.max(0, Math.min(isMobile ? viewportWidth - 24 : 320, viewportWidth - 24));
+        const preferredLeft = isMobile ? 12 : openField === 'to' ? triggerRect.right - width : triggerRect.left;
+        const left = Math.max(12, Math.min(preferredLeft, viewportWidth - width - 12));
+        calendar.style.position = 'fixed';
+        calendar.style.left = `${left}px`;
+        calendar.style.right = 'auto';
+        calendar.style.width = `${width}px`;
+        calendar.style.maxWidth = 'calc(100vw - 24px)';
+        const calendarHeight = calendar.getBoundingClientRect().height;
         const below = triggerRect.bottom + 8;
         const top = below + calendarHeight <= window.innerHeight - 8
             ? below
             : Math.max(8, triggerRect.top - calendarHeight - 8);
-        field.calendar.style.top = `${top}px`;
+        calendar.style.top = `${top}px`;
     };
 
     const boundsFor = (key) => {
@@ -217,7 +230,7 @@ export function mountReportDateCalendars(root) {
     }
 
     document.addEventListener('pointerdown', (event) => {
-        if (openField && !root.contains(event.target)) close();
+        if (openField && !root.contains(event.target) && !fields[openField].calendar.contains(event.target)) close();
     });
     window.addEventListener('resize', positionOpenCalendar);
     window.addEventListener('scroll', positionOpenCalendar, true);

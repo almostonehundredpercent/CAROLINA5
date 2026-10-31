@@ -93,6 +93,7 @@
 
 .report-date-calendar[hidden] { display: none; }
 .report-date-field-to .report-date-calendar { right: 0; left: auto; }
+.report-date-calendar.report-date-calendar-viewport { position: fixed; z-index: 1000; }
 .booking-filters .report-date-calendar button {
     width: auto !important;
     min-height: 0 !important;

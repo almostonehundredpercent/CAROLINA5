@@ -41,7 +41,7 @@ test('report date calendar stays usable when selecting and changing a range', as
     const stylesheet = await readFile(new URL('../../public/css/admin-report-calendar.css', import.meta.url), 'utf8');
     const adminStylesheet = await readFile(new URL('../../public/css/admin.css', import.meta.url), 'utf8');
 
-    await page.setContent(`<!doctype html><html><head><meta name="viewport" content="width=device-width, initial-scale=1"></head><body><form id="report-range-form" class="booking-filters">
+    await page.setContent(`<!doctype html><html><head><meta name="viewport" content="width=device-width, initial-scale=1"><style>.test-transformed-shell{width:420px;transform:translateZ(0)}</style></head><body><div class="test-transformed-shell"><form id="report-range-form" class="booking-filters">
         <input type="hidden" name="from" value="2026-10-01">
         <input type="hidden" name="to" value="">
         <div data-report-date-calendars>
@@ -49,7 +49,7 @@ test('report date calendar stays usable when selecting and changing a range', as
             <label class="report-date-field report-date-field-to">To <button type="button" class="report-date-trigger" data-date-trigger="to" aria-expanded="false"><span data-date-value>Choose date</span></button><div class="report-date-calendar" data-date-calendar="to" role="dialog" hidden></div></label>
         </div>
         <button type="submit">Custom range</button>
-    </form></body></html>`);
+    </form></div></body></html>`);
     await page.addStyleTag({ content: adminStylesheet });
     await page.addStyleTag({ content: stylesheet });
     await page.addScriptTag({ type: 'module', content: script });
@@ -104,6 +104,14 @@ test('report date calendar stays usable when selecting and changing a range', as
     });
     assert.ok(narrowCalendarBox.left >= 12 && narrowCalendarBox.right <= narrowCalendarBox.viewport - 12, `the open calendar should remain inside a narrow phone viewport: ${JSON.stringify(narrowCalendarBox)}`);
     assert.ok(narrowCalendarBox.scrollWidth <= narrowCalendarBox.clientWidth, `the calendar contents should not create horizontal scrolling on a narrow phone: ${JSON.stringify(narrowCalendarBox)}`);
+
+    await page.setViewportSize({ width: 1280, height: 900 });
+    const desktopCalendarBox = await page.locator('[data-date-calendar="to"]').evaluate(element => {
+        const { left, right, width } = element.getBoundingClientRect();
+        return { left, right, width, viewport: innerWidth };
+    });
+    assert.ok(desktopCalendarBox.left >= 12 && desktopCalendarBox.right <= desktopCalendarBox.viewport - 12, `the viewport-positioned calendar should remain anchored and contained on desktop too: ${JSON.stringify(desktopCalendarBox)}`);
+    assert.equal(desktopCalendarBox.width, 320, 'desktop calendar width should remain at its existing compact size');
 
     await browser.close();
 });
