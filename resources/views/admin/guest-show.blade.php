@@ -17,7 +17,7 @@
             <div>
                 <p class="admin-kicker">GUEST PROFILE</p>
                 <h1>{{ $guest->guest_name ?? $guest->user?->name ?? 'Guest' }}</h1>
-                <p class="admin-subtitle">{{ $guest->guest_email ?? $guest->user?->email ?? 'No email' }} · {{ $guest->guest_phone ?? 'No phone' }}</p>
+                <p class="admin-subtitle">{{ $guest->guest_email ?? $guest->user?->email ?? 'No email' }} · @if($guest->guest_phone)<a class="admin-phone-link" href="tel:{{ preg_replace('/[^0-9+]/', '', (string) $guest->guest_phone) }}">{{ $guest->guest_phone }}</a>@else No phone @endif</p>
             </div>
         </header>
         @include('admin.partials.flash')
