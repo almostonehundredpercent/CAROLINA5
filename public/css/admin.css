@@ -3046,6 +3046,30 @@ tbody tr:hover {
     }
 }
 
+.admin-shell .admin-phone-link {
+    display: inline-flex;
+    align-items: center;
+    max-width: 100%;
+    padding: 6px 9px;
+    border: 1px solid #ded4c9;
+    border-radius: 8px;
+    background: #fffdfa;
+    color: #30251d !important;
+    font-weight: 600;
+    line-height: 1.25;
+    text-decoration: none !important;
+    overflow-wrap: anywhere;
+    -webkit-text-fill-color: currentColor;
+}
+.admin-shell .admin-phone-link:hover { border-color: var(--orange); }
+.admin-shell .admin-phone-link:focus-visible { outline: 2px solid var(--orange); outline-offset: 2px; }
+html.dark-mode .admin-shell .admin-phone-link {
+    border-color: #5a4537;
+    background: #2a1f19;
+    color: #f5e9dd !important;
+    -webkit-text-fill-color: currentColor;
+}
+
 .review-moderation-list {
     display: grid;
     gap: 14px;
