@@ -1095,6 +1095,9 @@ html.dark-mode .admin-confirm-dialog.is-cancellation .admin-confirm-accept {
     gap: 20px;
     margin-bottom: 20px;
 }
+.report-bottom-grid > * {
+    min-width: 0;
+}
 .report-bars {
     height: 175px;
     border-bottom: 1px solid var(--line);
