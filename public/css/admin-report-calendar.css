@@ -1,0 +1,210 @@
+.report-range-fields {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(180px, 1fr));
+    gap: 12px;
+    flex: 1 1 390px;
+    min-width: 0;
+}
+
+.report-date-field {
+    position: relative;
+    display: grid;
+    gap: 6px;
+    min-width: 0;
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.report-date-trigger {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    width: 100%;
+    min-width: 0;
+    min-height: 44px;
+    padding: 9px 12px;
+    border: 1px solid var(--line) !important;
+    border-radius: 10px !important;
+    background: var(--paper) !important;
+    color: var(--ink) !important;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition: border-color .16s ease, box-shadow .16s ease, background .16s ease;
+}
+
+.booking-filters .report-date-trigger { padding: 9px 12px; }
+
+.report-date-trigger:hover,
+.report-date-trigger[aria-expanded="true"] {
+    border-color: #c97900 !important;
+    box-shadow: 0 0 0 3px rgba(201, 121, 0, .13);
+}
+
+.report-date-trigger:focus-visible,
+.report-calendar-head button:focus-visible,
+.report-calendar-day:focus-visible,
+.report-calendar-foot button:focus-visible {
+    outline: 3px solid rgba(217, 137, 21, .48);
+    outline-offset: 2px;
+}
+
+.report-date-trigger svg {
+    width: 18px;
+    height: 18px;
+    flex: 0 0 auto;
+    fill: none;
+    stroke: currentColor;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-width: 1.7;
+    opacity: .78;
+}
+
+.report-date-value {
+    overflow: hidden;
+    color: var(--ink);
+    font-size: 13px;
+    font-weight: 700;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.report-date-calendar {
+    position: absolute;
+    z-index: 100;
+    top: calc(100% + 8px);
+    left: 0;
+    width: min(320px, calc(100vw - 32px));
+    padding: 15px;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    background: var(--paper);
+    box-shadow: 0 18px 44px rgba(31, 23, 17, .22);
+    color: var(--ink);
+}
+
+.report-date-calendar[hidden] { display: none; }
+.report-date-field-to .report-date-calendar { right: 0; left: auto; }
+
+.report-calendar-head {
+    display: grid;
+    grid-template-columns: 38px 1fr 38px;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 15px;
+}
+
+.report-calendar-head strong {
+    color: var(--ink);
+    font-size: 15px;
+    text-align: center;
+}
+
+.report-calendar-head button {
+    display: grid;
+    place-items: center;
+    width: 38px;
+    height: 38px;
+    padding: 0;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: transparent;
+    color: var(--ink);
+    cursor: pointer;
+}
+
+.booking-filters .report-calendar-head button { padding: 0; border: 1px solid var(--line); border-radius: 10px; background: transparent; color: var(--ink); }
+
+.report-calendar-head button:hover { background: rgba(201, 121, 0, .12); }
+.report-calendar-head svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+
+.report-calendar-week,
+.report-calendar-days {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 4px;
+}
+
+.report-calendar-week { margin-bottom: 6px; }
+.report-calendar-week span { color: var(--muted); font-size: 10px; font-weight: 700; text-align: center; }
+
+.report-calendar-day,
+.report-calendar-blank {
+    display: grid;
+    place-items: center;
+    min-width: 0;
+    min-height: 36px;
+}
+
+.report-calendar-day {
+    padding: 0;
+    border: 1px solid transparent;
+    border-radius: 9px;
+    background: transparent;
+    color: var(--ink);
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.booking-filters .report-calendar-day { padding: 0; border: 1px solid transparent; border-radius: 9px; background: transparent; color: var(--ink); }
+
+.report-calendar-day:hover:not(:disabled) { border-color: rgba(201, 121, 0, .3); background: rgba(201, 121, 0, .12); }
+.report-calendar-day.today:not(.selected) { border-color: #c97900; color: #b45b00; }
+.report-calendar-day.selected { border-color: #b96100; background: linear-gradient(135deg, #d67a00, #ad5100); color: #fff; }
+.report-calendar-day:disabled { color: #a9a098; cursor: not-allowed; opacity: .5; }
+
+.report-calendar-foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px solid var(--line);
+}
+
+.report-calendar-foot button {
+    min-height: 34px;
+    padding: 5px 10px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: transparent;
+    color: #a65300;
+    font: inherit;
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.booking-filters .report-calendar-foot button { padding: 5px 10px; border: 1px solid var(--line); border-radius: 8px; background: transparent; color: #a65300; }
+
+.report-calendar-foot button:hover:not(:disabled) { background: rgba(201, 121, 0, .1); }
+.report-calendar-foot button:disabled { color: var(--muted); opacity: .5; cursor: not-allowed; }
+.report-calendar-foot span { color: var(--muted); font-size: 10px; }
+
+html.dark-mode .report-date-trigger,
+html.dark-mode .booking-filters .report-date-trigger { background: rgba(16, 12, 10, .67) !important; }
+html.dark-mode .report-date-calendar { border-color: rgba(255, 220, 182, .24); background: #211914; color: #fff8f1; }
+html.dark-mode .report-calendar-day.today:not(.selected),
+html.dark-mode .report-calendar-foot button { color: #f3b155; }
+html.dark-mode .report-calendar-day:disabled { color: #a99b8e; opacity: 1; }
+
+@media (max-width: 600px) {
+    .report-range-fields { flex-basis: 100%; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .report-date-field { font-size: 10px; }
+    .report-date-trigger { min-height: 46px; padding: 8px 9px; }
+    .report-date-value { font-size: 12px; }
+    .report-date-calendar { position: fixed; top: 0; right: 12px; left: 12px; width: auto; max-height: calc(100dvh - 24px); overflow-y: auto; }
+    .report-date-field-to .report-date-calendar { right: 12px; left: 12px; }
+    .report-calendar-day, .report-calendar-blank { min-height: 38px; }
+}
+
+@media (max-width: 360px) {
+    .report-range-fields { grid-template-columns: 1fr; }
+}
