@@ -28,10 +28,6 @@
     <p class="result-count">{{ $rooms->whereNull('availability_reason')->count() }} available · {{ $rooms->whereNotNull('availability_reason')->count() }} unavailable{{ isset($filters['check_in']) ? ' for your stay' : ' right now' }}</p>
     @php($roomPages = $rooms->chunk(6)->values())
     <div class="rooms-carousel" id="rooms-carousel">
-        <p class="rooms-page-status" id="rooms-page-status" aria-live="polite">{{ $rooms->isEmpty() ? 'No rooms to display' : 'Showing rooms 1–'.min(6, $rooms->count()).' of '.$rooms->count().($roomPages->count() > 1 ? ' · Group 1 of '.$roomPages->count() : '') }}</p>
-        <button class="rooms-page-arrow rooms-page-arrow-previous" type="button" id="rooms-page-previous" aria-label="Show previous six rooms" aria-controls="rooms-page-track" hidden>
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
-        </button>
         <div class="rooms-page-track" id="rooms-page-track">
             @forelse($roomPages as $pageIndex => $roomPage)
                 <div class="rooms-page" role="group" data-room-page="{{ $pageIndex + 1 }}" aria-label="Rooms {{ $pageIndex * 6 + 1 }} to {{ min(($pageIndex + 1) * 6, $rooms->count()) }}">
@@ -71,9 +67,14 @@
                 <div class="room-grid"><div class="empty-state"><h2>No rooms found</h2><p>Try another date, stay length, or smaller group.</p><a class="text-link" href="{{ route('rooms.index') }}">Clear search</a></div></div>
             @endforelse
         </div>
-        <button class="rooms-page-arrow rooms-page-arrow-next" type="button" id="rooms-page-next" aria-label="Show next six rooms" aria-controls="rooms-page-track" hidden>
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
-        </button>
+        <nav class="rooms-pagination" aria-label="Room pages" @if($roomPages->count() < 2) hidden @endif>
+            <p class="rooms-page-summary" id="rooms-page-summary" aria-live="polite"></p>
+            <div class="rooms-pagination-controls">
+                <button class="rooms-pagination-step" type="button" id="rooms-page-previous" aria-label="Show previous page of rooms" aria-controls="rooms-page-track">Previous</button>
+                <div class="rooms-page-numbers" id="rooms-page-numbers" aria-label="Choose a page"></div>
+                <button class="rooms-pagination-step" type="button" id="rooms-page-next" aria-label="Show next page of rooms" aria-controls="rooms-page-track">Next</button>
+            </div>
+        </nav>
     </div>
 </section>
 <script>
@@ -114,18 +115,32 @@ document.addEventListener('DOMContentLoaded', () => {
     const pages = [...(carousel?.querySelectorAll('[data-room-page]') || [])];
     const previous = document.getElementById('rooms-page-previous');
     const next = document.getElementById('rooms-page-next');
-    const status = document.getElementById('rooms-page-status');
+    const summary = document.getElementById('rooms-page-summary');
+    const pageNumbers = document.getElementById('rooms-page-numbers');
     if (pages.length < 2) return;
 
     let currentPage = 1;
+    pages.forEach((_, index) => {
+        const pageNumber = index + 1;
+        const button = document.createElement('button');
+        button.className = 'rooms-page-number';
+        button.type = 'button';
+        button.textContent = String(pageNumber);
+        button.setAttribute('aria-label', `Show page ${pageNumber} of ${pages.length}`);
+        button.addEventListener('click', () => showPage(pageNumber));
+        pageNumbers.append(button);
+    });
+
     const showPage = page => {
         currentPage = Math.max(1, Math.min(pages.length, page));
         pages.forEach((element, index) => { element.hidden = index + 1 !== currentPage; });
         const firstRoom = (currentPage - 1) * 6 + 1;
         const lastRoom = Math.min(currentPage * 6, {{ $rooms->count() }});
-        status.textContent = `Showing rooms ${firstRoom}–${lastRoom} of {{ $rooms->count() }} · Group ${currentPage} of ${pages.length}`;
-        previous.hidden = false;
-        next.hidden = false;
+        summary.textContent = `Showing rooms ${firstRoom}–${lastRoom} of {{ $rooms->count() }} · Page ${currentPage} of ${pages.length}`;
+        pageNumbers.querySelectorAll('button').forEach((button, index) => {
+            if (index + 1 === currentPage) button.setAttribute('aria-current', 'page');
+            else button.removeAttribute('aria-current');
+        });
         previous.disabled = currentPage === 1;
         next.disabled = currentPage === pages.length;
     };

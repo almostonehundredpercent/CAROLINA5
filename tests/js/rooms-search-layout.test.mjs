@@ -12,6 +12,9 @@ const [baseStyles, roomsStyles, promoStyles, roomsView] = await Promise.all([
 ]);
 const roomsSearchScript = roomsView.match(/<script>([\s\S]*?)<\/script>/)?.[1];
 assert.ok(roomsSearchScript, 'the rooms page should provide its interactive search controls');
+const roomsPaginationScript = roomsView.match(/<script>([\s\S]*?)<\/script>/g)
+    ?.map(script => script.slice('<script>'.length, -'</script>'.length))
+    .find(script => script.includes("const carousel = document.getElementById('rooms-carousel')"));
 
 let browser;
 
@@ -373,5 +376,64 @@ test('price sort options remain above room cards where the dropdown overlaps the
         assert.equal(layering, true, 'the option should be clickable instead of hidden behind the card');
     } finally {
         await page.close();
+    }
+});
+
+test('room pagination sits below the cards and clearly marks the active page on desktop and mobile', async () => {
+    assert.ok(roomsPaginationScript, 'the rooms page should provide its pagination behavior');
+    assert.match(roomsView, /<nav class="rooms-pagination"[^>]*aria-label="Room pages"/,
+        'the page selector should be an accessible navigation group');
+    assert.doesNotMatch(roomsView, /rooms-page-arrow/,
+        'the old arrows that float beside the cards should be removed');
+    assert.ok(roomsView.indexOf('class="rooms-pagination"') > roomsView.indexOf('id="rooms-page-track"'),
+        'the page selector should follow the room cards');
+
+    for (const width of [1274, 390, 320]) {
+        const page = await browser.newPage({ viewport: { width, height: 850 } });
+        try {
+            const pagesMarkup = [1, 2, 3].map(number => `<div class="rooms-page" data-room-page="${number}"><article class="room-card rooms-card">Room page ${number}</article></div>`).join('');
+            await page.setContent(`<html><head><style>${baseStyles}\n${roomsStyles}</style></head><body>
+                <div class="rooms-carousel" id="rooms-carousel">
+                    <div class="rooms-page-track" id="rooms-page-track">${pagesMarkup}</div>
+                    <nav class="rooms-pagination" aria-label="Room pages">
+                        <p class="rooms-page-summary" id="rooms-page-summary" aria-live="polite"></p>
+                        <div class="rooms-pagination-controls"><button type="button" id="rooms-page-previous">Previous</button><div class="rooms-page-numbers" id="rooms-page-numbers"></div><button type="button" id="rooms-page-next">Next</button></div>
+                    </nav>
+                </div>
+            </body></html>`, { waitUntil: 'domcontentloaded' });
+            await page.addScriptTag({ content: roomsPaginationScript.replaceAll('{{ $rooms->count() }}', '18') });
+            await page.evaluate(() => document.dispatchEvent(new Event('DOMContentLoaded')));
+
+            const positions = await page.evaluate(() => {
+                const track = document.querySelector('#rooms-page-track').getBoundingClientRect();
+                const pager = document.querySelector('.rooms-pagination').getBoundingClientRect();
+                return { trackBottom: track.bottom, pagerTop: pager.top, pageWidth: document.documentElement.scrollWidth, viewport: innerWidth };
+            });
+            assert.ok(positions.pagerTop >= positions.trackBottom,
+                `pagination should be below the room cards at ${width}px (${JSON.stringify(positions)})`);
+            assert.equal(positions.pageWidth, positions.viewport, 'pagination should not introduce horizontal scrolling');
+            assert.equal(await page.locator('#rooms-page-summary').textContent(), 'Showing rooms 1–6 of 18 · Page 1 of 3');
+            assert.equal(await page.locator('#rooms-page-numbers [aria-current="page"]').textContent(), '1');
+            assert.equal(await page.locator('#rooms-page-previous').isDisabled(), true);
+
+            const buttons = await page.locator('.rooms-pagination-controls button').evaluateAll(elements => elements.map(element => ({
+                width: element.getBoundingClientRect().width,
+                height: element.getBoundingClientRect().height,
+            })));
+            assert.ok(buttons.every(button => button.width >= 44 && button.height >= 44),
+                `pagination controls should be comfortable tap targets at ${width}px`);
+
+            await page.locator('#rooms-page-numbers button').filter({ hasText: '2' }).click();
+            assert.equal(await page.locator('#rooms-page-summary').textContent(), 'Showing rooms 7–12 of 18 · Page 2 of 3');
+            assert.equal(await page.locator('#rooms-page-numbers [aria-current="page"]').textContent(), '2');
+            assert.equal(await page.locator('[data-room-page="2"]').isVisible(), true);
+            assert.equal(await page.locator('[data-room-page="1"]').isVisible(), false);
+            assert.equal(await page.locator('#rooms-page-previous').isDisabled(), false);
+            await page.locator('#rooms-page-next').click();
+            assert.equal(await page.locator('#rooms-page-summary').textContent(), 'Showing rooms 13–18 of 18 · Page 3 of 3');
+            assert.equal(await page.locator('#rooms-page-next').isDisabled(), true);
+        } finally {
+            await page.close();
+        }
     }
 });
