@@ -128,6 +128,31 @@
             background: #26392a;
             color: #cfe5d1;
         }
+        .booking-guest-phone {
+            display: flex;
+            align-items: center;
+            width: fit-content;
+            max-width: 100%;
+            margin-top: 6px !important;
+            padding: 7px 10px;
+            border: 1px solid #ded4c9;
+            border-radius: 8px;
+            background: #fffdfa;
+            color: #30251d !important;
+            font-weight: 600;
+            line-height: 1.25;
+            text-decoration: none;
+            overflow-wrap: anywhere;
+            -webkit-text-fill-color: currentColor;
+        }
+        .booking-guest-phone:hover { border-color: var(--orange); }
+        .booking-guest-phone:focus-visible { outline: 2px solid var(--orange); outline-offset: 2px; }
+        html.dark-mode .booking-guest-phone {
+            border-color: #5a4537;
+            background: #2a1f19;
+            color: #f5e9dd !important;
+            -webkit-text-fill-color: currentColor;
+        }
         .hold-expiry { display: block; color: #9d6100; font-size: 11px; margin-top: 5px; }
         .status-select { cursor: pointer; }
         .booking-filters { display:flex; flex-wrap:wrap; gap:8px; margin:0 0 16px; }
@@ -250,7 +275,11 @@
                                     <td data-label="Guest">
                                         <b>{{ $booking->guest_name ?? $booking->user?->name ?? 'Guest' }}</b>
                                         <small>{{ $booking->guest_email ?? $booking->user?->email ?? 'No email' }}</small>
-                                        <small>{{ $booking->guest_phone ?? 'No phone' }}</small>
+                                        @if($booking->guest_phone)
+                                            <a class="booking-guest-phone" href="tel:{{ preg_replace('/[^0-9+]/', '', (string) $booking->guest_phone) }}" aria-label="Call {{ $booking->guest_name ?? $booking->user?->name ?? 'guest' }} at {{ $booking->guest_phone }}">{{ $booking->guest_phone }}</a>
+                                        @else
+                                            <small>No phone</small>
+                                        @endif
                                         @if($booking->children_count || $booking->pets_count)
                                             <small>{{ $booking->children_count ? $booking->children_count . ' child' . ($booking->children_count > 1 ? 'ren' : '') : 'No children' }} · {{ $booking->pets_count ? $booking->pets_count . ' pet' . ($booking->pets_count > 1 ? 's' : '') : 'No pets' }}</small>
                                         @endif
