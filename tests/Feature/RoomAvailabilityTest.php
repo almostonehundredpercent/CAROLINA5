@@ -37,6 +37,19 @@ test('every room card exposes its own booked-date calendar', function () {
     }
 });
 
+test('live room availability responses remain uncached', function () {
+    $room = availabilityTestRoom();
+
+    $roomList = $this->get(route('rooms.index'))->assertOk();
+    $availability = $this->get(route('rooms.availability', $room))->assertOk();
+
+    foreach ([$roomList, $availability] as $response) {
+        expect($response->headers->get('Cache-Control'))
+            ->toContain('no-store')
+            ->toContain('private');
+    }
+});
+
 function availabilityTestBooking(Room $room, Carbon $start, Carbon $end): Booking
 {
     return Booking::create([

@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@push('late-styles')
+@push('styles')
 <link rel="stylesheet" href="{{ asset('css/rooms-premium.css') }}?v={{ filemtime(public_path('css/rooms-premium.css')) }}">
 <link rel="stylesheet" href="{{ asset('css/promo-campaign.css') }}?v={{ filemtime(public_path('css/promo-campaign.css')) }}">
 @endpush

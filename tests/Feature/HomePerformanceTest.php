@@ -156,3 +156,16 @@ test('locally hosted room cards offer WebP sources and keep their JPEG fallback'
             ->and($source->getAttribute('srcset'))->toContain('room-7-angle-1-480.webp', 'room-7-angle-1-800.webp');
     }
 });
+
+test('rooms page styles load before body content to prevent late page styling', function () {
+    $html = $this->get(route('rooms.index'))->assertOk()->getContent();
+    $bodyPosition = strpos($html, '<body>');
+    $roomsStylesPosition = strpos($html, 'css/rooms-premium.css');
+    $promoStylesPosition = strpos($html, 'css/promo-campaign.css');
+
+    expect($bodyPosition)->not->toBeFalse()
+        ->and($roomsStylesPosition)->not->toBeFalse()
+        ->and($promoStylesPosition)->not->toBeFalse()
+        ->and($roomsStylesPosition)->toBeLessThan($bodyPosition)
+        ->and($promoStylesPosition)->toBeLessThan($bodyPosition);
+});
