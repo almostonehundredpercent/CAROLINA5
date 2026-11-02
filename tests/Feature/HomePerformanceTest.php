@@ -4,6 +4,23 @@ use App\Models\Room;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 
+test('public pages advertise the Carolina logo as their browser favicon', function () {
+    $this->get(route('home'))
+        ->assertOk()
+        ->assertSee('rel="icon" type="image/jpeg" href="'.asset('images/carolina-logo.jpg').'"', false);
+
+    expect(file_exists(public_path('images/carolina-logo.jpg')))->toBeTrue();
+});
+
+test('CAROL decision support advertises the Carolina logo as its browser favicon', function () {
+    $admin = User::factory()->create(['is_admin' => true]);
+
+    $this->actingAsStaff($admin)
+        ->get(route('admin.decision-support'))
+        ->assertOk()
+        ->assertSee('rel="icon" type="image/jpeg" href="'.asset('images/carolina-logo.jpg').'"', false);
+});
+
 test('public header places a Book now button between Contact and the dark mode toggle', function () {
     $response = $this->get(route('home'))->assertOk();
     $navigationStart = strpos($response->getContent(), '<nav id="primary-navigation">');
