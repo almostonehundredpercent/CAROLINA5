@@ -73,6 +73,8 @@
 .rooms-pagination-controls button:focus-visible { outline:3px solid rgba(198,112,19,.28); outline-offset:2px; }
 .rooms-pagination-controls button:disabled { opacity:.46; cursor:not-allowed; }
 .room-grid { gap:22px; }
+.room-grid:has(.room-availability-panel:not([hidden])) { align-items:start; }
+.room-grid:has(.room-availability-panel:not([hidden])) .rooms-card { min-height:0; }
 .rooms-results > .ber-promo-rooms { width:auto; max-width:none; min-width:0; margin:18px 48px 0; padding:17px 22px; border-radius:16px; box-shadow:0 10px 28px rgba(54,36,18,.11); }
 .rooms-results > .ber-promo-rooms .ber-promo-layout { gap:18px; }
 .rooms-results > .ber-promo-rooms .ber-promo-copy { max-width:none; }
