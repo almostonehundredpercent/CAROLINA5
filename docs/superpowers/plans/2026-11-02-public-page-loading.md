@@ -37,11 +37,18 @@
 - Uses the existing Blade `@push('styles')` and `@stack('styles')`.
 - Keeps the current stylesheet order: `rooms-premium.css`, then `promo-campaign.css`, then shared navigation CSS.
 
-- [ ] Add a feature test asserting `rooms-premium.css` and `promo-campaign.css` occur before `<body>` in the Rooms response.
-- [ ] Run the focused test and confirm it fails because those styles are currently emitted after the main content.
-- [ ] Change the Rooms view from `@push('late-styles')` to `@push('styles')`; preserve the shared late-style stack because room-detail and guest-arrival views still use it.
-- [ ] Run the focused test and verify it passes.
-- [ ] Run `php artisan test`, `node --test tests/js/*.test.mjs`, and `npm run build`.
-- [ ] Run Playwright on live `/rooms` at 390px and 1440px, then mobile Lighthouse on `/rooms`; record status, errors, overflow, CLS, LCP, and TTFB.
-- [ ] Confirm live availability responses remain `Cache-Control: private, no-store`.
-- [ ] Commit and push to `main`; verify the deployed route reflects the new stylesheet ordering.
+- [x] Add a feature test asserting `rooms-premium.css` and `promo-campaign.css` occur before `<body>` in the Rooms response.
+- [x] Run the focused test and confirm it fails because those styles are currently emitted after the main content.
+- [x] Change the Rooms view from `@push('late-styles')` to `@push('styles')`; preserve the shared late-style stack because room-detail and guest-arrival views still use it.
+- [x] Run the focused test and verify it passes.
+- [x] Run `php artisan test`, `node --test tests/js/*.test.mjs`, and `npm run build`.
+- [x] Run Playwright on live `/rooms` at 390px and 1440px, then mobile Lighthouse on `/rooms`; record status, errors, overflow, CLS, LCP, and TTFB.
+- [x] Confirm live availability responses remain `Cache-Control: private, no-store`.
+- [x] Commit and push to `main`; verify the deployed route reflects the new stylesheet ordering.
+
+## Production Verification
+
+- Deployment commit: `fe9ca3d5b214e545720e38ef35e979ecafcc52f7`.
+- Playwright: `/rooms` returned 200 at 390px and 1440px; 18 cards rendered, no horizontal overflow or page errors; page CSS was in `<head>`.
+- Live availability response: 200, `Cache-Control: no-store, private`.
+- Mobile Lighthouse repeat: performance 0.79, FCP 3.0s, LCP 4.1s, Speed Index 4.2s, TBT 0ms, CLS 0.014, document response 950ms. The prior measured `/rooms` CLS was 0.167; response/paint timings vary between runs.
