@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>@yield('title', 'Carolina Transient & Airbnb | Tabaco City')</title>
     <meta name="description" content="Reserve short and overnight stays with Carolina Transient & Airbnb in Tabaco City, Albay.">
-    <link rel="icon" type="image/jpeg" href="{{ asset('images/carolina-logo.jpg') }}">
+    <link rel="icon" type="image/png" href="{{ asset('images/carolina-favicon.png') }}">
     <link rel="canonical" href="{{ url()->current() }}">
     <meta property="og:type" content="website"><meta property="og:title" content="@yield('title', 'Carolina Transient & Airbnb | Tabaco City')"><meta property="og:description" content="Reserve short and overnight stays in Tabaco City, Albay."><meta property="og:url" content="{{ url()->current() }}"><meta property="og:image" content="{{ asset('images/carolina-logo.jpg') }}">
     <meta name="twitter:card" content="summary_large_image">
