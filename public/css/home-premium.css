@@ -7,7 +7,13 @@
 .home-hero p { max-width:530px; color:rgba(255,248,238,.8); font-size:1.16rem; line-height:1.55; }
 .home-hero .eyebrow { color:#ffc768; }
 .home-hero-actions { display:flex; align-items:center; gap:22px; margin-top:31px; }
-.home-hero .home-hero-primary { min-height:58px; min-width:190px; justify-content:center; gap:12px; border:1px solid rgba(255,205,133,.72); border-radius:12px; padding:16px 25px; background:var(--gold); color:#1c140f; font-weight:700; box-shadow:0 10px 30px rgba(0,0,0,.24); }
+.home-hero .home-hero-primary { position:relative; min-height:58px; min-width:190px; justify-content:space-between; gap:17px; border:1px solid rgba(255,214,151,.86); border-radius:11px; padding:10px 11px 10px 21px; background-color:var(--gold); background-image:linear-gradient(135deg,#e69a24 0%,#d18408 52%,#bd6c00 100%); color:#1c140f; font:750 1rem/1.25 'DM Sans',sans-serif; letter-spacing:.005em; box-shadow:inset 0 1px 0 rgba(255,255,255,.28),0 12px 28px rgba(0,0,0,.3),0 3px 0 rgba(101,53,5,.36); transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease,filter .18s ease; }
+.home-hero .home-hero-primary:hover { transform:translateY(-2px); border-color:rgba(255,229,183,.98); filter:saturate(1.06) brightness(1.04); box-shadow:inset 0 1px 0 rgba(255,255,255,.32),0 17px 34px rgba(0,0,0,.34),0 3px 0 rgba(101,53,5,.32); }
+.home-hero .home-hero-primary:active { transform:translateY(0); filter:brightness(.98); box-shadow:inset 0 2px 5px rgba(71,38,3,.2),0 5px 14px rgba(0,0,0,.25); }
+.home-hero .home-hero-primary:focus-visible { outline:3px solid rgba(255,224,169,.92); outline-offset:4px; }
+.home-hero-arrow { display:inline-grid; place-items:center; width:34px; height:34px; flex:0 0 34px; border:1px solid rgba(54,31,9,.18); border-radius:8px; background:rgba(54,31,9,.12); transition:transform .18s ease,background-color .18s ease; }
+.home-hero-arrow svg { display:block; width:18px; height:18px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
+.home-hero-primary:hover .home-hero-arrow { transform:translateX(2px); background:rgba(54,31,9,.18); }
 .home-hero-link { color:rgba(255,250,242,.82); font-size:.92rem; font-weight:700; }
 .home-hero-link:hover { color:#fff; }
 .home-hero-details { display:flex; flex-wrap:wrap; gap:0; margin-top:74px; color:rgba(255,250,242,.7); font-size:.8rem; }
@@ -48,7 +54,7 @@
 .home-availability-top .home-room-picker { text-transform:none; }
 .home-room-picker-label { font-size:.72rem; font-weight:700; letter-spacing:.08em; text-transform:uppercase; }
 @media(max-width:800px) { .home-room-trigger { min-height:54px; }.home-room-options { max-height:min(360px,45vh); max-height:min(360px,45dvh); } }
-@media(prefers-reduced-motion:reduce) { .home-room-trigger,.home-room-trigger>svg,.home-room-option { transition:none; } }
+@media(prefers-reduced-motion:reduce) { .home-hero .home-hero-primary,.home-hero-arrow,.home-room-trigger,.home-room-trigger>svg,.home-room-option { transition:none; }.home-hero .home-hero-primary:hover,.home-hero-primary:hover .home-hero-arrow { transform:none; } }
 .home-calendar { max-width: 560px; margin:26px auto 0; padding:22px; border:1px solid var(--line); border-radius:14px; background:#fffcf8; }
 .home-calendar-head { margin-bottom:18px; }
 .home-calendar-head b { font-size:1.02rem; }
