@@ -233,6 +233,33 @@ test('scheduled cleaning and maintenance blocks do not show a live cleaning coun
     }
 });
 
+test('front desk room operations shows a live countdown for active cleaning blocks', function () {
+    Carbon::setTestNow('2026-10-24 12:00:00');
+
+    try {
+        $propertyNow = PropertyTime::now();
+        $room = adminDayRoom('frontdesk-cleaning-countdown-room');
+        RoomBlock::create([
+            'room_id' => $room->id,
+            'status' => 'cleaning',
+            'starts_at' => $propertyNow->copy()->subMinutes(14)->subSeconds(37),
+            'ends_at' => $propertyNow->copy()->addMinutes(5)->addSeconds(23),
+            'notes' => 'Automatic 20-minute cleaning period after check-out.',
+        ]);
+        $admin = User::factory()->create(['is_admin' => true]);
+
+        $this->actingAsStaff($admin)
+            ->get(route('admin.frontdesk'))
+            ->assertOk()
+            ->assertSee('data-cleaning-countdown', false)
+            ->assertSee('data-remaining-seconds="323"', false)
+            ->assertSee('05:23')
+            ->assertSee('js/cleaning-countdown.js', false);
+    } finally {
+        Carbon::setTestNow();
+    }
+});
+
 test('booking cancellation uses the in-page confirmation and explains refunds are separate', function () {
     $admin = User::factory()->create(['is_admin' => true]);
     $guest = User::factory()->create(['name' => 'Jordan Lee']);

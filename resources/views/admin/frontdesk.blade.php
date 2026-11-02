@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Today · Carolina</title>
     <link rel="stylesheet" href="{{ asset('css/admin.css') }}?v={{ filemtime(public_path('css/admin.css')) }}">
+    <script src="{{ asset('js/cleaning-countdown.js') }}?v={{ filemtime(public_path('js/cleaning-countdown.js')) }}" defer></script>
     <style>
         .today-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;align-items:start}
         .today-grid>.panel{height:max-content}
@@ -121,10 +122,13 @@
                 <div class="today-list">
                     @forelse($roomOperationBlocks as $block)
                         <article class="today-item today-maintenance-item">
-                            <span class="today-maintenance-label">{{ ucfirst($block->status) }} · {{ $block->starts_at->lte(now()) && $block->ends_at->gt(now()) ? 'In progress' : 'Scheduled today' }}</span>
+                            <span class="today-maintenance-label">{{ ucfirst($block->status) }} · {{ $block->starts_at->lte($propertyNow) && $block->ends_at->gt($propertyNow) ? 'In progress' : 'Scheduled today' }}</span>
                             <b>{{ $block->room?->name ?? 'Room' }}</b>
                             <small>{{ $block->starts_at->format('M j · g:i A') }} – {{ $block->ends_at->format('M j · g:i A') }}</small>
                             @if($block->notes)<p class="today-maintenance-note">{{ $block->notes }}</p>@endif
+                            @if($block->status === 'cleaning' && $block->starts_at->lte($propertyNow) && $block->ends_at->gt($propertyNow))
+                                @include('admin.partials.cleaning-countdown', ['remainingSeconds' => max(0, $block->ends_at->getTimestamp() - $propertyNow->getTimestamp())])
+                            @endif
                         </article>
                     @empty
                         <p class="empty-copy">No cleaning or maintenance items overlap today.</p>
