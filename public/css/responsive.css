@@ -6,6 +6,7 @@
 .nav { min-height: 96px; padding-left: 8%; padding-right: 8%; box-shadow: 0 2px 15px rgba(45, 37, 31, .06); }
 .nav .brand { gap: 11px; font-size: 1.48rem; line-height: 1; }
 .brand-logo { display: block; width: 56px; height: 56px; object-fit: cover; border-radius: 50%; box-shadow: 0 4px 10px rgba(201, 121, 0, .22); }
+.brand-logo-picture { display: block; flex: none; }
 .nav .brand small { margin-top: 4px; font-size: 10.5px; letter-spacing: 1.45px; }
 .nav nav { gap: 22px; font-size: 1rem; font-weight: 600; }
 .nav nav > a:not(.nav-button) { padding: 10px 0; color: var(--ink); }

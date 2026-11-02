@@ -352,7 +352,7 @@ class BookingController extends Controller
 
     public function index(Request $request)
     {
-        return view('bookings.index', ['bookings' => $request->user()->bookings()->with(['room', 'review', 'payments'])->latest()->get()]);
+        return view('bookings.index', ['bookings' => $request->user()->bookings()->with(['room', 'review', 'payments'])->latest()->paginate(10)->withQueryString()]);
     }
 
     public function submitReview(Request $request, Booking $booking)

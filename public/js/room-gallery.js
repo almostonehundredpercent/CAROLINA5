@@ -212,7 +212,8 @@ document.addEventListener('DOMContentLoaded', () => {
             if (event.key === 'ArrowLeft' && activeIndex > 0) show(activeIndex - 1);
             if (event.key === 'ArrowRight' && activeIndex < roomGallery.images.length - 1) show(activeIndex + 1);
         });
-        lightbox.addEventListener('keydown', (event) => {
+        document.addEventListener('keydown', (event) => {
+            if (!lightbox.open) return;
             if (event.key === 'ArrowLeft' && activeIndex > 0) show(activeIndex - 1);
             if (event.key === 'ArrowRight' && activeIndex < roomGallery.images.length - 1) show(activeIndex + 1);
             if (event.key === '+' || event.key === '=') setZoom(zoom * 1.5);

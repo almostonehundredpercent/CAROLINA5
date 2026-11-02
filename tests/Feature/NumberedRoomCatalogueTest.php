@@ -11,8 +11,8 @@ test('the room catalogue seeds and displays eighteen numbered rooms in groups of
         ->and($rooms->pluck('name')->all())->toBe(array_map(fn (int $number): string => 'Room '.$number, range(1, 18)));
 
     $response = $this->get(route('rooms.index'))->assertOk();
-    $response->assertSee('Show next six rooms')
-        ->assertSee('Group 1 of 3');
+    $response->assertSee('aria-label="Show next page of rooms"', false)
+        ->assertSee('id="rooms-page-summary" aria-live="polite"', false);
     expect(substr_count($response->getContent(), 'data-room-page='))->toBe(3);
 });
 

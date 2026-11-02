@@ -37,7 +37,7 @@
     <div class="network-loader" id="network-loader" role="status" aria-live="polite"><span class="network-loader-dots" aria-hidden="true"><i></i><i></i><i></i></span><span>Updating availability</span></div>
     <header class="nav{{ request()->routeIs('home') ? ' nav--over-hero' : '' }}">
         <a class="brand" href="{{ route('home') }}">
-            <img class="brand-logo" src="{{ asset('images/carolina-logo.jpg') }}" alt="Carolina logo"><span>Carolina <small>TRANSIENT & AIRBNB</small></span>
+            <picture class="brand-logo-picture"><source type="image/webp" srcset="{{ asset('images/carolina-logo-256.webp') }}"><img class="brand-logo" src="{{ asset('images/carolina-logo.jpg') }}" alt="Carolina logo"></picture><span>Carolina <small>TRANSIENT & AIRBNB</small></span>
         </a>
         <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="primary-navigation">
             <span class="sr-only">Open navigation menu</span>
@@ -87,7 +87,7 @@
     <footer id="contact" class="site-footer">
         <div class="footer-content">
             <section class="footer-brand">
-                <a class="brand" href="{{ route('home') }}"><img class="brand-logo" src="{{ asset('images/carolina-logo.jpg') }}" alt="Carolina logo"><span>Carolina <small>TRANSIENT & AIRBNB</small></span></a>
+                <a class="brand" href="{{ route('home') }}"><picture class="brand-logo-picture"><source type="image/webp" srcset="{{ asset('images/carolina-logo-256.webp') }}"><img class="brand-logo" src="{{ asset('images/carolina-logo.jpg') }}" alt="Carolina logo"></picture><span>Carolina <small>TRANSIENT & AIRBNB</small></span></a>
                 <p>A thoughtful, comfortable stay in the heart of Tabaco City.</p>
             </section>
 

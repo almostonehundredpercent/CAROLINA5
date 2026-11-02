@@ -106,6 +106,7 @@ test('each room calendar marks its own booked dates red, including cross-midnigh
         ]) {
             const card = page.locator(`[data-availability-url="/rooms/${slug}/availability"]`);
             await card.locator('.room-availability-toggle').click();
+            await card.locator('[data-calendar-days] .room-availability-day').first().waitFor();
             const targetMonth = new Intl.DateTimeFormat('en-PH', { timeZone: 'Asia/Singapore', month: 'long', year: 'numeric' })
                 .format(new Date(`${targetDate}T12:00:00+08:00`));
             for (let attempt = 0; attempt < 2 && (await card.locator('[data-month-label]').textContent()) !== targetMonth; attempt++) {

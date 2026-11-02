@@ -1,10 +1,13 @@
 @extends('layouts.app')
+@push('styles')
+<link rel="stylesheet" href="{{ asset('css/booking-pagination.css') }}?v={{ filemtime(public_path('css/booking-pagination.css')) }}">
+@endpush
 @section('content')
 <section class="page-hero slim"><span class="eyebrow">YOUR STAYS</span><h1>My bookings</h1></section>
 <section class="section compact"><div class="booking-list">
 @forelse($bookings as $booking)
     <article class="booking-row">
-        <img src="{{ $booking->room->image_url }}" alt="{{ $booking->room->name }}">
+        <picture>@if($roomWebpSrcset = $booking->room->responsiveWebpSrcset())<source type="image/webp" srcset="{{ $roomWebpSrcset }}" sizes="(max-width: 800px) 80px, 140px">@endif<img src="{{ $booking->room->image_url }}" alt="{{ $booking->room->name }}" @if($roomSrcset = $booking->room->responsiveImageSrcset()) srcset="{{ $roomSrcset }}" sizes="(max-width: 800px) 80px, 140px" @endif loading="lazy" decoding="async"></picture>
         <div class="booking-details">
             @php($holdExpired = $booking->hasExpiredHold() || $booking->isExpiredHoldRecord())
             <span class="status {{ $holdExpired ? 'cancelled' : $booking->status }}">{{ $holdExpired ? 'Payment hold expired' : ucfirst($booking->status) }}</span>
@@ -75,4 +78,11 @@
     <div class="empty-state"><h2>No bookings yet</h2><p>Your upcoming stays will appear here.</p><a class="button" href="{{ route('rooms.index') }}">Browse rooms</a></div>
 @endforelse
 </div></section>
+@if($bookings->hasPages())
+    <nav class="booking-pagination" aria-label="Booking pages">
+        @if($bookings->onFirstPage())<span class="booking-pagination-disabled" aria-disabled="true">Previous</span>@else<a href="{{ $bookings->previousPageUrl() }}">Previous</a>@endif
+        <span class="booking-pagination-page" aria-current="page">Page {{ $bookings->currentPage() }} of {{ $bookings->lastPage() }}</span>
+        @if($bookings->hasMorePages())<a href="{{ $bookings->nextPageUrl() }}">Next</a>@else<span class="booking-pagination-disabled" aria-disabled="true">Next</span>@endif
+    </nav>
+@endif
 @endsection

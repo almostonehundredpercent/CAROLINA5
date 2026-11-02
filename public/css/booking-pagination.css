@@ -1,0 +1,55 @@
+.booking-pagination {
+    display: flex;
+    width: max-content;
+    max-width: 100%;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin: 24px auto 0;
+    padding: 8px;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: var(--sand);
+}
+
+.booking-pagination a,
+.booking-pagination > span {
+    display: inline-flex;
+    min-width: 88px;
+    min-height: 44px;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 13px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--paper);
+    color: var(--ink);
+    font-size: .88rem;
+    font-weight: 700;
+}
+
+.booking-pagination a:hover,
+.booking-pagination a:focus-visible {
+    border-color: var(--gold);
+    outline: none;
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--gold) 20%, transparent);
+}
+
+.booking-pagination .booking-pagination-page {
+    min-width: 110px;
+    border-color: transparent;
+    background: transparent;
+    color: var(--muted);
+}
+
+.booking-pagination .booking-pagination-disabled {
+    color: var(--muted);
+    opacity: .6;
+}
+
+@media (max-width: 480px) {
+    .booking-pagination { gap: 5px; padding: 6px; }
+    .booking-pagination a,
+    .booking-pagination > span { min-width: 72px; padding: 7px 9px; font-size: .82rem; }
+    .booking-pagination .booking-pagination-page { min-width: 96px; }
+}

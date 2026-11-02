@@ -92,6 +92,7 @@ test('homepage prioritizes its hero image and defers below-the-fold room cards',
 
     expect($xpath->evaluate('count(//head/link[@rel="preload"][@as="image"][@media="(max-width: 800px)"])'))->toBe(1.0)
         ->and($xpath->evaluate('count(//head/link[@rel="preload"][@as="image"][@media="(min-width: 801px)"])'))->toBe(1.0)
+        ->and($xpath->evaluate('count(//picture[@class="brand-logo-picture"]/source[@type="image/webp"][@srcset])'))->toBe(2.0)
         ->and($xpath->evaluate('count(//head/link[contains(@href, "home-premium.css")])'))->toBe(1.0)
         ->and($xpath->evaluate('string(//div[contains(@class, "home-room-carousel")]//img[1]/@loading)'))->toBe('lazy')
         ->and($xpath->evaluate('string(//div[contains(@class, "home-room-carousel")]//img[1]/@fetchpriority)'))->not->toBe('high');
@@ -125,5 +126,33 @@ test('room photos provide smaller responsive variants only for supported Unsplas
         expect($image)->not->toBeNull()
             ->and($image->getAttribute('srcset'))->toContain('w=480', 'w=800', 'w=1000')
             ->and($image->getAttribute('sizes'))->not->toBeEmpty();
+    }
+});
+
+test('locally hosted room cards offer WebP sources and keep their JPEG fallback', function () {
+    Room::create([
+        'name' => 'Local photo room',
+        'slug' => 'local-photo-room',
+        'description' => 'A test stay.',
+        'room_type' => 'Standard',
+        'beds' => 1,
+        'guests' => 2,
+        'price_per_night' => 450,
+        'image_url' => '/images/rooms/room-7-angle-1.jpg',
+        'is_active' => true,
+    ]);
+
+    foreach ([route('home'), route('rooms.index')] as $url) {
+        $response = $this->get($url)->assertOk();
+        $document = new DOMDocument;
+        @$document->loadHTML('<?xml encoding="UTF-8"?>'.$response->getContent());
+        $xpath = new DOMXPath($document);
+        $image = $xpath->query('//img[@alt="Local photo room"]')->item(0);
+        $source = $xpath->query('//picture/source[@type="image/webp" and contains(@srcset, "room-7-angle-1-480.webp")]')->item(0);
+
+        expect($image)->not->toBeNull()
+            ->and($image->getAttribute('src'))->toContain('/images/rooms/room-7-angle-1.jpg')
+            ->and($source)->not->toBeNull()
+            ->and($source->getAttribute('srcset'))->toContain('room-7-angle-1-480.webp', 'room-7-angle-1-800.webp');
     }
 });

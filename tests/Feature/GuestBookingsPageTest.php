@@ -55,9 +55,44 @@ test('a checked-out guest booking renders separate action and review sections', 
         expect($xpath->query('//input[@type="radio" and @name="'.$name.'"]')->length)->toBe(5);
     }
 
+    $bookingImage = $xpath->query('//article[contains(concat(" ", normalize-space(@class), " "), " booking-row ")]//img')->item(0);
+    expect($bookingImage)->not->toBeNull()
+        ->and($bookingImage->getAttribute('loading'))->toBe('lazy')
+        ->and($bookingImage->getAttribute('decoding'))->toBe('async');
+
     expect($xpath->query('//input[@type="radio" and @name="rating" and @required]')->length)->toBe(5)
         ->and($xpath->query('//input[@type="radio" and @name!="rating" and @required]')->length)->toBe(0)
         ->and($xpath->query('//select[@name="rating" or @name="cleanliness_rating" or @name="comfort_rating" or @name="value_rating"]')->length)->toBe(0);
+});
+
+test('my bookings loads a page at a time instead of rendering every booking at once', function () {
+    $user = User::factory()->create(['staff_role' => 'guest', 'is_admin' => false]);
+    $room = Room::create([
+        'name' => 'Paginated guest room', 'slug' => 'paginated-guest-room', 'room_type' => 'Standard',
+        'description' => 'A room for guest pagination.', 'beds' => 1, 'guests' => 2,
+        'price_per_night' => 450, 'is_active' => true, 'operational_status' => 'available',
+    ]);
+
+    foreach (range(1, 12) as $number) {
+        $day = str_pad((string) $number, 2, '0', STR_PAD_LEFT);
+        Booking::create([
+            'user_id' => $user->id, 'room_id' => $room->id, 'guest_name' => 'Pagination Guest',
+            'guest_email' => $user->email, 'guest_phone' => '09XX XXX XXXX',
+            'check_in' => "2026-12-{$day}", 'check_out' => "2026-12-{$day}",
+            'check_in_at' => "2026-12-{$day} 12:00:00", 'check_out_at' => "2026-12-{$day} 18:00:00",
+            'booking_type' => 'hourly', 'hours' => 6, 'guests' => 1, 'nights' => 1,
+            'total_amount' => 450, 'status' => 'confirmed', 'payment_status' => 'paid', 'payment_method' => 'cash',
+        ]);
+    }
+
+    $firstPage = $this->actingAs($user)->get(route('bookings.index'))->assertOk();
+    expect($firstPage->viewData('bookings'))->toHaveCount(10)
+        ->and($firstPage->getContent())->toContain('Page 1 of 2')
+        ->and($firstPage->getContent())->toContain('href="'.route('bookings.index', ['page' => 2]).'"');
+
+    $secondPage = $this->actingAs($user)->get(route('bookings.index', ['page' => 2]))->assertOk();
+    expect($secondPage->viewData('bookings'))->toHaveCount(2)
+        ->and($secondPage->getContent())->toContain('Page 2 of 2');
 });
 
 test('signed-in guest can resume payment for an active unpaid booking', function () {
