@@ -74,13 +74,16 @@ class PayMongoPaymentReconciler
                 $conflict = $room->bookings()->whereKeyNot($lockedBooking->id)->blocking()->overlapping($startsAt, $endsAt)->exists()
                     || $room->blocks()->overlapping($startsAt, $endsAt)->exists();
             }
+            $paidBefore = (float) Payment::where('booking_id', $lockedBooking->id)->where('status', 'paid')->sum('amount');
+            $refundedBefore = (float) Payment::where('booking_id', $lockedBooking->id)->where('status', 'refunded')->sum('amount');
+            $willCompletePayment = ($paidBefore - $refundedBefore + (float) $lockedPayment->amount) + 0.001 >= (float) $lockedBooking->total_amount;
             $paidAt = now();
             $lockedPayment->update([
                 'status' => 'paid',
                 'paid_at' => $paidAt,
-                'notes' => (float) $lockedBooking->deposit_amount > 0 && (float) $lockedPayment->amount < (float) $lockedBooking->total_amount
-                    ? 'GCash downpayment confirmed by PayMongo.'
-                    : 'GCash payment confirmed by PayMongo.',
+                'notes' => $willCompletePayment
+                    ? 'GCash payment completing the booking total confirmed by PayMongo.'
+                    : 'GCash partial payment confirmed by PayMongo.',
             ]);
 
             $paidTotal = (float) Payment::where('booking_id', $lockedBooking->id)->where('status', 'paid')->sum('amount');

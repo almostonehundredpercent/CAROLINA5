@@ -9,6 +9,8 @@
     $hasDeposit = (float) $booking->deposit_amount > 0;
     $depositVerified = $booking->deposit_status === 'verified' || (bool) $booking->deposit_verified_at;
     $amountDueNow = $depositVerified ? 0 : round(min($financial['outstanding'], max(0, $depositTarget - $financial['net_collected'])), 2);
+    $fullPaymentAmount = round((float) $financial['outstanding'], 2);
+    $selectedPaymentOption = $activePayMongoCheckout && abs((float) $activePayMongoCheckout->amount - $fullPaymentAmount) < 0.01 ? 'full' : 'deposit';
     $canPayOnline = ! $unavailable && ! $paymentComplete && ! $depositVerified && $amountDueNow > 0;
     $temporaryHold = ! $unavailable && $booking->status === 'pending' && ! $booking->hasProtectedInventory();
     $holdDeadline = $temporaryHold ? $booking->holdDeadline() : null;
@@ -44,6 +46,14 @@
     .receipt-hold-alert strong{color:#50320b}
     .paymongo-submit{display:flex;align-items:center;justify-content:center;gap:9px;width:100%;min-height:52px;margin-top:12px;padding:12px 18px;font-size:1rem;font-weight:800}
     .paymongo-submit:disabled{cursor:wait;opacity:.82}
+    .payment-options{display:grid;gap:9px;margin:14px 0 4px}
+    .payment-option{display:flex;align-items:flex-start;gap:10px;padding:12px;border:1px solid var(--line);border-radius:10px;background:rgba(255,255,255,.55);cursor:pointer}
+    .payment-option:has(input:checked){border-color:#c98216;box-shadow:0 0 0 1px #c98216}
+    .payment-option input{margin:3px 0 0;accent-color:#bd7100}
+    .payment-option span{display:grid;gap:3px;min-width:0}
+    .payment-option strong{color:var(--ink)}
+    .payment-option small{color:var(--muted);line-height:1.4}
+    .pending-checkout-note{margin:10px 0 0;padding:10px 12px;border:1px solid #dfbd81;border-radius:9px;background:#fff5df;color:#684512;font-size:.88rem;line-height:1.45}
     .paymongo-spinner{display:none;width:17px;height:17px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:paymongo-spin .7s linear infinite}
     .paymongo-submit[aria-busy="true"] .paymongo-spinner{display:inline-block}
     .paymongo-loading-message{display:none;margin:9px 0 0;color:var(--muted);font-size:.9rem}
@@ -57,6 +67,11 @@
     .dark-mode .receipt-status.paid{background:#17432b;color:#b7f7c5}
     .dark-mode .receipt-hold-alert{border-color:#8b622b;background:#3c2d1a;color:#f3d8a7}
     .dark-mode .receipt-hold-alert strong{color:#ffe1a9}
+    .dark-mode .payment-option{border-color:#574638;background:#211a15}
+    .dark-mode .payment-option:has(input:checked){border-color:#d99223;box-shadow:0 0 0 1px #d99223}
+    .dark-mode .payment-option strong{color:#fff4e8}
+    .dark-mode .payment-option small{color:#d4c3b2}
+    .dark-mode .pending-checkout-note{border-color:#805d2d;background:#382b1c;color:#f6dcae}
     @keyframes paymongo-spin{to{transform:rotate(360deg)}}
     @media(prefers-reduced-motion:reduce){.paymongo-spinner{animation-duration:1.8s}}
     .receipt-actions{margin:14px auto 0}
@@ -86,7 +101,7 @@
                 @elseif($unavailable)
                     <small>Payment</small><b>{{ ucfirst($booking->payment_status ?? 'pending') }}</b><small>Online checkout is unavailable for this request</small>
                 @else
-                    <small>{{ $hasDeposit ? '30% downpayment due' : 'Amount due' }}</small><b>₱{{ number_format($amountDueNow, 2) }}</b><small>Secure GCash checkout via PayMongo</small>
+                    <small>{{ $hasDeposit ? 'Selected payment amount' : 'Amount due' }}</small><b id="selected-payment-amount">₱{{ number_format($hasDeposit && $selectedPaymentOption === 'full' ? $fullPaymentAmount : $amountDueNow, 2) }}</b><small>Secure GCash checkout via PayMongo</small>
                 @endif
             </div>
         </div>
@@ -105,12 +120,27 @@
                 <p>{{ $depositVerified ? 'The remaining balance is due at the property after staff reviews your booking.' : 'This limit applies only to unpaid requests awaiting confirmation.' }}</p>
             </div>
         @endif
+        @if($canPayOnline && $activePayMongoCheckout)
+            <p class="pending-checkout-note" role="status">A PayMongo checkout for <strong>₱{{ number_format((float) $activePayMongoCheckout->amount, 2) }}</strong> is already active. Continue that checkout, or wait for it to expire before starting a checkout for a different amount.</p>
+        @endif
         @if($canPayOnline)
             <form id="paymongo-checkout-form" method="POST" action="{{ route('bookings.paymongo.start', $booking) }}" data-no-loading>
                 @csrf
+                @if($hasDeposit)
+                    <div class="payment-options" role="radiogroup" aria-label="Choose how much to pay now">
+                        <label class="payment-option">
+                            <input type="radio" name="payment_option" value="deposit" {{ $selectedPaymentOption === 'deposit' ? 'checked' : '' }}>
+                            <span><strong>Pay 30% downpayment · ₱{{ number_format($amountDueNow, 2) }}</strong><small>Reserve the room time while Carolina reviews your request. Pay the remaining balance at the property.</small></span>
+                        </label>
+                        <label class="payment-option">
+                            <input type="radio" name="payment_option" value="full" {{ $selectedPaymentOption === 'full' ? 'checked' : '' }}>
+                            <span><strong>Pay in full · ₱{{ number_format($fullPaymentAmount, 2) }}</strong><small>After PayMongo verifies the full amount, the booking is confirmed automatically if the room is still available.</small></span>
+                        </label>
+                    </div>
+                @endif
                 <button class="button paymongo-submit" type="submit" aria-busy="false" data-loading-text="Opening the secure PayMongo checkout…">
                     <span class="paymongo-spinner" aria-hidden="true"></span>
-                    <span class="paymongo-submit-label">{{ $hasDeposit ? 'Pay downpayment' : 'Pay' }} ₱{{ number_format($amountDueNow, 2) }} with GCash</span>
+                    <span class="paymongo-submit-label">{{ $hasDeposit ? ($selectedPaymentOption === 'full' ? 'Pay in full' : 'Pay downpayment') : 'Pay' }} ₱{{ number_format($hasDeposit && $selectedPaymentOption === 'full' ? $fullPaymentAmount : $amountDueNow, 2) }} with GCash</span>
                     <span class="paymongo-submit-arrow" aria-hidden="true">→</span>
                 </button>
                 <p id="paymongo-loading-message" class="paymongo-loading-message" role="status" aria-live="polite">Connecting to PayMongo securely… Keep this page open.</p>
@@ -150,7 +180,17 @@
     </div>
 </section>
 <script>
-    document.getElementById('paymongo-checkout-form')?.addEventListener('submit', async function (event) {
+    const checkoutForm = document.getElementById('paymongo-checkout-form');
+    checkoutForm?.querySelectorAll('input[name="payment_option"]').forEach(option => option.addEventListener('change', () => {
+        const label = checkoutForm.querySelector('.paymongo-submit-label');
+        if (!label) return;
+        const amount = option.value === 'full' ? @json(number_format($fullPaymentAmount, 2)) : @json(number_format($amountDueNow, 2));
+        label.textContent = `${option.value === 'full' ? 'Pay in full' : 'Pay downpayment'} ₱${amount} with GCash`;
+        const summaryAmount = document.getElementById('selected-payment-amount');
+        if (summaryAmount) summaryAmount.textContent = `₱${amount}`;
+    }));
+
+    checkoutForm?.addEventListener('submit', async function (event) {
         event.preventDefault();
 
         const form = this;

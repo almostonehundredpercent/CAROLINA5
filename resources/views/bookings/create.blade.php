@@ -146,7 +146,7 @@
             <strong>₱{{ number_format($room->price_per_night) }} <small>{{ $room->rate_label }}</small></strong>
         @endif
         <hr>
-        <small>{{ $bookingMode === 'hourly' ? 'Choose your stay length and see the adjusted total before continuing.' : 'Final total is calculated from your dates.' }} A downpayment of 30% of the original price is due through PayMongo test checkout after you submit; it is capped at the final total if a promo reduces the price below that amount. The remaining balance is due at the property. No real money is collected in test mode.</small>
+        <small>{{ $bookingMode === 'hourly' ? 'Choose your stay length and see the adjusted total before continuing.' : 'Final total is calculated from your dates.' }} After you submit, choose a 30% downpayment or pay the full amount through PayMongo test checkout. The downpayment is based on the original price and capped at the final total if a promo reduces it; any remaining balance is due at the property. No real money is collected in test mode.</small>
     </aside>
 </section>
 @if(auth()->check() || $isGuest)

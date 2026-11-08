@@ -390,8 +390,15 @@ class BookingController extends Controller
         $this->authorizeBookingAccess($request, $booking);
         $booking->loadMissing('payments');
         $financial = FinancialSummary::forBooking($booking);
+        $activePayMongoCheckout = $booking->payments()
+            ->where('method', 'gcash')
+            ->where('status', 'pending')
+            ->where('reference', 'like', 'paymongo:%')
+            ->whereDoesntHave('timeAdjustment')
+            ->latest('id')
+            ->first();
 
-        return view('bookings.receipt', compact('booking', 'financial'));
+        return view('bookings.receipt', compact('booking', 'financial', 'activePayMongoCheckout'));
     }
 
     public function confirmation(Request $request, Booking $booking)
@@ -405,8 +412,12 @@ class BookingController extends Controller
 
     public function startPayMongoCheckout(Request $request, Booking $booking, PayMongoCheckout $checkout, PayMongoPaymentReconciler $payments)
     {
+        $data = $request->validate([
+            'payment_option' => 'nullable|in:deposit,full',
+        ]);
+        $paymentOption = $data['payment_option'] ?? 'deposit';
         $this->authorizeBookingAccess($request, $booking);
-        $state = $this->reservePayMongoCheckoutAttempt($request, $booking->id);
+        $state = $this->reservePayMongoCheckoutAttempt($request, $booking->id, paymentOption: $paymentOption);
 
         while ($state['kind'] === 'existing') {
             $booking = $state['booking'];
@@ -436,11 +447,19 @@ class BookingController extends Controller
 
             $providerStatus = strtolower((string) data_get($providerSession, 'data.attributes.status'));
             if (in_array($providerStatus, ['expired', 'failed'], true)) {
-                $state = $this->reservePayMongoCheckoutAttempt($request, $booking->id, $pendingPayment->id, $providerStatus);
+                $state = $this->reservePayMongoCheckoutAttempt($request, $booking->id, $pendingPayment->id, $providerStatus, $paymentOption);
                 continue;
             }
 
             if ($providerStatus === 'active' && is_string(data_get($providerSession, 'data.attributes.checkout_url'))) {
+                if (abs((float) $pendingPayment->amount - (float) $state['amount']) >= 0.01) {
+                    $message = 'A PayMongo checkout for ₱'.number_format((float) $pendingPayment->amount, 2).' is already active. Finish it or wait for it to expire before choosing a different amount.';
+
+                    return $request->expectsJson()
+                        ? response()->json(['message' => $message], 409)
+                        : back()->withErrors(['payment' => $message]);
+                }
+
                 $booking = Booking::findOrFail($booking->id);
                 if ($booking->status === 'cancelled' || $booking->hasExpiredHold() || in_array($booking->payment_status, ['paid', 'refunded'], true)) {
                     $this->expireUnusableCheckout($checkout, $booking, $pendingPayment, $payments);
@@ -516,9 +535,9 @@ class BookingController extends Controller
         return redirect()->away($session['url']);
     }
 
-    private function reservePayMongoCheckoutAttempt(Request $request, int $bookingId, ?int $expiredPaymentId = null, ?string $providerStatus = null): array
+    private function reservePayMongoCheckoutAttempt(Request $request, int $bookingId, ?int $expiredPaymentId = null, ?string $providerStatus = null, string $paymentOption = 'deposit'): array
     {
-        return DB::transaction(function () use ($request, $bookingId, $expiredPaymentId, $providerStatus): array {
+        return DB::transaction(function () use ($request, $bookingId, $expiredPaymentId, $providerStatus, $paymentOption): array {
             $snapshot = Booking::findOrFail($bookingId);
             Room::whereKey($snapshot->room_id)->lockForUpdate()->firstOrFail();
             $booking = Booking::with(['room', 'user'])->whereKey($bookingId)->lockForUpdate()->firstOrFail();
@@ -535,8 +554,9 @@ class BookingController extends Controller
             $depositTarget = (float) $booking->deposit_amount > 0
                 ? min((float) $booking->deposit_amount, (float) $booking->total_amount)
                 : (float) $booking->total_amount;
-            $checkoutAmount = round(min($financial['outstanding'], max(0, $depositTarget - $netCollected)), 2);
-            abort_if($checkoutAmount <= 0, 422, 'There is no online downpayment due. Please contact Carolina for the remaining balance.');
+            $depositDue = max(0, $depositTarget - $netCollected);
+            $checkoutAmount = round(min($financial['outstanding'], $paymentOption === 'full' ? $financial['outstanding'] : $depositDue), 2);
+            abort_if($checkoutAmount <= 0, 422, 'There is no online payment due for this reservation. Please contact Carolina if you need help.');
 
             if ($expiredPaymentId !== null) {
                 $expiredPayment = Payment::where('booking_id', $booking->id)->whereKey($expiredPaymentId)->lockForUpdate()->first();
@@ -552,12 +572,13 @@ class BookingController extends Controller
                 ->where('method', 'gcash')
                 ->where('status', 'pending')
                 ->where('reference', 'like', 'paymongo:%')
+                ->whereDoesntHave('timeAdjustment')
                 ->latest('id')
                 ->lockForUpdate()
                 ->first();
 
             if ($pendingPayment) {
-                return ['kind' => 'existing', 'booking' => $booking, 'payment' => $pendingPayment];
+                return ['kind' => 'existing', 'booking' => $booking, 'payment' => $pendingPayment, 'amount' => $checkoutAmount];
             }
 
             $attemptId = $booking->paymongo_checkout_attempt_id;
