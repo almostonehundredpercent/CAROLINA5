@@ -17,6 +17,7 @@ use App\Services\PayMongoCheckout;
 use App\Services\PayMongoCheckoutCreationException;
 use App\Services\PayMongoPaymentReconciler;
 use App\Support\BookingSelection;
+use App\Support\FinancialSummary;
 use App\Support\PropertyTime;
 use App\Support\PromoPricing;
 use Carbon\Carbon;
@@ -302,8 +303,11 @@ class BookingController extends Controller
                     'promo_code' => $pricing ? $pricing['promo']->code : null,
                     'nights' => $nights,
                     'total_amount' => $pricing ? $pricing['total'] : $total,
-                    'original_amount' => $pricing ? $pricing['original'] : null,
+                    'original_amount' => $pricing ? $pricing['original'] : $total,
                     'discount_amount' => $pricing ? $pricing['discount'] : 0,
+                    'deposit_amount' => min(round((($pricing ? $pricing['original'] : $total) * 0.30), 2), (float) ($pricing ? $pricing['total'] : $total)),
+                    'deposit_status' => 'awaiting_payment',
+                    'deposit_due_at' => now()->addMinutes(Booking::holdMinutes()),
                     'add_ons' => [],
                     'hold_expires_at' => now()->addMinutes(Booking::holdMinutes()),
                     'payment_method' => 'cash',
@@ -384,8 +388,10 @@ class BookingController extends Controller
     public function receipt(Request $request, Booking $booking)
     {
         $this->authorizeBookingAccess($request, $booking);
+        $booking->loadMissing('payments');
+        $financial = FinancialSummary::forBooking($booking);
 
-        return view('bookings.receipt', compact('booking'));
+        return view('bookings.receipt', compact('booking', 'financial'));
     }
 
     public function confirmation(Request $request, Booking $booking)
@@ -459,8 +465,9 @@ class BookingController extends Controller
 
         $booking = $state['booking'];
         $attemptId = $state['attempt_id'];
+        $checkoutAmount = (float) $state['amount'];
         try {
-            $session = $checkout->create($booking->loadMissing(['room', 'user']), $attemptId);
+            $session = $checkout->create($booking->loadMissing(['room', 'user']), $attemptId, null, $checkoutAmount);
         } catch (PayMongoCheckoutCreationException $exception) {
             if ($exception->definitive) {
                 $this->rotatePayMongoCheckoutAttempt($booking->id, $attemptId);
@@ -490,7 +497,7 @@ class BookingController extends Controller
             return back()->withErrors(['payment' => 'Online GCash checkout is unavailable right now. Please try again later.']);
         }
 
-        $stored = $this->storePayMongoCheckoutSession($booking, $attemptId, $session);
+        $stored = $this->storePayMongoCheckoutSession($booking, $attemptId, $session, $checkoutAmount);
         $booking = $stored['booking'];
         if ($stored['unusable']) {
             $this->expireUnusableCheckout($checkout, $booking, $stored['payment'], $payments);
@@ -520,6 +527,16 @@ class BookingController extends Controller
             abort_if($booking->hasExpiredHold(), 422, 'This reservation hold expired. Please choose an available stay or contact Carolina before paying.');
             abort_if($booking->status === 'cancelled', 422, 'Cancelled reservations cannot be paid online.');
             abort_if(in_array($booking->payment_status, ['paid', 'refunded'], true), 422, 'This reservation has already been paid.');
+            abort_if((float) $booking->deposit_amount > 0 && ($booking->deposit_status === 'verified' || $booking->deposit_verified_at), 422, 'The downpayment is already verified. Please pay the remaining balance at the property.');
+
+            $payments = $booking->payments()->lockForUpdate()->get();
+            $netCollected = (float) $payments->where('status', 'paid')->sum('amount') - (float) $payments->where('status', 'refunded')->sum('amount');
+            $financial = FinancialSummary::forBooking($booking->setRelation('payments', $payments));
+            $depositTarget = (float) $booking->deposit_amount > 0
+                ? min((float) $booking->deposit_amount, (float) $booking->total_amount)
+                : (float) $booking->total_amount;
+            $checkoutAmount = round(min($financial['outstanding'], max(0, $depositTarget - $netCollected)), 2);
+            abort_if($checkoutAmount <= 0, 422, 'There is no online downpayment due. Please contact Carolina for the remaining balance.');
 
             if ($expiredPaymentId !== null) {
                 $expiredPayment = Payment::where('booking_id', $booking->id)->whereKey($expiredPaymentId)->lockForUpdate()->first();
@@ -549,13 +566,13 @@ class BookingController extends Controller
                 $booking->update(['paymongo_checkout_attempt_id' => $attemptId]);
             }
 
-            return ['kind' => 'create', 'booking' => $booking, 'attempt_id' => $attemptId];
+            return ['kind' => 'create', 'booking' => $booking, 'attempt_id' => $attemptId, 'amount' => $checkoutAmount];
         });
     }
 
-    private function storePayMongoCheckoutSession(Booking $booking, string $attemptId, array $session): array
+    private function storePayMongoCheckoutSession(Booking $booking, string $attemptId, array $session, float $checkoutAmount): array
     {
-        return DB::transaction(function () use ($booking, $attemptId, $session): array {
+        return DB::transaction(function () use ($booking, $attemptId, $session, $checkoutAmount): array {
             $snapshot = Booking::findOrFail($booking->id);
             Room::whereKey($snapshot->room_id)->lockForUpdate()->firstOrFail();
             $lockedBooking = Booking::whereKey($booking->id)->lockForUpdate()->firstOrFail();
@@ -568,11 +585,11 @@ class BookingController extends Controller
             if (! $payment) {
                 $payment = Payment::create([
                     'booking_id' => $lockedBooking->id,
-                    'amount' => $lockedBooking->total_amount,
+                    'amount' => $checkoutAmount,
                     'method' => 'gcash',
                     'status' => 'pending',
                     'reference' => $reference,
-                    'notes' => 'PayMongo test checkout session.',
+                    'notes' => (float) $lockedBooking->deposit_amount > 0 ? 'PayMongo test downpayment checkout session.' : 'PayMongo test checkout session.',
                 ]);
             }
 
@@ -582,7 +599,8 @@ class BookingController extends Controller
 
             $unusable = $lockedBooking->status === 'cancelled'
                 || $lockedBooking->hasExpiredHold()
-                || in_array($lockedBooking->payment_status, ['paid', 'refunded'], true);
+                || in_array($lockedBooking->payment_status, ['paid', 'refunded'], true)
+                || ((float) $lockedBooking->deposit_amount > 0 && ($lockedBooking->deposit_status === 'verified' || $lockedBooking->deposit_verified_at));
 
             if ($payment->status === 'pending' && ! in_array($lockedBooking->payment_status, ['paid', 'refunded'], true)) {
                 $lockedBooking->update(['payment_method' => 'gcash', 'payment_status' => 'pending']);
@@ -685,7 +703,9 @@ class BookingController extends Controller
                 ? 'PayMongo confirmed the payment, but the reservation is no longer active. Contact Carolina for staff resolution.'
                 : ($booking->status === 'confirmed'
                     ? 'GCash payment confirmed by PayMongo. Your reservation is confirmed.'
-                    : 'GCash payment confirmed by PayMongo. Contact Carolina for staff resolution.'));
+                    : ($booking->deposit_status === 'verified'
+                        ? 'GCash downpayment confirmed by PayMongo. Your room time is protected while Carolina reviews your reservation.'
+                        : 'GCash payment confirmed by PayMongo. Contact Carolina for staff resolution.')));
         }
         if ($request->query('outcome') === 'cancelled') {
             if ($adjustment) {
@@ -731,7 +751,9 @@ class BookingController extends Controller
             ? 'Test payment recorded, but this reservation is no longer held. Contact Carolina for staff resolution; your room was not re-reserved.'
             : ($booking->status === 'confirmed'
                 ? 'GCash test payment confirmed. Your reservation is confirmed.'
-                : 'GCash test payment confirmed. Contact Carolina for staff resolution.'));
+                : ($booking->deposit_status === 'verified'
+                    ? 'GCash downpayment confirmed. Your room time is protected while Carolina reviews your reservation.'
+                    : 'GCash test payment confirmed. Contact Carolina for staff resolution.')));
     }
 
     public function cancel(Request $request, Booking $booking)

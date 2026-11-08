@@ -146,7 +146,7 @@
             <strong>₱{{ number_format($room->price_per_night) }} <small>{{ $room->rate_label }}</small></strong>
         @endif
         <hr>
-        <small>{{ $bookingMode === 'hourly' ? 'Choose your stay length and see the adjusted total before continuing.' : 'Final total is calculated from your dates.' }} This sends a request for staff to confirm. No payment is collected online.</small>
+        <small>{{ $bookingMode === 'hourly' ? 'Choose your stay length and see the adjusted total before continuing.' : 'Final total is calculated from your dates.' }} A downpayment of 30% of the original price is due through PayMongo test checkout after you submit; it is capped at the final total if a promo reduces the price below that amount. The remaining balance is due at the property. No real money is collected in test mode.</small>
     </aside>
 </section>
 @if(auth()->check() || $isGuest)
@@ -432,7 +432,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const result = await response.json().catch(() => ({}));
             if (!response.ok) throw new Error(result.errors?.promo_code?.[0] || result.message || 'This promo could not be applied.');
             message.className = 'promo-message success';
-            message.textContent = `${result.name}: ${money(result.original)} → ${money(result.total)}. You save ${money(result.discount)}.`;
+            message.textContent = `${result.name}: ${money(result.original)} → ${money(result.total)}. You save ${money(result.discount)}. Downpayment (30% of original, up to final total): ${money(Math.min(result.original * 0.30, result.total))}.`;
         } catch (error) {
             message.className = 'promo-message error'; message.textContent = error.message;
         } finally { button.disabled = false; }

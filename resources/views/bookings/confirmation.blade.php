@@ -18,7 +18,7 @@
         @else
             <a class="button" href="{{ route('bookings.lookup') }}">Find booking later</a>
         @endauth
-        @if($booking->status === 'confirmed' || in_array($booking->payment_status, ['paid', 'refunded'], true))
+        @if($booking->status === 'confirmed' || in_array($booking->payment_status, ['paid', 'partial', 'refunded'], true))
             <a class="button button-outline" href="{{ route('bookings.receipt', $booking) }}">View receipt</a>
         @endif
     </div>

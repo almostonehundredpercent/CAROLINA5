@@ -175,6 +175,9 @@ class AdminController extends Controller
             $lockedBooking = Booking::whereKey($booking->id)->lockForUpdate()->firstOrFail();
             $before = $lockedBooking->only(['status', 'staff_notes', 'cancelled_at', 'cancelled_by', 'cancellation_reason']);
             if ($status === 'confirmed') {
+                if ((float) $lockedBooking->deposit_amount > 0 && $lockedBooking->deposit_status !== 'verified' && ! $lockedBooking->deposit_verified_at) {
+                    throw ValidationException::withMessages(['status' => 'Verify the required downpayment before confirming this online reservation.']);
+                }
                 if ($lockedBooking->status !== 'pending' && ! $lockedBooking->isExpiredHoldRecord()) {
                     throw ValidationException::withMessages(['status' => 'This booking is no longer pending. Refresh the bookings page before taking action.']);
                 }
@@ -215,34 +218,81 @@ class AdminController extends Controller
     {
         abort_unless($request->user()->canManageBookings(), 403, 'Your staff role cannot manage payments.');
         $data = $request->validate([
-            'payment_status' => 'required|in:pending,paid,failed',
             'payment_method' => 'required|in:cash,gcash',
+            'amount' => 'required|numeric|min:0.01',
+            'payment_reference' => 'nullable|string|max:100',
+            'notes' => 'nullable|string|max:500',
         ]);
-        abort_if($booking->status === 'cancelled' && $data['payment_status'] === 'paid', 422, 'A cancelled booking cannot be marked paid.');
-        $before = $booking->only(['payment_status', 'payment_method', 'paid_at']);
-        $paidAt = $data['payment_status'] === 'paid' ? now() : null;
-        DB::transaction(function () use ($booking, $data, $paidAt, $request) {
+        $before = $booking->only(['payment_status', 'payment_method', 'paid_at', 'deposit_status', 'deposit_verified_at']);
+        DB::transaction(function () use ($booking, $data, $request) {
             Room::whereKey($booking->room_id)->lockForUpdate()->firstOrFail();
             $lockedBooking = Booking::whereKey($booking->id)->lockForUpdate()->firstOrFail();
-            $hasPayMongoCheckout = Payment::where('booking_id', $lockedBooking->id)
+            $hasPendingPayMongoCheckout = Payment::where('booking_id', $lockedBooking->id)
                 ->where('reference', 'like', 'paymongo:%')
-                ->whereIn('status', ['pending', 'paid', 'refunded'])
+                ->where('status', 'pending')
                 ->exists();
-            if ($hasPayMongoCheckout) {
-                throw ValidationException::withMessages(['payment_status' => 'PayMongo payments must be verified with PayMongo. Use the Verify with PayMongo action instead.']);
+            if ($hasPendingPayMongoCheckout) {
+                throw ValidationException::withMessages(['amount' => 'A PayMongo checkout is still pending. Verify or expire it before recording a manual payment.']);
             }
-            abort_if($data['payment_status'] === 'paid' && $lockedBooking->status === 'cancelled', 422, 'A cancelled booking cannot be marked paid.');
-            if ($data['payment_status'] === 'paid' && $lockedBooking->hasExpiredHold()) {
-                throw ValidationException::withMessages(['payment_status' => 'This booking hold expired. Check room availability and restore the booking before recording cash payment.']);
+            abort_if($lockedBooking->status === 'cancelled', 422, 'A cancelled booking cannot receive a new payment.');
+            if ($lockedBooking->hasExpiredHold()) {
+                throw ValidationException::withMessages(['amount' => 'This booking hold expired. Check room availability and restore the booking before recording a payment.']);
             }
-            Payment::create(['booking_id' => $lockedBooking->id, 'amount' => $lockedBooking->total_amount, 'method' => $data['payment_method'], 'status' => $data['payment_status'], 'paid_at' => $paidAt, 'recorded_by' => $request->user()->id, 'notes' => 'Manual staff payment record.']);
-            $lockedBooking->update($data + ['paid_at' => $paidAt]);
+            $payments = $lockedBooking->payments()->lockForUpdate()->get();
+            $financial = FinancialSummary::forBooking($lockedBooking->setRelation('payments', $payments));
+            $amount = round((float) $data['amount'], 2);
+            if ($amount - $financial['outstanding'] > 0.001) {
+                throw ValidationException::withMessages(['amount' => 'The amount cannot exceed the outstanding balance of ₱'.number_format($financial['outstanding'], 2).'.']);
+            }
+            $depositTarget = (float) $lockedBooking->deposit_amount > 0
+                ? min((float) $lockedBooking->deposit_amount, (float) $lockedBooking->total_amount)
+                : (float) $lockedBooking->total_amount;
+            $netAfterPayment = $financial['net_collected'] + $amount;
+            $depositVerified = $lockedBooking->deposit_status === 'verified'
+                || (bool) $lockedBooking->deposit_verified_at
+                || $netAfterPayment + 0.001 >= $depositTarget;
+            if ((float) $lockedBooking->deposit_amount > 0 && ! $depositVerified) {
+                throw ValidationException::withMessages(['amount' => 'Record at least the remaining downpayment amount of ₱'.number_format(max(0, $depositTarget - $financial['net_collected']), 2).'.']);
+            }
+
+            $fullyPaid = $netAfterPayment + 0.001 >= (float) $lockedBooking->total_amount;
+            Payment::create([
+                'booking_id' => $lockedBooking->id,
+                'amount' => $amount,
+                'method' => $data['payment_method'],
+                'status' => 'paid',
+                'reference' => filled($data['payment_reference'] ?? null) ? trim($data['payment_reference']) : null,
+                'paid_at' => now(),
+                'recorded_by' => $request->user()->id,
+                'notes' => filled($data['notes'] ?? null) ? trim($data['notes']) : 'Manual staff payment record.',
+            ]);
+            $updates = [
+                'payment_method' => $data['payment_method'],
+                'payment_status' => $fullyPaid ? 'paid' : 'partial',
+                'paid_at' => $fullyPaid ? now() : null,
+            ];
+            if ((float) $lockedBooking->deposit_amount > 0) {
+                $updates['deposit_status'] = $depositVerified ? 'verified' : 'awaiting_payment';
+                if ($depositVerified && ! $lockedBooking->deposit_verified_at) {
+                    $updates['deposit_verified_at'] = now();
+                    $updates['deposit_verified_by'] = $request->user()->id;
+                }
+                if ($depositVerified) {
+                    $updates['deposit_due_at'] = null;
+                }
+                if ($depositVerified && ! $fullyPaid) {
+                    $updates['hold_expires_at'] = null;
+                }
+            }
+            $lockedBooking->update($updates);
         });
         $booking->refresh();
-        $this->log($booking->fresh(), $request->user()->id, 'payment_'.$data['payment_status'], 'Payment status recorded as '.$data['payment_status'].'.', $before, $booking->fresh()->only(['payment_status', 'payment_method', 'paid_at']));
-        $this->email($booking->fresh('room'), 'Payment update for your Carolina booking', 'Your payment status is now '.$data['payment_status'].'.');
+        $after = $booking->fresh()->only(['payment_status', 'payment_method', 'paid_at', 'deposit_status', 'deposit_verified_at']);
+        $this->log($booking->fresh(), $request->user()->id, 'payment_recorded', 'Staff recorded ₱'.number_format((float) $data['amount'], 2).' via '.strtoupper($data['payment_method']).'.', $before, $after);
+        $financial = FinancialSummary::forBooking($booking->fresh('payments'));
+        $this->email($booking->fresh('room'), 'Payment update for your Carolina booking', 'Carolina recorded a payment of ₱'.number_format((float) $data['amount'], 2).'. Remaining balance: ₱'.number_format($financial['outstanding'], 2).'.');
 
-        return back()->with('success', 'Payment record updated.');
+        return back()->with('success', 'Payment of ₱'.number_format((float) $data['amount'], 2).' recorded.');
     }
 
     public function recheckPayMongoPayment(Request $request, Booking $booking, PayMongoCheckout $checkout, PayMongoPaymentReconciler $payments)
@@ -288,7 +338,9 @@ class AdminController extends Controller
             ? 'PayMongo confirmed payment, but the reservation is no longer active. Carolina staff must resolve the booking.'
             : ($booking->status === 'confirmed'
                 ? 'PayMongo confirmed the full payment; the booking was confirmed automatically.'
-                : 'PayMongo confirmed the full payment. Carolina staff must resolve the booking.'));
+                : ($booking->deposit_status === 'verified'
+                    ? 'PayMongo confirmed the downpayment. The room time is protected and the booking is awaiting staff review.'
+                    : 'PayMongo confirmed the full payment. Carolina staff must resolve the booking.')));
     }
 
     /**

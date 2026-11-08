@@ -23,8 +23,8 @@
             @elseif($booking->status === 'pending' && ! $booking->hasProtectedInventory())
                 <a class="button booking-receipt-link" href="{{ route('bookings.receipt', $booking) }}">Continue payment</a>
             @endif
-            @if($booking->status === 'confirmed' || in_array($booking->payment_status, ['paid', 'refunded'], true))
-                <a class="button button-outline booking-receipt-link" href="{{ route('bookings.receipt', $booking) }}">View receipt</a>
+            @if($booking->status === 'confirmed' || in_array($booking->payment_status, ['paid', 'partial', 'refunded'], true))
+                <a class="button button-outline booking-receipt-link" href="{{ route('bookings.receipt', $booking) }}">{{ $booking->payment_status === 'partial' ? 'View downpayment receipt' : 'View receipt' }}</a>
             @endif
             @if($booking->status !== 'cancelled' && $booking->check_in->isFuture())
                 @if($booking->canCancelOnline())

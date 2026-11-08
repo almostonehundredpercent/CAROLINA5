@@ -201,7 +201,7 @@
                     <div>
                         <p class="admin-kicker">ALL RESERVATIONS</p>
                         <h2>Review requests</h2>
-                        <p class="booking-note">Payments update automatically when PayMongo confirms them. Fully paid, available bookings are confirmed automatically; cash bookings still need staff confirmation.</p>
+                        <p class="booking-note">PayMongo updates the payment ledger automatically. A verified 30% downpayment protects the room while staff reviews the booking; fully paid available bookings are confirmed automatically.</p>
                     </div>
                     <div class="booking-heading-actions"><a class="status-select" href="{{ route('admin.bookings.export', request()->query()) }}">Export CSV</a><span class="pill">{{ $individualBookings->total() }} total</span></div>
                 </div>
@@ -272,13 +272,16 @@
                                         @php($hasPaidPayMongoPayment = $payMongoPayments->contains(fn ($payment) => $payment->status === 'paid'))
                                         @php($expiredCashHold = $booking->isExpiredHoldRecord() || (! $hasPayMongoPayment && ($booking->payment_method === 'cash' || $booking->payment_method === null) && $booking->hasExpiredHold()))
                                         @php($timeAdjustment = $booking->timeAdjustments->sortByDesc('id')->first())
-                                        @php($paymentStatus = $booking->payment_status === 'refunded' ? 'refunded' : ($hasPaidPayMongoPayment ? 'paid' : ($booking->payment_status ?? 'pending')))
+                                        @php($paymentStatus = $booking->payment_status ?? 'pending')
                                         @php($paymentStatusClass = match ($paymentStatus) { 'paid' => 'confirmed', 'refunded', 'failed' => 'cancelled', default => '' })
                                         <div class="booking-status-stack">
                                             <span class="mini-status {{ $expiredCashHold ? 'hold-expired' : $booking->status }}" aria-label="Booking status: {{ $expiredCashHold ? 'Hold expired' : ($booking->status === 'pending' ? 'Pending staff confirmation' : ucfirst($booking->status)) }}">{{ $expiredCashHold ? 'Hold expired' : ($booking->status === 'pending' ? 'Pending staff confirmation' : ucfirst($booking->status)) }}</span>
                                             <span class="mini-status booking-payment-status {{ $paymentStatus }} {{ $paymentStatusClass }}" aria-label="Payment status: {{ ucfirst($paymentStatus) }}">Payment {{ ucfirst($paymentStatus) }}</span>
                                         </div>
                                         <small class="booking-payment-method">{{ $hasPayMongoPayment ? 'PayMongo · GCash' : strtoupper($booking->payment_method ?? 'cash') }}</small>
+                                        @if((float) $booking->deposit_amount > 0)
+                                            <small class="booking-payment-method">Downpayment ₱{{ number_format((float) $booking->deposit_amount, 2) }} · {{ $booking->deposit_status === 'verified' || $booking->deposit_verified_at ? 'Verified' : 'Awaiting payment' }}</small>
+                                        @endif
                                         @if($timeAdjustment?->status === 'needs_review')
                                             <span class="hold-expiry" role="status">Extra-time payment received · staff follow-up needed</span>
                                         @elseif($timeAdjustment?->status === 'pending' && $timeAdjustment->expires_at?->lte(now()))
@@ -320,26 +323,19 @@
                                                             @csrf
                                                             <button class="status-select confirmed" type="submit">Verify with PayMongo</button>
                                                         </form>
-                                                    @elseif(! $hasPayMongoPayment && $booking->status !== 'cancelled')
-                                                        <form method="POST" action="{{ route('admin.bookings.payment', $booking) }}"
-                                                            data-admin-confirm
-                                                            data-confirm-kicker="PAYMENT RECORD"
-                                                            data-confirm-icon="₱"
-                                                            data-confirm-title="Update payment record?"
-                                                            data-confirm-message="{{ $booking->payment_status === 'paid' ? 'Mark this payment as unpaid? This changes only the payment record; it does not issue a refund.' : 'Mark this payment as paid? This records the payment manually and does not process a charge.' }}"
-                                                            data-confirm-action="{{ $booking->payment_status === 'paid' ? 'Mark unpaid' : 'Mark paid' }}">
-                                                            @csrf @method('PATCH')
-                                                            <input type="hidden" name="payment_method" value="{{ in_array($booking->payment_method, ['cash', 'gcash']) ? $booking->payment_method : 'cash' }}">
-                                                            <input type="hidden" name="payment_status" value="{{ $booking->payment_status === 'paid' ? 'pending' : 'paid' }}">
-                                                            <button class="status-select {{ $booking->payment_status === 'paid' ? 'confirmed' : '' }}" type="submit">{{ $booking->payment_status === 'paid' ? 'Mark unpaid' : 'Mark paid' }}</button>
-                                                        </form>
+                                                    @elseif($booking->status !== 'cancelled')
+                                                        <a class="status-select" href="{{ route('admin.bookings.show', $booking) }}">Payment details</a>
                                                     @endif
                                                     @if($booking->status === 'pending' && ! $expiredCashHold)
                                                         <form method="POST" action="{{ route('admin.bookings.update', $booking) }}">
                                                             @csrf
                                                             @method('PATCH')
                                                             <input type="hidden" name="status" value="confirmed">
-                                                            <button class="status-select confirmed" type="submit">Confirm</button>
+                                                            @if((float) $booking->deposit_amount <= 0 || $booking->deposit_status === 'verified' || $booking->deposit_verified_at)
+                                                                <button class="status-select confirmed" type="submit">Confirm</button>
+                                                            @else
+                                                                <a class="status-select" href="{{ route('admin.bookings.show', $booking) }}">Verify downpayment first</a>
+                                                            @endif
                                                         </form>
                                                     @endif
 

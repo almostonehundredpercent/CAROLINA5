@@ -14,7 +14,7 @@ class PayMongoCheckout
     private const BASE_URL = 'https://api.paymongo.com/v1';
 
     /** Create a hosted GCash checkout. Amounts are in centavos. */
-    public function create(Booking $booking, ?string $attemptId = null, ?BookingTimeAdjustment $adjustment = null): array
+    public function create(Booking $booking, ?string $attemptId = null, ?BookingTimeAdjustment $adjustment = null, ?float $amount = null): array
     {
         $secretKey = $this->secretKey();
         $startedAt = hrtime(true);
@@ -43,7 +43,7 @@ class PayMongoCheckout
                             ]),
                             'cancel_url' => route('bookings.paymongo.return', array_filter(['booking' => $booking, 'outcome' => 'cancelled', 'adjustment' => $adjustment?->id])),
                             'success_url' => route('bookings.paymongo.return', array_filter(['booking' => $booking, 'outcome' => 'success', 'adjustment' => $adjustment?->id])),
-                            'description' => $adjustment ? 'Carolina stay time change '.$booking->reference : 'Carolina reservation '.$booking->reference,
+                            'description' => $adjustment ? 'Carolina stay time change '.$booking->reference : (($booking->deposit_amount ?? 0) > 0 ? 'Carolina reservation downpayment '.$booking->reference : 'Carolina reservation '.$booking->reference),
                             'merchant' => 'Carolina',
                             'payment_method_types' => ['gcash'],
                             'reference_number' => $booking->reference,
@@ -51,7 +51,7 @@ class PayMongoCheckout
                             'show_description' => true,
                             'show_line_items' => true,
                             'line_items' => [[
-                                'amount' => (int) round(((float) ($adjustment?->amount ?? $booking->total_amount)) * 100),
+                                'amount' => (int) round(((float) ($adjustment?->amount ?? $amount ?? $booking->total_amount)) * 100),
                                 'currency' => 'PHP',
                                 'description' => $adjustment
                                     ? ($adjustment->type === 'early_checkin' ? 'Early check-in' : 'Extra checkout time')

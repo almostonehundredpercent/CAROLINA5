@@ -5,7 +5,11 @@
     $expiredHold = $booking->hasExpiredHold() || $booking->isExpiredHoldRecord();
     $unavailable = $expiredHold || $booking->status === 'cancelled';
     $paymentComplete = in_array($booking->payment_status, ['paid', 'refunded'], true);
-    $canPayOnline = ! $unavailable && ! $paymentComplete;
+    $depositTarget = (float) $booking->deposit_amount > 0 ? min((float) $booking->deposit_amount, (float) $booking->total_amount) : (float) $booking->total_amount;
+    $hasDeposit = (float) $booking->deposit_amount > 0;
+    $depositVerified = $booking->deposit_status === 'verified' || (bool) $booking->deposit_verified_at;
+    $amountDueNow = $depositVerified ? 0 : round(min($financial['outstanding'], max(0, $depositTarget - $financial['net_collected'])), 2);
+    $canPayOnline = ! $unavailable && ! $paymentComplete && ! $depositVerified && $amountDueNow > 0;
     $temporaryHold = ! $unavailable && $booking->status === 'pending' && ! $booking->hasProtectedInventory();
     $holdDeadline = $temporaryHold ? $booking->holdDeadline() : null;
     $remainingHoldSeconds = $holdDeadline ? max(0, $holdDeadline->timestamp - now()->timestamp) : 0;
@@ -71,19 +75,24 @@
             <span>PAYMENT</span>
             <span class="receipt-status {{ $booking->payment_status ?? 'pending' }}">{{ $expiredHold ? 'Hold expired' : 'Payment ' . ucfirst($booking->payment_status ?? 'pending') }}</span>
         </div>
-        <h2 class="receipt-payment-title">{{ $booking->payment_status === 'paid' ? 'Payment recorded' : ($booking->payment_status === 'refunded' ? 'Refund recorded' : ($unavailable ? 'Payment summary' : 'Complete your payment')) }}</h2>
+        <h2 class="receipt-payment-title">{{ $booking->payment_status === 'paid' ? 'Payment recorded' : ($booking->payment_status === 'refunded' ? 'Refund recorded' : ($depositVerified ? 'Downpayment received' : ($unavailable ? 'Payment summary' : ($hasDeposit ? 'Complete your downpayment' : 'Complete your payment')))) }}</h2>
         <div class="receipt-summary-grid">
-            <div class="receipt-amount-card"><small>{{ $booking->payment_status === 'paid' ? 'Amount paid' : ($booking->payment_status === 'refunded' || $unavailable ? 'Booking total' : 'Amount to pay') }}</small><b>₱{{ number_format($booking->total_amount, 2) }}</b>@if($booking->discount_amount > 0)<small><s>₱{{ number_format($booking->original_amount, 2) }}</s> · {{ $booking->promo_code }} saved ₱{{ number_format($booking->discount_amount, 2) }}</small>@endif</div>
+            <div class="receipt-amount-card"><small>Booking total</small><b>₱{{ number_format($booking->total_amount, 2) }}</b>@if($booking->discount_amount > 0)<small><s>₱{{ number_format($booking->original_amount, 2) }}</s> · {{ $booking->promo_code }} saved ₱{{ number_format($booking->discount_amount, 2) }}</small>@endif</div>
             <div>
-                @if($paymentComplete)
-                    <small>Payment method</small><b>{{ strtoupper($booking->payment_method ?? 'payment') }}</b><small>{{ $booking->payment_status === 'paid' ? 'Payment complete' : 'Refund complete' }}@if($booking->paid_at) · {{ $booking->paid_at->format('M j, Y g:i A') }}@endif</small>
+                @if($depositVerified && ! $paymentComplete)
+                    <small>Remaining balance</small><b>₱{{ number_format($financial['outstanding'], 2) }}</b><small>Pay at the property after Carolina reviews your booking</small>
+                @elseif($paymentComplete)
+                    <small>Payment method</small><b>{{ strtoupper($booking->payment_method ?? 'payment') }}</b><small>{{ $booking->payment_status === 'paid' ? 'Payment complete' : 'Refund recorded' }}@if($booking->paid_at) · {{ $booking->paid_at->format('M j, Y g:i A') }}@endif</small>
                 @elseif($unavailable)
                     <small>Payment</small><b>{{ ucfirst($booking->payment_status ?? 'pending') }}</b><small>Online checkout is unavailable for this request</small>
                 @else
-                    <small>Pay online with</small><b>GCash</b><small>Secure checkout via PayMongo</small>
+                    <small>{{ $hasDeposit ? '30% downpayment due' : 'Amount due' }}</small><b>₱{{ number_format($amountDueNow, 2) }}</b><small>Secure GCash checkout via PayMongo</small>
                 @endif
             </div>
         </div>
+        @if($financial['net_collected'] > 0 && ! $paymentComplete)
+            <p class="receipt-note">Recorded so far: ₱{{ number_format($financial['net_collected'], 2) }} · Remaining after deposit: ₱{{ number_format($financial['outstanding'], 2) }}</p>
+        @endif
         @if($temporaryHold)
             <div class="receipt-hold-alert" role="note">
                 <strong>{{ \App\Models\Booking::holdMinutes() }}-minute payment window</strong>
@@ -92,8 +101,8 @@
             </div>
         @elseif($canPayOnline && $booking->status === 'confirmed')
             <div class="receipt-hold-alert receipt-payment-window-info" role="note">
-                <strong>The 30-minute hold does not apply to this confirmed booking</strong>
-                <p>This limit applies only to unpaid requests awaiting confirmation.</p>
+                <strong>{{ $depositVerified ? 'Your downpayment protects the requested room time' : 'The 30-minute hold does not apply to this confirmed booking' }}</strong>
+                <p>{{ $depositVerified ? 'The remaining balance is due at the property after staff reviews your booking.' : 'This limit applies only to unpaid requests awaiting confirmation.' }}</p>
             </div>
         @endif
         @if($canPayOnline)
@@ -101,14 +110,16 @@
                 @csrf
                 <button class="button paymongo-submit" type="submit" aria-busy="false" data-loading-text="Opening the secure PayMongo checkout…">
                     <span class="paymongo-spinner" aria-hidden="true"></span>
-                    <span class="paymongo-submit-label">Pay ₱{{ number_format($booking->total_amount, 2) }} with GCash</span>
+                    <span class="paymongo-submit-label">{{ $hasDeposit ? 'Pay downpayment' : 'Pay' }} ₱{{ number_format($amountDueNow, 2) }} with GCash</span>
                     <span class="paymongo-submit-arrow" aria-hidden="true">→</span>
                 </button>
                 <p id="paymongo-loading-message" class="paymongo-loading-message" role="status" aria-live="polite">Connecting to PayMongo securely… Keep this page open.</p>
                 <small style="display:block;margin-top:9px;color:var(--muted)">For thesis testing only. No real money is collected.</small>
             </form>
         @endif
-        @if($booking->payment_status === 'paid')
+        @if($booking->payment_status === 'partial' || ($depositVerified && ! $paymentComplete))
+            <p class="receipt-note"><strong>Downpayment received.</strong> Carolina still needs to review and confirm your reservation. Pay the remaining ₱{{ number_format($financial['outstanding'], 2) }} at the property.</p>
+        @elseif($booking->payment_status === 'paid')
             <p class="receipt-note"><strong>Payment recorded.</strong> {{ $unavailable ? 'The room was not re-reserved. Contact staff to resolve this payment before making another one.' : ($booking->status === 'confirmed' ? 'Your reservation is confirmed.' : 'Your slot remains reserved while staff reviews your request.') }}</p>
             <p class="receipt-note">Paid via {{ strtoupper($booking->payment_method ?? 'payment') }}@if($booking->paid_at) on {{ $booking->paid_at->format('M j, Y g:i A') }}@endif.</p>
         @elseif($booking->payment_status === 'refunded')
