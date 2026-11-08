@@ -9,6 +9,17 @@
     transition:transform .2s cubic-bezier(.2,.8,.2,1),box-shadow .2s ease;
 }
 
+.motion-reveal {
+    opacity:0;
+    transform:translateY(18px);
+    transition:opacity .68s cubic-bezier(.2,.75,.25,1),transform .68s cubic-bezier(.2,.75,.25,1);
+}
+
+.motion-reveal.is-motion-visible {
+    opacity:1;
+    transform:translateY(0);
+}
+
 .room-availability-panel:not([hidden]) {
     transform-origin:top;
     animation:availability-panel-enter .18s ease-out both;
@@ -59,6 +70,8 @@
     .nav-button,
     .theme-toggle,
     .room-card,
+    .motion-reveal,
+    .motion-reveal.is-motion-visible,
     .home-hero .hero-copy,
     .room-availability-panel:not([hidden]) { animation:none !important; transition:none !important; }
 

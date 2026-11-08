@@ -3,9 +3,10 @@ import test from 'node:test';
 import { readFile } from 'node:fs/promises';
 import postcss from 'postcss';
 
-const [motionStyles, appLayout] = await Promise.all([
+const [motionStyles, appLayout, revealScript] = await Promise.all([
     readFile(new URL('../../public/css/motion.css', import.meta.url), 'utf8'),
     readFile(new URL('../../resources/views/layouts/app.blade.php', import.meta.url), 'utf8'),
+    readFile(new URL('../../public/js/scroll-reveal.js', import.meta.url), 'utf8').catch(() => ''),
 ]);
 
 const stylesheet = postcss.parse(motionStyles);
@@ -44,4 +45,14 @@ test('reduced-motion preference removes motion and the shared layout loads the m
     assert.ok(overrideSelectors.some(selector => selector.includes('.home-hero .hero-copy')));
     assert.ok(overrideSelectors.some(selector => selector.includes('.room-availability-panel')));
     assert.match(appLayout, /asset\('css\/motion\.css'\).*filemtime/);
+});
+
+test('room and featured-room cards reveal when they enter the viewport', () => {
+    assert.match(revealScript, /IntersectionObserver/);
+    assert.match(revealScript, /\.home-rooms \.room-card/);
+    assert.match(revealScript, /\.rooms-page \.rooms-card/);
+    assert.match(revealScript, /is-motion-visible/);
+    assert.match(motionStyles, /\.motion-reveal/);
+    assert.match(motionStyles, /\.motion-reveal\.is-motion-visible/);
+    assert.match(appLayout, /asset\('js\/scroll-reveal\.js'\)/);
 });

@@ -18,6 +18,7 @@
         <link rel="preload" as="image" href="https://images.unsplash.com/photo-1601918774946-25832a4be0d6?auto=format&amp;fit=crop&amp;w=1800&amp;q=85" media="(min-width: 801px)" fetchpriority="high">
     @endif
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+    <script src="{{ asset('js/scroll-reveal.js') }}?v={{ filemtime(public_path('js/scroll-reveal.js')) }}" defer></script>
     <script>
         if (localStorage.getItem('carolina-theme') === 'dark' || (!localStorage.getItem('carolina-theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
             document.documentElement.classList.add('dark-mode');
