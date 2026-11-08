@@ -1,69 +1,92 @@
-/* Short, purposeful feedback that stays out of the way of booking tasks. */
+/* Strong, readable movement for the moments that matter across the stay flow. */
 .button,
 .nav-button,
 .theme-toggle {
-    transition:transform .18s cubic-bezier(.2,.8,.2,1),box-shadow .18s ease,filter .18s ease;
+    transition:transform .24s cubic-bezier(.2,.8,.2,1),box-shadow .24s ease,filter .24s ease;
 }
 
 .room-card {
-    transition:transform .2s cubic-bezier(.2,.8,.2,1),box-shadow .2s ease;
+    transition:transform .35s cubic-bezier(.2,.8,.2,1),box-shadow .35s ease,border-color .35s ease;
 }
 
 .motion-reveal {
     opacity:0;
-    transform:translateY(18px);
-    transition:opacity .68s cubic-bezier(.2,.75,.25,1),transform .68s cubic-bezier(.2,.75,.25,1);
+    transform:translateY(44px) scale(.96);
+    transition:opacity .9s cubic-bezier(.2,.75,.25,1),transform .9s cubic-bezier(.2,.75,.25,1);
 }
 
 .motion-reveal.is-motion-visible {
     opacity:1;
-    transform:translateY(0);
+    transform:translateY(0) scale(1);
 }
+
+.room-grid > .motion-reveal:nth-child(3n + 2),
+.home-room-carousel > .motion-reveal:nth-child(3n + 2) { transition-delay:.12s; }
+
+.room-grid > .motion-reveal:nth-child(3n),
+.home-room-carousel > .motion-reveal:nth-child(3n) { transition-delay:.24s; }
 
 .room-availability-panel:not([hidden]) {
     transform-origin:top;
-    animation:availability-panel-enter .18s ease-out both;
+    animation:availability-panel-enter .32s cubic-bezier(.2,.8,.2,1) both;
 }
 
-.home-hero .hero-copy {
-    animation:home-hero-enter .48s cubic-bezier(.2,.8,.2,1) both;
+.home-hero .hero-copy > .eyebrow,
+.home-hero .hero-copy > h1,
+.home-hero .hero-copy > p,
+.home-hero .hero-copy > .home-hero-actions,
+.home-hero .hero-copy > .home-hero-details {
+    animation:home-hero-enter .72s cubic-bezier(.2,.8,.2,1) both;
 }
+
+.home-hero .hero-copy > .eyebrow { animation-delay:.04s; }
+.home-hero .hero-copy > h1 { animation-delay:.12s; }
+.home-hero .hero-copy > p { animation-delay:.22s; }
+.home-hero .hero-copy > .home-hero-actions { animation-delay:.32s; }
+.home-hero .hero-copy > .home-hero-details { animation-delay:.44s; }
 
 @keyframes availability-panel-enter {
-    from { opacity:0; transform:translateY(-5px) scaleY(.985); }
+    from { opacity:0; transform:translateY(-16px) scaleY(.96); }
     to { opacity:1; transform:translateY(0) scaleY(1); }
 }
 
 @keyframes home-hero-enter {
-    from { opacity:0; transform:translateY(10px); }
-    to { opacity:1; transform:translateY(0); }
+    from { opacity:0; transform:translateY(28px) scale(.97); }
+    to { opacity:1; transform:translateY(0) scale(1); }
 }
 
 @media (hover:hover) and (pointer:fine) {
-    .button:hover,
+    .home-hero .button:hover,
+    .ber-promo .button:hover,
+    .rooms-card .button:hover,
     .nav-button:hover,
-    .theme-toggle:hover { transform:translateY(-1px); }
-
-    .room-card:hover {
-        transform:translateY(-2px);
-        box-shadow:0 12px 28px rgba(48,35,21,.13);
+    .theme-toggle:hover {
+        transform:translateY(-4px) scale(1.04);
+        box-shadow:0 16px 34px rgba(48,35,21,.24);
+        filter:brightness(1.08);
     }
 
+    .home-room-carousel .room-card:hover,
     .rooms-card:hover {
-        transform:translateY(-3px);
-        border-color:rgba(207,133,31,.72);
-        box-shadow:0 15px 30px rgba(38,22,11,.14);
+        position:relative;
+        z-index:3;
+        transform:translateY(-10px) scale(1.03);
+        box-shadow:0 24px 48px rgba(48,35,21,.24);
     }
+
+    .rooms-card:hover { border-color:rgba(207,133,31,.72); }
 
     .dark-mode .rooms-card:hover {
         border-color:rgba(234,161,60,.72);
-        box-shadow:0 15px 30px rgba(0,0,0,.32);
+        box-shadow:0 24px 48px rgba(0,0,0,.48);
     }
+
+    .home-hero .home-hero-primary:hover { transform:translateY(-5px) scale(1.04); }
 }
 
 .button:active,
 .nav-button:active,
-.theme-toggle:active { transform:translateY(1px) scale(.99); }
+.theme-toggle:active { transform:translateY(1px) scale(.97); }
 
 @media (prefers-reduced-motion:reduce) {
     .button,
@@ -72,7 +95,11 @@
     .room-card,
     .motion-reveal,
     .motion-reveal.is-motion-visible,
-    .home-hero .hero-copy,
+    .home-hero .hero-copy > .eyebrow,
+    .home-hero .hero-copy > h1,
+    .home-hero .hero-copy > p,
+    .home-hero .hero-copy > .home-hero-actions,
+    .home-hero .hero-copy > .home-hero-details,
     .room-availability-panel:not([hidden]) { animation:none !important; transition:none !important; }
 
     .button:hover,
@@ -81,5 +108,8 @@
     .nav-button:active,
     .theme-toggle:hover,
     .theme-toggle:active,
-    .room-card:hover { transform:none !important; }
+    .room-card:hover,
+    .rooms-card:hover,
+    .home-room-carousel .room-card:hover,
+    .home-hero .home-hero-primary:hover { transform:none !important; }
 }
