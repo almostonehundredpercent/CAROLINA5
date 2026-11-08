@@ -15,10 +15,6 @@
     transition:opacity .9s cubic-bezier(.2,.75,.25,1),transform .9s cubic-bezier(.2,.75,.25,1);
 }
 
-.motion-reveal[data-motion-state="above"] {
-    transform:translateY(-44px) scale(.96);
-}
-
 .motion-reveal.is-motion-visible {
     opacity:1;
     transform:translateY(0) scale(1);

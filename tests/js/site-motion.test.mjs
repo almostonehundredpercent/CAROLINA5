@@ -67,9 +67,7 @@ test('room and featured-room cards reveal when they enter the viewport', () => {
     assert.match(appLayout, /asset\('js\/scroll-reveal\.js'\)/);
 });
 
-test('room reveals replay from the direction of travel when scrolling down and back up', () => {
-    assert.equal(declarationFor('.motion-reveal[data-motion-state="above"]', 'transform'), 'translateY(-44px) scale(.96)');
-
+test('room reveal stays visible after its first entrance instead of replaying on every scroll', () => {
     const classes = new Set();
     const target = {
         dataset: {},
@@ -80,18 +78,16 @@ test('room reveals replay from the direction of travel when scrolling down and b
         getBoundingClientRect: () => ({ top: 500 }),
     };
     const observed = [];
+    const unobserved = [];
     let observerCallback;
     let activeObserver;
-    const listeners = {};
     class TestIntersectionObserver {
         constructor(callback) { observerCallback = callback; activeObserver = this; }
         observe(element) { observed.push(element); }
-        unobserve() {}
+        unobserve(element) { unobserved.push(element); }
     }
     const browserWindow = {
-        scrollY: 0,
         matchMedia: () => ({ matches: false }),
-        addEventListener: (name, callback) => { listeners[name] = callback; },
         IntersectionObserver: TestIntersectionObserver,
     };
     runInNewContext(revealScript, {
@@ -103,18 +99,8 @@ test('room reveals replay from the direction of travel when scrolling down and b
     assert.deepEqual(observed, [target]);
     observerCallback([{ target, isIntersecting: true }], activeObserver);
     assert.equal(classes.has('is-motion-visible'), true);
+    assert.deepEqual(unobserved, [target], 'each card should stop observing after its first reveal');
 
     observerCallback([{ target, isIntersecting: false }], activeObserver);
-    assert.equal(classes.has('is-motion-visible'), false, 'leaving view should hide the card so its reveal can replay');
-    assert.equal(target.dataset.motionState, 'above', 'scrolling down should leave the card above the viewport');
-
-    browserWindow.scrollY = 500;
-    listeners.scroll();
-    browserWindow.scrollY = 300;
-    listeners.scroll();
-    observerCallback([{ target, isIntersecting: true }], activeObserver);
-    assert.equal(classes.has('is-motion-visible'), true, 'the card should reveal again when scrolling back up');
-    observerCallback([{ target, isIntersecting: false }], activeObserver);
-    assert.equal(classes.has('is-motion-visible'), false);
-    assert.equal(target.dataset.motionState, 'below', 'scrolling up should leave the card below the viewport');
+    assert.equal(classes.has('is-motion-visible'), true, 'leaving view should not hide a revealed card');
 });
