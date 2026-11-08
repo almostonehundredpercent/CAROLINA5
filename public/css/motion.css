@@ -1,0 +1,72 @@
+/* Short, purposeful feedback that stays out of the way of booking tasks. */
+.button,
+.nav-button,
+.theme-toggle {
+    transition:transform .18s cubic-bezier(.2,.8,.2,1),box-shadow .18s ease,filter .18s ease;
+}
+
+.room-card {
+    transition:transform .2s cubic-bezier(.2,.8,.2,1),box-shadow .2s ease;
+}
+
+.room-availability-panel:not([hidden]) {
+    transform-origin:top;
+    animation:availability-panel-enter .18s ease-out both;
+}
+
+.home-hero .hero-copy {
+    animation:home-hero-enter .48s cubic-bezier(.2,.8,.2,1) both;
+}
+
+@keyframes availability-panel-enter {
+    from { opacity:0; transform:translateY(-5px) scaleY(.985); }
+    to { opacity:1; transform:translateY(0) scaleY(1); }
+}
+
+@keyframes home-hero-enter {
+    from { opacity:0; transform:translateY(10px); }
+    to { opacity:1; transform:translateY(0); }
+}
+
+@media (hover:hover) and (pointer:fine) {
+    .button:hover,
+    .nav-button:hover,
+    .theme-toggle:hover { transform:translateY(-1px); }
+
+    .room-card:hover {
+        transform:translateY(-2px);
+        box-shadow:0 12px 28px rgba(48,35,21,.13);
+    }
+
+    .rooms-card:hover {
+        transform:translateY(-3px);
+        border-color:rgba(207,133,31,.72);
+        box-shadow:0 15px 30px rgba(38,22,11,.14);
+    }
+
+    .dark-mode .rooms-card:hover {
+        border-color:rgba(234,161,60,.72);
+        box-shadow:0 15px 30px rgba(0,0,0,.32);
+    }
+}
+
+.button:active,
+.nav-button:active,
+.theme-toggle:active { transform:translateY(1px) scale(.99); }
+
+@media (prefers-reduced-motion:reduce) {
+    .button,
+    .nav-button,
+    .theme-toggle,
+    .room-card,
+    .home-hero .hero-copy,
+    .room-availability-panel:not([hidden]) { animation:none !important; transition:none !important; }
+
+    .button:hover,
+    .button:active,
+    .nav-button:hover,
+    .nav-button:active,
+    .theme-toggle:hover,
+    .theme-toggle:active,
+    .room-card:hover { transform:none !important; }
+}

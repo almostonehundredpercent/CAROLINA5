@@ -29,6 +29,7 @@
     <link rel="stylesheet" href="{{ asset('css/loading.css') }}?v={{ filemtime(public_path('css/loading.css')) }}">
     <link rel="stylesheet" href="{{ asset('css/footer-apple.css') }}?v={{ filemtime(public_path('css/footer-apple.css')) }}">
     @stack('styles')
+    <link rel="stylesheet" href="{{ asset('css/motion.css') }}?v={{ filemtime(public_path('css/motion.css')) }}">
     <link rel="stylesheet" href="{{ asset('css/navigation-glass.css') }}?v={{ filemtime(public_path('css/navigation-glass.css')) }}">
 </head>
 <body>
