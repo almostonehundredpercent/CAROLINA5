@@ -160,13 +160,30 @@
         min-height: 44px;
     }
 
-    .nav nav .nav-theme-toggle {
-        border-color: rgba(255, 246, 233, 0.52);
-        background-color: rgba(255, 246, 233, 0.12);
-        color: #fff6e9;
+    .nav nav .nav-theme-toggle,
+    .dark-mode .nav nav .nav-theme-toggle {
+        border-color: rgba(231, 236, 239, 0.4);
+        background-color: #39393a;
+        color: #e7ecef;
     }
 
-    .nav nav .nav-theme-toggle span {
+    .nav nav .nav-theme-toggle:hover,
+    .nav nav .nav-theme-toggle:focus-visible,
+    .dark-mode .nav nav .nav-theme-toggle:hover,
+    .dark-mode .nav nav .nav-theme-toggle:focus-visible {
+        border-color: #c97900;
+        background-color: #4a4a4b;
+        color: #fff;
+    }
+
+    .nav nav .nav-theme-toggle:focus-visible,
+    .dark-mode .nav nav .nav-theme-toggle:focus-visible {
+        outline: 2px solid #c97900;
+        outline-offset: 2px;
+    }
+
+    .nav nav .nav-theme-toggle span,
+    .dark-mode .nav nav .nav-theme-toggle span {
         color: inherit;
         font-weight: 700;
     }

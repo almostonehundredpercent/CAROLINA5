@@ -89,7 +89,7 @@ test('mobile room carousel stays at the first room and remains manually scrollab
     }
 });
 
-test('mobile menu scrolls with the page and keeps the dark-header theme action legible', async () => {
+test('mobile theme action stays legible over hero content in either site theme', async () => {
     const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
     try {
         await page.setContent(`<html><head><meta name="viewport" content="width=device-width,initial-scale=1"><style>${css.join('\n')}</style></head>
@@ -104,11 +104,15 @@ test('mobile menu scrolls with the page and keeps the dark-header theme action l
             bodyOverflow: getComputedStyle(document.body).overflow,
         }));
         assert.notEqual(style.bodyOverflow, 'hidden', 'open nav should not lock the page scroll');
-        assert.equal(style.text, 'rgb(255, 246, 233)', 'theme control text should remain bright on the dark glass header');
+        assert.equal(style.text, 'rgb(231, 236, 239)', 'theme control text should use the light palette color');
         assert.equal(style.label, style.text, 'visible theme label should inherit its high-contrast text color');
-        assert.notEqual(style.background, 'rgba(0, 0, 0, 0)', 'theme toggle should have a visible button surface');
+        assert.equal(style.background, 'rgb(57, 57, 58)', 'theme toggle should use an opaque graphite surface instead of showing the hero through it');
         await page.evaluate(() => window.scrollTo(0, 300));
         assert.ok(await page.evaluate(() => window.scrollY > 0), 'the page should scroll while the menu is open');
+
+        await page.evaluate(() => document.documentElement.classList.add('dark-mode'));
+        const darkThemeText = await page.locator('.nav-theme-toggle').evaluate(element => getComputedStyle(element).color);
+        assert.equal(darkThemeText, 'rgb(231, 236, 239)', 'theme control label should remain light when dark mode is active');
     } finally {
         await page.close();
     }
