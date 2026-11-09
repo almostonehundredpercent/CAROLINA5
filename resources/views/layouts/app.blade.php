@@ -58,7 +58,7 @@
                 @if(auth()->user()->is_admin)
                     <a href="{{ route('admin.dashboard') }}">Admin</a>
                 @endif
-                <a class="nav-button nav-book-now" href="{{ route('rooms.index') }}"><span>Book now</span><svg viewBox="0 0 20 20" aria-hidden="true" focusable="false"><path d="M3.5 10h12m-5-5 5 5-5 5" /></svg></a>
+                <a class="nav-button nav-book-now" href="{{ route('rooms.index') }}">Book now</a>
                 <button class="theme-toggle nav-theme-toggle" type="button" aria-label="Enable dark mode" aria-pressed="false">
                     <svg viewBox="0 0 24 24" aria-hidden="true"></svg>
                     <span>Dark mode</span>
@@ -68,7 +68,7 @@
                     <button class="nav-button" type="submit">Sign out</button>
                 </form>
             @else
-                <a class="nav-button nav-book-now" href="{{ route('rooms.index') }}"><span>Book now</span><svg viewBox="0 0 20 20" aria-hidden="true" focusable="false"><path d="M3.5 10h12m-5-5 5 5-5 5" /></svg></a>
+                <a class="nav-button nav-book-now" href="{{ route('rooms.index') }}">Book now</a>
                 <button class="theme-toggle nav-theme-toggle" type="button" aria-label="Enable dark mode" aria-pressed="false">
                     <svg viewBox="0 0 24 24" aria-hidden="true"></svg>
                     <span>Dark mode</span>

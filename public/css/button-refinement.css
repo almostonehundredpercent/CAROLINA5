@@ -36,8 +36,7 @@
     background: transparent;
 }
 
-.home-hero-arrow svg,
-.nav .nav-button.nav-book-now svg {
+.home-hero-arrow svg {
     display: block;
     width: 18px;
     height: 18px;
@@ -59,36 +58,43 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 9px;
-    border: 1px solid rgba(231, 236, 239, 0.5);
-    border-radius: 9px;
-    background-color: rgba(5, 5, 5, 0.2);
+    border: 0;
+    border-radius: 8px;
+    padding: 10px 0;
+    background-color: transparent;
     background-image: none;
     box-shadow: none;
-    color: #E7ECEF;
-    -webkit-backdrop-filter: blur(10px);
-    backdrop-filter: blur(10px);
-    transition: transform 160ms ease, background-color 160ms ease, border-color 160ms ease;
+    color: inherit;
+    font: inherit;
+    font-weight: inherit;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    transition: color 160ms ease, background-color 160ms ease;
 }
 
 .nav .nav-button.nav-book-now:hover,
 .dark-mode .nav .nav-button.nav-book-now:hover {
-    border-color: rgba(231, 236, 239, 0.78);
-    background-color: rgba(5, 5, 5, 0.32);
+    background-color: rgba(255, 255, 255, 0.08);
     background-image: none;
     box-shadow: none;
+    color: #FFD28E;
     filter: none;
-    transform: translateY(-1px);
-}
-
-.nav .nav-button.nav-book-now:hover svg {
-    transform: translateX(2px);
+    transform: none;
 }
 
 .nav .nav-button.nav-book-now:active,
 .dark-mode .nav .nav-button.nav-book-now:active {
-    background-color: rgba(5, 5, 5, 0.4);
-    transform: translateY(0);
+    background-color: rgba(255, 255, 255, 0.12);
+}
+
+@media (max-width: 800px) {
+    .nav nav .nav-button.nav-book-now,
+    .dark-mode .nav nav .nav-button.nav-book-now {
+        width: 100%;
+        justify-content: flex-start;
+        padding: 12px 13px;
+        border-radius: 7px;
+    }
 }
 
 .nav .nav-button.nav-book-now:focus-visible {
@@ -103,8 +109,7 @@
     }
 
     .home-hero .home-hero-primary:hover,
-    .nav .nav-button.nav-book-now:hover,
-    .nav .nav-button.nav-book-now:hover svg {
+    .nav .nav-button.nav-book-now:hover {
         transform: none;
     }
 }
