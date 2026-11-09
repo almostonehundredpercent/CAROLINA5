@@ -53,11 +53,11 @@ test('mobile review cards are compact while the desktop card sizing stays intact
     }
 });
 
-test('all five mobile benefit cards share one horizontal row without overflow', async () => {
+test('mobile benefit cards stay in one swipeable row at a readable width', async () => {
     const page = await browser.newPage({ viewport: { width: 400, height: 850 } });
     try {
         await page.setContent(`<html><head><meta name="viewport" content="width=device-width,initial-scale=1"><style>${css.join('\n')}</style></head><body>
-            <section class="benefits home-benefits"><div class="benefit-grid">
+            <section class="benefits section home-benefits"><div class="section-heading center"><div><span class="eyebrow">A LITTLE MORE COMFORT</span><h2>Everything you need, already here.</h2><p>Simple thoughtful touches, included with your stay.</p></div></div><div class="benefit-grid">
                 <div>Breakfast</div><div>Hygiene</div><div>Wi-Fi</div><div>Netflix</div><div>Private CR</div>
             </div></section></body></html>`);
         for (const width of [400, 320]) {
@@ -67,14 +67,25 @@ test('all five mobile benefit cards share one horizontal row without overflow', 
                     const rect = element.getBoundingClientRect();
                     return { top: Math.round(rect.top), left: Math.round(rect.left), width: Math.round(rect.width) };
                 }),
+                clientWidth: document.querySelector('.benefit-grid').clientWidth,
+                scrollWidth: document.querySelector('.benefit-grid').scrollWidth,
+                rowWidth: Math.round(document.querySelector('.home-benefits').getBoundingClientRect().width),
                 pageWidth: document.documentElement.scrollWidth,
             }));
             assert.equal(new Set(layout.cards.map(card => card.top)).size, 1,
                 `all benefit cards should stay on a single row at ${width}px`);
             assert.equal(layout.pageWidth, width, `the one-row benefits should not create page overflow at ${width}px`);
+            assert.equal(layout.rowWidth, width, `the full benefits section should remain inside the phone viewport at ${width}px`);
+            assert.ok(layout.cards.every(card => card.width >= 138 && card.width <= 176),
+                `benefit cards should have enough room for readable labels at ${width}px`);
+            assert.ok(layout.scrollWidth > layout.clientWidth, 'the benefit row should scroll horizontally to reveal all five cards');
             assert.ok(layout.cards.every((card, index) => index === 0 || card.left > layout.cards[index - 1].left),
                 'benefits should run left-to-right in a single row');
         }
+
+        await page.locator('.benefit-grid').evaluate(element => { element.scrollLeft = element.clientWidth; });
+        assert.ok(await page.locator('.benefit-grid').evaluate(element => element.scrollLeft > 0),
+            'guests should be able to swipe to later benefit cards');
 
         await page.setViewportSize({ width: 1280, height: 850 });
         const desktopColumns = await page.locator('.benefit-grid').evaluate(element => getComputedStyle(element).gridTemplateColumns.split(' ').length);
