@@ -215,3 +215,40 @@
     .room-availability-toggle > span:last-child { width:34px; height:34px; flex:0 0 34px; }
     .room-availability-toggle:focus-visible { outline:2px solid #c97900; outline-offset:2px; }
 }
+
+/* Mobile room cards keep every decision detail while shortening the scroll. */
+@media (max-width:650px) {
+    .rooms-card { border-radius:16px; }
+    .rooms-card img { height:152px; }
+    .rooms-card .room-card-body { padding:14px 15px 15px; }
+    .rooms-card .room-card-body > span { font-size:.65rem; line-height:1.35; }
+    .rooms-card h3 { margin:6px 0 5px; font-size:1.18rem; }
+    .room-availability-line { gap:6px; margin:3px 0 8px; }
+    .room-availability-line .room-availability-badge { min-height:28px; padding:5px 9px; font-size:.68rem; }
+    .room-card-availability { margin:0; }
+    .room-availability-toggle { min-height:50px; padding:7px 10px; }
+    .room-availability-toggle b { font-size:.8rem; }
+    .room-availability-toggle small { margin-top:1px; font-size:.68rem; }
+    .room-availability-toggle > span:last-child { width:32px; height:32px; flex-basis:32px; }
+    .room-card-social { display:flex; min-width:0; align-items:center; flex-wrap:wrap; gap:6px 11px; margin-top:9px; }
+    .rooms-card .room-promo-badge { margin:0; padding:5px 8px; font-size:.65rem; }
+    .rooms-card .card-rating { display:inline-flex; align-items:center; gap:4px; margin:0; font-size:.72rem; line-height:1.3; }
+    .rooms-card .card-rating-stars,.rooms-card .card-rating-empty > span { color:#9a611b; font-size:.9rem; }
+    .rooms-card .room-card-body > p { margin:8px 0 10px; font-size:.82rem; line-height:1.42; }
+    .rooms-card-footer { align-items:center; gap:10px; padding-top:9px; border-top:1px solid #efe6dc; }
+    .rooms-card-footer strong { font-size:1rem; }
+    .rooms-card-footer strong small { display:inline; margin:0 0 0 3px; font-size:.7rem; }
+    .rooms-card .button.small { min-height:44px; padding:10px 13px; border-radius:11px; }
+    .dark-mode .rooms-card-footer { border-top-color:#443329; }
+}
+
+@media (max-width:360px) {
+    .rooms-card img { height:136px; }
+    .rooms-card .room-card-body { padding:13px 14px 14px; }
+    .room-availability-toggle small { font-size:.65rem; }
+    .rooms-card .room-card-body > p { font-size:.78rem; }
+}
+
+@media (min-width:651px) {
+    .room-card-social { display:contents; }
+}

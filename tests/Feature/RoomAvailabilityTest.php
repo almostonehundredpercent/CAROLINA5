@@ -54,6 +54,15 @@ test('rooms search renders descriptive field icons without changing its controls
         ->assertSee('Check availability');
 });
 
+test('room cards group promotion and review details for compact mobile layouts', function () {
+    availabilityTestRoom('Compact Card Room');
+
+    $this->get(route('rooms.index'))
+        ->assertOk()
+        ->assertSee('class="room-card-social"', false)
+        ->assertSee('class="card-rating card-rating-empty"', false);
+});
+
 test('live room availability responses remain uncached', function () {
     $room = availabilityTestRoom();
 
