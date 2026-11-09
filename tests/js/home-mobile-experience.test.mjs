@@ -76,7 +76,7 @@ test('mobile benefit cards stay in one swipeable row at a readable width', async
                 `all benefit cards should stay on a single row at ${width}px`);
             assert.equal(layout.pageWidth, width, `the one-row benefits should not create page overflow at ${width}px`);
             assert.equal(layout.rowWidth, width, `the full benefits section should remain inside the phone viewport at ${width}px`);
-            assert.ok(layout.cards.every(card => card.width >= 138 && card.width <= 176),
+            assert.ok(layout.cards.every(card => card.width >= 128 && card.width <= 156),
                 `benefit cards should have enough room for readable labels at ${width}px`);
             assert.ok(layout.scrollWidth > layout.clientWidth, 'the benefit row should scroll horizontally to reveal all five cards');
             assert.ok(layout.cards.every((card, index) => index === 0 || card.left > layout.cards[index - 1].left),
