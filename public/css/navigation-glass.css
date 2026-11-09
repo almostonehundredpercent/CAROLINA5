@@ -142,6 +142,24 @@
         backdrop-filter: blur(18px) saturate(145%);
     }
 
+    .nav nav.is-open,
+    .dark-mode .nav nav.is-open {
+        left: 50%;
+        right: auto;
+        width: min(340px, calc(100vw - 32px));
+        gap: 4px;
+        justify-content: flex-start;
+        padding: 8px;
+        transform: translateX(-50%);
+    }
+
+    .nav nav.is-open > a,
+    .nav nav.is-open > button,
+    .nav nav.is-open > form,
+    .nav nav.is-open > form .nav-button {
+        min-height: 44px;
+    }
+
     .nav nav > a:not(.nav-button):hover,
     .dark-mode .nav nav > a:not(.nav-button):hover {
         background-color: rgba(255, 255, 255, 0.09);
