@@ -38,7 +38,7 @@ const luminance = color => {
     return 0.2126 * red + 0.7152 * green + 0.0722 * blue;
 };
 
-test('homepage Book now uses a restrained solid ochre button and unboxed arrow', async () => {
+test('homepage Book now uses the selected smoky glass surface and framed arrow', async () => {
     const browser = await chromium.launch();
     try {
         for (const viewport of [{ width: 390, height: 844 }, { width: 1440, height: 900 }]) {
@@ -55,10 +55,13 @@ test('homepage Book now uses a restrained solid ochre button and unboxed arrow',
                     background: style.backgroundImage,
                     backgroundColor: style.backgroundColor,
                     color: style.color,
+                    backdropFilter: style.backdropFilter,
                     radius: Number.parseFloat(style.borderTopLeftRadius),
                     height: rect.height,
                     width: rect.width,
-                    arrowVisible: Boolean(arrow && getComputedStyle(arrow).backgroundColor !== 'rgba(0, 0, 0, 0)'),
+                    arrowBorderStyle: arrow ? getComputedStyle(arrow).borderTopStyle : 'none',
+                    arrowBackground: arrow ? getComputedStyle(arrow).backgroundColor : 'none',
+                    arrowRadius: arrow ? Number.parseFloat(getComputedStyle(arrow).borderTopLeftRadius) : 0,
                     arrowSvg: Boolean(arrow?.querySelector('svg path')),
                 };
             });
@@ -66,12 +69,16 @@ test('homepage Book now uses a restrained solid ochre button and unboxed arrow',
             assert.equal(base.label, 'Book now');
             assert.equal(base.href, '/rooms');
             assert.equal(base.background, 'none');
-            assert.equal(base.backgroundColor, 'rgb(201, 121, 0)');
+            assert.equal(base.backgroundColor, 'rgba(31, 25, 19, 0.58)');
+            assert.equal(base.color, 'rgb(255, 250, 242)');
+            assert.match(base.backdropFilter, /blur\(11px\)/);
             const contrast = (Math.max(luminance(base.backgroundColor), luminance(base.color)) + 0.05) / (Math.min(luminance(base.backgroundColor), luminance(base.color)) + 0.05);
             assert.ok(contrast >= 4.5, `button text contrast should be at least 4.5:1, got ${contrast.toFixed(2)}:1`);
-            assert.ok(base.radius <= 14, `button should stay confidently rectangular, got ${base.radius}px corners`);
+            assert.ok(base.radius >= 12 && base.radius <= 14, `glass button should retain its modest 13px corner radius, got ${base.radius}px`);
             assert.ok(base.height >= 54, `button should remain easy to tap at ${viewport.width}px`);
-            assert.equal(base.arrowVisible, false, 'arrow should not have a separate visual container');
+            assert.equal(base.arrowBorderStyle, 'solid', 'arrow should have a visible framed container');
+            assert.equal(base.arrowBackground, 'rgba(255, 250, 242, 0.1)');
+            assert.equal(base.arrowRadius, 10);
             assert.ok(base.arrowSvg, 'direction cue should be a crisp SVG arrow');
             if (viewport.width <= 460) assert.ok(base.width >= viewport.width * 0.72, 'phone button should retain a generous tap width');
 
