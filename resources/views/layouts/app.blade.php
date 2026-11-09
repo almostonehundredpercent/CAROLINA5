@@ -25,6 +25,7 @@
         }
     </script>
     <link rel="stylesheet" href="{{ asset('css/site.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/palette.css') }}?v={{ filemtime(public_path('css/palette.css')) }}">
     <link rel="stylesheet" href="{{ asset('css/password-toggle.css') }}">
     <link rel="stylesheet" href="{{ asset('css/responsive.css') }}?v={{ filemtime(public_path('css/responsive.css')) }}">
     <link rel="stylesheet" href="{{ asset('css/loading.css') }}?v={{ filemtime(public_path('css/loading.css')) }}">

@@ -444,6 +444,70 @@ td small {
     }
 }
 
+/* Carolina palette refresh: color-only overrides; preserve the existing admin layout. */
+:root {
+    --orange: #C97900;
+    --orange-dark: #773C12;
+    --deep: #773C12;
+    --ink: #39393A;
+    --muted: #565B5E;
+    --paper: #E7ECEF;
+    --line: rgba(57, 57, 58, .22);
+    --white: #E7ECEF;
+    --admin-rail: #773C12;
+    --admin-card: #F4F6F7;
+    --admin-canvas: #E7ECEF;
+    --blue: #648DE5;
+}
+
+body, .admin-shell, .admin-main { background-color: var(--admin-canvas); color: var(--ink); }
+.admin-sidebar { background: var(--admin-rail); color: var(--paper); border-color: var(--line); }
+.admin-nav a, .admin-logout button { color: var(--paper); }
+.admin-nav a:hover, .admin-nav a.active { background: rgba(201, 121, 0, .18); color: var(--paper); box-shadow: inset 3px 0 var(--orange); }
+.admin-home { border-color: rgba(231, 236, 239, .55) !important; color: var(--paper) !important; }
+.admin-logout .logout-button { background: rgba(5, 5, 5, .18); border-color: rgba(231, 236, 239, .55); color: var(--paper); }
+.admin-logout .logout-button:hover { background: var(--paper); color: var(--deep); }
+.metric-grid article, .panel, .transaction-grid > div, .admin-table-wrap, .report-table-wrap, table { background-color: var(--admin-card); border-color: var(--line); color: var(--ink); }
+.admin-theme-toggle, .admin-mobile-menu-toggle, .period-form select, .report-period button, .rooms-table select, .admin-main input, .admin-main select, .admin-main textarea { background-color: var(--admin-card); color: var(--ink); border-color: var(--line); }
+.admin-main input, .admin-main select, .admin-main textarea, .walkin-card input, .walkin-card select { background-color: var(--admin-card) !important; color: var(--ink) !important; border-color: var(--line) !important; }
+.admin-main .button, .walkin-submit { color: #050505; }
+.admin-kicker, .metric-grid article > span, .metric-grid em, .bar-item b, .report-bars b, .transaction-grid strong { color: var(--orange-dark); }
+.admin-theme-toggle:hover, .admin-mobile-menu-toggle:hover { border-color: var(--orange); }
+.admin-sidebar :focus-visible, .admin-main :focus-visible { outline-color: var(--orange); }
+.bar, .report-bars span { background: var(--orange); }
+.booking-line, .booking-dot { stroke: var(--orange); }
+.report-booking-metrics article { background: var(--orange); color: #050505; }
+
+body.admin-dark {
+    --orange: #C97900; --orange-dark: #E7ECEF; --deep: #773C12; --ink: #E7ECEF;
+    --muted: #C3C8CB; --paper: #050505; --line: rgba(231, 236, 239, .2);
+    --white: #39393A; --admin-rail: #050505; --admin-card: #39393A; --admin-canvas: #050505;
+    color: var(--ink); background-color: var(--admin-canvas);
+}
+body.admin-dark .admin-shell, body.admin-dark .admin-main, body.admin-dark .admin-table-wrap, body.admin-dark .report-table-wrap, body.admin-dark table { background-color: var(--admin-canvas); color: var(--ink); }
+body.admin-dark .admin-sidebar { background: var(--admin-rail); color: var(--ink); }
+body.admin-dark .admin-nav a, body.admin-dark .admin-logout button { color: var(--ink); }
+body.admin-dark .admin-nav a:hover, body.admin-dark .admin-nav a.active { background: rgba(201, 121, 0, .2); color: var(--ink); }
+body.admin-dark .metric-grid article, body.admin-dark .panel, body.admin-dark .transaction-grid > div, body.admin-dark .admin-theme-toggle, body.admin-dark .admin-mobile-menu-toggle, body.admin-dark .period-form select, body.admin-dark .report-period button, body.admin-dark .rooms-table select, body.admin-dark .status-select, body.admin-dark input, body.admin-dark select, body.admin-dark textarea { background-color: var(--admin-card); color: var(--ink); border-color: var(--line); }
+body.admin-dark .report-tabs > a.active { background-color: var(--admin-card); color: var(--ink); border-color: var(--line); }
+body.admin-dark .report-period button.active { background-color: var(--deep); color: var(--ink); }
+body.admin-dark .booking-directory code { background-color: var(--deep); color: var(--ink); }
+body.admin-dark .line-graph .chart-empty { background-color: var(--admin-card); color: var(--ink); }
+
+/* Keep pagers consistent with the new palette, including late overrides. */
+.booking-directory nav[aria-label="Pagination Navigation"] a,
+.booking-directory nav[aria-label="Pagination Navigation"] [aria-disabled="true"] > span,
+.booking-directory nav[aria-label="Pagination Navigation"] [aria-current="page"] > span { background-color: var(--admin-card); border-color: var(--line); color: var(--ink); }
+.booking-directory nav[aria-label="Pagination Navigation"] [aria-current="page"] > span { background-color: var(--orange); color: var(--paper); }
+.booking-directory nav[aria-label="Pagination Navigation"] a:hover { background-color: var(--paper); border-color: var(--orange); }
+body.admin-dark .walkin-calendar-controls button,
+body.admin-dark .booking-directory nav[aria-label="Pagination Navigation"] a,
+body.admin-dark .booking-directory nav[aria-label="Pagination Navigation"] [aria-disabled="true"] > span { background-color: var(--admin-card); color: var(--ink); border-color: var(--line); }
+body.admin-dark .walkin-calendar-controls button:hover,
+body.admin-dark .walkin-day:hover:not([disabled]),
+body.admin-dark .booking-directory nav[aria-label="Pagination Navigation"] a:hover { background-color: var(--deep); color: var(--ink); border-color: var(--orange); }
+body.admin-dark .booking-directory nav[aria-label="Pagination Navigation"] [aria-current="page"] > span { background-color: var(--orange); color: var(--paper); border-color: var(--orange); }
+
 .bookings-page .booking-time-change {
     flex: 1 1 100%;
     min-width: 190px;
@@ -3048,6 +3112,17 @@ tbody tr:hover {
         color: #eadbce !important;
     }
 }
+
+/* Final palette pass: keep all admin surfaces using the supplied colors. */
+body, .admin-shell, .admin-main { background-color: var(--admin-canvas); color: var(--ink); }
+.admin-sidebar { background: var(--admin-rail); color: var(--paper); }
+.admin-nav a, .admin-logout button { color: var(--paper); }
+.admin-nav a:hover, .admin-nav a.active { color: var(--paper); }
+.metric-grid article, .panel, .transaction-grid > div, .admin-table-wrap, .report-table-wrap, table { background-color: var(--admin-card); border-color: var(--line); color: var(--ink); }
+.admin-main input, .admin-main select, .admin-main textarea, .walkin-card input, .walkin-card select { background-color: var(--admin-card); color: var(--ink); border-color: var(--line); }
+body.admin-dark .admin-sidebar { background: var(--admin-rail) !important; color: var(--ink); }
+body.admin-dark .admin-nav > a, body.admin-dark .admin-more summary, body.admin-dark .admin-more-links a { color: var(--ink) !important; }
+body.admin-dark .admin-nav > a.active { background: rgba(201, 121, 0, .2) !important; }
 
 .admin-shell .admin-phone-link {
     display: inline-flex;

@@ -1,0 +1,264 @@
+/* Carolina palette refresh: color-only overrides; layout and sizing remain unchanged. */
+:root {
+    --ink: #39393A;
+    --paper: #E7ECEF;
+    --sand: #D9E1E6;
+    --gold: #C97900;
+    --deep: #773C12;
+    --muted: #565B5E;
+    --line: rgba(57, 57, 58, .22);
+    --palette-black: #050505;
+    --surface: #F4F6F7;
+}
+
+body,
+.nav,
+.menu-toggle,
+input,
+select,
+textarea,
+.search-card,
+.filter-bar,
+.room-card,
+.booking-summary,
+.auth-card,
+.confirmation-card,
+.booking-row,
+.stats div,
+table,
+.rooms-search-calendar,
+.rooms-date-trigger,
+.booking-form input,
+.booking-form select,
+.booking-form textarea,
+.booking-form .hourly-calendar,
+.booking-form .hourly-time-menu,
+.booking-form .clean-select-menu {
+    color: var(--ink);
+    background-color: var(--paper);
+    border-color: var(--line);
+}
+
+.search-card,
+.room-card,
+.booking-summary,
+.auth-card,
+.confirmation-card,
+.booking-row,
+.stats div,
+.panel,
+.metric-grid article,
+.transaction-grid > div,
+.booking-form,
+.page-hero,
+.empty-state {
+    background-color: var(--surface);
+    border-color: var(--line);
+}
+
+.benefits,
+.filter-bar,
+.facts span,
+.amenities span,
+.booking-form label.checkbox,
+.home-availability {
+    background-color: var(--sand);
+    color: var(--ink);
+}
+
+.nav { border-bottom-color: var(--line); }
+.nav .brand { color: var(--deep); }
+.nav .brand small { color: var(--ink); }
+.nav nav > a:not(.nav-button) { color: var(--ink); }
+.nav nav > a:not(.nav-button):hover,
+.text-link,
+.auth-switch a,
+.room-card-body span,
+.room-card-body a:not(.button),
+.eyebrow,
+.stats b { color: var(--deep); }
+
+.button,
+.nav-button,
+.benefit-grid b,
+.rooms-calendar-day.selected,
+.rooms-calendar-day.selected.range,
+.booking-form .hourly-calendar-day.selected,
+.booking-form .hourly-time-option.selected,
+.booking-form .clean-select-option.selected {
+    background-color: var(--gold);
+    border-color: var(--gold);
+    color: var(--palette-black);
+}
+
+.room-card-body a.button { color: var(--palette-black); }
+
+.button.light { background-color: var(--paper); color: var(--deep); }
+.button.button-outline { color: var(--deep); border-color: var(--deep); }
+.button.button-outline:hover { background-color: var(--deep); color: var(--paper); }
+.nav .nav-button {
+    background: var(--gold);
+    border-color: var(--gold);
+    color: var(--palette-black);
+    box-shadow: 0 4px 12px rgba(5, 5, 5, .12);
+}
+.nav .nav-button:hover { background: var(--gold); color: var(--palette-black); }
+.nav .nav-theme-toggle { background: transparent; border-color: var(--line); color: var(--ink); }
+.nav .nav-theme-toggle:hover { background: var(--sand); border-color: var(--gold); color: var(--ink); }
+.nav :is(a, button):focus-visible,
+.nav form button:focus-visible { outline-color: var(--gold); }
+.theme-toggle { color: var(--ink); border-color: var(--line); }
+.theme-toggle:hover,
+.nav nav > a:not(.nav-button):hover { color: var(--gold); }
+.nav-button, .button { box-shadow: 0 4px 12px rgba(5, 5, 5, .12); }
+
+.hero {
+    background-image: linear-gradient(90deg, rgba(5, 5, 5, .82), rgba(57, 57, 58, .35)), url('https://images.unsplash.com/photo-1601918774946-25832a4be0d6?auto=format&fit=crop&w=1800&q=85');
+}
+
+.site-footer,
+footer {
+    background: var(--deep);
+    color: var(--paper);
+}
+.site-footer p,
+.site-footer small,
+.site-footer .footer-column > a,
+.site-footer .footer-contact p,
+.site-footer .footer-bottom small,
+.site-footer .footer-bottom a,
+footer p,
+footer small { color: var(--paper); }
+.site-footer .brand,
+.site-footer h2,
+.site-footer .footer-contact span { color: var(--paper); }
+.site-footer .footer-column,
+.site-footer .footer-bottom { border-color: rgba(231, 236, 239, .38); }
+.site-footer .social-link { color: var(--paper); border-color: var(--paper); }
+.site-footer .social-link:hover { background: var(--paper); color: var(--deep); }
+
+.rooms-calendar-day:hover:not([disabled]),
+.booking-form .hourly-calendar-day:hover:not(:disabled),
+.booking-form .hourly-time-option:hover,
+.booking-form .clean-select-option:hover { background-color: var(--sand); }
+.rooms-calendar-day.selected.range { background-color: var(--deep); color: var(--paper); }
+.rooms-calendar-day.past { color: rgba(57, 57, 58, .42); }
+
+/* Keep the alternate theme available, expressed through the same five colors. */
+.dark-mode {
+    --ink: #E7ECEF;
+    --paper: #050505;
+    --sand: #39393A;
+    --gold: #C97900;
+    --deep: #773C12;
+    --muted: #C3C8CB;
+    --line: rgba(231, 236, 239, .2);
+    --surface: #39393A;
+}
+
+.dark-mode body,
+.dark-mode .nav,
+.dark-mode .menu-toggle,
+.dark-mode .search-card,
+.dark-mode .filter-bar,
+.dark-mode .room-card,
+.dark-mode .booking-summary,
+.dark-mode .auth-card,
+.dark-mode .confirmation-card,
+.dark-mode .booking-row,
+.dark-mode .stats div,
+.dark-mode table,
+.dark-mode input,
+.dark-mode select,
+.dark-mode textarea,
+.dark-mode .rooms-search-calendar,
+.dark-mode .rooms-date-trigger,
+.dark-mode .booking-form input,
+.dark-mode .booking-form select,
+.dark-mode .booking-form textarea,
+.dark-mode .booking-form .hourly-calendar,
+.dark-mode .booking-form .hourly-time-menu,
+.dark-mode .booking-form .clean-select-menu {
+    background-color: var(--paper);
+    color: var(--ink);
+    border-color: var(--line);
+}
+
+.dark-mode .search-card,
+.dark-mode .room-card,
+.dark-mode .booking-summary,
+.dark-mode .auth-card,
+.dark-mode .confirmation-card,
+.dark-mode .booking-row,
+.dark-mode .stats div,
+.dark-mode .booking-form,
+.dark-mode .page-hero,
+.dark-mode .empty-state,
+.dark-mode .home-availability,
+.dark-mode .booking-form .hourly-calendar-day,
+.dark-mode .booking-form .hourly-time-option,
+.dark-mode .booking-form .clean-select-option { background-color: var(--surface); }
+
+.dark-mode .benefits,
+.dark-mode .filter-bar,
+.dark-mode .facts span,
+.dark-mode .amenities span,
+.dark-mode .booking-form label.checkbox { background-color: var(--sand); }
+.dark-mode .nav { border-bottom-color: var(--line); }
+.dark-mode .nav .brand { color: var(--ink); }
+.dark-mode .nav .brand small { color: var(--ink); }
+.dark-mode .nav .nav-button { background: var(--gold); border-color: var(--gold); color: var(--palette-black); }
+.dark-mode .nav .nav-theme-toggle { background: transparent; color: var(--ink); }
+.dark-mode .nav nav > a:not(.nav-button),
+.dark-mode .theme-toggle,
+.dark-mode .booking-form label { color: var(--ink); }
+.dark-mode .eyebrow,
+.dark-mode .text-link,
+.dark-mode .auth-switch a,
+.dark-mode .room-card-body span,
+.dark-mode .room-card-body a:not(.button),
+.dark-mode .stats b { color: var(--ink); }
+.dark-mode .nav nav > a:not(.nav-button):hover { background-color: var(--sand); }
+.dark-mode .rooms-calendar-head button,
+.dark-mode .home-room-picker select,
+.dark-mode .home-calendar-head button { background-color: var(--surface); color: var(--ink); border-color: var(--line); }
+.dark-mode .rooms-calendar-day:hover:not([disabled]),
+.dark-mode .booking-form .hourly-calendar-day:hover:not(:disabled),
+.dark-mode .booking-form .hourly-time-option:hover,
+.dark-mode .booking-form .clean-select-option:hover { background-color: var(--deep); }
+.dark-mode .rooms-calendar-day.selected.range { background-color: var(--gold); color: var(--paper); }
+.dark-mode .site-footer,
+.dark-mode footer { background: var(--deep); }
+.dark-mode .page-loader { background: rgba(5, 5, 5, .82); }
+.dark-mode .page-loader-card,
+.dark-mode .network-loader { background: var(--surface); color: var(--ink); border-color: var(--line); }
+
+.dark-mode .booking-form .hourly-calendar-head button,
+.dark-mode .booking-form .hourly-calendar-day,
+.dark-mode .booking-form .hourly-time-option,
+.dark-mode .booking-form .clean-select-option { background-color: var(--surface); color: var(--ink); }
+.dark-mode .booking-form .hourly-rental,
+.dark-mode .booking-form .booking-type-selector,
+.dark-mode .booking-form .availability-calendar,
+.dark-mode .booking-form .selector-display,
+.dark-mode .booking-form .hourly-date-trigger,
+.dark-mode .booking-form .hourly-time-trigger,
+.dark-mode .booking-form .clean-select-trigger,
+.dark-mode .booking-form .hourly-calendar,
+.dark-mode .booking-form .hourly-time-menu,
+.dark-mode .booking-form .clean-select-menu {
+    background-color: var(--surface);
+    border-color: var(--line);
+    color: var(--ink);
+}
+.dark-mode .booking-form #hourly-total,
+.dark-mode .booking-form .hourly-rental #hourly-total { background-color: var(--deep); color: var(--ink); }
+.dark-mode .booking-form .hourly-rental p,
+.dark-mode .booking-form .booking-type-options small { color: var(--muted); }
+
+@media (max-width: 800px) {
+    .nav nav { background-color: var(--surface); border-color: var(--line); }
+    .nav nav > a:not(.nav-button):hover { background-color: var(--sand); }
+    .dark-mode .nav nav { background-color: var(--surface); border-color: var(--line); }
+}
+
