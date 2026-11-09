@@ -164,7 +164,87 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 </script>
 <script type="module" src="{{ asset('js/home-availability.mjs') }}?v={{ filemtime(public_path('js/home-availability.mjs')) }}"></script>
-<script>document.addEventListener('DOMContentLoaded',()=>{const carousel=document.querySelector('.home-room-carousel');if(!carousel||window.matchMedia('(prefers-reduced-motion: reduce)').matches||window.matchMedia('(max-width: 800px)').matches)return;const cards=[...carousel.children];if(cards.length<2)return;const duplicate=(card)=>{const copy=card.cloneNode(true);copy.setAttribute('aria-hidden','true');copy.querySelectorAll('a').forEach(link=>link.tabIndex=-1);return copy};cards.forEach(card=>carousel.appendChild(duplicate(card)));cards.slice().reverse().forEach(card=>carousel.insertBefore(duplicate(card),carousel.firstChild));let paused=false;let span=0;const gap=()=>parseFloat(getComputedStyle(carousel).gap)||0;const measure=()=>{span=[...carousel.children].slice(cards.length,cards.length*2).reduce((total,card)=>total+card.getBoundingClientRect().width,0)+gap()*(cards.length-1)};const step=()=>carousel.children[cards.length]?.getBoundingClientRect().width+gap()||0;requestAnimationFrame(()=>{measure();carousel.scrollLeft=span});['pointerenter','focusin','touchstart'].forEach(event=>carousel.addEventListener(event,()=>paused=true,{passive:true}));['pointerleave','focusout','touchend'].forEach(event=>carousel.addEventListener(event,()=>paused=false));carousel.addEventListener('scroll',()=>{if(!span)return;if(carousel.scrollLeft<span*.45)carousel.scrollLeft+=span;else if(carousel.scrollLeft>span*1.55)carousel.scrollLeft-=span},{passive:true});window.addEventListener('resize',()=>{measure();carousel.scrollLeft=span});setInterval(()=>{if(!paused)carousel.scrollBy({left:step(),behavior:'smooth'})},4200)});</script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const carousel = document.querySelector('.home-room-carousel');
+    if (!carousel) return;
+
+    const mobileViewport = window.matchMedia('(max-width: 800px)');
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const originalCards = [...carousel.children];
+    let clonedCards = [];
+    let autoAdvance = null;
+    let paused = false;
+    let loopWidth = 0;
+
+    if (originalCards.length < 2) return;
+
+    const gap = () => Number.parseFloat(getComputedStyle(carousel).gap) || 0;
+    const measureLoop = () => {
+        const middleCards = [...carousel.children].slice(originalCards.length, originalCards.length * 2);
+        loopWidth = middleCards.reduce((total, card) => total + card.getBoundingClientRect().width, 0)
+            + gap() * (middleCards.length - 1);
+    };
+    const step = () => carousel.children[originalCards.length]?.getBoundingClientRect().width + gap() || 0;
+
+    const stopDesktopLoop = () => {
+        window.clearInterval(autoAdvance);
+        autoAdvance = null;
+        clonedCards.forEach(card => card.remove());
+        clonedCards = [];
+        loopWidth = 0;
+        carousel.scrollLeft = 0;
+    };
+
+    const startDesktopLoop = () => {
+        stopDesktopLoop();
+        if (mobileViewport.matches || reducedMotion.matches) return;
+
+        const duplicate = card => {
+            const copy = card.cloneNode(true);
+            copy.setAttribute('aria-hidden', 'true');
+            copy.querySelectorAll('a').forEach(link => { link.tabIndex = -1; });
+            clonedCards.push(copy);
+            return copy;
+        };
+
+        originalCards.forEach(card => carousel.appendChild(duplicate(card)));
+        originalCards.slice().reverse().forEach(card => carousel.insertBefore(duplicate(card), carousel.firstChild));
+
+        requestAnimationFrame(() => {
+            if (mobileViewport.matches || reducedMotion.matches || !clonedCards.length) return;
+            measureLoop();
+            carousel.scrollLeft = loopWidth;
+        });
+
+        autoAdvance = window.setInterval(() => {
+            if (!paused) carousel.scrollBy({ left: step(), behavior: 'smooth' });
+        }, 4200);
+    };
+
+    ['pointerenter', 'focusin', 'touchstart'].forEach(event => {
+        carousel.addEventListener(event, () => { paused = true; }, { passive: true });
+    });
+    ['pointerleave', 'focusout', 'touchend'].forEach(event => {
+        carousel.addEventListener(event, () => { paused = false; });
+    });
+    carousel.addEventListener('scroll', () => {
+        if (!loopWidth || mobileViewport.matches) return;
+        if (carousel.scrollLeft < loopWidth * .45) carousel.scrollLeft += loopWidth;
+        else if (carousel.scrollLeft > loopWidth * 1.55) carousel.scrollLeft -= loopWidth;
+    }, { passive: true });
+    window.addEventListener('resize', () => {
+        if (mobileViewport.matches || reducedMotion.matches || !clonedCards.length) return;
+        measureLoop();
+        carousel.scrollLeft = loopWidth;
+    });
+
+    const onModeChange = () => startDesktopLoop();
+    mobileViewport.addEventListener?.('change', onModeChange);
+    reducedMotion.addEventListener?.('change', onModeChange);
+    startDesktopLoop();
+});
+</script>
 <script>document.addEventListener('DOMContentLoaded',()=>{const roomCalendar=document.getElementById('home-room-calendar');if(!roomCalendar)return;const refresh=()=>{if(!document.hidden&&roomCalendar.value)roomCalendar.dispatchEvent(new Event('change'))};setInterval(refresh,15000);document.addEventListener('visibilitychange',refresh)});</script>
 <script src="{{ asset('js/home-touch-cards.js') }}?v={{ filemtime(public_path('js/home-touch-cards.js')) }}" defer></script>
 <section class="section home-location" aria-labelledby="booking-location-title">
