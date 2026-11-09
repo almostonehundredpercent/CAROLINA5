@@ -45,7 +45,7 @@ test('promo editor has readable tap targets and balanced desktop panels in dark 
         assert.equal(layout.columns, 2);
         assert.ok(layout.inputHeight >= 46);
         assert.ok(layout.roomTargetHeight >= 46);
-        assert.equal(layout.labelColor, 'rgb(241, 227, 213)');
+        assert.equal(layout.labelColor, 'rgb(231, 236, 239)');
     } finally {
         await browser.close();
     }
@@ -63,7 +63,7 @@ test('promo editor stacks cleanly on narrow light-mode screens', async () => {
         }));
         assert.equal(layout.columns, 1);
         assert.equal(layout.formColumns, 1);
-        assert.equal(layout.labelColor, 'rgb(61, 48, 39)');
+        assert.equal(layout.labelColor, 'rgb(57, 57, 58)');
         assert.ok(layout.pageWidth <= layout.viewportWidth, 'the small screen should not scroll sideways');
     } finally {
         await browser.close();
