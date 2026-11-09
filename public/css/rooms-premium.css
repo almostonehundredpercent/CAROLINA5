@@ -252,3 +252,34 @@
 @media (min-width:651px) {
     .room-card-social { display:contents; }
 }
+
+/* Mobile pagination: separate the room range from page position and expose every target. */
+@media (max-width:650px) {
+    .rooms-pagination { min-height:0; flex-direction:column; flex-wrap:nowrap; align-items:stretch; gap:0; margin-top:18px; padding:12px 0; border:0; border-top:1px solid #e1d2c1; border-bottom:1px solid #e1d2c1; border-radius:0; background:transparent; box-shadow:none; }
+    .rooms-page-summary { display:flex; min-width:0; align-items:center; justify-content:space-between; gap:8px; margin:0; color:#49372a; font-size:.74rem; line-height:1.25; text-align:left; }
+    .rooms-page-range { min-width:0; font-weight:700; }
+    .rooms-page-position { flex:none; padding:5px 8px; border:1px solid #d7b88f; border-radius:8px; background:#fff1dc; color:#75400b; font-size:.64rem; font-weight:750; letter-spacing:.035em; text-transform:uppercase; white-space:nowrap; }
+    .rooms-page-separator { display:none; }
+    .rooms-pagination-controls { display:grid; grid-template-columns:minmax(72px,1fr) auto minmax(58px,1fr); align-items:center; gap:4px; width:100%; margin-top:8px; }
+    .rooms-pagination-controls .rooms-pagination-step { width:100%; min-width:44px; min-height:44px; gap:4px; padding:0 6px; border-color:#d7c7b5; border-radius:9px; background:#fffdfa; color:#49372a; font-size:.72rem; font-weight:650; opacity:1; }
+    .rooms-pagination-controls .rooms-page-numbers { flex-wrap:nowrap; gap:3px; }
+    .rooms-pagination-controls .rooms-page-number { width:42px; min-width:42px; min-height:44px; padding:0; border-color:#d7c7b5; border-radius:9px; background:#fffdfa; color:#49372a; font-size:.76rem; }
+    .rooms-pagination-controls .rooms-page-number[aria-current="page"] { border-color:#aa5d00; background:linear-gradient(145deg,#d98914,#b85b00); color:#fffaf2; box-shadow:0 3px 8px rgba(146,81,9,.16); }
+    .rooms-pagination-controls .rooms-pagination-step:disabled { border-color:#ded3c6; background:#f7f2eb; color:#756657; cursor:not-allowed; opacity:1; }
+    .rooms-pagination-controls button:focus-visible { outline:3px solid rgba(201,121,0,.35); outline-offset:2px; }
+    .dark-mode .rooms-pagination { border-color:#594332; background:transparent; box-shadow:none; }
+    .dark-mode .rooms-page-summary { color:#fff1e3; }
+    .dark-mode .rooms-page-position { border-color:#805b30; background:#47321e; color:#ffdda7; }
+    .dark-mode .rooms-pagination-controls button { border-color:#594332; background:#30231b; color:#fff1e3; }
+    .dark-mode .rooms-pagination-controls .rooms-page-number[aria-current="page"] { border-color:#e49a34; background:linear-gradient(135deg,#d98914,#a94d00); color:#fffaf2; }
+    .dark-mode .rooms-pagination-controls .rooms-pagination-step:disabled { border-color:#4a3629; background:#291f19; color:#c3ad99; }
+}
+
+@media (max-width:360px) {
+    .rooms-page-summary { font-size:.68rem; }
+    .rooms-page-position { padding:5px 6px; font-size:.59rem; }
+    .rooms-pagination-controls { grid-template-columns:minmax(48px,1fr) auto minmax(48px,1fr); gap:3px; }
+    .rooms-pagination-controls .rooms-pagination-step { min-width:48px; gap:2px; padding:0 3px; font-size:.66rem; }
+    .rooms-pagination-controls .rooms-page-numbers { gap:2px; }
+    .rooms-pagination-controls .rooms-page-number { width:36px; min-width:36px; }
+}

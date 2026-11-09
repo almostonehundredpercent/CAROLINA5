@@ -70,7 +70,7 @@
             @endforelse
         </div>
         <nav class="rooms-pagination" aria-label="Room pages" @if($roomPages->count() < 2) hidden @endif>
-            <p class="rooms-page-summary" id="rooms-page-summary" aria-live="polite"></p>
+            <p class="rooms-page-summary" id="rooms-page-summary" aria-live="polite"><span class="rooms-page-range" id="rooms-page-range"></span><span class="rooms-page-separator" aria-hidden="true"> · </span><span class="rooms-page-position" id="rooms-page-position"></span></p>
             <div class="rooms-pagination-controls">
                 <button class="rooms-pagination-step" type="button" id="rooms-page-previous" aria-label="Show previous page of rooms" aria-controls="rooms-page-track">Previous</button>
                 <div class="rooms-page-numbers" id="rooms-page-numbers" aria-label="Choose a page"></div>
@@ -117,7 +117,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const pages = [...(carousel?.querySelectorAll('[data-room-page]') || [])];
     const previous = document.getElementById('rooms-page-previous');
     const next = document.getElementById('rooms-page-next');
-    const summary = document.getElementById('rooms-page-summary');
+    const rangeSummary = document.getElementById('rooms-page-range');
+    const pagePosition = document.getElementById('rooms-page-position');
     const pageNumbers = document.getElementById('rooms-page-numbers');
     if (pages.length < 2) return;
 
@@ -138,7 +139,8 @@ document.addEventListener('DOMContentLoaded', () => {
         pages.forEach((element, index) => { element.hidden = index + 1 !== currentPage; });
         const firstRoom = (currentPage - 1) * 6 + 1;
         const lastRoom = Math.min(currentPage * 6, {{ $rooms->count() }});
-        summary.textContent = `Showing rooms ${firstRoom}–${lastRoom} of {{ $rooms->count() }} · Page ${currentPage} of ${pages.length}`;
+        rangeSummary.textContent = `Showing rooms ${firstRoom}–${lastRoom} of {{ $rooms->count() }}`;
+        pagePosition.textContent = `Page ${currentPage} of ${pages.length}`;
         pageNumbers.querySelectorAll('button').forEach((button, index) => {
             if (index + 1 === currentPage) button.setAttribute('aria-current', 'page');
             else button.removeAttribute('aria-current');

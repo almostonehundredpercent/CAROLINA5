@@ -63,6 +63,19 @@ test('room cards group promotion and review details for compact mobile layouts',
         ->assertSee('class="card-rating card-rating-empty"', false);
 });
 
+test('room pagination exposes its range and current page separately', function () {
+    foreach (range(1, 7) as $number) {
+        availabilityTestRoom('Pagination Room '.$number);
+    }
+
+    $this->get(route('rooms.index'))
+        ->assertOk()
+        ->assertSee('id="rooms-page-range"', false)
+        ->assertSee('id="rooms-page-position"', false)
+        ->assertSee('id="rooms-page-previous"', false)
+        ->assertSee('id="rooms-page-next"', false);
+});
+
 test('live room availability responses remain uncached', function () {
     $room = availabilityTestRoom();
 
