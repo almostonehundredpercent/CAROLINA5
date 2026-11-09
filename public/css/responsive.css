@@ -50,7 +50,6 @@ footer { flex-shrink: 0; }
     .nav nav .nav-button { width: 100%; justify-content: center; padding: 12px 15px; }
     .nav nav .nav-theme-toggle { width: 100%; height: auto; margin: 0; padding: 12px 13px; justify-content: flex-start; }
     .nav nav .nav-theme-toggle span { position: static; width: auto; height: auto; margin: 0; overflow: visible; clip: auto; white-space: normal; }
-    body.menu-open { overflow: hidden; }
     .hero { min-height: 470px; padding: 58px 7%; }
     .hero-copy h1 { font-size: clamp(2.6rem, 13vw, 4rem); }
     .search-wrap { margin: 22px 0 0; padding: 0 5%; }
