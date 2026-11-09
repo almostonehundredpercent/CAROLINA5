@@ -53,20 +53,32 @@ test('mobile review cards are compact while the desktop card sizing stays intact
     }
 });
 
-test('the final mobile benefit card aligns with the same two-column grid', async () => {
+test('all five mobile benefit cards share one horizontal row without overflow', async () => {
     const page = await browser.newPage({ viewport: { width: 400, height: 850 } });
     try {
         await page.setContent(`<html><head><meta name="viewport" content="width=device-width,initial-scale=1"><style>${css.join('\n')}</style></head><body>
             <section class="benefits home-benefits"><div class="benefit-grid">
                 <div>Breakfast</div><div>Hygiene</div><div>Wi-Fi</div><div>Netflix</div><div>Private CR</div>
             </div></section></body></html>`);
-        const cards = await page.locator('.benefit-grid > div').evaluateAll(elements => elements.map(element => {
-            const rect = element.getBoundingClientRect();
-            return { left: Math.round(rect.left), width: Math.round(rect.width) };
-        }));
+        for (const width of [400, 320]) {
+            await page.setViewportSize({ width, height: 850 });
+            const layout = await page.locator('.benefit-grid > div').evaluateAll(elements => ({
+                cards: elements.map(element => {
+                    const rect = element.getBoundingClientRect();
+                    return { top: Math.round(rect.top), left: Math.round(rect.left), width: Math.round(rect.width) };
+                }),
+                pageWidth: document.documentElement.scrollWidth,
+            }));
+            assert.equal(new Set(layout.cards.map(card => card.top)).size, 1,
+                `all benefit cards should stay on a single row at ${width}px`);
+            assert.equal(layout.pageWidth, width, `the one-row benefits should not create page overflow at ${width}px`);
+            assert.ok(layout.cards.every((card, index) => index === 0 || card.left > layout.cards[index - 1].left),
+                'benefits should run left-to-right in a single row');
+        }
 
-        assert.equal(cards[4].left, cards[0].left, 'the final card should start at the first grid column, not float at center');
-        assert.equal(cards[4].width, cards[0].width, 'the final card should have the same width as the other benefits');
+        await page.setViewportSize({ width: 1280, height: 850 });
+        const desktopColumns = await page.locator('.benefit-grid').evaluate(element => getComputedStyle(element).gridTemplateColumns.split(' ').length);
+        assert.equal(desktopColumns, 5, 'desktop should keep its existing five-column layout');
     } finally {
         await page.close();
     }
