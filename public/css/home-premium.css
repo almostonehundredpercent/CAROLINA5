@@ -233,11 +233,11 @@
 .home-room-carousel .room-card picture img { display:block; }
 @media (max-width:460px) {
     .ber-promo.ber-promo-home { margin:24px 5% 0; padding:16px; border-radius:14px; }
-    .ber-promo.ber-promo-home .ber-promo-layout { gap:12px; }
+    .ber-promo.ber-promo-home .ber-promo-layout { gap:8px; }
     .ber-promo.ber-promo-home .ber-promo-kicker { margin-bottom:6px; padding:5px 9px; font-size:.62rem; }
     .ber-promo.ber-promo-home h2 { margin-bottom:5px; font-size:clamp(1.3rem,5.5vw,1.5rem); line-height:1.15; }
     .ber-promo.ber-promo-home p { font-size:.88rem; line-height:1.45; }
     .ber-promo.ber-promo-home .ber-promo-highlights { gap:6px; margin-top:10px; }
     .ber-promo.ber-promo-home .ber-promo-highlights span { padding:5px 8px; font-size:.7rem; }
-    .ber-promo.ber-promo-home .button { min-height:44px; padding:10px 14px; font-size:.9rem; }
+    .ber-promo.ber-promo-home .button { min-height:48px; padding:10px 14px; font-size:.9rem; }
 }

@@ -8,6 +8,7 @@ const css = await Promise.all([
     'palette.css',
     'home-premium.css',
     'promo-campaign.css',
+    'button-refinement.css',
 ].map(file => readFile(new URL(`../../public/css/${file}`, import.meta.url), 'utf8')));
 
 let browser;
@@ -42,7 +43,7 @@ test('home promo is compact and readable on mobile without changing desktop sizi
             });
             assert.equal(mobile.padding, '16px', `promo should have compact 16px padding at ${width}px`);
             assert.ok(mobile.height < 290, `promo should be shorter on mobile; got ${mobile.height}px at ${width}px`);
-            assert.ok(mobile.buttonHeight >= 44, `offer button must remain easy to tap at ${width}px`);
+            assert.ok(mobile.buttonHeight >= 48, `offer button must remain easy to tap at ${width}px`);
             assert.ok(mobile.cardWidth < width, `promo should keep its side margins at ${width}px`);
             assert.ok(mobile.cardRight <= width, `promo should fit inside the viewport at ${width}px`);
             assert.equal(mobile.pageWidth, width, `promo should not cause horizontal page overflow at ${width}px`);
