@@ -53,6 +53,25 @@ test('mobile review cards are compact while the desktop card sizing stays intact
     }
 });
 
+test('the final mobile benefit card aligns with the same two-column grid', async () => {
+    const page = await browser.newPage({ viewport: { width: 400, height: 850 } });
+    try {
+        await page.setContent(`<html><head><meta name="viewport" content="width=device-width,initial-scale=1"><style>${css.join('\n')}</style></head><body>
+            <section class="benefits home-benefits"><div class="benefit-grid">
+                <div>Breakfast</div><div>Hygiene</div><div>Wi-Fi</div><div>Netflix</div><div>Private CR</div>
+            </div></section></body></html>`);
+        const cards = await page.locator('.benefit-grid > div').evaluateAll(elements => elements.map(element => {
+            const rect = element.getBoundingClientRect();
+            return { left: Math.round(rect.left), width: Math.round(rect.width) };
+        }));
+
+        assert.equal(cards[4].left, cards[0].left, 'the final card should start at the first grid column, not float at center');
+        assert.equal(cards[4].width, cards[0].width, 'the final card should have the same width as the other benefits');
+    } finally {
+        await page.close();
+    }
+});
+
 test('mobile room carousel stays at the first room and remains manually scrollable', async () => {
     assert.ok(carouselStyles, 'the live carousel layout rules should be present');
     assert.ok(carouselScript?.includes("window.matchMedia('(max-width: 800px)').matches"),
