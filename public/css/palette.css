@@ -9,7 +9,10 @@
     --line: rgba(57, 57, 58, .22);
     --palette-black: #050505;
     --surface: #F4F6F7;
+    --auth-canvas: #F4EEE6;
 }
+
+.auth-page { background-color: var(--auth-canvas); }
 
 body,
 .nav,
@@ -154,6 +157,7 @@ footer small { color: var(--paper); }
     --muted: #C3C8CB;
     --line: rgba(231, 236, 239, .2);
     --surface: #39393A;
+    --auth-canvas: #39393A;
 }
 
 .dark-mode body,
