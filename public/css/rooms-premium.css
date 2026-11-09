@@ -1,4 +1,6 @@
 /* Rooms discovery, rebuilt with the same quiet surfaces and deliberate spacing. */
+.rooms-mobile-icon,.rooms-action-icon { display:none; }
+.rooms-date-copy,.rooms-field-label { display:contents; }
 .rooms-card picture { display:block; }
 .rooms-card picture img { display:block; }
 .rooms-hero { max-width:1424px; min-height:0; margin:0 auto; padding:34px 48px 7px; overflow:visible; text-align:left; background:transparent; }
@@ -167,6 +169,47 @@
 @media (max-width:650px) { .rooms-hero { min-height:0; padding:20px 24px 6px; }.rooms-hero h1 { font-size:clamp(2.2rem,9vw,3.1rem); }.section.compact.rooms-results { padding:8px 16px 55px; }.rooms-search { margin:0 8px; grid-template-columns:1fr; padding:12px; border-radius:15px; }.rooms-date-control,.rooms-search-calendar { width:100%; }.rooms-sort-menu { width:100%; }.rooms-search > .button { min-height:54px; }.rooms-date-trigger,.rooms-choice,.rooms-time-field { min-height:58px; }.rooms-results > .ber-promo-rooms { margin:14px 8px 0; padding:15px; }.rooms-results > .ber-promo-rooms .ber-promo-layout { align-items:stretch; flex-direction:column; gap:10px; }.rooms-results > .ber-promo-rooms h2 { font-size:1.25rem; }.rooms-results > .ber-promo-rooms .ber-promo-highlights { margin-top:8px; }.rooms-results > .ber-promo-rooms .button { width:100%; min-height:44px; justify-content:center; }.rooms-results .result-count { margin:18px 8px 16px; }.rooms-carousel { padding:0 8px; }.rooms-pagination { flex-direction:column; align-items:stretch; gap:10px; margin-top:18px; padding:12px 10px; }.rooms-page-summary { text-align:center; }.rooms-pagination-controls { width:100%; gap:4px; }.rooms-pagination-controls .rooms-pagination-step { min-width:62px; padding:0 8px; }.rooms-pagination-controls .rooms-page-number { min-width:44px; }.room-grid { grid-template-columns:1fr; gap:17px; }.rooms-card img { height:220px; }.rooms-card .room-card-body { padding:18px; } }
 @media (prefers-reduced-motion:reduce) { .rooms-date-trigger,.rooms-choice,.rooms-time-field,.rooms-sort-control,.rooms-search > .button { transition:none; }.rooms-date-trigger:hover,.rooms-choice:hover,.rooms-time-field:hover,.rooms-sort-control:hover,.rooms-search > .button:hover,.rooms-search > .button:active { transform:none; } }
 
+@media (max-width:650px) {
+    .rooms-search { grid-template-columns:repeat(2,minmax(0,1fr)); gap:9px; }
+    .rooms-search > * { min-width:0; }
+    .rooms-date-control,.rooms-search > .button { grid-column:1 / -1; }
+    .rooms-date-trigger { display:flex; min-height:60px; align-items:center; gap:12px; padding:10px 13px; text-align:left; }
+    .rooms-date-copy { display:grid; min-width:0; gap:2px; }
+    .rooms-date-trigger .rooms-date-copy > span { margin:0; color:#796d62; font-size:.64rem; line-height:1.2; letter-spacing:.06em; }
+    .rooms-date-trigger .rooms-date-copy > b { margin:0; font-size:.9rem; line-height:1.3; }
+    .rooms-choice,.rooms-time-field { display:flex; min-height:62px; flex-direction:column; justify-content:center; gap:4px; padding:9px 10px; }
+    .rooms-field-label { display:flex; min-width:0; align-items:center; gap:5px; color:#796d62; font-size:.61rem; line-height:1.2; letter-spacing:.04em; }
+    .rooms-field-label > span { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .rooms-mobile-icon { display:block; width:15px; height:15px; flex:0 0 15px; fill:none; stroke:#b96c0c; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
+    .rooms-choice > button,.rooms-time-field > button { min-height:24px; margin:0; padding:0 16px 0 0; font-size:.82rem; }
+    .rooms-sort-control { display:flex; min-height:62px; flex-direction:column; justify-content:center; gap:4px; padding:9px 10px; }
+    .rooms-sort-control > button { min-height:24px; font-size:.82rem; }
+    .rooms-search > .button { display:flex; min-height:50px; align-items:center; justify-content:space-between; gap:10px; padding:0 15px; }
+    .rooms-action-icon { display:block; width:18px; height:18px; flex:none; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
+    .dark-mode .rooms-field-label { color:#d2bba7; }
+    .dark-mode .rooms-mobile-icon { stroke:#f1b25b; }
+}
+
+@media (max-width:360px) {
+    .rooms-search { gap:7px; padding:10px; }
+    .rooms-choice,.rooms-time-field,.rooms-sort-control { padding-right:8px; padding-left:8px; }
+    .rooms-field-label { gap:4px; font-size:.57rem; }
+    .rooms-mobile-icon { width:14px; height:14px; flex-basis:14px; }
+    .rooms-choice > button,.rooms-time-field > button,.rooms-sort-control > button { font-size:.76rem; }
+}
+
+/* Desktop keeps the established six-field search bar; only narrow layouts gain icons. */
+@media (min-width:651px) {
+    .rooms-date-copy,.rooms-field-label { display:contents; }
+}
+
+/* Keep mobile field labels and the date value aligned without changing desktop. */
+@media (max-width:650px) {
+    .rooms-sort-control .rooms-field-label { display:flex; }
+    .rooms-search-calendar { left:0; max-width:100%; }
+}
+
+/* Existing room card/calendar rules continue below. */
 @media (max-width:650px) {
     .room-availability-toggle { min-height:56px; padding:10px 12px; }
     .room-availability-toggle > span:last-child { width:34px; height:34px; flex:0 0 34px; }

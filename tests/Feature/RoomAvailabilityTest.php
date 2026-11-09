@@ -37,6 +37,23 @@ test('every room card exposes its own booked-date calendar', function () {
     }
 });
 
+test('rooms search renders descriptive field icons without changing its controls', function () {
+    availabilityTestRoom('Icon Search Room');
+
+    $this->get(route('rooms.index'))
+        ->assertOk()
+        ->assertSee('data-room-icon="calendar"', false)
+        ->assertSee('data-room-icon="stay"', false)
+        ->assertSee('data-room-icon="time"', false)
+        ->assertSee('data-room-icon="guests"', false)
+        ->assertSee('data-room-icon="sort"', false)
+        ->assertSee('name="stay"', false)
+        ->assertSee('name="check_in_time"', false)
+        ->assertSee('name="guests"', false)
+        ->assertSee('name="sort"', false)
+        ->assertSee('Check availability');
+});
+
 test('live room availability responses remain uncached', function () {
     $room = availabilityTestRoom();
 
