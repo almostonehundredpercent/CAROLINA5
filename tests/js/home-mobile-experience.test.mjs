@@ -23,31 +23,57 @@ after(async () => { await browser?.close(); });
 test('mobile review cards are compact while the desktop card sizing stays intact', async () => {
     const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
     try {
+        const reviews = [
+            { comment: 'twas a good 6 hours solo experience, rooms nice and yeah!', author: 'Glyza Delfin', room: 'Room 8', date: 'Oct 2026' },
+            { comment: 'We had a lovely stay! The place was clean, comfortable, and just as described. Check-in was easy, and our host was welcoming and responsive. We’d happily stay here again.', author: 'aerl', room: 'Room 10', date: 'Oct 2026' },
+            { comment: 'Guest shared a 5-star rating.', author: 'Aeru', room: 'Room 7', date: 'Oct 2026' },
+        ];
+        const reviewCards = reviews.map(review => `<article class="public-review home-review-card">
+            <div class="home-review-rating"><span class="review-stars">★★★★★</span><small>Verified stay</small></div>
+            <p class="home-review-comment">${review.comment}</p>
+            <div class="home-review-author"><div><b>${review.author}</b><small>${review.room}</small></div><time>${review.date}</time></div>
+        </article>`).join('');
         await page.setContent(`<html><head><style>${css.join('\n')}</style></head><body>
-            <section class="section home-reviews"><div class="review-list"><article class="public-review home-review-card">
-                <div class="home-review-rating"><span class="review-stars">★★★★★</span><small>Verified stay</small></div>
-                <p class="home-review-comment">A comfortable stay with a clean room and a helpful host.</p>
-                <div class="home-review-author"><div><b>Guest</b><small>Room 1</small></div><time>Oct 2026</time></div>
-            </article></div></section></body></html>`);
+            <section class="section home-reviews"><div class="section-heading"><div><span class="eyebrow">GUEST REVIEWS</span>
+                <h2>Experiences shared by our guests.</h2><p>Recent reviews from completed Carolina stays.</p></div></div>
+                <div class="review-list">${reviewCards}</div></section></body></html>`);
 
-        const mobile = await page.locator('.home-review-card').evaluate(element => ({
-            padding: getComputedStyle(element).padding,
-            minHeight: getComputedStyle(element).minHeight,
-            commentSize: getComputedStyle(element.querySelector('.home-review-comment')).fontSize,
-            height: Math.round(element.getBoundingClientRect().height),
+        const mobile = await page.locator('.home-reviews').evaluate(section => ({
+            height: Math.round(section.getBoundingClientRect().height),
+            paddingTop: getComputedStyle(section).paddingTop,
+            paddingBottom: getComputedStyle(section).paddingBottom,
+            headingGap: getComputedStyle(section.querySelector('.section-heading')).marginBottom,
+            titleSize: getComputedStyle(section.querySelector('h2')).fontSize,
+            listGap: getComputedStyle(section.querySelector('.review-list')).rowGap,
+            cards: [...section.querySelectorAll('.home-review-card')].map(element => ({
+                padding: getComputedStyle(element).padding,
+                minHeight: getComputedStyle(element).minHeight,
+                commentSize: getComputedStyle(element.querySelector('.home-review-comment')).fontSize,
+                height: Math.round(element.getBoundingClientRect().height),
+                commentIsVisible: element.querySelector('.home-review-comment').scrollHeight === element.querySelector('.home-review-comment').clientHeight,
+            })),
         }));
-        assert.equal(mobile.padding, '14px');
-        assert.equal(mobile.minHeight, '0px');
-        assert.equal(Number.parseFloat(mobile.commentSize), 14.72);
-        assert.ok(mobile.height < 190, `mobile review should avoid excess card height; got ${mobile.height}px`);
+        assert.equal(mobile.paddingTop, '8px', 'mobile review section should use less top spacing');
+        assert.equal(mobile.paddingBottom, '24px', 'mobile review section should use less bottom spacing');
+        assert.equal(mobile.headingGap, '12px', 'the heading should sit closer to the reviews');
+        assert.equal(mobile.titleSize, '27.2px', 'the mobile title should remain prominent but take fewer lines');
+        assert.equal(mobile.listGap, '8px', 'review cards should feel grouped without excess gaps');
+        assert.ok(mobile.height < 640, `mobile review section should use less page height; got ${JSON.stringify(mobile)}`);
+        assert.equal(mobile.cards.length, 3, 'all reviews should remain visible in the vertical list');
+        assert.ok(mobile.cards.every(card => card.padding === '10px' && card.minHeight === '0px'), 'mobile review cards should be compact without forced height');
+        assert.ok(mobile.cards.every(card => Number.parseFloat(card.commentSize) >= 14), 'review text should stay comfortably readable');
+        assert.ok(mobile.cards.every(card => card.height < 180), 'each mobile review card should stay concise');
+        assert.ok(mobile.cards.every(card => card.commentIsVisible), 'long review comments should remain fully visible');
 
         await page.setViewportSize({ width: 1280, height: 800 });
-        const desktop = await page.locator('.home-review-card').evaluate(element => ({
-            padding: getComputedStyle(element).padding,
-            minHeight: getComputedStyle(element).minHeight,
+        const desktop = await page.locator('.home-reviews').evaluate(section => ({
+            padding: getComputedStyle(section.querySelector('.home-review-card')).padding,
+            minHeight: getComputedStyle(section.querySelector('.home-review-card')).minHeight,
+            columns: getComputedStyle(section.querySelector('.review-list')).gridTemplateColumns.split(' ').length,
         }));
         assert.equal(desktop.padding, '22px', 'desktop review card padding should remain unchanged');
         assert.equal(desktop.minHeight, '230px', 'desktop review card height should remain unchanged');
+        assert.equal(desktop.columns, 3, 'desktop review grid should keep its existing three columns');
     } finally {
         await page.close();
     }
