@@ -53,7 +53,7 @@ test('mobile review cards are compact while the desktop card sizing stays intact
     }
 });
 
-test('mobile benefit cards stay in one swipeable row at a readable width', async () => {
+test('all five mobile benefits fit in one row without horizontal scrolling', async () => {
     const page = await browser.newPage({ viewport: { width: 400, height: 850 } });
     try {
         await page.setContent(`<html><head><meta name="viewport" content="width=device-width,initial-scale=1"><style>${css.join('\n')}</style></head><body>
@@ -76,16 +76,13 @@ test('mobile benefit cards stay in one swipeable row at a readable width', async
                 `all benefit cards should stay on a single row at ${width}px`);
             assert.equal(layout.pageWidth, width, `the one-row benefits should not create page overflow at ${width}px`);
             assert.equal(layout.rowWidth, width, `the full benefits section should remain inside the phone viewport at ${width}px`);
-            assert.ok(layout.cards.every(card => card.width >= 128 && card.width <= 156),
-                `benefit cards should have enough room for readable labels at ${width}px`);
-            assert.ok(layout.scrollWidth > layout.clientWidth, 'the benefit row should scroll horizontally to reveal all five cards');
+            assert.ok(layout.cards.every(card => card.width >= 50 && card.width <= 72),
+                `benefit items should use the full row width at ${width}px`);
+            assert.ok(layout.scrollWidth <= layout.clientWidth,
+                'the benefit row should show all five items without sideways scrolling');
             assert.ok(layout.cards.every((card, index) => index === 0 || card.left > layout.cards[index - 1].left),
                 'benefits should run left-to-right in a single row');
         }
-
-        await page.locator('.benefit-grid').evaluate(element => { element.scrollLeft = element.clientWidth; });
-        assert.ok(await page.locator('.benefit-grid').evaluate(element => element.scrollLeft > 0),
-            'guests should be able to swipe to later benefit cards');
 
         await page.setViewportSize({ width: 1280, height: 850 });
         const desktopColumns = await page.locator('.benefit-grid').evaluate(element => getComputedStyle(element).gridTemplateColumns.split(' ').length);
