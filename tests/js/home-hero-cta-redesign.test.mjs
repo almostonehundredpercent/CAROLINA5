@@ -5,8 +5,12 @@ import { chromium } from 'playwright';
 
 const styles = await Promise.all([
     'site.css',
+    'palette.css',
     'responsive.css',
     'home-premium.css',
+    'motion.css',
+    'navigation-glass.css',
+    'button-refinement.css',
 ].map(file => readFile(new URL(`../../public/css/${file}`, import.meta.url), 'utf8')));
 
 const markup = `
@@ -34,7 +38,7 @@ const luminance = color => {
     return 0.2126 * red + 0.7152 * green + 0.0722 * blue;
 };
 
-test('homepage Book now has a polished, accessible amber treatment and arrow detail', async () => {
+test('homepage Book now uses a restrained solid ochre button and unboxed arrow', async () => {
     const browser = await chromium.launch();
     try {
         for (const viewport of [{ width: 390, height: 844 }, { width: 1440, height: 900 }]) {
@@ -61,18 +65,20 @@ test('homepage Book now has a polished, accessible amber treatment and arrow det
 
             assert.equal(base.label, 'Book now');
             assert.equal(base.href, '/rooms');
-            assert.match(base.background, /linear-gradient/);
+            assert.equal(base.background, 'none');
+            assert.equal(base.backgroundColor, 'rgb(201, 121, 0)');
             const contrast = (Math.max(luminance(base.backgroundColor), luminance(base.color)) + 0.05) / (Math.min(luminance(base.backgroundColor), luminance(base.color)) + 0.05);
             assert.ok(contrast >= 4.5, `button text contrast should be at least 4.5:1, got ${contrast.toFixed(2)}:1`);
             assert.ok(base.radius <= 14, `button should stay confidently rectangular, got ${base.radius}px corners`);
             assert.ok(base.height >= 54, `button should remain easy to tap at ${viewport.width}px`);
-            assert.ok(base.arrowVisible, 'arrow should have its own subtle visual container');
+            assert.equal(base.arrowVisible, false, 'arrow should not have a separate visual container');
             assert.ok(base.arrowSvg, 'direction cue should be a crisp SVG arrow');
             if (viewport.width <= 460) assert.ok(base.width >= viewport.width * 0.72, 'phone button should retain a generous tap width');
 
             await button.hover();
+            await page.waitForTimeout(200);
             const hoverTransform = await button.evaluate(element => getComputedStyle(element).transform);
-            assert.notEqual(hoverTransform, 'none', 'hover should provide a restrained lift');
+            assert.match(hoverTransform, /matrix\(1, 0, 0, 1, 0, -1\)/, 'hover should provide only a restrained 1px lift');
             await page.close();
         }
     } finally {

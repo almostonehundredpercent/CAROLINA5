@@ -1,0 +1,110 @@
+/* Apple-inspired restraint for Carolina's two primary booking actions. */
+.home-hero .home-hero-primary {
+    border: 1px solid rgba(255, 218, 160, 0.85);
+    border-radius: 11px;
+    background-color: #C97900;
+    background-image: none;
+    color: #050505;
+    box-shadow: 0 5px 16px rgba(5, 5, 5, 0.22);
+    transition: transform 160ms ease, box-shadow 160ms ease, background-color 160ms ease;
+}
+
+.home-hero .home-hero-primary:hover {
+    border-color: rgba(255, 228, 190, 0.96);
+    background-color: #D48613;
+    filter: none;
+    transform: translateY(-1px);
+    box-shadow: 0 7px 19px rgba(5, 5, 5, 0.26);
+}
+
+.home-hero .home-hero-primary:active {
+    background-color: #B96F00;
+    transform: translateY(0);
+    box-shadow: 0 2px 7px rgba(5, 5, 5, 0.2);
+}
+
+.home-hero .home-hero-primary:focus-visible {
+    outline-color: #E7ECEF;
+}
+
+.home-hero-arrow {
+    width: auto;
+    height: auto;
+    flex-basis: auto;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+}
+
+.home-hero-arrow svg,
+.nav .nav-button.nav-book-now svg {
+    display: block;
+    width: 18px;
+    height: 18px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    transition: transform 160ms ease;
+}
+
+.home-hero .home-hero-primary:hover .home-hero-arrow {
+    background: transparent;
+    transform: none;
+}
+
+.nav .nav-button.nav-book-now,
+.dark-mode .nav .nav-button.nav-book-now {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+    border: 1px solid rgba(231, 236, 239, 0.5);
+    border-radius: 9px;
+    background-color: rgba(5, 5, 5, 0.2);
+    background-image: none;
+    box-shadow: none;
+    color: #E7ECEF;
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+    transition: transform 160ms ease, background-color 160ms ease, border-color 160ms ease;
+}
+
+.nav .nav-button.nav-book-now:hover,
+.dark-mode .nav .nav-button.nav-book-now:hover {
+    border-color: rgba(231, 236, 239, 0.78);
+    background-color: rgba(5, 5, 5, 0.32);
+    background-image: none;
+    box-shadow: none;
+    filter: none;
+    transform: translateY(-1px);
+}
+
+.nav .nav-button.nav-book-now:hover svg {
+    transform: translateX(2px);
+}
+
+.nav .nav-button.nav-book-now:active,
+.dark-mode .nav .nav-button.nav-book-now:active {
+    background-color: rgba(5, 5, 5, 0.4);
+    transform: translateY(0);
+}
+
+.nav .nav-button.nav-book-now:focus-visible {
+    outline-color: #E7ECEF;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .home-hero .home-hero-primary,
+    .home-hero-arrow svg,
+    .nav .nav-button.nav-book-now {
+        transition: none;
+    }
+
+    .home-hero .home-hero-primary:hover,
+    .nav .nav-button.nav-book-now:hover,
+    .nav .nav-button.nav-book-now:hover svg {
+        transform: none;
+    }
+}
