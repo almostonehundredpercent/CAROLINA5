@@ -131,7 +131,7 @@
                 <label>Special request<textarea name="special_request" rows="3" placeholder="e.g., Extra pillow, if available.">{{ old('special_request') }}</textarea></label>
                 <x-contact-card class="booking-contact-help" />
                 <div id="booking-availability-status" role="status" aria-live="polite" style="padding:14px;border:1px solid var(--line);border-radius:10px;background:var(--paper);color:var(--ink)">Choose your stay dates to check availability. Unpaid requests hold their slot for {{ \App\Models\Booking::holdMinutes() }} minutes; paid or confirmed reservations remain reserved.</div>
-                <button class="button" id="booking-submit">Continue to receipt</button>
+                <button class="button" id="booking-submit">Proceed to payment</button>
             </form>
         @endif
     </div>
