@@ -56,7 +56,7 @@ final class AdminPermissions
             'organization_admin', 'front_desk' => 'admin.frontdesk',
             'viewer' => 'admin.dashboard',
             'housekeeping' => 'admin.rooms',
-            default => 'home',
+            default => 'bookings.index',
         };
     }
 

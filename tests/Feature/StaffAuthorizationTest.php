@@ -13,7 +13,7 @@ function staffAccount(string $role): User
     ]);
 }
 
-test('staff must set up mfa after password login while guests reach home', function (string $role, string $destination) {
+test('staff must set up mfa after password login while customers reach My bookings', function (string $role, string $destination) {
     $user = staffAccount($role);
     $this->post(route('login.submit'), ['email' => $user->email, 'password' => 'secure-password'])
         ->assertRedirect($destination);
@@ -22,7 +22,7 @@ test('staff must set up mfa after password login while guests reach home', funct
     'front desk' => ['front_desk', '/staff/mfa/setup'],
     'housekeeping' => ['housekeeping', '/staff/mfa/setup'],
     'viewer' => ['viewer', '/staff/mfa/setup'],
-    'guest' => ['guest', '/'],
+    'guest' => ['guest', '/bookings'],
 ]);
 
 test('role boundaries are enforced on direct administrative URLs', function () {
