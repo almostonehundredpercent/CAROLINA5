@@ -152,6 +152,62 @@ test('date selectors are easy to tap and guest contact fields sit on a visible s
     }
 });
 
+test('reservation review stays compact, readable, and keeps every booking value in both themes', async () => {
+    const fields = [
+        ['Room', 'Room 5'], ['Room type', 'Whole house'], ['Stay type', 'Overnight stay'],
+        ['Check-in', 'Nov 12, 2026'], ['Check-out', 'Nov 13, 2026'], ['Length of stay', '1 night'],
+        ['Guests', '1 guest'], ['Pets', 'None'], ['Booked for', 'Niccolo Paganini'],
+        ['Email', 'zyroncanchela420@gmail.com'], ['Phone', '+639169907895'], ['Special request', 'None'],
+    ];
+    const markup = fields.map(([label, value]) => `<div class="booking-review-item"><dt>${label}</dt><dd>${value}</dd></div>`).join('');
+
+    for (const mode of ['light', 'dark']) {
+        for (const width of [1440, 390, 320]) {
+            const page = await browser.newPage({ viewport: { width, height: 900 } });
+            try {
+                await page.setContent(`<html class="${mode === 'dark' ? 'dark-mode' : ''}"><head><style>${baseStyles}\n${paletteStyles}\n${bookingStyles}</style></head><body>
+                    <main class="booking-form"><section class="booking-review-panel"><div class="booking-review-heading"><span class="booking-review-kicker">CHECK BEFORE YOU CONTINUE</span><h2>Review your reservation</h2><p>This is a summary only. Use Previous if you want to change any details.</p></div><dl class="booking-review-grid">${markup}</dl><p class="booking-review-note">This is not a confirmed booking. Your request will be submitted when you choose Proceed to payment. The final amount and payment choices will appear on the next page.</p></section><div class="booking-step-actions"><button class="button button-outline" id="booking-previous" type="button">Previous</button><button class="button" id="booking-submit" type="button">Proceed to payment</button></div></main>
+                </body></html>`);
+
+                const result = await page.evaluate(() => {
+                    const panel = document.querySelector('.booking-review-panel');
+                    const heading = document.querySelector('.booking-review-heading');
+                    const item = document.querySelector('.booking-review-item');
+                    const previous = document.querySelector('#booking-previous');
+                    const submit = document.querySelector('#booking-submit');
+                    return {
+                        width: document.documentElement.clientWidth,
+                        scrollWidth: document.documentElement.scrollWidth,
+                        panelPadding: Number.parseFloat(getComputedStyle(panel).paddingTop),
+                        headingGap: Number.parseFloat(getComputedStyle(heading).marginBottom),
+                        itemPadding: Number.parseFloat(getComputedStyle(item).paddingTop),
+                        values: [...document.querySelectorAll('.booking-review-item dd')].map(value => value.textContent),
+                        previousBg: getComputedStyle(previous).backgroundColor,
+                        previousText: getComputedStyle(previous).color,
+                        previousBorder: getComputedStyle(previous).borderTopWidth,
+                        submitBg: getComputedStyle(submit).backgroundColor,
+                        previousHeight: previous.getBoundingClientRect().height,
+                    };
+                });
+
+                assert.equal(result.values.length, fields.length, `all reservation details should remain visible at ${width}px in ${mode} mode`);
+                assert.deepEqual(result.values, fields.map(([, value]) => value));
+                assert.ok(result.scrollWidth <= result.width, `review should fit the viewport at ${width}px in ${mode} mode`);
+                assert.ok(result.panelPadding <= 20, `review panel should use compact padding at ${width}px in ${mode} mode`);
+                assert.ok(result.headingGap <= 14, `review heading spacing should be compact at ${width}px in ${mode} mode`);
+                assert.ok(result.itemPadding <= 9, `review detail rows should be compact at ${width}px in ${mode} mode`);
+                assert.notEqual(result.previousBg, 'rgba(0, 0, 0, 0)', `Previous needs a visible muted surface at ${width}px in ${mode} mode`);
+                assert.notEqual(result.previousBg, result.submitBg, `Previous should not compete with the primary action at ${width}px in ${mode} mode`);
+                assert.ok(Number.parseFloat(result.previousBorder) >= 1, 'Previous should retain a visible boundary');
+                assert.ok(result.previousHeight >= 44, 'Previous should remain a comfortable touch target');
+                assert.notEqual(result.previousText, 'rgba(0, 0, 0, 0)', 'Previous text should remain visible');
+            } finally {
+                await page.close();
+            }
+        }
+    }
+});
+
 test('hourly booking cards keep consistent spacing inside the entry fields wrapper', async () => {
     for (const width of [1440, 390, 320]) {
         const page = await browser.newPage({ viewport: { width, height: 900 } });
