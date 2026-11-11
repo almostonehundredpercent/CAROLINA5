@@ -2,6 +2,14 @@
 
 @section('content')
 <style>
+.booking-review-panel{margin-top:18px;padding:clamp(18px,3vw,26px);border:1px solid #d5a553;border-radius:16px;background:linear-gradient(145deg,#fffaf1,#fffdf9);box-shadow:0 12px 28px rgba(85,57,22,.08)}
+.booking-review-panel[hidden],#booking-entry-fields[hidden],#booking-previous[hidden]{display:none!important}
+.booking-review-heading{margin-bottom:18px}.booking-review-kicker{display:block;margin:0 0 6px;color:#a05d00;font-size:.68rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase}.booking-review-heading h2{margin:0 0 7px;color:var(--ink);font:700 1.45rem/1.2 'DM Sans',sans-serif}.booking-review-heading p{margin:0;color:var(--muted);font-size:.9rem;line-height:1.5}
+.booking-review-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 20px;margin:0}.booking-review-item{min-width:0;padding:12px 0;border-bottom:1px solid var(--line)}.booking-review-item--wide{grid-column:1/-1}.booking-review-item dt{margin-bottom:4px;color:var(--muted);font-size:.76rem}.booking-review-item dd{margin:0;color:var(--ink);font-size:.94rem;font-weight:700;line-height:1.45;overflow-wrap:anywhere}
+.booking-review-note{margin:16px 0 0;padding:12px 14px;border:1px solid #ead7b5;border-radius:10px;background:#fff4df;color:#644716;font-size:.84rem;line-height:1.5}.booking-step-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:16px}.booking-step-actions .button{min-height:46px}.dark-mode .booking-review-panel{border-color:#805e2f;background:linear-gradient(145deg,#30251a,#241c16);box-shadow:0 16px 32px rgba(0,0,0,.2)}.dark-mode .booking-review-kicker{color:#ffc16b}.dark-mode .booking-review-note{border-color:#805d2d;background:#382b1c;color:#f6dcae}
+@media(max-width:520px){.booking-review-grid{grid-template-columns:1fr}.booking-review-item--wide{grid-column:auto}.booking-step-actions{flex-direction:column-reverse}.booking-step-actions .button{width:100%;justify-content:center}}
+</style>
+<style>
 .stay-date-fields{display:grid;grid-template-columns:1fr 1fr;gap:15px}.stay-date-fields input[readonly]{cursor:pointer;background:#fff}.availability-calendar{border:1px solid var(--line);background:#fff;border-radius:9px;padding:16px}.calendar-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:14px}.calendar-heading strong{display:block;font-size:.92rem}.calendar-heading small{display:block;color:var(--muted);font-size:.73rem;margin-top:3px}.calendar-controls{display:flex;align-items:center;gap:8px}.calendar-controls b{min-width:119px;text-align:center;font-size:.78rem}.calendar-controls button{width:29px;height:29px;border:1px solid var(--line);background:#fff;border-radius:5px;color:var(--deep);font-size:1.35rem;line-height:1;cursor:pointer}.calendar-controls button:hover{background:var(--sand)}.calendar-weekdays,.calendar-days{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}.calendar-weekdays{margin-bottom:6px}.calendar-weekdays span{text-align:center;font-size:.65rem;color:var(--muted);font-weight:700}.calendar-day,.calendar-blank{aspect-ratio:1;min-width:0;border:0;border-radius:5px;background:transparent;color:var(--ink);font:600 .75rem 'DM Sans';display:grid;place-items:center}.calendar-day{cursor:pointer}.calendar-day:hover:not([disabled]){background:#fff0d8;color:var(--deep)}.calendar-day.booked{background:#fbe1df;color:#a84239;cursor:not-allowed;text-decoration:line-through}.calendar-day.past{color:#c8c0b8;cursor:not-allowed}.calendar-day.selected{background:var(--gold);color:#fff}.calendar-note{margin:13px 0 0;font-size:.77rem;color:var(--deep);line-height:1.45}.booking-form form .availability-calendar{margin-top:-4px}@media(max-width:520px){.stay-date-fields{grid-template-columns:1fr}.availability-calendar{padding:13px}.calendar-heading{display:block}.calendar-controls{margin-top:11px;justify-content:space-between}.calendar-controls b{min-width:auto}.calendar-weekdays,.calendar-days{gap:4px}.calendar-day,.calendar-blank{font-size:.7rem}}
 </style>
 <style>
@@ -58,6 +66,7 @@
                 <input type="hidden" name="checkout_type" value="{{ $isGuest ? 'guest' : 'account' }}">
                 <input type="hidden" name="booking_type" value="{{ $bookingMode === 'hourly' ? 'hourly' : 'dates' }}">
                 <input type="hidden" name="submission_token" value="{{ $submissionToken }}">
+                <div id="booking-entry-fields">
                 @if(!$room->rental_hours)
                 <section class="booking-type-selector" aria-label="Choose booking type">
                     <span class="booking-type-label">Choose your stay type</span>
@@ -130,8 +139,21 @@
 
                 <label>Special request<textarea name="special_request" rows="3" placeholder="e.g., Extra pillow, if available.">{{ old('special_request') }}</textarea></label>
                 <x-contact-card class="booking-contact-help" />
-                <div id="booking-availability-status" role="status" aria-live="polite" style="padding:14px;border:1px solid var(--line);border-radius:10px;background:var(--paper);color:var(--ink)">Choose your stay dates to check availability. Unpaid requests hold their slot for {{ \App\Models\Booking::holdMinutes() }} minutes; paid or confirmed reservations remain reserved.</div>
-                <button class="button" id="booking-submit">Proceed to payment</button>
+                </div>
+                <section class="booking-review-panel" id="booking-review-panel" hidden aria-labelledby="booking-review-title">
+                    <div class="booking-review-heading">
+                        <span class="booking-review-kicker">CHECK BEFORE YOU CONTINUE</span>
+                        <h2 id="booking-review-title">Review your reservation</h2>
+                        <p>This is a summary only. Use Previous if you want to change any details.</p>
+                    </div>
+                    <dl class="booking-review-grid" id="booking-review-grid"></dl>
+                    <p class="booking-review-note">This is not a confirmed booking. Your request will be submitted when you choose Proceed to payment. The final amount and payment choices will appear on the next page.</p>
+                </section>
+                <div id="booking-availability-status" role="status" aria-live="polite" style="margin-top:16px;padding:14px;border:1px solid var(--line);border-radius:10px;background:var(--paper);color:var(--ink)">Choose your stay dates to check availability. Unpaid requests hold their slot for {{ \App\Models\Booking::holdMinutes() }} minutes; paid or confirmed reservations remain reserved.</div>
+                <div class="booking-step-actions">
+                    <button class="button button-outline" id="booking-previous" type="button" hidden>Previous</button>
+                    <button class="button" id="booking-submit" type="submit">Continue</button>
+                </div>
             </form>
         @endif
     </div>
@@ -146,7 +168,7 @@
             <strong>₱{{ number_format($room->price_per_night) }} <small>{{ $room->rate_label }}</small></strong>
         @endif
         <hr>
-        <small>{{ $bookingMode === 'hourly' ? 'Choose your stay length and see the adjusted total before continuing.' : 'Final total is calculated from your dates.' }} After you submit, choose a 30% downpayment or pay the full amount through PayMongo test checkout. The downpayment is based on the original price and capped at the final total if a promo reduces it; any remaining balance is due at the property. No real money is collected in test mode.</small>
+        <small>{{ $bookingMode === 'hourly' ? 'Choose your stay length and see the estimated total before continuing.' : 'The total is estimated from your selected dates.' }} Continue to review your details, then proceed to payment to submit the request. Final pricing and payment options appear on the next page.</small>
     </aside>
 </section>
 @if(auth()->check() || $isGuest)
@@ -445,18 +467,21 @@ document.addEventListener('DOMContentLoaded', () => {
     const submit = document.getElementById('booking-submit');
     if (!submit) return;
     const form = submit.form, status = document.getElementById('booking-availability-status');
-    let sequence = 0, allowed = false, timer;
+    const entryFields = document.getElementById('booking-entry-fields');
+    const reviewPanel = document.getElementById('booking-review-panel');
+    const reviewGrid = document.getElementById('booking-review-grid');
+    const previous = document.getElementById('booking-previous');
+    let sequence = 0, allowed = false, reviewing = false, timer;
     const check = async () => {
         const run = ++sequence;
         const data = new FormData(form);
-        status.textContent = 'Choose your stay dates to check availability. Unpaid requests hold their slot for {{ \App\Models\Booking::holdMinutes() }} minutes; paid or confirmed reservations remain reserved.';
         let start, end;
         if (data.get('booking_type') === 'hourly') {
-            if (!data.get('hourly_date') || !data.get('check_in_time')) return false;
+            if (!data.get('hourly_date') || !data.get('check_in_time')) { status.textContent = 'Choose a check-in date and time before continuing.'; return false; }
             start = `${data.get('hourly_date')}T${data.get('check_in_time')}:00Z`;
             end = new Date(Date.parse(start) + Number(data.get('hours')) * 3600000).toISOString();
         } else {
-            if (!data.get('check_in') || !data.get('check_out')) return false;
+            if (!data.get('check_in') || !data.get('check_out')) { status.textContent = 'Choose both check-in and check-out dates before continuing.'; return false; }
             start = `${data.get('check_in')}T00:00:00Z`; end = `${data.get('check_out')}T00:00:00Z`;
         }
         status.textContent = 'Checking your selected stay…';
@@ -474,15 +499,72 @@ document.addEventListener('DOMContentLoaded', () => {
             return false;
         }
     };
-    form.addEventListener('click', event => { if (event.target.closest('#booking-submit')) return; clearTimeout(timer); timer = setTimeout(check, 100); });
+    const dateLabel = value => value ? new Date(`${value}T00:00:00`).toLocaleDateString('en-PH', {month:'short', day:'numeric', year:'numeric'}) : '';
+    const timeLabel = value => value ? new Date(`2000-01-01T${value}`).toLocaleTimeString('en-PH', {hour:'numeric', minute:'2-digit'}) : '';
+    const addReviewItem = (label, value, wide = false) => {
+        if (!value) return;
+        const item = document.createElement('div'); item.className = `booking-review-item${wide ? ' booking-review-item--wide' : ''}`;
+        const term = document.createElement('dt'); term.textContent = label;
+        const description = document.createElement('dd'); description.textContent = value;
+        item.append(term, description); reviewGrid.append(item);
+    };
+    const buildReview = () => {
+        const data = new FormData(form), hourly = data.get('booking_type') === 'hourly';
+        reviewGrid.replaceChildren();
+        addReviewItem('Room', @json($room->name));
+        addReviewItem('Room type', @json($room->room_type));
+        addReviewItem('Stay type', hourly ? 'Short stay by the hour' : 'Overnight stay');
+        if (hourly) {
+            addReviewItem('Check-in', `${dateLabel(data.get('hourly_date'))} · ${timeLabel(data.get('check_in_time'))}`);
+            const hours = Number(data.get('hours'));
+            addReviewItem('Duration', hours === 720 ? '1 month' : hours < 24 ? `${hours} hours` : `${hours / 24} day${hours === 24 ? '' : 's'}`);
+        } else {
+            const start = data.get('check_in'), end = data.get('check_out');
+            const nights = Math.round((new Date(`${end}T00:00:00`) - new Date(`${start}T00:00:00`)) / 86400000);
+            addReviewItem('Check-in', dateLabel(start)); addReviewItem('Check-out', dateLabel(end));
+            addReviewItem('Length of stay', `${nights} night${nights === 1 ? '' : 's'}`);
+        }
+        const guests = Number(data.get('guests') || 1), children = Number(data.get('children_count') || 0), pets = Number(data.get('pets_count') || 0);
+        addReviewItem('Guests', `${guests} guest${guests === 1 ? '' : 's'}${children ? ` · ${children} child${children === 1 ? '' : 'ren'}` : ''}`);
+        addReviewItem('Pets', pets ? `${pets} pet${pets === 1 ? '' : 's'}` : 'None');
+        const name = data.get('guest_name') || @json(auth()->user()->name ?? '');
+        const email = data.get('guest_email') || @json(auth()->user()->email ?? '');
+        const phone = data.get('guest_phone');
+        if (name) addReviewItem('Booked for', name);
+        if (email) addReviewItem('Email', email);
+        if (phone) addReviewItem('Phone', phone);
+        const promo = String(data.get('promo_code') || '').trim();
+        if (promo) addReviewItem('Promo code', promo);
+        addReviewItem('Special request', String(data.get('special_request') || '').trim() || 'None', true);
+        const estimate = document.getElementById(hourly ? 'hourly-total' : 'date-deposit-preview')?.textContent?.trim();
+        if (estimate) addReviewItem('Current estimate', estimate, true);
+    };
+    const showEntryFields = () => {
+        reviewing = false; entryFields.hidden = false; reviewPanel.hidden = true; previous.hidden = true;
+        submit.textContent = 'Continue';
+        entryFields.scrollIntoView({behavior:'smooth', block:'start'});
+        entryFields.querySelector('input:not([type="hidden"]), button, a')?.focus({preventScroll:true});
+    };
+    form.addEventListener('click', event => { if (event.target.closest('#booking-submit, #booking-previous, #booking-review-panel')) return; clearTimeout(timer); timer = setTimeout(check, 100); });
     form.addEventListener('change', check);
     check();
     form.addEventListener('submit', async event => {
         if (allowed) return;
         event.preventDefault(); event.stopImmediatePropagation(); clearTimeout(timer); submit.disabled = true;
-        if (await check()) { allowed = true; submit.disabled = false; form.requestSubmit(submit); }
-        else { submit.disabled = false; status.scrollIntoView({block:'center',behavior:'smooth'}); }
+        if (await check()) {
+            if (!reviewing) {
+                buildReview(); reviewing = true; entryFields.hidden = true; reviewPanel.hidden = false; previous.hidden = false;
+                submit.textContent = 'Proceed to payment';
+                status.textContent = 'Availability checked. We will check again before submitting your reservation.';
+                reviewPanel.scrollIntoView({behavior:'smooth', block:'start'});
+                submit.disabled = false;
+            } else {
+                status.textContent = 'Availability confirmed. Submitting your reservation…';
+                allowed = true; submit.disabled = false; form.requestSubmit(submit);
+            }
+        } else { submit.disabled = false; status.scrollIntoView({block:'center',behavior:'smooth'}); }
     }, true);
+    previous.addEventListener('click', showEntryFields);
 });
 </script>
 @endsection

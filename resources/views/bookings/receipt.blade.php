@@ -23,7 +23,7 @@
     .receipt-page>h1+p{max-width:900px;margin:0 auto 18px;font-size:.95rem;line-height:1.45}
     .receipt-layout{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(320px,.8fr);align-items:start;gap:16px;max-width:1120px;margin:0 auto 18px;text-align:left}
     .receipt-card,.receipt-summary{width:100%;max-width:none;margin:0;text-align:left}
-    .receipt-card{grid-template-columns:repeat(2,minmax(0,1fr));align-content:start;gap:13px 16px;padding:18px;border:2px solid #d99223;border-radius:14px;background:linear-gradient(135deg,#fff8eb,#fffdf9);box-shadow:0 12px 30px rgba(104,64,16,.12)}
+    .receipt-card{grid-template-columns:repeat(2,minmax(0,1fr));align-content:start;gap:13px 16px;padding:18px;border:2px solid #d99223;border-radius:14px;background:linear-gradient(135deg,#fff8eb,#fffdf9);box-shadow:0 12px 30px rgba(104,64,16,.1)}
     .receipt-card .receipt-details-title{grid-column:1/-1;margin:0 0 2px;font:700 1.05rem 'DM Sans',sans-serif;color:var(--ink)}
     .receipt-card .receipt-reference{grid-column:1/-1;padding-bottom:10px;border-bottom:1px solid var(--line)}
     .receipt-card>div:not(.receipt-reference){padding-bottom:8px;border-bottom:1px solid var(--line)}
@@ -65,7 +65,7 @@
     .dark-mode .receipt-summary-grid small,.dark-mode .receipt-note{color:#d4c3b2}
     .dark-mode .receipt-summary-grid .receipt-amount-card b{color:#ffd18a}
     .dark-mode .receipt-status.paid{background:#17432b;color:#b7f7c5}
-    .dark-mode .receipt-card{border-color:#d99223;background:linear-gradient(145deg,#33271c,#251d17);box-shadow:0 16px 32px rgba(0,0,0,.24)}
+    .dark-mode .receipt-card{border-color:#80602e;background:linear-gradient(145deg,#33271c,#251d17);box-shadow:0 16px 32px rgba(0,0,0,.24)}
     .dark-mode .receipt-hold-alert{border-color:#8b622b;background:#3c2d1a;color:#f3d8a7}
     .dark-mode .receipt-hold-alert strong{color:#ffe1a9}
     .dark-mode .payment-option{border-color:#574638;background:#211a15}
@@ -179,7 +179,7 @@
     </section>
 
     <div class="confirmation-card receipt-card">
-        <h2 class="receipt-details-title">Booking summary</h2>
+        <h2 class="receipt-details-title">Booking information</h2>
         <div class="receipt-reference"><small>Booking reference</small><b>{{ $booking->reference }}</b></div>
         <div><small>Stay type</small><b>{{ $booking->booking_type === 'hourly' ? $booking->hours . ' hours' : $booking->nights . ' night' . ($booking->nights === 1 ? '' : 's') }}</b></div>
         <div><small>Room</small><b>{{ $booking->room->name }}</b></div>
