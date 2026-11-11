@@ -130,7 +130,7 @@
 </style>
 <section class="booking-page">
     <header class="booking-page-heading">
-        @include('bookings.partials.context-bar', ['backUrl' => route('rooms.show', ['room' => $room] + $bookingSearch), 'backLabel' => 'room details'])
+        @include('bookings.partials.context-bar', ['backUrl' => route('rooms.index', $bookingSearch), 'backLabel' => 'rooms'])
         <span class="eyebrow">RESERVATION DETAILS</span>
         <h1>Complete your booking.</h1>
         <p>Choose your stay details and guest information.</p>
