@@ -124,6 +124,7 @@ document.addEventListener('DOMContentLoaded', () => {
     sync();
 });
 </script>
+@endif
 <script>
 document.addEventListener('DOMContentLoaded', () => {
     const carousel = document.getElementById('rooms-carousel');
