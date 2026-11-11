@@ -165,7 +165,7 @@
             const glassHeader = document.querySelector('.nav--over-hero');
             const homeHero = document.querySelector('.home-hero');
             if (glassHeader && homeHero) {
-                const updateGlassHeader = () => glassHeader.classList.toggle('is-scrolled', homeHero.getBoundingClientRect().bottom <= glassHeader.offsetHeight);
+                const updateGlassHeader = () => glassHeader.classList.toggle('is-scrolled', window.scrollY > 24 || homeHero.getBoundingClientRect().bottom <= glassHeader.offsetHeight);
                 updateGlassHeader();
                 window.addEventListener('scroll', updateGlassHeader, { passive: true });
             }
