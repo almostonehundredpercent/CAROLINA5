@@ -45,6 +45,30 @@
     color: var(--ink);
 }
 
+.room-future-actions .button {
+    border-color: #9a5a00;
+    background: #9a5a00;
+    color: #f5f5f0;
+}
+
+.room-future-actions .button.button-outline {
+    border-color: #773c12;
+    background: #773c12;
+    color: #f5f5f0;
+}
+
+.room-future-actions .button:hover {
+    border-color: #814b00;
+    background: #814b00;
+    color: #f5f5f0;
+}
+
+.room-future-actions .button.button-outline:hover {
+    border-color: #63300d;
+    background: #63300d;
+    color: #f5f5f0;
+}
+
 @media (prefers-reduced-motion: reduce) {
     .room-detail-back {
         transition: none;
