@@ -37,6 +37,26 @@
 <section class="section compact reviews-section"><div class="section-heading"><div><span class="eyebrow">GUEST REVIEWS</span><h2>Verified stays at {{ $room->name }}</h2></div>@if($room->approved_reviews_count)<span class="review-summary"><b>★ {{ number_format($room->approved_reviews_avg_rating, 1) }}</b> · {{ $room->approved_reviews_count }} {{ Str::plural('review', $room->approved_reviews_count) }}</span>@endif</div><div class="review-list">@forelse($room->approvedReviews as $review)<article class="public-review"><div><b>{{ $review->guest_name }}</b><small>Verified stay · {{ $review->approved_at?->format('M Y') }}</small></div><span class="review-stars">{{ str_repeat('★', $review->rating) }}{{ str_repeat('☆', 5 - $review->rating) }}</span>@if($review->comment)<p>{{ $review->comment }}</p>@endif @if($review->cleanliness_rating || $review->comfort_rating || $review->value_rating)<small class="review-detail">Cleanliness {{ $review->cleanliness_rating ?? '—' }}/5 · Comfort {{ $review->comfort_rating ?? '—' }}/5 · Value {{ $review->value_rating ?? '—' }}/5</small>@endif</article>@empty<p class="empty-review">Reviews from completed stays will appear here.</p>@endforelse</div></section>
 @php
     $roomGalleryImages = match ($room->slug) {
+        'air-conditioned-room-couple' => [
+            asset('images/rooms/room-2-angle-1.jpg'),
+            asset('images/rooms/room-2-angle-2.jpg'),
+            asset('images/rooms/room-2-angle-3.jpg'),
+        ],
+        'fan-room-couple' => [
+            asset('images/rooms/room-3-angle-1.jpg'),
+            asset('images/rooms/room-3-angle-2.jpg'),
+            asset('images/rooms/room-3-angle-3.jpg'),
+        ],
+        'air-conditioned-day-stay' => [
+            asset('images/rooms/room-4-angle-1.jpg'),
+            asset('images/rooms/room-4-angle-2.jpg'),
+            asset('images/rooms/room-4-angle-3.jpg'),
+        ],
+        'whole-house-panal-10-guests' => [
+            asset('images/rooms/room-5-angle-1.jpg'),
+            asset('images/rooms/room-5-angle-2.jpg'),
+            asset('images/rooms/room-5-angle-3.jpg'),
+        ],
         'carolina-room-7' => [
             asset('images/rooms/room-7-angle-1.jpg'),
             asset('images/rooms/room-7-angle-2.jpg'),
