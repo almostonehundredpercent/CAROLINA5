@@ -115,6 +115,14 @@
     outline-color: #E7ECEF;
 }
 
+.nav nav > a.nav-button.nav-book-now[aria-current="page"] {
+    border: 1px solid rgba(255, 230, 190, 0.9);
+    background: linear-gradient(135deg, #e2a33a 0%, #c97900 100%);
+    box-shadow: inset 0 1px rgba(255, 255, 255, 0.3), 0 4px 14px rgba(164, 82, 0, 0.3);
+    color: #21160b;
+    outline: none;
+}
+
 @media (prefers-reduced-motion: reduce) {
     .home-hero .home-hero-primary,
     .home-hero-arrow svg,

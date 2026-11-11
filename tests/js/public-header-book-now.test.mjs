@@ -74,3 +74,29 @@ test('Book now reads as a regular navigation link in guest and signed-in headers
         await page.close();
     }
 });
+
+test('selected Book now is filled and highlighted instead of relying on an outline', async () => {
+    const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
+    try {
+        await page.setContent(`<!doctype html><html><head><style>${publicStyles}</style></head><body>
+            <header class="nav"><a class="brand" href="#">Carolina</a><nav>
+                <a href="#rooms">Rooms</a>
+                <a class="nav-button nav-book-now" href="#book" aria-current="page">Book now</a>
+                <a class="nav-button" href="#sign-in">Sign in</a>
+            </nav></header>
+        </body></html>`);
+
+        const activeStyle = await page.locator('.nav-book-now').evaluate(element => {
+            const style = getComputedStyle(element);
+            return { backgroundImage: style.backgroundImage, backgroundColor: style.backgroundColor };
+        });
+
+        assert.ok(activeStyle.backgroundImage !== 'none' || activeStyle.backgroundColor !== 'rgba(0, 0, 0, 0)', 'the selected navigation item needs a visible filled surface');
+
+        await page.setViewportSize({ width: 390, height: 844 });
+        const mobileStyle = await page.locator('.nav-book-now').evaluate(element => getComputedStyle(element).backgroundImage);
+        assert.notEqual(mobileStyle, 'none', 'the selected Book now item should stay filled in the mobile menu');
+    } finally {
+        await page.close();
+    }
+});
