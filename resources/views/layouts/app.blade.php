@@ -54,7 +54,7 @@
             <a href="{{ route('rooms.index') }}">Rooms</a>
             @guest<a href="{{ route('bookings.lookup') }}">Find booking</a>@endguest
             <a href="{{ route('home') }}#about">About</a>
-            <a href="#contact">Contact</a>
+            <a href="{{ route('contact') }}">Contact</a>
             @auth
                 @if(auth()->user()->is_admin)
                     <a href="{{ route('admin.dashboard') }}">Admin</a>
@@ -64,11 +64,13 @@
                     <svg viewBox="0 0 24 24" aria-hidden="true"></svg>
                     <span>Dark mode</span>
                 </button>
-                <a class="nav-button nav-profile" href="{{ route('bookings.index') }}">Profile</a>
-                <form method="POST" action="{{ route('logout') }}">
-                    @csrf
-                    <button class="nav-button" type="submit">Sign out</button>
-                </form>
+                @unless(request()->routeIs('bookings.index'))<a class="nav-button nav-profile" href="{{ route('bookings.index') }}">Profile</a>@endunless
+                @unless(request()->routeIs('home'))
+                    <form method="POST" action="{{ route('logout') }}">
+                        @csrf
+                        <button class="nav-button" type="submit">Sign out</button>
+                    </form>
+                @endunless
             @else
                 <a class="nav-button nav-book-now" href="{{ route('booking.start') }}">Book now</a>
                 <button class="theme-toggle nav-theme-toggle" type="button" aria-label="Enable dark mode" aria-pressed="false">
@@ -101,6 +103,7 @@
             <nav class="footer-column footer-quick" aria-label="Footer navigation">
                 <h2>Explore</h2>
                 <a href="{{ route('rooms.index') }}">Rooms</a>
+                <a href="{{ route('contact') }}">Contact</a>
                 @auth<a href="{{ route('bookings.index') }}">My bookings</a>@else<a href="{{ route('bookings.lookup') }}">Find booking</a>@endauth
                 <a href="{{ route('home') }}#about">About</a>
             </nav>

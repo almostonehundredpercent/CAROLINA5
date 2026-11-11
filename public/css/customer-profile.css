@@ -1,7 +1,15 @@
-.customer-profile-hero {
+.page-hero.slim.customer-profile-hero {
+    --customer-profile-surface: #fffaf3;
+    --customer-profile-raised: #f5eee5;
+    --customer-profile-border: #e6d8c8;
     padding: clamp(38px, 6vw, 70px) max(24px, calc((100% - 1120px) / 2));
     text-align: left;
+    background: var(--customer-profile-raised);
 }
+
+.customer-profile { --customer-profile-surface: #fffaf3; --customer-profile-raised: #f5eee5; --customer-profile-border: #e6d8c8; }
+.dark-mode .page-hero.slim.customer-profile-hero,
+.dark-mode .customer-profile { --customer-profile-surface: #211a15; --customer-profile-raised: #30251f; --customer-profile-border: #514032; }
 
 .customer-profile-head h1 {
     margin: 7px 0 8px;
@@ -21,7 +29,7 @@
 
 .customer-profile-actions {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 15px;
     margin-bottom: 22px;
 }
@@ -34,9 +42,9 @@
     row-gap: 2px;
     min-height: 78px;
     padding: 15px 17px;
-    border: 1px solid var(--line);
-    border-radius: 13px;
-    background: var(--surface);
+    border: 1px solid var(--customer-profile-border);
+    border-radius: 15px;
+    background: var(--customer-profile-surface);
     color: var(--ink);
     text-decoration: none;
     transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease;
@@ -45,7 +53,7 @@
 .customer-profile-action:hover {
     transform: translateY(-2px);
     border-color: var(--gold);
-    box-shadow: 0 9px 22px rgba(74, 53, 21, .08);
+    box-shadow: 0 12px 26px rgba(74, 53, 21, .12);
 }
 
 .customer-profile-action > span {
@@ -55,7 +63,7 @@
     width: 36px;
     height: 36px;
     border-radius: 10px;
-    background: var(--sand);
+    background: var(--customer-profile-raised);
     color: var(--gold);
     font-size: 1.15rem;
     font-weight: 800;
@@ -72,9 +80,9 @@
     max-width: 100%;
     margin: 4px 0 18px;
     padding: 5px;
-    border: 1px solid var(--line);
+    border: 1px solid var(--customer-profile-border);
     border-radius: 999px;
-    background: var(--sand);
+    background: var(--customer-profile-raised);
 }
 
 .customer-profile-tabs a {
@@ -89,7 +97,7 @@
 .customer-profile-tabs a:first-child,
 .customer-profile-tabs a:hover,
 .customer-profile-tabs a:focus-visible {
-    background: var(--surface);
+    background: var(--customer-profile-surface);
     color: var(--ink);
     box-shadow: 0 2px 8px rgba(41, 29, 18, .08);
 }
@@ -97,10 +105,10 @@
 .customer-profile-information {
     margin-bottom: 36px;
     padding: clamp(20px, 3vw, 30px);
-    border: 1px solid var(--line);
+    border: 1px solid var(--customer-profile-border);
     border-radius: 16px;
-    background: var(--surface);
-    box-shadow: 0 10px 28px rgba(41, 29, 18, .045);
+    background: var(--customer-profile-surface);
+    box-shadow: 0 12px 28px rgba(45,37,31,.07);
     scroll-margin-top: 24px;
 }
 
@@ -134,7 +142,7 @@
     padding: 7px 10px;
     border: 1px solid var(--line);
     border-radius: 999px;
-    background: var(--sand);
+    background: var(--customer-profile-raised);
     color: var(--muted);
     font-size: .73rem;
     font-weight: 700;
@@ -143,7 +151,7 @@
 .customer-profile-form { margin-top: 18px; }
 .customer-profile-form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
 .customer-profile-form-grid label { display: grid; align-content: start; gap: 7px; color: var(--muted); font-size: .78rem; font-weight: 700; }
-.customer-profile-form-grid input { width: 100%; min-width: 0; min-height: 45px; border: 1px solid var(--line); border-radius: 9px; padding: 11px 12px; background: var(--paper); color: var(--ink); font: 600 .93rem 'DM Sans', sans-serif; }
+.customer-profile-form-grid input { width: 100%; min-width: 0; min-height: 48px; border: 1px solid var(--customer-profile-border); border-radius: 10px; padding: 11px 13px; background: var(--customer-profile-raised); color: var(--ink); font: 600 .93rem 'DM Sans', sans-serif; }
 .customer-profile-form-grid input:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
 .customer-profile-field-error { color: #a33932; font-size: .76rem; }
 .customer-profile-form-footer { display: flex; align-items: center; flex-wrap: wrap; gap: 12px 16px; margin-top: 18px; padding-top: 15px; border-top: 1px solid var(--line); }
@@ -152,7 +160,7 @@
 .customer-profile-form-footer .button { min-height: 43px; padding: 10px 16px; }
 .customer-profile-alert { margin: 0 0 18px; padding: 12px 15px; border: 1px solid #b9dfc4; border-radius: 10px; background: #e9f7ed; color: #21653a; font-size: .9rem; font-weight: 650; }
 .dark-mode .customer-profile-alert { border-color: #315c3a; background: #1d3323; color: #b9edc3; }
-.dark-mode .customer-profile-form-grid input { background: #211a15; }
+.dark-mode .customer-profile-form-grid input { background: #18120e; }
 
 .customer-profile-section-heading {
     align-items: flex-end;
@@ -167,19 +175,14 @@
 
 .customer-profile-stays { scroll-margin-top: 24px; }
 .customer-profile-stays .booking-list { gap: 14px; }
+.customer-profile-stays .booking-row { border-color: var(--customer-profile-border); border-radius: 15px; background: var(--customer-profile-surface); box-shadow: 0 8px 22px rgba(45,37,31,.04); }
+.dark-mode .customer-profile-stays .booking-row { box-shadow: 0 10px 25px rgba(0,0,0,.16); }
 .customer-profile :focus-visible { outline: 3px solid var(--gold); outline-offset: 3px; }
 
-.dark-mode .customer-profile-action,
-.dark-mode .customer-profile-information { background: var(--surface); }
 .dark-mode .customer-profile-action:hover { box-shadow: 0 12px 26px rgba(0, 0, 0, .22); }
-.dark-mode .customer-profile-tabs a:first-child,
-.dark-mode .customer-profile-tabs a:hover,
-.dark-mode .customer-profile-tabs a:focus-visible { background: var(--surface); }
-.dark-mode .profile-member-badge,
-.dark-mode .profile-stay-count { background: var(--sand); }
 
 @media (max-width: 700px) {
-    .customer-profile-hero { padding: 36px 22px; }
+    .page-hero.slim.customer-profile-hero { padding: 36px 22px; }
     .customer-profile { padding: 22px 18px 48px; }
     .customer-profile-actions { grid-template-columns: 1fr; gap: 10px; }
     .customer-profile-action { min-height: 68px; }

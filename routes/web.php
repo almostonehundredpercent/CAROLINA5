@@ -3,6 +3,7 @@
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BookingController;
+use App\Http\Controllers\ContactController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\DecisionSupportController;
 use App\Http\Controllers\PayMongoWebhookController;
@@ -41,7 +42,7 @@ Route::get('/', function () {
     ])->header('Cache-Control', 'private, no-store');
 })->name('home');
 Route::get('/sitemap.xml', function () {
-    $urls = collect([route('home'), route('rooms.index'), route('bookings.lookup'), route('privacy'), route('terms')])->merge(Room::where('is_active', true)->pluck('slug')->map(fn ($slug) => route('rooms.show', $slug)));
+    $urls = collect([route('home'), route('rooms.index'), route('contact'), route('bookings.lookup'), route('privacy'), route('terms')])->merge(Room::where('is_active', true)->pluck('slug')->map(fn ($slug) => route('rooms.show', $slug)));
 
     return response()->view('sitemap', compact('urls'))->header('Content-Type', 'application/xml');
 })->name('sitemap');
@@ -54,6 +55,7 @@ Route::view('/privacy', 'legal.privacy')->name('privacy');
 Route::view('/terms', 'legal.terms')->name('terms');
 Route::get('/book', [RoomController::class, 'bookingStart'])->name('booking.start');
 Route::get('/rooms', [RoomController::class, 'index'])->name('rooms.index');
+Route::get('/contact', [ContactController::class, 'show'])->name('contact');
 Route::get('/rooms/{room:slug}', [RoomController::class, 'show'])->name('rooms.show');
 Route::get('/rooms/{room:slug}/availability', [BookingController::class, 'availability'])->middleware('throttle:30,1')->name('rooms.availability');
 Route::post('/rooms/{room:slug}/promo-quote', [BookingController::class, 'promoQuote'])->middleware('throttle:20,1')->name('rooms.promos.quote');

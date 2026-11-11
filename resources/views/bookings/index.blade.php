@@ -8,15 +8,14 @@
     <div class="customer-profile-head">
         <span class="eyebrow">YOUR ACCOUNT</span>
         <h1>Welcome back, {{ auth()->user()->name }}!</h1>
-        <p>Manage your profile and view your Carolina stays.</p>
+        <p>Update your account details and keep your Carolina bookings in one place.</p>
     </div>
 </section>
 <section class="section compact customer-profile">
     @if(session('profile_success'))<p class="customer-profile-alert" role="status">{{ session('profile_success') }}</p>@endif
     <div class="customer-profile-actions" aria-label="Quick actions">
         <a class="customer-profile-action" href="{{ route('booking.start') }}"><span aria-hidden="true">＋</span><strong>New booking</strong><small>Find your next stay</small></a>
-        <a class="customer-profile-action" href="#your-bookings"><span aria-hidden="true">▣</span><strong>Your stays</strong><small>View reservations and receipts</small></a>
-        <a class="customer-profile-action" href="#contact"><span aria-hidden="true">✉</span><strong>Contact Carolina</strong><small>Get help with your stay</small></a>
+        <a class="customer-profile-action" href="{{ route('contact') }}"><span aria-hidden="true">✉</span><strong>Contact Carolina</strong><small>Get help with your stay</small></a>
     </div>
 
     <nav class="customer-profile-tabs" aria-label="Profile sections">
@@ -41,7 +40,7 @@
     </article>
 
     <section class="customer-profile-stays" id="your-bookings" aria-labelledby="your-bookings-title">
-        <div class="customer-profile-section-heading"><div><span class="profile-kicker">YOUR STAYS</span><h2 id="your-bookings-title">My bookings</h2><p>See your reservations, payment details, and stay updates in one place.</p></div><span class="profile-stay-count">{{ $bookings->total() }} {{ \Illuminate\Support\Str::plural('booking', $bookings->total()) }}</span></div>
+        <div class="customer-profile-section-heading"><div><span class="profile-kicker">BOOKING HISTORY</span><h2 id="your-bookings-title">My bookings</h2><p>See your reservations, payment details, and stay updates in one place.</p></div><span class="profile-stay-count">{{ $bookings->total() }} {{ \Illuminate\Support\Str::plural('booking', $bookings->total()) }}</span></div>
         <div class="booking-list">
 @forelse($bookings as $booking)
     <article class="booking-row">
