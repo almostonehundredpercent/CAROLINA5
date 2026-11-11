@@ -208,6 +208,34 @@ test('reservation review stays compact, readable, and keeps every booking value 
     }
 });
 
+test('booking primary actions use warm off-white labels in light and dark themes', async () => {
+    for (const mode of ['light', 'dark']) {
+        const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
+        try {
+            await page.setContent(`<html class="${mode === 'dark' ? 'dark-mode' : ''}"><head><style>${baseStyles}\n${paletteStyles}\n${bookingStyles}</style></head><body>
+                <main class="booking-form"><form><button class="button" id="booking-submit" type="button">Continue to review</button><div class="booking-step-actions"><button class="button button-outline" id="booking-previous" type="button">Previous</button></div></form></main>
+            </body></html>`);
+
+            const result = await page.evaluate(() => {
+                const submit = document.querySelector('#booking-submit');
+                const continueColor = getComputedStyle(submit).color;
+                submit.textContent = 'Proceed to payment';
+                return {
+                    continueColor,
+                    paymentColor: getComputedStyle(submit).color,
+                    previousColor: getComputedStyle(document.querySelector('#booking-previous')).color,
+                };
+            });
+
+            assert.equal(result.continueColor, 'rgb(255, 247, 238)', `Continue to review should use warm off-white text in ${mode} mode`);
+            assert.equal(result.paymentColor, 'rgb(255, 247, 238)', `Proceed to payment should use warm off-white text in ${mode} mode`);
+            assert.notEqual(result.previousColor, result.continueColor, 'The muted Previous button should retain its separate text treatment');
+        } finally {
+            await page.close();
+        }
+    }
+});
+
 test('hourly booking cards keep consistent spacing inside the entry fields wrapper', async () => {
     for (const width of [1440, 390, 320]) {
         const page = await browser.newPage({ viewport: { width, height: 900 } });
