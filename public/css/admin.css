@@ -6131,3 +6131,36 @@ html.dark-mode .admin-theme-toggle {
         color: #4a3b31 !important;
     }
 }
+
+/* Keep the admin theme class and palette variables in sync across the workspace. */
+html:not(.dark-mode) {
+    --admin-canvas: #f7f4ef !important;
+    --admin-card: #fffdf9 !important;
+    --admin-rail: #fffdf9 !important;
+    --white: #fffdf9 !important;
+    --deep: #8d4b0b !important;
+}
+html:not(.dark-mode) .admin-main {
+    background: #f7f4ef !important;
+    color: #2b211b !important;
+}
+html.dark-mode {
+    --admin-canvas: #110e0c !important;
+    --admin-card: #241914 !important;
+    --admin-rail: #251a14 !important;
+    --white: #241914 !important;
+    --deep: #773c12 !important;
+    --orange: #e38a00 !important;
+    --orange-dark: #ffb44d !important;
+    --ink: #fff8f1 !important;
+    --muted: #cbbcaf !important;
+    --paper: #110e0c !important;
+    --line: rgba(255, 220, 182, 0.16) !important;
+}
+html.dark-mode .admin-shell {
+    background: transparent !important;
+}
+html.dark-mode .admin-main {
+    background: transparent !important;
+    color: #fff8f1 !important;
+}
