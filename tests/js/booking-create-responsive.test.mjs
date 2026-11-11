@@ -69,6 +69,31 @@ test('booking form and room summary align on desktop and stack without horizonta
     }
 });
 
+test('hourly booking cards keep consistent spacing inside the entry fields wrapper', async () => {
+    for (const width of [1440, 390, 320]) {
+        const page = await browser.newPage({ viewport: { width, height: 900 } });
+        try {
+            await page.setContent(`<html><head><style>${baseStyles}\n${paletteStyles}\n${bookingStyles}</style></head><body>
+                <main class="booking-form"><form><div id="booking-entry-fields">
+                    <section class="booking-type-selector"><span class="booking-type-label">Choose your stay type</span><div class="booking-type-options"><a>Book by dates</a><a class="active">Rent by hours</a></div></section>
+                    <div class="hourly-booked-summary"><strong>Booked times</strong><ul><li>12 AM – 7 PM</li></ul></div>
+                    <div class="hourly-rental"><p>Short stay rental</p><label>Duration</label><label>Check-in date</label><label>Check-in time</label><p id="hourly-total">Estimated total</p></div>
+                    <section class="stay-party-details"><strong>Guest details</strong><div class="party-detail-fields"><label>Total guests</label><label>Children</label><label>Pets</label></div></section>
+                </div></form></main></body></html>`);
+
+            const gaps = await page.evaluate(() => {
+                const selectors = ['.booking-type-selector', '.hourly-booked-summary', '.hourly-rental', '.stay-party-details'];
+                const elements = selectors.map(selector => document.querySelector(selector).getBoundingClientRect());
+                return elements.slice(1).map((element, index) => Math.round(element.top - elements[index].bottom));
+            });
+
+            assert.ok(gaps.every(gap => gap >= 12), `hourly booking cards should have at least 12px between them at ${width}px; got ${gaps.join(', ')}px`);
+        } finally {
+            await page.close();
+        }
+    }
+});
+
 test('room estimate follows the selected date range', async () => {
     const page = await render({ width: 390, height: 900 });
     try {
