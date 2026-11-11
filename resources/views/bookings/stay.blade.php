@@ -5,6 +5,14 @@
 @endpush
 @section('content')
 <section class="stay-page">
+    @php
+        $stayPaid = max(0, round((float) $financial['net_collected'], 2));
+        if ($stayPaid < 0.01 && $booking->payment_status === 'paid') $stayPaid = (float) $booking->total_amount;
+        $stayPaidInFull = $booking->payment_status === 'paid' || $stayPaid + 0.01 >= (float) $booking->total_amount;
+        $stayBalance = $stayPaidInFull ? 0 : round((float) $financial['outstanding'], 2);
+        $stayPaymentMode = $booking->payment_status === 'refunded' ? 'Refund recorded' : ($stayPaidInFull ? 'Paid in full' : ($stayPaid > 0 ? 'Downpayment / partial payment' : ((float) $booking->deposit_amount > 0 ? 'Downpayment selected' : 'Full payment selected')));
+        $stayPaymentMethod = match ($booking->payment_method) { 'gcash' => 'GCash', 'cash' => 'Cash', null => 'Not paid yet', default => strtoupper((string) $booking->payment_method) };
+    @endphp
     @include('bookings.partials.context-bar', ['backUrl' => auth()->check() && auth()->id() === $booking->user_id ? route('bookings.index') : route('bookings.lookup'), 'backLabel' => auth()->check() && auth()->id() === $booking->user_id ? 'My bookings' : 'Find booking', 'roomName' => $booking->room?->name ?? 'Room unavailable', 'bookingReference' => $booking->reference])
     <span class="eyebrow">YOUR ARRIVAL</span><h1>A little less to worry about.</h1>
     <p>Stay prepared with live room readiness and arrival updates from Carolina.</p>
@@ -14,6 +22,18 @@
     <div class="stay-grid">
         <article class="stay-card"><h2>Your reservation</h2><p>{{ ucfirst($booking->status) }}</p><strong>{{ ($booking->check_in_at ?? $booking->check_in)->format('M j, Y · g:i A') }}</strong><p>Until {{ ($booking->check_out_at ?? $booking->check_out)->format('M j, Y · g:i A') }}</p>
             @if($booking->status === 'pending')<p>Reception still needs to confirm availability.</p>@endif
+            <div class="stay-payment-summary" aria-label="Payment summary">
+                <h3>Payment summary</h3>
+                <div><small>Booking total</small><b>₱{{ number_format($booking->total_amount, 2) }}</b></div>
+                @if($booking->payment_status === 'refunded')
+                    <div><small>Refund recorded</small><b>₱{{ number_format((float) $financial['refunds'], 2) }}</b></div>
+                @else
+                    <div><small>Amount paid</small><b>₱{{ number_format($stayPaid, 2) }}</b></div>
+                @endif
+                <div><small>Remaining balance</small><b>₱{{ number_format($stayBalance, 2) }}</b></div>
+                <div><small>Payment option</small><b>{{ $stayPaymentMode }}</b></div>
+                <div><small>Payment method</small><b>{{ $stayPaymentMethod }}</b></div>
+            </div>
         </article>
         <article class="stay-card"><h2>Room preparation</h2>
             @if($booking->status === 'cancelled')<strong>Reservation cancelled</strong>

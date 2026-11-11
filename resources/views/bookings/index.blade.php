@@ -54,6 +54,11 @@
             <h3>{{ $booking->room->name }}</h3>
             <p>{{ $booking->check_in->format('M j, Y') }} - {{ $booking->check_out->format('M j, Y') }} · {{ $booking->nights }} {{ Str::plural('night', $booking->nights) }} · {{ $booking->guests }} {{ Str::plural('guest', $booking->guests) }}</p>
             <small>Reference: {{ $booking->reference }}</small>
+            @php($bookingFinance = \App\Support\FinancialSummary::forBooking($booking))
+            <div class="booking-payment-brief" aria-label="Payment summary">
+                <div><small>Paid</small><b>₱{{ number_format(max(0, $bookingFinance['net_collected']), 2) }}</b></div>
+                <div><small>Remaining balance</small><b>₱{{ number_format($bookingFinance['outstanding'], 2) }}</b></div>
+            </div>
         </div>
         <div class="booking-actions">
             <strong>₱{{ number_format($booking->total_amount) }}</strong>

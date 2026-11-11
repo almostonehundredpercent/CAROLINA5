@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\ActivityLog;
 use App\Models\Booking;
 use App\Models\Room;
+use App\Support\FinancialSummary;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\URL;
@@ -18,6 +19,8 @@ class StayController extends Controller
 
     public function show(Booking $booking)
     {
+        $booking->loadMissing('payments');
+        $financial = FinancialSummary::forBooking($booking);
         // Never retain a ready promise when a new operational conflict appears.
         if ($booking->readiness === 'ready' && (! $booking->room || $booking->room->operational_status !== 'available'
             || $booking->room->blocks()->where('starts_at', '<=', now())->where('ends_at', '>', now())->exists()
@@ -28,7 +31,7 @@ class StayController extends Controller
             ->where('starts_at', '<=', now())->where('ends_at', '>', now())
             ->where(fn ($q) => $q->whereNull('room_id')->orWhere('room_id', $booking->room_id))->latest('updated_at')->get();
 
-        return response()->view('bookings.stay', compact('booking', 'notices'))
+        return response()->view('bookings.stay', compact('booking', 'notices', 'financial'))
             ->header('Cache-Control', 'private, no-store')->header('Referrer-Policy', 'no-referrer')->header('X-Robots-Tag', 'noindex, nofollow');
     }
 

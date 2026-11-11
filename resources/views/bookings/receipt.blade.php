@@ -119,13 +119,63 @@
     @media(max-width:900px){.receipt-layout{grid-template-columns:minmax(0,1fr) minmax(280px,.85fr);gap:12px}}
     @media(max-width:800px){.confirmation.receipt-page{padding:34px 20px 42px}.receipt-page>h1{font-size:clamp(2.15rem,6vw,3rem)}.receipt-layout{grid-template-columns:1fr;max-width:700px}.receipt-card{grid-template-columns:repeat(2,minmax(0,1fr))}}
     @media(max-width:600px){.confirmation.receipt-page{padding:24px 16px 34px}.receipt-page>h1{font-size:clamp(2rem,9vw,2.6rem)}.receipt-summary{padding:17px}.receipt-summary-grid,.receipt-payment-facts{grid-template-columns:1fr}.receipt-payment-heading{align-items:flex-start}.receipt-hold-alert{padding:11px 12px}.receipt-card{padding:16px;gap:11px 12px}.receipt-card b{overflow-wrap:anywhere}}
+    .confirmation.receipt-page{width:min(100%,1160px);max-width:1160px;margin:0 auto;padding:34px clamp(16px,3vw,36px) 52px;text-align:left}
+    .receipt-page>.eyebrow,.receipt-page>h1,.receipt-page>h1+p{display:block;max-width:1080px;margin-left:auto;margin-right:auto;text-align:left}
+    .receipt-page>.eyebrow{margin-bottom:8px}
+    .receipt-page>h1{margin-bottom:8px;font-size:clamp(2.2rem,4.6vw,3.5rem);line-height:1.04}
+    .receipt-page>h1+p{margin-bottom:22px;font-size:1rem;line-height:1.55}
+    .receipt-unified-card{width:min(100%,1080px);margin:0 auto 18px;overflow:hidden;border:1px solid #6c4c27;border-radius:20px;background:linear-gradient(145deg,#fff9ef,#fffdf9);box-shadow:0 16px 38px rgba(54,34,15,.12);color:var(--ink)}
+    .receipt-booking-context{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:15px 22px;border-bottom:1px solid rgba(116,81,42,.2);background:linear-gradient(100deg,#f4e6d0,#fff8eb)}
+    .receipt-back-link{display:inline-flex;align-items:center;gap:8px;flex:0 0 auto;color:#4e3822;font-size:.88rem;font-weight:750;text-decoration:none}
+    .receipt-back-link:hover{text-decoration:underline;text-underline-offset:3px}
+    .receipt-context-identifiers{display:flex;justify-content:flex-end;gap:22px}
+    .receipt-context-identifiers>div{display:grid;gap:3px;min-width:0}
+    .receipt-context-identifiers small{color:#80684b;font-size:.65rem;font-weight:800;letter-spacing:.1em}
+    .receipt-context-identifiers b{color:#302317;font-size:.85rem;overflow-wrap:anywhere}
+    .receipt-layout{grid-template-columns:minmax(0,1.35fr) minmax(250px,.75fr);gap:0;max-width:none;margin:0;text-align:left}
+    .receipt-summary{padding:24px;border:0;border-radius:0;background:transparent;box-shadow:none}
+    .receipt-summary-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}
+    .receipt-summary-grid>div{display:flex;flex-direction:column;align-items:flex-start;justify-content:center;min-height:96px;padding:12px;border-color:rgba(116,81,42,.16);background:#fff}
+    .receipt-summary-grid small{font-size:.73rem;line-height:1.4}
+    .receipt-summary-grid b{font-size:1.08rem;line-height:1.25;overflow-wrap:anywhere}
+    .receipt-summary-grid .receipt-amount-card b{font-size:clamp(1.25rem,2vw,1.7rem)}
+    .receipt-summary-grid .receipt-balance-card{border-color:#dbb879;background:#fff7e8}
+    .receipt-selected-payment-grid{margin-top:-3px}
+    .receipt-selected-payment-grid>div{grid-column:1/-1;min-height:72px}
+    .receipt-payment-facts{gap:8px}
+    .receipt-payment-facts>div{background:rgba(255,255,255,.76)}
+    .receipt-stay-details{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-content:start;gap:13px 16px;margin:0;padding:24px;border:0;border-left:1px solid rgba(116,81,42,.2);border-radius:0;background:rgba(245,232,212,.42);box-shadow:none;text-align:left}
+    .receipt-stay-details .receipt-details-title{grid-column:1/-1;margin:0 0 2px;color:var(--ink);font:700 1.15rem 'DM Sans',sans-serif}
+    .receipt-stay-details>div{min-width:0;padding:0 0 10px;border-bottom:1px solid rgba(116,81,42,.16)}
+    .receipt-stay-details small{display:block;margin-bottom:4px;color:var(--muted);font-size:.73rem}
+    .receipt-stay-details b{display:block;color:var(--ink);font-size:.88rem;line-height:1.45;overflow-wrap:anywhere}
+    .receipt-actions{width:min(100%,1080px);margin:0 auto;justify-content:flex-start}
+    .dark-mode .receipt-unified-card{border-color:#60472f;background:linear-gradient(145deg,#261e18,#1d1713);color:#fff4e8;box-shadow:0 18px 42px rgba(0,0,0,.24)}
+    .dark-mode .receipt-booking-context{border-color:#4b3930;background:linear-gradient(100deg,#30251f,#261e18)}
+    .dark-mode .receipt-back-link,.dark-mode .receipt-context-identifiers b,.dark-mode .receipt-stay-details .receipt-details-title,.dark-mode .receipt-stay-details b{color:#fff4e8}
+    .dark-mode .receipt-context-identifiers small{color:#d0ae7b}
+    .dark-mode .receipt-summary{background:transparent}
+    .dark-mode .receipt-summary-grid>div,.dark-mode .receipt-payment-facts>div{border-color:rgba(255,220,182,.12);background:#30251f}
+    .dark-mode .receipt-summary-grid .receipt-balance-card{border-color:#80602e;background:#382b1c}
+    .dark-mode .receipt-summary-grid small,.dark-mode .receipt-payment-facts small,.dark-mode .receipt-stay-details small{color:#d4c3b2}
+    .dark-mode .receipt-stay-details{border-color:#4b3930;background:rgba(255,255,255,.025)}
+    .dark-mode .receipt-stay-details>div{border-color:#4b3930}
+    @media(max-width:900px){.receipt-layout{grid-template-columns:1fr}.receipt-stay-details{border-top:1px solid rgba(116,81,42,.2);border-left:0}.dark-mode .receipt-stay-details{border-top-color:#4b3930}}
+    @media(max-width:600px){.confirmation.receipt-page{padding:26px 14px 36px}.receipt-page>h1{font-size:clamp(2rem,9vw,2.65rem)}.receipt-page>h1+p{margin-bottom:16px}.receipt-unified-card{border-radius:15px}.receipt-booking-context{align-items:stretch;flex-direction:column;gap:12px;padding:15px}.receipt-context-identifiers{justify-content:flex-start;gap:16px}.receipt-context-identifiers>div{flex:1}.receipt-summary{padding:17px}.receipt-summary-grid{grid-template-columns:1fr}.receipt-summary-grid>div{min-height:78px}.receipt-stay-details{grid-template-columns:1fr 1fr;padding:17px}.receipt-payment-facts{grid-template-columns:1fr}.receipt-actions{justify-content:stretch}.receipt-actions .button{flex:1 1 100%}}
 </style>
 <section class="confirmation receipt-page">
-    @include('bookings.partials.context-bar', ['backUrl' => auth()->check() && auth()->id() === $booking->user_id ? route('bookings.index') : (session('guest_booking_reference') === $booking->reference ? route('bookings.confirmation', $booking) : route('bookings.lookup')), 'backLabel' => auth()->check() && auth()->id() === $booking->user_id ? 'My bookings' : (session('guest_booking_reference') === $booking->reference ? 'booking details' : 'Find booking'), 'roomName' => $booking->room?->name ?? 'Room unavailable', 'bookingReference' => $booking->reference])
     <span class="eyebrow">{{ $booking->payment_status === 'refunded' ? 'REFUND RECORD' : ($booking->payment_status === 'paid' ? 'PAYMENT RECEIPT' : ($booking->status === 'confirmed' ? 'BOOKING CONFIRMED' : 'REQUEST RECEIVED')) }}</span>
     <h1>{{ $expiredHold ? 'Reservation hold expired' : ($booking->status === 'confirmed' ? 'Your reservation is confirmed.' : ($booking->status === 'cancelled' ? 'This reservation was cancelled.' : 'Your reservation request is in.')) }}</h1>
     <p>@if($unavailable)This request no longer reserves the room. Choose another available stay or contact Carolina for help. This page keeps your booking and payment details for your records.@elseif($booking->status === 'confirmed')Carolina has confirmed your reservation.@else Keep your reference below. Staff confirmation is required before your stay is final.@endif</p>
 
+    <article class="receipt-unified-card">
+    <header class="receipt-booking-context">
+        <a class="receipt-back-link" href="{{ auth()->check() && auth()->id() === $booking->user_id ? route('bookings.index', ['section' => 'bookings']) : (session('guest_booking_reference') === $booking->reference ? route('bookings.confirmation', $booking) : route('bookings.lookup')) }}"><span aria-hidden="true">←</span> {{ auth()->check() && auth()->id() === $booking->user_id ? 'Back to my bookings' : (session('guest_booking_reference') === $booking->reference ? 'Back to booking details' : 'Back to find booking') }}</a>
+        <div class="receipt-context-identifiers">
+            <div><small>ROOM</small><b>{{ $booking->room?->name ?? 'Room unavailable' }}</b></div>
+            <div><small>BOOKING REFERENCE</small><b>{{ $booking->reference }}</b></div>
+        </div>
+    </header>
     <div class="receipt-layout">
     <section class="receipt-summary receipt-payment-primary">
         <div class="receipt-payment-heading">
@@ -138,24 +188,15 @@
             <div>
                 @if($booking->payment_status === 'refunded')
                     <small>Refund recorded</small><b>₱{{ number_format((float) $financial['refunds'], 2) }}</b><small>{{ strtoupper($booking->payment_method ?? 'payment') }} refund</small>
-                @elseif($amountPaid > 0)
-                    @if($paidInFull)
-                        <small>Amount paid</small><b>₱{{ number_format($amountPaid, 2) }}</b><small>Paid in full · remaining balance ₱0.00</small>
-                    @elseif($unavailable)
-                        <small>Amount paid so far</small><b>₱{{ number_format($amountPaid, 2) }}</b><small>This reservation is no longer active. Contact Carolina about resolving this payment.</small>
-                    @elseif($depositVerified)
-                        <small>Downpayment paid</small><b>₱{{ number_format($amountPaid, 2) }}</b>
-                        <small>Remaining balance: ₱{{ number_format($remainingBalance, 2) }} · due at the property after Carolina reviews your booking</small>
-                    @else
-                        <small>Amount paid so far</small><b>₱{{ number_format($amountPaid, 2) }}</b><small>Remaining balance: ₱{{ number_format($remainingBalance, 2) }}</small>
-                    @endif
-                @elseif($unavailable)
-                    <small>Payment</small><b>{{ ucfirst($booking->payment_status ?? 'pending') }}</b><small>Online checkout is unavailable for this request</small>
                 @else
-                    <small>{{ $hasDeposit ? 'Selected payment amount' : 'Amount due' }}</small><b id="selected-payment-amount">₱{{ number_format($hasDeposit && $selectedPaymentOption === 'full' ? $fullPaymentAmount : $amountDueNow, 2) }}</b><small>Secure GCash checkout via PayMongo</small>
+                    <small>Amount paid</small><b>₱{{ number_format($amountPaid, 2) }}</b><small>{{ $paidInFull ? 'Paid in full' : ($amountPaid > 0 ? 'Payment received' : 'No payment received yet') }}</small>
                 @endif
             </div>
+            <div class="receipt-balance-card"><small>{{ $booking->payment_status === 'refunded' ? 'Balance after refund' : 'Remaining balance' }}</small><b>₱{{ number_format($remainingBalance, 2) }}</b><small>@if($paidInFull)Paid in full.@elseif($booking->payment_status === 'refunded')Refund recorded.@elseif($booking->status === 'cancelled')No balance is due on this cancelled reservation.@elseif($unavailable)This expired reservation is inactive; contact Carolina before making another payment.@elseif($depositVerified)Due at the property after Carolina reviews your booking.@else Remaining amount for this reservation.@endif</small></div>
         </div>
+        @if($canPayOnline && $amountPaid <= 0)
+            <div class="receipt-summary-grid receipt-selected-payment-grid"><div><small>Selected amount to pay now</small><b id="selected-payment-amount">₱{{ number_format($hasDeposit && $selectedPaymentOption === 'full' ? $fullPaymentAmount : $amountDueNow, 2) }}</b><small>{{ $selectedPaymentOption === 'full' ? 'Full payment selected' : 'Downpayment selected' }}</small></div></div>
+        @endif
         <div class="receipt-payment-facts" aria-label="Payment details">
             <div><small>Payment option</small><b>{{ $paymentModeLabel }}</b></div>
             <div><small>Payment method</small><b>{{ $paymentMethodLabel }}</b></div>
@@ -218,14 +259,15 @@
         @endif
     </section>
 
-    <div class="confirmation-card receipt-card">
-        <h2 class="receipt-details-title">Stay details</h2>
+    <section class="receipt-stay-details" aria-labelledby="receipt-stay-title">
+        <h2 class="receipt-details-title" id="receipt-stay-title">Stay details</h2>
         <div><small>Stay type</small><b>{{ $booking->booking_type === 'hourly' ? $booking->hours . ' hours' : $booking->nights . ' night' . ($booking->nights === 1 ? '' : 's') }}</b></div>
         <div><small>Stay</small><b>{{ $booking->check_in_at && $booking->check_out_at ? $booking->check_in_at->format('M j, g A') . ' – ' . $booking->check_out_at->format('M j, g A') : $booking->check_in->format('M j') . ' – ' . $booking->check_out->format('M j, Y') }}</b></div>
         <div><small>Guests</small><b>{{ $booking->guests }} total{{ $booking->children_count ? ' · ' . $booking->children_count . ' child' . ($booking->children_count > 1 ? 'ren' : '') : '' }}</b></div>
         <div><small>Pets</small><b>{{ $booking->pets_count ? $booking->pets_count . ' pet' . ($booking->pets_count > 1 ? 's' : '') : 'None' }}</b></div>
+    </section>
     </div>
-    </div>
+    </article>
     <div class="receipt-actions">
         <a class="button" href="{{ \App\Http\Controllers\StayController::link($booking) }}">Your arrival page</a>
         <a class="button button-outline" href="{{ route('home') }}">Back to home</a>
@@ -238,8 +280,14 @@
     <div class="receipt-success-icon" aria-hidden="true">✓</div>
     <h2 id="receipt-success-title">Booking received!</h2>
     <p id="receipt-success-copy">
-        @if($booking->payment_status === 'partial')
-            Your downpayment was processed. Carolina will review your reservation and email you about the next steps.
+        @if($booking->payment_status === 'refunded')
+            A refund of ₱{{ number_format((float) $financial['refunds'], 2) }} was recorded for this reservation.
+        @elseif($paidInFull)
+            Full payment of ₱{{ number_format($amountPaid, 2) }} was recorded. Remaining balance: ₱0.00.
+        @elseif($amountPaid > 0)
+            ₱{{ number_format($amountPaid, 2) }} was received as a downpayment. Remaining balance: ₱{{ number_format($remainingBalance, 2) }}, due at the property after Carolina reviews your booking.
+        @elseif($booking->payment_status === 'partial')
+            Your partial payment was processed. Remaining balance: ₱{{ number_format($remainingBalance, 2) }}. Carolina will review your reservation and email you about the next steps.
         @elseif($booking->status === 'confirmed')
             Your payment was processed and your reservation is confirmed. Check your email for booking updates.
         @else
@@ -249,7 +297,7 @@
     <p class="receipt-success-reference">Reference: <strong>{{ $booking->reference }}</strong></p>
     <div class="receipt-success-actions">
         @if($booking->user_id && auth()->id() === $booking->user_id)
-            <a class="button" href="{{ route('bookings.index') }}">View Bookings</a>
+            <a class="button" href="{{ route('bookings.index', ['section' => 'bookings']) }}">View Bookings</a>
         @else
             <a class="button" href="{{ \App\Http\Controllers\StayController::link($booking) }}">View Bookings</a>
         @endif
