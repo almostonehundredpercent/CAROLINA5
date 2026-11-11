@@ -8,6 +8,11 @@
     $depositTarget = (float) $booking->deposit_amount > 0 ? min((float) $booking->deposit_amount, (float) $booking->total_amount) : (float) $booking->total_amount;
     $hasDeposit = (float) $booking->deposit_amount > 0;
     $depositVerified = $booking->deposit_status === 'verified' || (bool) $booking->deposit_verified_at;
+    $amountPaid = max(0, round((float) $financial['net_collected'], 2));
+    if ($amountPaid < 0.01 && $booking->payment_status === 'paid') $amountPaid = (float) $booking->total_amount;
+    elseif ($amountPaid < 0.01 && $depositVerified) $amountPaid = $depositTarget;
+    $paidInFull = $booking->payment_status === 'paid' || $amountPaid + 0.01 >= (float) $booking->total_amount;
+    $remainingBalance = $paidInFull ? 0 : round(max(0, (float) $financial['outstanding']), 2);
     $amountDueNow = $depositVerified ? 0 : round(min($financial['outstanding'], max(0, $depositTarget - $financial['net_collected'])), 2);
     $fullPaymentAmount = round((float) $financial['outstanding'], 2);
     $selectedPaymentOption = $activePayMongoCheckout && abs((float) $activePayMongoCheckout->amount - $fullPaymentAmount) < 0.01 ? 'full' : 'deposit';
@@ -110,10 +115,19 @@
         <div class="receipt-summary-grid">
             <div class="receipt-amount-card"><small>Booking total</small><b>₱{{ number_format($booking->total_amount, 2) }}</b>@if($booking->discount_amount > 0)<small><s>₱{{ number_format($booking->original_amount, 2) }}</s> · {{ $booking->promo_code }} saved ₱{{ number_format($booking->discount_amount, 2) }}</small>@endif</div>
             <div>
-                @if($depositVerified && ! $paymentComplete)
-                    <small>Remaining balance</small><b>₱{{ number_format($financial['outstanding'], 2) }}</b><small>Pay at the property after Carolina reviews your booking</small>
-                @elseif($paymentComplete)
-                    <small>Payment method</small><b>{{ strtoupper($booking->payment_method ?? 'payment') }}</b><small>{{ $booking->payment_status === 'paid' ? 'Payment complete' : 'Refund recorded' }}@if($booking->paid_at) · {{ $booking->paid_at->format('M j, Y g:i A') }}@endif</small>
+                @if($booking->payment_status === 'refunded')
+                    <small>Refund recorded</small><b>₱{{ number_format((float) $financial['refunds'], 2) }}</b><small>{{ strtoupper($booking->payment_method ?? 'payment') }} refund</small>
+                @elseif($amountPaid > 0)
+                    @if($paidInFull)
+                        <small>Amount paid</small><b>₱{{ number_format($amountPaid, 2) }}</b><small>Paid in full · remaining balance ₱0.00</small>
+                    @elseif($unavailable)
+                        <small>Amount paid so far</small><b>₱{{ number_format($amountPaid, 2) }}</b><small>This reservation is no longer active. Contact Carolina about resolving this payment.</small>
+                    @elseif($depositVerified)
+                        <small>Downpayment paid</small><b>₱{{ number_format($amountPaid, 2) }}</b>
+                        <small>Remaining balance: ₱{{ number_format($remainingBalance, 2) }} · due at the property after Carolina reviews your booking</small>
+                    @else
+                        <small>Amount paid so far</small><b>₱{{ number_format($amountPaid, 2) }}</b><small>Remaining balance: ₱{{ number_format($remainingBalance, 2) }}</small>
+                    @endif
                 @elseif($unavailable)
                     <small>Payment</small><b>{{ ucfirst($booking->payment_status ?? 'pending') }}</b><small>Online checkout is unavailable for this request</small>
                 @else
@@ -121,9 +135,6 @@
                 @endif
             </div>
         </div>
-        @if($financial['net_collected'] > 0 && ! $paymentComplete)
-            <p class="receipt-note">Recorded so far: ₱{{ number_format($financial['net_collected'], 2) }} · Remaining after deposit: ₱{{ number_format($financial['outstanding'], 2) }}</p>
-        @endif
         @if($temporaryHold)
             <div class="receipt-hold-alert" role="note">
                 <strong>{{ \App\Models\Booking::holdMinutes() }}-minute payment window</strong>
@@ -164,7 +175,11 @@
             </form>
         @endif
         @if($booking->payment_status === 'partial' || ($depositVerified && ! $paymentComplete))
-            <p class="receipt-note"><strong>Downpayment received.</strong> Carolina still needs to review and confirm your reservation. Pay the remaining ₱{{ number_format($financial['outstanding'], 2) }} at the property.</p>
+            @if($unavailable)
+                <p class="receipt-note"><strong>Reservation is no longer active.</strong> Contact Carolina to resolve this payment before making another.</p>
+            @else
+                <p class="receipt-note"><strong>{{ $depositVerified ? 'Downpayment received.' : 'Partial payment recorded.' }}</strong> Carolina still needs to review and confirm your reservation. @if($depositVerified)The remaining balance shown above is due at the property.@else The downpayment is not complete yet; contact Carolina for help completing it.@endif</p>
+            @endif
         @elseif($booking->payment_status === 'paid')
             <p class="receipt-note"><strong>Payment recorded.</strong> {{ $unavailable ? 'The room was not re-reserved. Contact staff to resolve this payment before making another one.' : ($booking->status === 'confirmed' ? 'Your reservation is confirmed.' : 'Your slot remains reserved while staff reviews your request.') }}</p>
             <p class="receipt-note">Paid via {{ strtoupper($booking->payment_method ?? 'payment') }}@if($booking->paid_at) on {{ $booking->paid_at->format('M j, Y g:i A') }}@endif.</p>
