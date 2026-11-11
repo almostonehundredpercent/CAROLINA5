@@ -15,14 +15,19 @@ class ProfileController extends Controller
         if ($request->filled('email')) {
             $request->merge(['email' => Str::lower(trim((string) $request->input('email')))]);
         }
+        if ($request->filled('contact_number')) {
+            $request->merge(['contact_number' => preg_replace('/[\s()\-]/', '', (string) $request->input('contact_number'))]);
+        }
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email:rfc', 'max:255', Rule::unique('users', 'email')->ignore($user->id)],
+            'contact_number' => ['nullable', 'string', 'max:20', 'regex:/^(?:\\+63|63|0)9\\d{9}$/'],
         ]);
 
         $email = Str::lower(trim($data['email']));
         $emailChanged = Str::lower($user->email) !== $email;
         $user->name = trim($data['name']);
+        $user->contact_number = $data['contact_number'] ?? null;
 
         if ($emailChanged) {
             $user->email = $email;
