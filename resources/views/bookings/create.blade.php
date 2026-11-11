@@ -117,6 +117,15 @@
 .dark-mode .booking-contact-fields input::placeholder{color:#c8b5a0;opacity:1}
 @media(max-width:520px){.stay-date-fields input[readonly]{min-height:54px}.booking-type-selector{padding:10px}.booking-type-options a{padding:8px}.guest-contact-section{padding:14px}}
 </style>
+<style>
+    .promo-entry>summary { background:var(--sand); border-radius:8px; transition:background-color .16s ease; }
+    .promo-entry[open]>summary { border-radius:8px 8px 0 0; }
+    .promo-entry>summary:hover { background:var(--surface); }
+    .promo-entry>summary:focus-visible { outline:3px solid var(--gold); outline-offset:2px; }
+    .dark-mode .promo-entry>summary { background:var(--sand); }
+    .dark-mode .promo-entry>summary::after { color:#ffc26e; }
+    .dark-mode .promo-entry>summary:hover { background:#4a4037; }
+</style>
 <section class="booking-page">
     <header class="booking-page-heading">
         @include('bookings.partials.context-bar', ['backUrl' => route('rooms.show', $room), 'backLabel' => 'room details'])
