@@ -1,2 +1,71 @@
 .stay-page{max-width:1050px;margin:48px auto;padding:0 22px}.stay-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}.stay-card{min-width:0;padding:24px;margin-bottom:20px;border:1px solid #dfd4c7;border-radius:18px;background:#fffaf3;color:#2d251f}.stay-card h2{font:700 1.35rem/1.3 'DM Sans',sans-serif}.stay-card p{color:#67594b;line-height:1.6}.stay-card small{color:#67594b}.stay-actions{display:flex;flex-wrap:wrap;gap:10px}.stay-notice{margin:16px 0;padding:18px;border:1px solid #b67922;border-radius:12px;background:#fff0d7;color:#593809}.stay-notice p{color:inherit;white-space:pre-wrap}.stay-form{display:grid;gap:14px;margin-top:18px}.stay-form label{display:grid;gap:7px;font-size:.9rem;font-weight:600}.stay-form :is(input,select,textarea){width:100%;min-width:0;font:inherit;padding:12px;border:1px solid #cbbdab;border-radius:9px;background:#fff;color:#2d251f}.stay-card .button{min-height:44px;padding:12px 17px;border:0;border-radius:10px;background:#a85b08;color:white;font:600 .9rem 'DM Sans',sans-serif;cursor:pointer}.stay-message{white-space:pre-wrap}.stay-card a{color:#945207;text-decoration:underline}.dark-mode .stay-card{background:#261e18;border-color:#554134;color:#fff2e4}.dark-mode .stay-card :is(p,small){color:#d8c7b5}.dark-mode .stay-card a{color:#ffc875}.stay-page :focus-visible,.stay-form :focus-visible{outline:3px solid #c9801a;outline-offset:3px}@media(max-width:650px){.stay-grid{grid-template-columns:1fr}.stay-card{padding:18px}.stay-page{margin:28px auto;padding:0 16px}.stay-page h1{font-size:2.6rem}.stay-actions{display:grid;grid-template-columns:1fr}.stay-form input{font-size:16px}}
 .stay-payment-summary{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:18px;padding-top:15px;border-top:1px solid #dfd4c7}.stay-payment-summary h3{grid-column:1/-1;margin:0 0 2px;font:700 1rem 'DM Sans',sans-serif}.stay-payment-summary>div{display:grid;gap:3px;min-width:0;padding:10px 11px;border:1px solid #e4d8ca;border-radius:10px;background:rgba(255,255,255,.72)}.stay-payment-summary small{font-size:.72rem}.stay-payment-summary b{font-size:.88rem;overflow-wrap:anywhere}.dark-mode .stay-payment-summary{border-color:#554134}.dark-mode .stay-payment-summary>div{border-color:#554134;background:#211a15}@media(max-width:420px){.stay-payment-summary{grid-template-columns:1fr}}
+
+/* Guest arrival is a single booking card; the sections inside share its surface. */
+.stay-unified-card{overflow:hidden;border:1px solid #dfd4c7;border-radius:20px;background:#fffaf3;color:#2d251f;box-shadow:0 16px 38px rgba(45,37,31,.08)}
+.stay-unified-header{padding:20px clamp(20px,3vw,32px) 25px;border-bottom:1px solid #dfd4c7;background:linear-gradient(135deg,#fffaf3,#f7eee3)}
+.stay-booking-context{display:flex;align-items:center;justify-content:space-between;gap:18px;padding-bottom:17px;border-bottom:1px solid #e4d8ca}
+.stay-back-link{display:inline-flex;align-items:center;gap:8px;min-height:40px;padding:8px 11px;border:1px solid #dfd4c7;border-radius:9px;color:#2d251f;font-size:.84rem;font-weight:750;text-decoration:none;white-space:nowrap}
+.stay-back-link span{color:#a85b08;font-size:1.1rem}
+.stay-back-link:hover{border-color:#c9801a;background:#f7eee3}
+.stay-identifiers{display:flex;align-items:stretch;min-width:0}
+.stay-identifiers>div{display:grid;align-content:center;gap:3px;min-width:130px;padding:2px 13px}
+.stay-identifiers>div+div{border-left:1px solid #dfd4c7}
+.stay-identifiers small{color:#67594b;font-size:.65rem;font-weight:800;letter-spacing:.09em;text-transform:uppercase}
+.stay-identifiers strong{color:#2d251f;font-size:.86rem;line-height:1.35;overflow-wrap:anywhere}
+.stay-unified-intro{padding-top:22px}
+.stay-unified-intro>.eyebrow{color:#945207;font-size:.7rem;font-weight:800;letter-spacing:.12em}
+.stay-page .stay-unified-intro h1{max-width:100%;margin:5px 0 7px;font-size:clamp(2.4rem,5.1vw,4.25rem);line-height:1.03}
+.stay-unified-intro p{margin:0;color:#67594b;font-size:.98rem;line-height:1.55}
+.stay-notice{margin:18px 28px 0}
+.stay-overview-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));border-bottom:1px solid #dfd4c7}
+.stay-overview-section{min-width:0;padding:24px clamp(20px,3vw,30px)}
+.stay-room-preparation{border-left:1px solid #dfd4c7}
+.stay-overview-section h2,.stay-payment-section h2,.stay-update-section h2,.stay-instructions-section h2{margin:0 0 14px;font:700 1.22rem/1.3 'DM Sans',sans-serif;color:#2d251f}
+.stay-section-heading{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.stay-section-heading h2{margin-bottom:13px}
+.stay-status-pill{display:inline-flex;align-items:center;padding:5px 9px;border:1px solid #dfd4c7;border-radius:999px;color:#67594b;font-size:.72rem;font-weight:750;text-transform:capitalize}
+.stay-status-pill.stay-status-confirmed{border-color:#b8ddc0;background:#e8f6eb;color:#21653a}
+.stay-status-pill.stay-status-pending{border-color:#e7c98b;background:#fff3d9;color:#79520e}
+.stay-status-pill.stay-status-cancelled{border-color:#e9c6c2;background:#fff0ee;color:#9f3932}
+.stay-reservation-facts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px;margin:0}
+.stay-reservation-facts>div{min-width:0;padding-bottom:12px;border-bottom:1px solid #e4d8ca}
+.stay-reservation-facts dt,.stay-payment-facts dt{margin-bottom:5px;color:#67594b;font-size:.74rem;font-weight:650}
+.stay-reservation-facts dd,.stay-payment-facts dd{margin:0;color:#2d251f;font-size:.92rem;font-weight:750;line-height:1.45;overflow-wrap:anywhere}
+.stay-reservation-note,.stay-room-preparation p{margin:12px 0 0;color:#67594b;font-size:.88rem;line-height:1.55}
+.stay-room-preparation>strong{display:block;color:#2d251f;font-size:.98rem;line-height:1.45}
+.stay-room-preparation>small{display:block;margin-top:10px;color:#67594b;font-size:.76rem;line-height:1.5}
+.stay-payment-section{padding:22px clamp(20px,3vw,30px) 24px;border-bottom:1px solid #dfd4c7}
+.stay-payment-section h2{margin-bottom:12px}
+.stay-payment-facts{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:0;margin:0}
+.stay-payment-facts>div{min-width:0;padding:2px 14px;border-left:1px solid #dfd4c7}
+.stay-payment-facts>div:first-child{padding-left:0;border-left:0}
+.stay-payment-facts dd{font-size:.89rem}
+.stay-update-section,.stay-instructions-section{padding:22px clamp(20px,3vw,30px);border-bottom:1px solid #dfd4c7}
+.stay-update-section h2,.stay-instructions-section h2{margin-bottom:7px}
+.stay-update-section>p,.stay-instructions-section>p{margin:6px 0 14px;color:#67594b;font-size:.88rem;line-height:1.55}
+.stay-update-section>p strong{color:#2d251f}
+.stay-actions{display:flex;flex-wrap:wrap;gap:9px;margin-top:14px}
+.stay-unified-card .stay-actions .button{min-height:43px;padding:10px 16px;border:1px solid #a85b08;border-radius:10px;background:#a85b08;color:white;font:700 .88rem 'DM Sans',sans-serif;cursor:pointer}
+.stay-unified-card .stay-actions .button:hover{background:#8e4d07}
+.stay-message{white-space:pre-wrap}
+.stay-private-note{padding:15px clamp(20px,3vw,30px);color:#67594b;font-size:.78rem;line-height:1.5}
+.stay-private-note a{color:#945207;font-weight:700;text-underline-offset:3px}
+.stay-unified-page :focus-visible{outline:3px solid #c9801a;outline-offset:3px}
+.dark-mode .stay-unified-card{border-color:#554134;background:#261e18;color:#fff2e4;box-shadow:0 16px 38px rgba(0,0,0,.2)}
+.dark-mode .stay-unified-header{border-color:#554134;background:linear-gradient(135deg,#30251f,#261e18)}
+.dark-mode .stay-booking-context,.dark-mode .stay-room-preparation,.dark-mode .stay-payment-section,.dark-mode .stay-update-section,.dark-mode .stay-instructions-section,.dark-mode .stay-overview-grid{border-color:#554134}
+.dark-mode .stay-back-link{border-color:#554134;color:#fff2e4}
+.dark-mode .stay-back-link:hover{border-color:#c9801a;background:#35271e}
+.dark-mode .stay-identifiers>div+div,.dark-mode .stay-payment-facts>div{border-color:#554134}
+.dark-mode .stay-identifiers small,.dark-mode .stay-reservation-facts dt,.dark-mode .stay-payment-facts dt,.dark-mode .stay-private-note,.dark-mode .stay-reservation-note,.dark-mode .stay-room-preparation p,.dark-mode .stay-room-preparation>small,.dark-mode .stay-unified-intro p,.dark-mode .stay-update-section>p,.dark-mode .stay-instructions-section>p{color:#d8c7b5}
+.dark-mode .stay-identifiers strong,.dark-mode .stay-section-heading h2,.dark-mode .stay-overview-section h2,.dark-mode .stay-payment-section h2,.dark-mode .stay-update-section h2,.dark-mode .stay-instructions-section h2,.dark-mode .stay-reservation-facts dd,.dark-mode .stay-payment-facts dd,.dark-mode .stay-room-preparation>strong,.dark-mode .stay-update-section>p strong{color:#fff2e4}
+.dark-mode .stay-unified-intro>.eyebrow,.dark-mode .stay-private-note a{color:#ffc875}
+.dark-mode .stay-reservation-facts>div{border-color:#554134}
+.dark-mode .stay-status-pill.stay-status-confirmed{border-color:#315c3a;background:#1d3323;color:#b9edc3}
+.dark-mode .stay-status-pill.stay-status-pending{border-color:#805d2d;background:#382b1c;color:#f6dcae}
+.dark-mode .stay-status-pill.stay-status-cancelled{border-color:#69403a;background:#38211e;color:#f3c1ba}
+@media(max-width:850px){.stay-overview-grid{grid-template-columns:1fr}.stay-room-preparation{border-top:1px solid #dfd4c7;border-left:0}.dark-mode .stay-room-preparation{border-top-color:#554134}.stay-payment-facts{grid-template-columns:repeat(3,minmax(0,1fr));row-gap:16px}.stay-payment-facts>div:nth-child(4){padding-left:0;border-left:0}}
+@media(max-width:650px){.stay-page{margin:24px auto;padding:0 14px}.stay-unified-card{border-radius:16px}.stay-unified-header{padding:15px 18px 21px}.stay-booking-context{align-items:flex-start;flex-direction:column;gap:12px;padding-bottom:14px}.stay-identifiers{width:100%}.stay-identifiers>div{min-width:0;flex:1;padding:2px 10px}.stay-identifiers>div:first-child{padding-left:0}.stay-page .stay-unified-intro h1{font-size:clamp(2.2rem,10vw,3rem)}.stay-unified-intro p{font-size:.9rem}.stay-overview-section{padding:20px 18px}.stay-payment-section,.stay-update-section,.stay-instructions-section{padding:19px 18px}.stay-payment-facts{grid-template-columns:repeat(2,minmax(0,1fr));row-gap:14px}.stay-payment-facts>div:nth-child(3),.stay-payment-facts>div:nth-child(5){padding-left:0;border-left:0}.stay-payment-facts>div:nth-child(4){padding-left:10px;border-left:1px solid #dfd4c7}.dark-mode .stay-payment-facts>div:nth-child(4){border-left-color:#554134}.stay-actions{display:grid;grid-template-columns:1fr}.stay-unified-card .stay-actions .button{width:100%}.stay-notice{margin:14px 18px 0;padding:14px}}
+@media(max-width:420px){.stay-identifiers>div{padding-right:7px;padding-left:7px}.stay-identifiers>div:first-child{padding-left:0}.stay-identifiers small{font-size:.59rem}.stay-identifiers strong{font-size:.78rem}.stay-payment-facts{grid-template-columns:1fr}.stay-payment-facts>div,.stay-payment-facts>div:nth-child(4){padding:0 0 10px;border:0;border-bottom:1px solid #dfd4c7}.dark-mode .stay-payment-facts>div,.dark-mode .stay-payment-facts>div:nth-child(4){border-bottom-color:#554134}}
+@media(prefers-reduced-motion:reduce){.stay-back-link{transition:none}}
