@@ -51,6 +51,7 @@ test('the home hero fills the viewport without clipping its overlapping availabi
                     viewportWidth: window.innerWidth,
                     viewportHeight: window.innerHeight,
                     availabilityTop: availability.top,
+                    availabilityCenter: availability.left + availability.width / 2,
                     bodyWidth: document.body.scrollWidth,
                 };
             });
@@ -59,6 +60,7 @@ test('the home hero fills the viewport without clipping its overlapping availabi
             assert.equal(layout.heroWidth, viewport.width, `${viewport.width}px hero should span the page`);
             assert.ok(layout.heroHeight >= viewport.height, `${viewport.width}px hero should fill the viewport: ${layout.heroHeight}px`);
             assert.ok(layout.availabilityTop < layout.heroHeight, 'the availability panel should still meet the hero');
+            assert.ok(Math.abs(layout.availabilityCenter - layout.viewportWidth / 2) <= 1, `${viewport.width}px availability panel should be horizontally centered: ${layout.availabilityCenter}px`);
             assert.ok(layout.bodyWidth <= layout.viewportWidth, `${viewport.width}px page should not scroll sideways`);
             await page.close();
         }
