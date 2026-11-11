@@ -6,7 +6,6 @@
 @section('content')
 <section class="page-hero slim about-page-hero">
     <div class="about-hero-inner">
-        <a class="about-back-link" href="{{ route('home') }}"><span aria-hidden="true">←</span> Back to Home</a>
         <div class="about-hero-copy">
             <span class="eyebrow">CAROLINA · TABACO CITY</span>
             <h1>Stay well.<br>Spend less.</h1>

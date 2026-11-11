@@ -6,7 +6,6 @@
 @section('content')
 <section class="page-hero slim contact-page-hero">
     <div class="contact-hero-inner">
-        <a class="contact-back-link" href="{{ route('home') }}"><span aria-hidden="true">←</span> Back to Home</a>
         <div class="contact-hero-copy">
             <div><span class="eyebrow">WE’RE HERE TO HELP</span><h1>Get in touch.</h1></div>
             <p>Questions about a room, an upcoming stay, or finding us? Contact Carolina and we’ll help you plan your visit.</p>
