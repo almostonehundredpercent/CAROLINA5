@@ -3,6 +3,7 @@
 <section class="auth-page">
     <form class="auth-card" method="POST" action="{{ route('bookings.lookup.submit') }}">
         @csrf
+        <a class="booking-context-back lookup-back-link" href="{{ route('home') }}"><span aria-hidden="true">←</span><span>Back to home</span></a>
         <span class="eyebrow">GUEST BOOKING</span>
         <h1>Find your booking.</h1>
         <p>Enter the email address and reference code from your confirmation email.</p>
@@ -10,7 +11,6 @@
         <label>Booking reference<input name="reference" placeholder="CAR-XXXXXXXX" value="{{ old('reference', request()->query('reference')) }}" required></label>
         <p class="lookup-help">Can't find your reference? <a href="https://www.facebook.com/profile.php?id=61556306344437" target="_blank" rel="noopener noreferrer">Message Carolina on Facebook</a> and include the email used for your reservation.</p>
         <button class="button">View booking</button>
-        <p class="auth-switch"><a href="{{ route('home') }}">← Back to home</a></p>
     </form>
 </section>
 @endsection

@@ -36,8 +36,9 @@
 .dark-mode .booking-field-error{color:#ffb8ae}
 </style>
 <section class="booking-page">
+    @include('bookings.partials.context-bar', ['backUrl' => route('rooms.show', $room), 'backLabel' => 'room details', 'roomName' => $room->name])
     <div class="booking-form">
-        <span class="eyebrow">RESERVE {{ strtoupper($room->name) }}</span>
+        <span class="eyebrow">RESERVATION DETAILS</span>
         <h1>Complete your booking.</h1>
 
         @guest

@@ -67,11 +67,12 @@
 </style>
 
 <section class="guest-portal" aria-labelledby="guest-portal-title">
+    @include('bookings.partials.context-bar', ['backUrl' => route('bookings.lookup'), 'backLabel' => 'Find booking', 'roomName' => $booking->room?->name ?? 'Room unavailable', 'bookingReference' => $booking->reference])
     <header class="guest-portal-header">
         <div class="guest-portal-heading">
             <span class="eyebrow">GUEST PORTAL</span>
-            <h1 id="guest-portal-title">{{ $booking->room->name }}</h1>
-            <p class="guest-portal-reference">Manage your reservation · Reference <strong>{{ $booking->reference }}</strong></p>
+            <h1 id="guest-portal-title">Your booking</h1>
+            <p class="guest-portal-reference">Manage your reservation and stay details.</p>
         </div>
         <a class="button guest-arrival-link" href="{{ \App\Http\Controllers\StayController::link($booking) }}">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h16M13 5l7 7-7 7"/></svg>

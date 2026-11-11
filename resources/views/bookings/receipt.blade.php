@@ -17,11 +17,25 @@
     $fullPaymentAmount = round((float) $financial['outstanding'], 2);
     $selectedPaymentOption = $activePayMongoCheckout && abs((float) $activePayMongoCheckout->amount - $fullPaymentAmount) < 0.01 ? 'full' : 'deposit';
     $canPayOnline = ! $unavailable && ! $paymentComplete && ! $depositVerified && $amountDueNow > 0;
+    $latestPayment = $booking->payments->whereIn('status', ['paid', 'refunded'])->sortByDesc('id')->first();
+    $paymentMethod = $latestPayment?->method ?? ($amountPaid > 0 ? $booking->payment_method : null);
+    $paymentMethodLabel = match ($paymentMethod) {
+        'gcash' => 'GCash via PayMongo',
+        'cash' => 'Cash',
+        null => $activePayMongoCheckout ? 'GCash via PayMongo · pending' : 'Not paid yet',
+        default => strtoupper((string) $paymentMethod),
+    };
+    $paymentModeLabel = $booking->payment_status === 'refunded'
+        ? 'Refund recorded'
+        : ($amountPaid > 0
+            ? ($paidInFull ? 'Full payment' : ($hasDeposit ? 'Downpayment' : 'Partial payment'))
+            : ($hasDeposit ? ($selectedPaymentOption === 'full' ? 'Full payment selected' : 'Downpayment selected') : 'Full payment selected'));
     $temporaryHold = ! $unavailable && $booking->status === 'pending' && ! $booking->hasProtectedInventory();
     $holdDeadline = $temporaryHold ? $booking->holdDeadline() : null;
     $remainingHoldSeconds = $holdDeadline ? max(0, $holdDeadline->timestamp - now()->timestamp) : 0;
 @endphp
 <style>
+    .receipt-page>.booking-context-box{max-width:1120px;margin:0 auto 18px;text-align:left}
     .confirmation.receipt-page{width:min(100%,1260px);max-width:1260px;padding:24px 28px 42px;text-align:center}
     .receipt-page>.eyebrow{margin-bottom:6px}
     .receipt-page>h1{max-width:1120px;margin:0 auto 6px;font-size:clamp(2.2rem,3.5vw,3.25rem);line-height:1.02}
@@ -43,6 +57,10 @@
     .receipt-summary-grid small{display:block;margin-bottom:5px;color:var(--muted)}
     .receipt-summary-grid b{font-size:1.12rem}
     .receipt-summary-grid .receipt-amount-card b{display:block;color:#7d4300;font-size:clamp(1.8rem,4vw,2.25rem);line-height:1.1;letter-spacing:-.035em}
+    .receipt-payment-facts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:0 0 12px}
+    .receipt-payment-facts>div{display:grid;gap:4px;min-width:0;padding:10px 12px;border:1px solid rgba(116,81,42,.1);border-radius:9px;background:rgba(255,255,255,.65)}
+    .receipt-payment-facts small{color:var(--muted);font-size:.72rem}
+    .receipt-payment-facts b{color:var(--ink);font-size:.86rem;overflow-wrap:anywhere}
     .receipt-status{display:inline-flex;padding:7px 11px;border-radius:999px;background:#fff0d4;color:#805000;font-size:.78rem;font-weight:800}
     .receipt-status.paid{background:#dcfce7;color:#166534}
     .receipt-note{margin:0;color:var(--muted);line-height:1.55}
@@ -69,6 +87,8 @@
     .dark-mode .receipt-summary-grid div{border-color:rgba(255,220,182,.1);background:#1d1713;color:#fff4e8}
     .dark-mode .receipt-summary-grid small,.dark-mode .receipt-note{color:#d4c3b2}
     .dark-mode .receipt-summary-grid .receipt-amount-card b{color:#ffd18a}
+    .dark-mode .receipt-payment-facts>div{border-color:rgba(255,220,182,.1);background:#1d1713}
+    .dark-mode .receipt-payment-facts b{color:#fff4e8}
     .dark-mode .receipt-status.paid{background:#17432b;color:#b7f7c5}
     .dark-mode .receipt-card{border-color:#80602e;background:linear-gradient(145deg,#33271c,#251d17);box-shadow:0 16px 32px rgba(0,0,0,.24)}
     .dark-mode .receipt-hold-alert{border-color:#8b622b;background:#3c2d1a;color:#f3d8a7}
@@ -98,9 +118,10 @@
     .dark-mode .receipt-success-modal h2,.dark-mode .receipt-success-reference strong{color:#fff4e8}
     @media(max-width:900px){.receipt-layout{grid-template-columns:minmax(0,1fr) minmax(280px,.85fr);gap:12px}}
     @media(max-width:800px){.confirmation.receipt-page{padding:34px 20px 42px}.receipt-page>h1{font-size:clamp(2.15rem,6vw,3rem)}.receipt-layout{grid-template-columns:1fr;max-width:700px}.receipt-card{grid-template-columns:repeat(2,minmax(0,1fr))}}
-    @media(max-width:600px){.confirmation.receipt-page{padding:24px 16px 34px}.receipt-page>h1{font-size:clamp(2rem,9vw,2.6rem)}.receipt-summary{padding:17px}.receipt-summary-grid{grid-template-columns:1fr}.receipt-payment-heading{align-items:flex-start}.receipt-hold-alert{padding:11px 12px}.receipt-card{padding:16px;gap:11px 12px}.receipt-card b{overflow-wrap:anywhere}}
+    @media(max-width:600px){.confirmation.receipt-page{padding:24px 16px 34px}.receipt-page>h1{font-size:clamp(2rem,9vw,2.6rem)}.receipt-summary{padding:17px}.receipt-summary-grid,.receipt-payment-facts{grid-template-columns:1fr}.receipt-payment-heading{align-items:flex-start}.receipt-hold-alert{padding:11px 12px}.receipt-card{padding:16px;gap:11px 12px}.receipt-card b{overflow-wrap:anywhere}}
 </style>
 <section class="confirmation receipt-page">
+    @include('bookings.partials.context-bar', ['backUrl' => auth()->check() && auth()->id() === $booking->user_id ? route('bookings.index') : (session('guest_booking_reference') === $booking->reference ? route('bookings.confirmation', $booking) : route('bookings.lookup')), 'backLabel' => auth()->check() && auth()->id() === $booking->user_id ? 'My bookings' : (session('guest_booking_reference') === $booking->reference ? 'booking details' : 'Find booking'), 'roomName' => $booking->room?->name ?? 'Room unavailable', 'bookingReference' => $booking->reference])
     <span class="eyebrow">{{ $booking->payment_status === 'refunded' ? 'REFUND RECORD' : ($booking->payment_status === 'paid' ? 'PAYMENT RECEIPT' : ($booking->status === 'confirmed' ? 'BOOKING CONFIRMED' : 'REQUEST RECEIVED')) }}</span>
     <h1>{{ $expiredHold ? 'Reservation hold expired' : ($booking->status === 'confirmed' ? 'Your reservation is confirmed.' : ($booking->status === 'cancelled' ? 'This reservation was cancelled.' : 'Your reservation request is in.')) }}</h1>
     <p>@if($unavailable)This request no longer reserves the room. Choose another available stay or contact Carolina for help. This page keeps your booking and payment details for your records.@elseif($booking->status === 'confirmed')Carolina has confirmed your reservation.@else Keep your reference below. Staff confirmation is required before your stay is final.@endif</p>
@@ -134,6 +155,10 @@
                     <small>{{ $hasDeposit ? 'Selected payment amount' : 'Amount due' }}</small><b id="selected-payment-amount">₱{{ number_format($hasDeposit && $selectedPaymentOption === 'full' ? $fullPaymentAmount : $amountDueNow, 2) }}</b><small>Secure GCash checkout via PayMongo</small>
                 @endif
             </div>
+        </div>
+        <div class="receipt-payment-facts" aria-label="Payment details">
+            <div><small>Payment option</small><b>{{ $paymentModeLabel }}</b></div>
+            <div><small>Payment method</small><b>{{ $paymentMethodLabel }}</b></div>
         </div>
         @if($temporaryHold)
             <div class="receipt-hold-alert" role="note">
@@ -194,10 +219,8 @@
     </section>
 
     <div class="confirmation-card receipt-card">
-        <h2 class="receipt-details-title">Booking information</h2>
-        <div class="receipt-reference"><small>Booking reference</small><b>{{ $booking->reference }}</b></div>
+        <h2 class="receipt-details-title">Stay details</h2>
         <div><small>Stay type</small><b>{{ $booking->booking_type === 'hourly' ? $booking->hours . ' hours' : $booking->nights . ' night' . ($booking->nights === 1 ? '' : 's') }}</b></div>
-        <div><small>Room</small><b>{{ $booking->room->name }}</b></div>
         <div><small>Stay</small><b>{{ $booking->check_in_at && $booking->check_out_at ? $booking->check_in_at->format('M j, g A') . ' – ' . $booking->check_out_at->format('M j, g A') : $booking->check_in->format('M j') . ' – ' . $booking->check_out->format('M j, Y') }}</b></div>
         <div><small>Guests</small><b>{{ $booking->guests }} total{{ $booking->children_count ? ' · ' . $booking->children_count . ' child' . ($booking->children_count > 1 ? 'ren' : '') : '' }}</b></div>
         <div><small>Pets</small><b>{{ $booking->pets_count ? $booking->pets_count . ' pet' . ($booking->pets_count > 1 ? 's' : '') : 'None' }}</b></div>

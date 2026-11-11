@@ -5,8 +5,9 @@
 @endpush
 @section('content')
 <section class="stay-page">
+    @include('bookings.partials.context-bar', ['backUrl' => auth()->check() && auth()->id() === $booking->user_id ? route('bookings.index') : route('bookings.lookup'), 'backLabel' => auth()->check() && auth()->id() === $booking->user_id ? 'My bookings' : 'Find booking', 'roomName' => $booking->room?->name ?? 'Room unavailable', 'bookingReference' => $booking->reference])
     <span class="eyebrow">YOUR ARRIVAL</span><h1>A little less to worry about.</h1>
-    <p>{{ $booking->room?->name }} · {{ $booking->reference }}</p>
+    <p>Stay prepared with live room readiness and arrival updates from Carolina.</p>
     @foreach($notices as $notice)
         <aside class="stay-notice" role="status"><strong>{{ $notice->title }}</strong><p>{{ $notice->message }}</p><small>{{ ucfirst($notice->type) }} update · {{ \Carbon\Carbon::parse($notice->updated_at)->format('M j, g:i A') }}</small></aside>
     @endforeach

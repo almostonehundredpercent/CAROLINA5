@@ -25,6 +25,7 @@
         }
     </script>
     <link rel="stylesheet" href="{{ asset('css/site.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/booking-context.css') }}?v={{ filemtime(public_path('css/booking-context.css')) }}">
     <link rel="stylesheet" href="{{ asset('css/palette.css') }}?v={{ filemtime(public_path('css/palette.css')) }}">
     <link rel="stylesheet" href="{{ asset('css/password-toggle.css') }}">
     <link rel="stylesheet" href="{{ asset('css/responsive.css') }}?v={{ filemtime(public_path('css/responsive.css')) }}">
@@ -55,7 +56,6 @@
             <a href="{{ route('home') }}#about">About</a>
             <a href="#contact">Contact</a>
             @auth
-                <a href="{{ route('bookings.index') }}">My bookings</a>
                 @if(auth()->user()->is_admin)
                     <a href="{{ route('admin.dashboard') }}">Admin</a>
                 @endif
@@ -64,6 +64,7 @@
                     <svg viewBox="0 0 24 24" aria-hidden="true"></svg>
                     <span>Dark mode</span>
                 </button>
+                <a class="nav-button nav-profile" href="{{ route('bookings.index') }}">Profile</a>
                 <form method="POST" action="{{ route('logout') }}">
                     @csrf
                     <button class="nav-button" type="submit">Sign out</button>

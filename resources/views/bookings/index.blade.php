@@ -12,6 +12,7 @@
     </div>
 </section>
 <section class="section compact customer-profile">
+    @if(session('profile_success'))<p class="customer-profile-alert" role="status">{{ session('profile_success') }}</p>@endif
     <div class="customer-profile-actions" aria-label="Quick actions">
         <a class="customer-profile-action" href="{{ route('booking.start') }}"><span aria-hidden="true">＋</span><strong>New booking</strong><small>Find your next stay</small></a>
         <a class="customer-profile-action" href="#your-bookings"><span aria-hidden="true">▣</span><strong>Your stays</strong><small>View reservations and receipts</small></a>
@@ -25,12 +26,18 @@
 
     <article class="customer-profile-information" id="profile-information">
         <div class="customer-profile-card-heading"><div><span class="profile-kicker">ACCOUNT DETAILS</span><h2>Personal information</h2></div><span class="profile-member-badge">Member since {{ auth()->user()->created_at->format('Y') }}</span></div>
-        <dl class="customer-profile-details">
-            <div><dt>Full name</dt><dd>{{ auth()->user()->name }}</dd></div>
-            <div><dt>Email address</dt><dd>{{ auth()->user()->email }}</dd></div>
-            <div><dt>Email status</dt><dd>{{ auth()->user()->hasVerifiedEmail() ? 'Verified' : 'Not verified' }}</dd></div>
-            <div><dt>Account created</dt><dd>{{ auth()->user()->created_at->format('F j, Y') }}</dd></div>
-        </dl>
+        <form class="customer-profile-form" method="POST" action="{{ route('profile.update') }}">
+            @csrf @method('PATCH')
+            <div class="customer-profile-form-grid">
+                <label>Full name<input name="name" type="text" value="{{ old('name', auth()->user()->name) }}" autocomplete="name" maxlength="255" required @error('name') aria-invalid="true" aria-describedby="profile-name-error" @enderror>@error('name')<small class="customer-profile-field-error" id="profile-name-error">{{ $message }}</small>@enderror</label>
+                <label>Email address<input name="email" type="email" value="{{ old('email', auth()->user()->email) }}" autocomplete="email" maxlength="255" required @error('email') aria-invalid="true" aria-describedby="profile-email-error" @enderror>@error('email')<small class="customer-profile-field-error" id="profile-email-error">{{ $message }}</small>@enderror</label>
+            </div>
+            <div class="customer-profile-form-footer">
+                <p>Email status: <strong>{{ auth()->user()->hasVerifiedEmail() ? 'Verified' : 'Not verified' }}</strong>. Account created {{ auth()->user()->created_at->format('F j, Y') }}.</p>
+                @unless(auth()->user()->hasVerifiedEmail())<a href="{{ route('verification.notice') }}">Verify your email</a>@endunless
+                <button class="button" type="submit">Save changes</button>
+            </div>
+        </form>
     </article>
 
     <section class="customer-profile-stays" id="your-bookings" aria-labelledby="your-bookings-title">

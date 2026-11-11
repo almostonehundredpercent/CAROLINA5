@@ -3,6 +3,7 @@
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BookingController;
+use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\DecisionSupportController;
 use App\Http\Controllers\PayMongoWebhookController;
 use App\Http\Controllers\PromoCodeController;
@@ -106,6 +107,7 @@ Route::get('/bookings/{booking}/paymongo/return', [BookingController::class, 're
 Route::post('/webhooks/paymongo', PayMongoWebhookController::class)->name('bookings.paymongo.webhook');
 Route::middleware('auth')->group(function () {
     Route::get('/bookings', [BookingController::class, 'index'])->name('bookings.index');
+    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::patch('/bookings/{booking}/cancel', [BookingController::class, 'cancel'])->name('bookings.cancel');
     Route::post('/bookings/{booking}/review', [BookingController::class, 'submitReview'])->name('bookings.review');
 });
