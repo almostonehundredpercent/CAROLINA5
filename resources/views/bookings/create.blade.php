@@ -4,8 +4,6 @@
 <style>
 .booking-page{width:min(calc(100% - 40px),1240px);max-width:1240px;grid-template-columns:minmax(0,1.45fr) minmax(300px,.8fr);grid-template-areas:"heading summary" "form summary";column-gap:clamp(28px,5vw,68px);row-gap:18px;align-items:start}
 .booking-page-heading{grid-area:heading;min-width:0;margin:0}
-.booking-page-heading .booking-context-box{display:flex;align-items:center;justify-content:flex-start;padding:0;margin:0 0 18px;border:0;border-radius:0;background:transparent;box-shadow:none}
-.booking-page-heading .booking-context-back{min-height:42px;padding:9px 13px;border:1px solid rgba(153,91,13,.25);border-radius:8px;background:#fffaf2;color:#573718}
 .booking-page-heading .eyebrow{margin-bottom:8px}
 .booking-page-heading h1{max-width:720px;margin:0;color:var(--ink);font-size:clamp(2.6rem,5vw,4.5rem);line-height:.98;letter-spacing:-.045em}
 .booking-page-heading>p{margin:10px 0 0;color:var(--muted);font-size:.95rem}
@@ -16,9 +14,6 @@
 .dark-mode .booking-page .booking-form textarea,.dark-mode .booking-availability-status{background:#211a15;border-color:var(--line);color:var(--ink)}
 .booking-page .booking-form{background:transparent;border:0;border-radius:0;box-shadow:none}
 .booking-page .booking-form form{margin-top:12px}
-.booking-page-heading .booking-context-back:hover{border-color:#c97900;background:#fff1da;color:#573718}
-.dark-mode .booking-page-heading .booking-context-back{border-color:#785629;background:#292019;color:#ffe0ad}
-.dark-mode .booking-page-heading .booking-context-back:hover{border-color:#d48b22;background:#3b2c20;color:#fff0d5}
 .booking-page .hourly-booked-summary.is-clear{border-color:#e6d4bd;background:#f7efe4;color:#746558}
 .booking-page .hourly-rental{border-color:#e5d4be;border-radius:14px;background:linear-gradient(145deg,#fffaf2,#f6ecdf);color:#34291f;box-shadow:0 10px 24px rgba(76,53,31,.07)}
 .booking-page .hourly-rental #hourly-total{background:#f0dfc9;color:#773c12}
@@ -100,9 +95,8 @@
 </style>
 <style>
 @media(max-width:800px){.booking-page{width:min(calc(100% - 28px),680px);grid-template-columns:minmax(0,1fr);grid-template-areas:"heading" "summary" "form";gap:16px;margin:28px auto}.booking-page .booking-summary{position:relative;top:auto;display:grid;grid-template-columns:108px minmax(0,1fr);align-items:center;margin:0;padding:10px;border-radius:10px}.booking-summary-head{grid-column:1/-1;padding:0 0 9px}.booking-summary-image{grid-column:1;grid-row:2 / span 2;width:108px;height:88px;margin:0}.booking-summary img{width:100%;height:100%;object-fit:cover}.booking-summary-image::after,.booking-summary-image-label{display:none}.booking-summary-content{grid-column:2;grid-row:2;padding:0 0 0 12px}.booking-summary h3{font-size:1.08rem}.booking-summary-content>p{margin-top:3px;font-size:.78rem}.booking-summary-rate{margin-top:5px;padding:5px 0 0}.booking-summary-rate-label{font-size:.7rem}.booking-summary-rate strong{font-size:.9rem}.booking-summary-total{grid-column:1/-1;margin:9px 0 0;padding:9px 11px}.booking-summary-total strong{font-size:1rem}}
-@media(max-width:520px){.booking-page{width:calc(100% - 24px);grid-template-columns:minmax(0,1fr);grid-template-areas:"heading" "summary" "form";gap:14px;margin:22px auto}.booking-page-heading .booking-context-box{margin-bottom:12px}.booking-page-heading h1{font-size:clamp(2.3rem,10vw,3.3rem)}.booking-page .booking-form{padding:0}.booking-page .booking-summary{grid-template-columns:88px minmax(0,1fr);padding:9px}.booking-summary-head{padding-bottom:7px}.booking-summary-image{width:88px;height:78px}.booking-summary-content{padding-left:10px}.booking-summary-content>p{font-size:.72rem}.booking-summary-rate{align-items:center;flex-direction:row;gap:4px}.booking-summary-rate strong{text-align:right}.booking-summary-total{padding:8px 10px}.booking-summary-total small{font-size:.7rem}.stay-date-fields{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.availability-calendar{padding:12px}.party-detail-fields{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.party-capacity{padding:9px 8px;font-size:.78rem}.booking-type-selector{padding:12px}.booking-type-options{grid-template-columns:1fr 1fr;gap:8px}.booking-type-options a{padding:10px}.booking-type-options strong{font-size:.82rem}.booking-type-options small{font-size:.68rem}.booking-contact-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.booking-contact-fields>label:first-child{grid-column:1/-1}.promo-entry-row{grid-template-columns:minmax(0,1fr) auto}.promo-entry-row button{min-height:42px}.booking-page .booking-form form{gap:12px}}
+@media(max-width:520px){.booking-page{width:calc(100% - 24px);grid-template-columns:minmax(0,1fr);grid-template-areas:"heading" "summary" "form";gap:14px;margin:22px auto}.booking-page-heading h1{font-size:clamp(2.3rem,10vw,3.3rem)}.booking-page .booking-form{padding:0}.booking-page .booking-summary{grid-template-columns:88px minmax(0,1fr);padding:9px}.booking-summary-head{padding-bottom:7px}.booking-summary-image{width:88px;height:78px}.booking-summary-content{padding-left:10px}.booking-summary-content>p{font-size:.72rem}.booking-summary-rate{align-items:center;flex-direction:row;gap:4px}.booking-summary-rate strong{text-align:right}.booking-summary-total{padding:8px 10px}.booking-summary-total small{font-size:.7rem}.stay-date-fields{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.availability-calendar{padding:12px}.party-detail-fields{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.party-capacity{padding:9px 8px;font-size:.78rem}.booking-type-selector{padding:12px}.booking-type-options{grid-template-columns:1fr 1fr;gap:8px}.booking-type-options a{padding:10px}.booking-type-options strong{font-size:.82rem}.booking-type-options small{font-size:.68rem}.booking-contact-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.booking-contact-fields>label:first-child{grid-column:1/-1}.promo-entry-row{grid-template-columns:minmax(0,1fr) auto}.promo-entry-row button{min-height:42px}.booking-page .booking-form form{gap:12px}}
 @media(max-width:360px){.stay-date-fields,.booking-contact-fields,.party-detail-fields{grid-template-columns:1fr}.booking-contact-fields>label:first-child{grid-column:auto}.booking-type-options{grid-template-columns:1fr}.booking-page .booking-summary{grid-template-columns:76px minmax(0,1fr)}.booking-summary-image{width:76px;height:72px}}
-.dark-mode .booking-page-heading .booking-context-back{color:#ffe0ad}
 .checkout-choice{display:flex;width:max-content;max-width:100%;gap:4px;margin:0 0 12px;padding:4px;border:1px solid var(--line);border-radius:9px;background:var(--sand)}
 .checkout-choice a{display:inline-flex;align-items:center;justify-content:center;min-height:38px;padding:7px 12px;border:1px solid transparent;border-radius:6px;color:var(--muted);font-size:.82rem;font-weight:700}
 .checkout-choice a.active{border-color:var(--line);background:var(--paper);color:var(--ink);box-shadow:0 2px 6px rgba(45,37,31,.06)}
@@ -141,7 +135,6 @@
 </style>
 <section class="booking-page">
     <header class="booking-page-heading">
-        @include('bookings.partials.context-bar', ['backUrl' => route('booking.start', $bookingSearch), 'backLabel' => 'rooms'])
         <span class="eyebrow">RESERVATION DETAILS</span>
         <h1>Complete your booking.</h1>
         <p>Choose your stay details and guest information.</p>
