@@ -50,16 +50,16 @@
             <span></span><span></span><span></span>
         </button>
         <nav id="primary-navigation">
-            <a href="{{ route('home') }}">Home</a>
-            <a href="{{ route('rooms.index') }}">Rooms</a>
-            @guest<a href="{{ route('bookings.lookup') }}">Find booking</a>@endguest
-            <a href="{{ route('about') }}">About</a>
-            <a href="{{ route('contact') }}">Contact</a>
+            <a href="{{ route('home') }}" @if(request()->routeIs('home')) aria-current="page" @endif>Home</a>
+            <a href="{{ route('rooms.index') }}" @if(request()->routeIs('rooms.*')) aria-current="page" @endif>Rooms</a>
+            @guest<a href="{{ route('bookings.lookup') }}" @if(request()->routeIs('bookings.lookup*')) aria-current="page" @endif>Find booking</a>@endguest
+            <a href="{{ route('about') }}" @if(request()->routeIs('about')) aria-current="page" @endif>About</a>
+            <a href="{{ route('contact') }}" @if(request()->routeIs('contact')) aria-current="page" @endif>Contact</a>
             @auth
                 @if(auth()->user()->is_admin)
-                    <a href="{{ route('admin.dashboard') }}">Admin</a>
+                    <a href="{{ route('admin.dashboard') }}" @if(request()->routeIs('admin.*')) aria-current="page" @endif>Admin</a>
                 @endif
-                <a class="nav-button nav-book-now" href="{{ route('booking.start') }}">Book now</a>
+                <a class="nav-button nav-book-now" href="{{ route('booking.start') }}" @if(request()->routeIs('booking.start', 'bookings.create', 'bookings.receipt', 'bookings.confirmation', 'bookings.paymongo.return')) aria-current="page" @endif>Book now</a>
                 <button class="theme-toggle nav-theme-toggle" type="button" aria-label="Enable dark mode" aria-pressed="false">
                     <svg viewBox="0 0 24 24" aria-hidden="true"></svg>
                     <span>Dark mode</span>
@@ -72,7 +72,7 @@
                     </form>
                 @endif
             @else
-                <a class="nav-button nav-book-now" href="{{ route('booking.start') }}">Book now</a>
+                <a class="nav-button nav-book-now" href="{{ route('booking.start') }}" @if(request()->routeIs('booking.start', 'bookings.create', 'bookings.receipt', 'bookings.confirmation', 'bookings.paymongo.return')) aria-current="page" @endif>Book now</a>
                 <button class="theme-toggle nav-theme-toggle" type="button" aria-label="Enable dark mode" aria-pressed="false">
                     <svg viewBox="0 0 24 24" aria-hidden="true"></svg>
                     <span>Dark mode</span>
