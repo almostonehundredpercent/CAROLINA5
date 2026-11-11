@@ -103,6 +103,18 @@
 @media(max-width:520px){.booking-contact-fields{gap:10px}}
 @media(max-width:360px){.booking-contact-fields{grid-template-columns:1fr}.booking-contact-fields>label:first-child{grid-column:auto}}
 </style>
+<style>
+.stay-date-fields input[readonly]{width:100%;min-width:0;min-height:54px;padding:14px;border-radius:8px;font-size:.95rem;font-weight:650}
+.booking-type-selector{padding:12px}
+.booking-type-options a{padding:11px 12px}
+.guest-contact-section{padding:18px;border:1px solid #e8d6bf;border-radius:12px;background:#fffaf2;box-shadow:0 8px 20px rgba(76,53,31,.05)}
+.guest-contact-section h3{margin:0 0 14px;color:var(--ink);font-size:1.15rem}
+.booking-contact-fields input{min-height:46px;background:#fffdf9;border-color:#d8c5ab}
+.dark-mode .guest-contact-section{border-color:#76552e;background:#211a15;box-shadow:none}
+.dark-mode .booking-contact-fields input{border-color:var(--line);background:#30251f;color:var(--ink)}
+.dark-mode .booking-contact-fields input::placeholder{color:#c8b5a0;opacity:1}
+@media(max-width:520px){.stay-date-fields input[readonly]{min-height:54px}.booking-type-selector{padding:10px}.booking-type-options a{padding:8px}.guest-contact-section{padding:14px}}
+</style>
 <section class="booking-page">
     <header class="booking-page-heading">
         @include('bookings.partials.context-bar', ['backUrl' => route('rooms.show', $room), 'backLabel' => 'room details'])
@@ -192,12 +204,14 @@
                 </section>
 
                 @if($isGuest)
-                    <h3>Guest contact information</h3>
+                    <section class="guest-contact-section" aria-labelledby="guest-contact-heading">
+                    <h3 id="guest-contact-heading">Guest contact information</h3>
                     <div class="booking-contact-fields">
                     <label>Full name<input id="guest-name" name="guest_name" value="{{ old('guest_name') }}" placeholder="e.g., Maria Santos" autocomplete="name" maxlength="255" required @error('guest_name') aria-invalid="true" aria-describedby="guest-name-error" @enderror>@error('guest_name')<small class="booking-field-error" id="guest-name-error">{{ $message }}</small>@enderror</label>
                     <label>Email address<input id="guest-email" type="email" name="guest_email" value="{{ old('guest_email') }}" placeholder="e.g., maria@example.com" autocomplete="email" inputmode="email" autocapitalize="none" spellcheck="false" maxlength="255" required @error('guest_email') aria-invalid="true" aria-describedby="guest-email-error" @enderror>@error('guest_email')<small class="booking-field-error" id="guest-email-error">{{ $message }}</small>@enderror</label>
                     <label>Phone number<input id="guest-phone" type="tel" name="guest_phone" value="{{ old('guest_phone') }}" placeholder="09XX XXX XXXX" autocomplete="tel" inputmode="tel" maxlength="20" title="Enter a Philippine mobile number, such as 09XX XXX XXXX or +63 9XX XXX XXXX." required @error('guest_phone') aria-invalid="true" aria-describedby="guest-phone-error" @enderror>@error('guest_phone')<small class="booking-field-error" id="guest-phone-error">{{ $message }}</small>@enderror</label>
                     </div>
+                    </section>
                 @endif
                 <details class="promo-entry" data-promo-quote-url="{{ route('rooms.promos.quote', $room) }}" @if(old('promo_code')) open @endif>
                     <summary>Promo code <span>Optional</span></summary>
@@ -238,7 +252,10 @@
         </div>
         <div class="booking-summary-image">
             <a class="booking-summary-image-link" href="{{ route('rooms.show', $room) }}" aria-label="View {{ $room->name }} photos and details">
-                <img src="{{ $room->image_url }}" alt="{{ $room->name }} room photo">
+                <picture>
+                    @if($roomWebpSrcset = $room->responsiveWebpSrcset())<source type="image/webp" srcset="{{ $roomWebpSrcset }}" sizes="(max-width: 520px) 88px, (max-width: 800px) 108px, 380px">@endif
+                    @if($roomSrcset = $room->responsiveImageSrcset())<img src="{{ $room->image_url }}" srcset="{{ $roomSrcset }}" sizes="(max-width: 520px) 88px, (max-width: 800px) 108px, 380px" alt="{{ $room->name }} room photo" fetchpriority="high" decoding="async">@else<img src="{{ $room->image_url }}" alt="{{ $room->name }} room photo" fetchpriority="high" decoding="async">@endif
+                </picture>
                 <span class="booking-summary-image-label">View room photos <span aria-hidden="true">↗</span></span>
             </a>
         </div>

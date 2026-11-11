@@ -22,7 +22,7 @@ async function render(viewport) {
     await page.setContent(`<html><head><style>${baseStyles}\n${paletteStyles}\n${bookingStyles}</style></head><body>
         <section class="booking-page">
             <header class="booking-page-heading"><span class="eyebrow">RESERVATION DETAILS</span><h1>Complete your booking.</h1></header>
-            <main class="booking-form"><form><input type="hidden" name="booking_type" value="dates"><input type="hidden" name="check_in" value="2026-11-12"><input type="hidden" name="check_out" value="2026-11-14"><section class="booking-type-selector"><span class="booking-type-label">Choose your stay type</span><div class="booking-type-options"><a class="active"><strong>Book by dates</strong><small>Overnight or multi-day stays</small></a><a><strong>Rent by hours</strong><small>Short stays for 3, 12, or 24 hours</small></a></div></section><div class="stay-date-fields"><label>Check in<input value="Nov 12, 2026"></label><label>Check out<input value="Nov 14, 2026"></label></div><section class="availability-calendar"><div class="calendar-heading"><strong>Room availability</strong></div><div class="calendar-weekdays">${'<span>Sun</span>'.repeat(7)}</div><div class="calendar-days">${'<button class="calendar-day">12</button>'.repeat(14)}</div></section><section class="stay-party-details"><strong>Guest details</strong><div class="party-detail-fields"><label>Total guests</label><label>Children</label><label>Pets</label></div></section><h3>Guest contact information</h3><div class="booking-contact-fields"><label>Full name<input></label><label>Email address<input></label><label>Phone number<input></label></div><details class="promo-entry"><summary>Promo code</summary></details><button class="button" id="booking-submit" type="submit">Continue to review</button></form></main>
+            <main class="booking-form"><form><input type="hidden" name="booking_type" value="dates"><input type="hidden" name="check_in" value="2026-11-12"><input type="hidden" name="check_out" value="2026-11-14"><section class="booking-type-selector"><span class="booking-type-label">Choose your stay type</span><div class="booking-type-options"><a class="active"><strong>Book by dates</strong><small>Overnight or multi-day stays</small></a><a><strong>Rent by hours</strong><small>Short stays for 3, 12, or 24 hours</small></a></div></section><div class="stay-date-fields"><label>Check in<input readonly value="Nov 12, 2026"></label><label>Check out<input readonly value="Nov 14, 2026"></label></div><section class="availability-calendar"><div class="calendar-heading"><strong>Room availability</strong></div><div class="calendar-weekdays">${'<span>Sun</span>'.repeat(7)}</div><div class="calendar-days">${'<button class="calendar-day">12</button>'.repeat(14)}</div></section><section class="stay-party-details"><strong>Guest details</strong><div class="party-detail-fields"><label>Total guests</label><label>Children</label><label>Pets</label></div></section><section class="guest-contact-section"><h3>Guest contact information</h3><div class="booking-contact-fields"><label>Full name<input></label><label>Email address<input></label><label>Phone number<input></label></div></section><details class="promo-entry"><summary>Promo code</summary></details><button class="button" id="booking-submit" type="submit">Continue to review</button></form></main>
             <aside class="booking-summary"><div class="booking-summary-head">Your selected room</div><div class="booking-summary-image"><img alt="Room"></div><div class="booking-summary-content"><h3>Room 5</h3><p>Whole house · Up to 10 guests</p><div class="booking-summary-rate"><span>Room rate</span><strong>₱4,500 <small>per night</small></strong></div></div><div class="booking-summary-total"><span>Estimated total</span><strong id="booking-summary-total" data-night-rate="4500" data-hourly-rate="187.5" data-package-rate="" data-package-hours="">Choose dates</strong><small id="booking-summary-period">Choose your stay to see an estimate.</small></div></aside>
         </section><script>${estimateScript}</script></body></html>`);
     return page;
@@ -101,7 +101,7 @@ test('booking form and room summary align on desktop and stack without horizonta
                 };
             });
 
-            assert.ok(layout.bodyWidth <= layout.viewport, `booking page should not overflow horizontally at ${width}px`);
+            assert.ok(layout.bodyWidth <= layout.viewport, `booking page should not overflow horizontally at ${width}px: ${JSON.stringify(layout)}`);
             assert.ok(layout.heading.width > 0 && layout.form.width > 0 && layout.summary.width > 0);
             if (width > 800) {
                 assert.ok(Math.abs(layout.heading.y - layout.summary.y) < 20, `room summary should align with the booking heading on desktop: ${JSON.stringify(layout)}`);
@@ -112,6 +112,40 @@ test('booking form and room summary align on desktop and stack without horizonta
                 assert.ok(layout.calendar.width <= layout.form.width, `mobile calendar should fit inside the form column: ${JSON.stringify(layout)}`);
             }
 
+        } finally {
+            await page.close();
+        }
+    }
+});
+
+test('date selectors are easy to tap and guest contact fields sit on a visible surface', async () => {
+    assert.match(view, /<section class="guest-contact-section"[\s\S]*?Guest contact information[\s\S]*?booking-contact-fields/);
+
+    for (const width of [1440, 390, 320]) {
+        const page = await render({ width, height: 900 });
+        try {
+            const result = await page.evaluate(() => {
+                const dateField = document.querySelector('.stay-date-fields input').getBoundingClientRect();
+                const stayType = document.querySelector('.booking-type-selector').getBoundingClientRect();
+                const contact = document.querySelector('.guest-contact-section');
+                const contactStyle = getComputedStyle(contact);
+                return {
+                    dateHeight: dateField.height,
+                    stayTypeHeight: stayType.height,
+                    contactBackground: contactStyle.backgroundColor,
+                    contactBorder: contactStyle.borderTopWidth,
+                    contactWidth: contact.getBoundingClientRect().width,
+                    viewport: document.documentElement.clientWidth,
+                    bodyWidth: document.documentElement.scrollWidth,
+                };
+            });
+
+            assert.ok(result.dateHeight >= 52, `date selector should provide a comfortable tap target at ${width}px: ${JSON.stringify(result)}`);
+            assert.notEqual(result.contactBackground, 'rgba(0, 0, 0, 0)', `guest contact area should have an opaque surface at ${width}px`);
+            assert.ok(Number.parseFloat(result.contactBorder) >= 1, 'guest contact area should have a visible outline');
+            assert.ok(result.contactWidth > 0 && result.contactWidth <= result.viewport);
+            assert.ok(result.bodyWidth <= result.viewport, `booking form should not overflow at ${width}px`);
+            if (width === 1440) assert.ok(result.stayTypeHeight < 125, `stay type selector should remain compact on desktop: ${JSON.stringify(result)}`);
         } finally {
             await page.close();
         }

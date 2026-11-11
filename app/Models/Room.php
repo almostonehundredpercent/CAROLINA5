@@ -44,7 +44,7 @@ class Room extends Model
     public function responsiveWebpSrcset(?string $imageUrl = null): ?string
     {
         $path = parse_url($imageUrl ?? $this->image_url ?? '', PHP_URL_PATH);
-        if (! is_string($path) || ! preg_match('~^/images/rooms/(room-(?:7|10|11|13)-angle-[1-3])\.jpg$~', $path, $matches)) {
+        if (! is_string($path) || ! preg_match('~^/images/rooms/(room-\d+-angle-[1-3])\.jpg$~', $path, $matches)) {
             return null;
         }
 
