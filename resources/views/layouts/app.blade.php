@@ -65,7 +65,7 @@
                     <svg viewBox="0 0 24 24" aria-hidden="true"></svg>
                     <span>Dark mode</span>
                 </button>
-                @unless(request()->routeIs('profile.show'))<a class="nav-button nav-profile" href="{{ route('profile.show') }}" @if(request()->routeIs('profile.show')) aria-current="page" @endif>Profile</a>@endunless
+                @unless(request()->routeIs('profile.show', 'bookings.index'))<a class="nav-button nav-profile" href="{{ route('profile.show') }}">Profile</a>@endunless
                 @if(request()->routeIs('profile.show', 'bookings.index'))
                     <form method="POST" action="{{ route('logout') }}">
                         @csrf
