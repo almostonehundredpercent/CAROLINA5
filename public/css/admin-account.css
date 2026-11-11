@@ -14,7 +14,11 @@
 .account-settings-form input:focus-visible { outline: 3px solid rgba(220,133,0,.3); outline-offset: 1px; border-color: var(--orange); }
 .account-password-field { position: relative; display: block; }
 .account-password-field input { padding-right: 68px; }
-.account-password-toggle { position: absolute; top: 50%; right: 9px; min-width: 48px; min-height: 34px; padding: 5px 8px; transform: translateY(-50%); border: 0; border-radius: 7px; background: transparent; color: var(--orange-dark); font: inherit; font-size: 12px; font-weight: 800; cursor: pointer; }
+.account-password-toggle { position: absolute; top: 50%; right: 8px; display: grid; width: 36px; height: 36px; place-items: center; transform: translateY(-50%); border: 0; border-radius: 7px; background: transparent; color: var(--orange-dark); cursor: pointer; }
+.account-eye-icon { display: block; width: 19px; height: 19px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.account-eye-pupil { fill: currentColor; stroke: none; }
+.account-eye-slash { display: none; }
+.account-password-toggle[aria-pressed="true"] .account-eye-slash { display: block; }
 .account-password-toggle:hover { background: rgba(220,133,0,.1); }
 .account-password-toggle:focus-visible { outline: 3px solid rgba(220,133,0,.3); outline-offset: 1px; }
 .account-verification { display: flex; align-items: flex-start; gap: 9px; padding: 11px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--paper); }
