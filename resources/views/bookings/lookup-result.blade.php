@@ -15,6 +15,15 @@
 <style>
     .guest-portal{--portal-surface:#fffaf3;--portal-border:#e6d8c8;--portal-subtle:#f5eee5;width:min(1040px,calc(100% - 40px));margin:clamp(32px,6vh,68px) auto 72px}
     .guest-portal-header{display:flex;align-items:flex-end;justify-content:space-between;gap:28px;margin-bottom:28px;padding-bottom:24px;border-bottom:1px solid var(--line)}
+    .guest-portal-context{display:flex;align-items:center;justify-content:space-between;gap:20px;margin-bottom:26px;padding:0}
+    .guest-portal-back{display:inline-flex;align-items:center;gap:8px;min-height:40px;color:var(--ink);font-size:.84rem;font-weight:750;text-decoration:none}
+    .guest-portal-back span{color:var(--gold);font-size:1.1rem}
+    .guest-portal-back:hover{color:var(--gold)}
+    .guest-portal-identifiers{display:flex;align-items:stretch;min-width:0}
+    .guest-portal-identifiers>div{display:grid;align-content:center;gap:3px;min-width:130px;padding:2px 13px}
+    .guest-portal-identifiers>div+div{border-left:1px solid var(--line)}
+    .guest-portal-identifiers small{color:var(--muted);font-size:.65rem;font-weight:800;letter-spacing:.09em;text-transform:uppercase}
+    .guest-portal-identifiers strong{color:var(--ink);font-size:.86rem;line-height:1.35;overflow-wrap:anywhere}
     .guest-portal-heading{min-width:0}
     .guest-portal .eyebrow{margin:0 0 9px;color:var(--gold)}
     .guest-portal-header h1{margin:0 0 9px;font-size:clamp(2.5rem,5vw,3.8rem);line-height:1.03}
@@ -62,12 +71,18 @@
     .dark-mode .portal-action-card .button.danger:hover{background:#4a2923}
     .dark-mode .portal-action-card .button.secondary{border-color:var(--portal-border);color:var(--ink)}
     .guest-portal :focus-visible{outline:3px solid #d99223;outline-offset:3px}
-    @media(max-width:760px){.guest-portal{width:min(100% - 32px,620px);margin:32px auto 48px}.guest-portal-header{align-items:stretch;flex-direction:column;gap:18px;margin-bottom:18px;padding-bottom:20px}.guest-arrival-link{width:100%}.guest-portal-grid{grid-template-columns:1fr;gap:14px}.portal-surface,.portal-action-card{padding:20px}}
+    @media(max-width:760px){.guest-portal{width:min(100% - 32px,620px);margin:32px auto 48px}.guest-portal-context{align-items:flex-start;flex-direction:column;gap:10px;margin-bottom:20px}.guest-portal-identifiers{width:100%}.guest-portal-identifiers>div{min-width:0;flex:1;padding:2px 10px}.guest-portal-identifiers>div:first-child{padding-left:0}.guest-portal-header{align-items:stretch;flex-direction:column;gap:18px;margin-bottom:18px;padding-bottom:20px}.guest-arrival-link{width:100%}.guest-portal-grid{grid-template-columns:1fr;gap:14px}.portal-surface,.portal-action-card{padding:20px}}
     @media(max-width:480px){.guest-portal{width:calc(100% - 24px);margin-top:24px}.guest-portal-header h1{font-size:2.55rem}.portal-summary-heading{align-items:flex-start;flex-direction:column;gap:12px}.portal-facts{grid-template-columns:1fr}.portal-fact{min-height:72px;padding:12px 14px}.portal-surface,.portal-action-card{padding:18px;border-radius:15px}}
 </style>
 
 <section class="guest-portal" aria-labelledby="guest-portal-title">
-    @include('bookings.partials.context-bar', ['backUrl' => route('bookings.lookup'), 'backLabel' => 'Find booking', 'roomName' => $booking->room?->name ?? 'Room unavailable', 'bookingReference' => $booking->reference])
+    <nav class="guest-portal-context" aria-label="Booking context">
+        <a class="guest-portal-back" href="{{ route('bookings.lookup') }}"><span aria-hidden="true">←</span> Back to Find booking</a>
+        <div class="guest-portal-identifiers" role="group" aria-label="Room and booking reference">
+            <div><small>Room</small><strong>{{ $booking->room?->name ?? 'Room unavailable' }}</strong></div>
+            <div><small>Booking reference</small><strong>{{ $booking->reference }}</strong></div>
+        </div>
+    </nav>
     <header class="guest-portal-header">
         <div class="guest-portal-heading">
             <span class="eyebrow">GUEST PORTAL</span>
