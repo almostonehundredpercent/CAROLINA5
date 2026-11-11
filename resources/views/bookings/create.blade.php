@@ -13,10 +13,13 @@
 .booking-summary-kicker{color:var(--summary-accent);font-size:.68rem;font-weight:800;letter-spacing:.13em;text-transform:uppercase}
 .booking-summary-chip{padding:7px 10px;border:1px solid var(--summary-chip-line);border-radius:999px;background:var(--summary-chip-bg);color:var(--summary-accent);font-size:.7rem;font-weight:700;white-space:nowrap}
 .booking-summary-image{position:relative;overflow:hidden;margin:0 18px;border:1px solid rgba(255,255,255,.12);border-radius:14px;background:#17120f;box-shadow:0 12px 26px rgba(0,0,0,.2)}
+.booking-summary-image-link{position:relative;display:block;color:inherit;text-decoration:none;cursor:pointer}
+.booking-summary-image:focus-within{outline:3px solid #f1ad4b;outline-offset:3px}
 .booking-summary-image::after{content:"";position:absolute;inset:35% 0 0;background:linear-gradient(transparent,rgba(18,13,10,.58));pointer-events:none}
 .booking-summary img{display:block;width:100%;height:clamp(190px,22vw,270px);object-fit:cover;object-position:center 55%;border-radius:0;transition:transform .45s ease}
-.booking-summary:hover img{transform:scale(1.025)}
-.booking-summary-image-label{position:absolute;z-index:1;bottom:12px;left:13px;padding:7px 10px;border:1px solid rgba(255,255,255,.26);border-radius:999px;background:rgba(31,23,17,.76);backdrop-filter:blur(8px);color:#fff7ec;font-size:.68rem;font-weight:700;letter-spacing:.03em}
+.booking-summary-image-link:hover img,.booking-summary-image-link:focus-visible img{transform:scale(1.025)}
+.booking-summary-image-label{position:absolute;z-index:1;bottom:12px;left:13px;display:inline-flex;align-items:center;gap:8px;padding:7px 10px;border:1px solid rgba(255,255,255,.26);border-radius:999px;background:rgba(31,23,17,.76);backdrop-filter:blur(8px);color:#fff7ec;font-size:.68rem;font-weight:700;letter-spacing:.03em;pointer-events:none}
+.booking-summary-image-label span{font-size:.82rem;line-height:1}
 .booking-summary-content{position:relative;padding:17px 20px 20px}
 .booking-summary h3{margin:0;color:var(--summary-title);font:700 1.5rem/1.2 'Playfair Display',serif;letter-spacing:-.02em}
 .booking-summary p{margin:8px 0 0;color:var(--summary-copy);line-height:1.5}
@@ -198,8 +201,10 @@
             <span class="booking-summary-chip">Carolina stay</span>
         </div>
         <div class="booking-summary-image">
-            <img src="{{ $room->image_url }}" alt="{{ $room->name }}">
-            <span class="booking-summary-image-label">Room preview</span>
+            <a class="booking-summary-image-link" href="{{ route('rooms.show', $room) }}" aria-label="View {{ $room->name }} photos and details">
+                <img src="{{ $room->image_url }}" alt="{{ $room->name }} room photo">
+                <span class="booking-summary-image-label">View room photos <span aria-hidden="true">↗</span></span>
+            </a>
         </div>
         <div class="booking-summary-content">
             <h3>{{ $room->name }}</h3>
