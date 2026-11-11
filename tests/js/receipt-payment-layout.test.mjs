@@ -49,6 +49,25 @@ test('changing the payment choice updates the amount and payment summary label',
     }
 });
 
+test('back-to-home action has an opaque branded surface and warm white text in both themes', async () => {
+    for (const mode of ['light', 'dark']) {
+        const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
+        try {
+            await page.setContent(`<html class="${mode === 'dark' ? 'dark-mode' : ''}"><head><style>${baseStyles}\n${paletteStyles}\n${receiptStyles}</style></head><body><section class="confirmation receipt-page"><div class="receipt-actions"><a class="button receipt-home-link" href="/">Back to home</a></div></section></body></html>`);
+            const colors = await page.locator('.receipt-home-link').evaluate(button => {
+                const style = getComputedStyle(button);
+                return { background: style.backgroundColor, text: style.color };
+            });
+
+            assert.equal(colors.background, 'rgb(119, 60, 18)', `${mode} home action should have the deep Carolina-brown fill`);
+            assert.equal(colors.text, 'rgb(246, 241, 233)', `${mode} home action should use dirty-white text`);
+            assert.notEqual(colors.background, 'rgba(0, 0, 0, 0)', `${mode} home action must not be transparent`);
+        } finally {
+            await page.close();
+        }
+    }
+});
+
 test('payment summary is readable and stays within desktop and mobile viewports in both themes', async () => {
     for (const mode of ['light', 'dark']) {
         for (const width of [1440, 768, 390, 320]) {

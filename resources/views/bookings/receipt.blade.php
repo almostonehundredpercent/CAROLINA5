@@ -142,6 +142,9 @@
     .receipt-stay-details small{display:block;margin-bottom:4px;color:var(--muted);font-size:.73rem}
     .receipt-stay-details b{display:block;color:var(--ink);font-size:.88rem;line-height:1.45;overflow-wrap:anywhere}
     .receipt-actions{width:min(100%,1080px);margin:0 auto;justify-content:flex-start}
+    .receipt-actions .receipt-home-link{border:1px solid #773c12;background:#773c12;color:#f6f1e9}
+    .receipt-actions .receipt-home-link:hover{border-color:#63310e;background:#63310e;color:#fffaf3}
+    .receipt-actions .receipt-home-link:focus-visible{outline:3px solid #c97900;outline-offset:3px}
     .dark-mode .receipt-unified-card{border-color:#60472f;background:linear-gradient(145deg,#261e18,#1d1713);color:#fff4e8;box-shadow:0 18px 42px rgba(0,0,0,.24)}
     .dark-mode .receipt-booking-context{border-color:#4b3930;background:linear-gradient(100deg,#30251f,#261e18)}
     .dark-mode .receipt-back-link,.dark-mode .receipt-context-identifiers b,.dark-mode .receipt-stay-details .receipt-details-title,.dark-mode .receipt-stay-details b{color:#fff4e8}
@@ -266,9 +269,7 @@
     </div>
     </article>
     <div class="receipt-actions">
-        <a class="button" href="{{ \App\Http\Controllers\StayController::link($booking) }}">Booking summary</a>
-        <a class="button button-outline" href="{{ route('home') }}">Back to home</a>
-        <button class="button light" type="button" onclick="window.print()">Print / save receipt</button>
+        <a class="button receipt-home-link" href="{{ route('home') }}">Back to home</a>
     </div>
 </section>
 @if(session('booking_payment_success'))

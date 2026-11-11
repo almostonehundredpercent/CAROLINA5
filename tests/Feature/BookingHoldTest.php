@@ -369,6 +369,24 @@ test('receipt groups payment and reservation details in one compact layout', fun
         ->assertSee('payment-option');
 });
 
+test('receipt footer keeps only a solid back-to-home action', function () {
+    $booking = heldBooking(holdRoom(), ['hold_expires_at' => now()->addMinutes(30)]);
+    $response = $this->withSession(['guest_booking_reference' => $booking->reference])->get(route('bookings.receipt', $booking))->assertOk();
+
+    $document = new DOMDocument;
+    @$document->loadHTML($response->getContent());
+    $xpath = new DOMXPath($document);
+    $actions = $xpath->query('//div[contains(concat(" ", normalize-space(@class), " "), " receipt-actions ")]');
+    $footerActions = $xpath->query('.//a | .//button', $actions->item(0));
+
+    expect($actions->length)->toBe(1)
+        ->and($footerActions->length)->toBe(1);
+    $response->assertSee('Back to home')
+        ->assertSee('class="button receipt-home-link"', false)
+        ->assertDontSee('Booking summary')
+        ->assertDontSee('Print / save receipt');
+});
+
 test('booking confirmation email explains the hold and links to secure booking lookup', function () {
     config()->set('services.paymongo.mode', 'test');
     $booking = heldBooking(holdRoom(), ['hold_expires_at' => now()->addMinutes(30)]);
