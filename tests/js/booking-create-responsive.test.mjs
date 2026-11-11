@@ -11,6 +11,7 @@ const [view, baseStyles, paletteStyles] = await Promise.all([
 ]);
 const bookingStyles = [...view.matchAll(/<style>([\s\S]*?)<\/style>/g)].map(match => match[1]).join('\n');
 const estimateScript = view.match(/<script>\s*(document.addEventListener\('DOMContentLoaded', \(\) => \{\s*const total = document.getElementById\('booking-summary-total'[\s\S]*?)<\/script>/)?.[1];
+const datePickerScript = view.match(/const ranges = @json\(\$blockedRanges\);\s*([\s\S]*?)\s*const updatePropertyDate =/)?.[1];
 let browser;
 
 before(async () => { browser = await chromium.launch({ headless: true }); });
@@ -31,6 +32,48 @@ test('booking page source gives the room summary one estimate and keeps the prom
     assert.match(view, /class="booking-page-heading"/);
     assert.match(view, /class="booking-summary-total"/);
     assert.match(view, /<details[^>]*class="promo-entry"/);
+});
+
+test('date calendar starts closed and guest mode does not repeat the sign-in/guest choice', () => {
+    const calendarTag = view.match(/<section class="availability-calendar"[^>]*>/)?.[0] ?? '';
+    const checkInField = view.match(/<input id="check-in-display"[^>]*>/)?.[0] ?? '';
+    const guestBlock = view.match(/@guest([\s\S]*?)@endguest/)?.[1] ?? '';
+
+    assert.match(calendarTag, /\bhidden\b/, 'availability calendar should not be expanded on first load');
+    assert.match(checkInField, /aria-expanded="false"/, 'check-in control should announce that its calendar starts closed');
+    assert.match(guestBlock, /@if\(!\$isGuest\)[\s\S]*?<div class="checkout-choice"/, 'account and guest actions should only appear before guest mode is selected');
+});
+
+test('date fields open the hidden availability calendar and its close button dismisses it', async () => {
+    const page = await browser.newPage({ viewport: { width: 390, height: 900 } });
+    try {
+        await page.clock.install({ time: new Date('2026-11-11T12:00:00+08:00') });
+        await page.setContent(`<html><head><style>${baseStyles}\n${paletteStyles}\n${bookingStyles}</style></head><body>
+            <label>Check in<input id="check-in-display" type="text" aria-controls="availability-calendar" aria-expanded="false"><input id="check-in" type="hidden"></label>
+            <label>Check out<input id="check-out-display" type="text" aria-controls="availability-calendar" aria-expanded="false"><input id="check-out" type="hidden"></label>
+            <section class="availability-calendar" id="availability-calendar" hidden><div class="calendar-heading"><strong>Room availability</strong><div class="calendar-controls"><button id="previous-month">‹</button><b id="calendar-month"></b><button id="next-month">›</button><button id="close-availability-calendar" class="calendar-close">×</button></div></div><div id="calendar-days" class="calendar-days"></div><p id="calendar-note"></p></section>
+        </body></html>`);
+        await page.addScriptTag({ content: `const ranges = [];${datePickerScript}\nrefreshInputs(); render();` });
+
+        assert.equal(await page.locator('#availability-calendar').isHidden(), true, 'calendar should start collapsed');
+        await page.locator('#check-in-display').click();
+        assert.equal(await page.locator('#availability-calendar').isVisible(), true, 'check-in should open the calendar');
+        assert.equal(await page.locator('#check-in-display').getAttribute('aria-expanded'), 'true');
+        await page.locator('#close-availability-calendar').click();
+        assert.equal(await page.locator('#availability-calendar').isHidden(), true, 'close control should collapse the calendar');
+        await page.locator('#check-out-display').click();
+        assert.equal(await page.locator('#availability-calendar').isVisible(), true, 'check-out should also open the calendar');
+        await page.locator('#calendar-days .calendar-day:not([disabled])').first().click();
+        const nextDate = await page.locator('#calendar-days').evaluate(days => {
+            const checkIn = document.getElementById('check-in').value;
+            return [...days.querySelectorAll('.calendar-day:not([disabled])')].find(day => day.dataset.date > checkIn)?.dataset.date;
+        });
+        await page.locator(`#calendar-days .calendar-day[data-date="${nextDate}"]`).click();
+        assert.equal(await page.locator('#availability-calendar').isHidden(), true, 'calendar should collapse after completing the date range');
+        assert.equal(await page.locator('#check-out-display').getAttribute('aria-expanded'), 'false');
+    } finally {
+        await page.close();
+    }
 });
 
 test('booking form and room summary align on desktop and stack without horizontal overflow on mobile', async () => {

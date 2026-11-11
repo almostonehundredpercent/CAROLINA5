@@ -75,7 +75,7 @@
 <style>.hourly-calendar-day.booked{background:#f8dcd9;color:#8f332d;cursor:pointer}.hourly-calendar-day.booked:disabled{color:#8f332d;opacity:1}</style>
 <style>.hourly-time-option.booked,.hourly-time-option.booked:disabled{background:#f8dcd9;color:#8f332d;cursor:not-allowed;opacity:1}.hourly-time-option.booked::after{content:'Occupied';font-size:.54rem}.dark-mode .hourly-time-option.booked,.dark-mode .hourly-time-option.booked:disabled{background:#492522;color:#ffc1b9}</style>
 <style>.hourly-booked-summary{grid-column:1/-1;padding:12px 14px;border:1px solid #efc4be;border-radius:8px;background:#fff3f1;color:#762e28;font-size:.8rem;line-height:1.45}.hourly-booked-summary strong{display:block;margin-bottom:5px;font-size:.82rem}.hourly-booked-summary ul{display:flex;flex-wrap:wrap;gap:6px;margin:0;padding:0;list-style:none}.hourly-booked-summary li{padding:5px 9px;border:1px solid #efc4be;border-radius:999px;background:#fff;color:#762e28;font-weight:700}.hourly-booked-summary.is-clear{border-color:var(--line);background:var(--sand);color:var(--muted)}.hourly-booked-summary.is-clear li{border-color:var(--line);background:transparent;color:var(--ink);font-weight:500}.dark-mode .hourly-booked-summary{border-color:#653a33;background:#382320;color:#ffd5ce}.dark-mode .hourly-booked-summary li{border-color:#70443c;background:#492522;color:#ffd5ce}.dark-mode .hourly-booked-summary.is-clear{border-color:var(--line);background:#211a15;color:var(--muted)}.dark-mode .hourly-booked-summary.is-clear li{background:transparent;color:var(--ink)}.hourly-calendar-hint{display:block;margin-top:9px;color:var(--muted);font-size:.68rem;line-height:1.4}</style>
-<style>#booking-entry-fields{display:grid;gap:12px}</style>
+<style>#booking-entry-fields{display:grid;gap:12px}.availability-calendar[hidden]{display:none!important}.calendar-controls .calendar-close{font-size:1rem;line-height:1}</style>
 <style>.promo-entry{display:block;padding:0;border:1px solid var(--line);border-radius:9px;background:var(--paper)}.promo-entry>summary{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:46px;padding:11px 14px;color:var(--ink);font-weight:700;cursor:pointer;list-style:none}.promo-entry>summary::-webkit-details-marker{display:none}.promo-entry>summary::after{content:'＋';color:var(--deep);font-size:1.05rem}.promo-entry[open]>summary::after{content:'−'}.promo-entry>summary span{margin-left:auto;color:var(--muted);font-size:.76rem;font-weight:500}.promo-entry-body{display:grid;gap:10px;padding:0 14px 14px}.promo-entry-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px}.promo-entry-row input{min-width:0;text-transform:uppercase}.promo-entry-row button{padding:0 16px;border:0;border-radius:7px;background:var(--gold);color:#fff;font-weight:800;cursor:pointer}.promo-message{margin:0;color:var(--muted);font-size:.78rem;line-height:1.45}.promo-message.success{color:#1f7a42;font-weight:700}.promo-message.error{color:#a23d2e;font-weight:700}.promo-offer{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 12px;border-radius:7px;background:var(--sand)}.promo-offer b{color:var(--deep)}.promo-offer small{color:var(--muted)}.promo-offer code{color:var(--orange-dark);font-weight:800}.dark-mode .promo-entry{background:#30251f;border-color:#76552e}.dark-mode .promo-entry>summary{color:var(--ink)}.dark-mode .promo-offer{background:#211a15}@media(max-width:520px){.promo-entry-row{grid-template-columns:minmax(0,1fr) auto}.promo-entry-row button{min-height:42px}.promo-offer{align-items:flex-start;flex-direction:column}}</style>
 <style>
 .booking-validation-summary{margin:0 0 16px;padding:14px 16px;border:1px solid #d98c82;border-radius:10px;background:#fff1ef;color:#6e2d27;line-height:1.45}
@@ -112,11 +112,11 @@
     </header>
     <div class="booking-form">
         @guest
+            @if(!$isGuest)
             <div class="checkout-choice">
                 <a class="{{ !$isGuest ? 'active' : '' }}" href="{{ route('login', ['room' => $room->slug] + $bookingSearch) }}">Sign in</a>
                 <a class="{{ $isGuest ? 'active' : '' }}" href="{{ route('bookings.create', ['room' => $room, 'guest' => 1] + $bookingSearch) }}">Continue as guest</a>
             </div>
-            @if(!$isGuest)
                 <p>Sign in to book with your account, or continue as a guest without creating one.</p>
                 <a class="button" href="{{ route('bookings.create', ['room' => $room, 'guest' => 1] + $bookingSearch) }}">Continue as guest</a>
             @endif
@@ -153,11 +153,11 @@
                     <div class="hourly-rental"><p><strong>{{ $room->rental_hours ? 'Fixed short-stay package' : 'Short stay rental' }}</strong><br>@if($room->rental_hours) This room is offered as a {{ $room->rental_hours }}-hour stay for ₱{{ number_format($room->price_per_night) }}.@else Rate: ₱{{ number_format($room->price_per_night / 24, 2) }} per hour.@endif</p><label class="clean-select">Duration<input id="hourly-hours" name="hours" type="hidden" value="{{ old('hours', $selectedHours) }}">@if($room->rental_hours)<span class="selector-display">{{ $room->rental_hours }} hours</span>@else<button type="button" class="clean-select-trigger" data-select-trigger>3 hours</button><section class="clean-select-menu" hidden>@foreach([3,6,12,24,48,72,96,120,168,720] as $hours)<button type="button" class="clean-select-option" data-select-value="{{ $hours }}">{{ $hours }} hours</button>@endforeach</section>@endif</label><label class="hourly-date-field">Check-in date<input id="hourly-date" name="hourly_date" type="hidden" value="{{ $hourlyDate }}" required><button id="hourly-date-trigger" class="hourly-date-trigger" type="button"></button><section class="hourly-calendar" id="hourly-calendar" hidden aria-label="Choose check-in date"><div class="hourly-calendar-head"><button type="button" id="hourly-calendar-prev" aria-label="Previous month">‹</button><b id="hourly-calendar-month"></b><button type="button" id="hourly-calendar-next" aria-label="Next month">›</button></div><div class="hourly-calendar-week"><span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span></div><div class="hourly-calendar-days" id="hourly-calendar-days"></div></section></label><label class="hourly-time-field">Check-in time<input id="hourly-time" name="check_in_time" type="hidden" value="{{ old('check_in_time', $selectedTime) }}" required><button id="hourly-time-trigger" class="hourly-time-trigger" type="button"></button><section class="hourly-time-menu" id="hourly-time-menu" hidden aria-label="Choose check-in time"><div class="hourly-time-menu-head"><b>Choose a time</b><small>One-hour slots</small></div><p class="hourly-time-legend">Red times mean the room is occupied for your selected stay.</p><div class="hourly-time-periods"><div class="hourly-time-period"><h4>Morning</h4>@for($hour = 6; $hour < 12; $hour++)<button class="hourly-time-option" type="button" data-time="{{ str_pad($hour, 2, '0', STR_PAD_LEFT) }}:00">{{ \Carbon\Carbon::createFromTime($hour)->format('g A') }}</button>@endfor</div><div class="hourly-time-period"><h4>Afternoon</h4>@for($hour = 12; $hour < 18; $hour++)<button class="hourly-time-option" type="button" data-time="{{ str_pad($hour, 2, '0', STR_PAD_LEFT) }}:00">{{ \Carbon\Carbon::createFromTime($hour)->format('g A') }}</button>@endfor</div><div class="hourly-time-period"><h4>Evening</h4>@for($hour = 18; $hour < 24; $hour++)<button class="hourly-time-option" type="button" data-time="{{ str_pad($hour, 2, '0', STR_PAD_LEFT) }}:00">{{ \Carbon\Carbon::createFromTime($hour)->format('g A') }}</button>@endfor</div></div></section></label><p id="hourly-total">Estimated total: ₱{{ number_format($room->rental_hours ? $room->price_per_night : ($room->price_per_night / 24) * 3, 2) }}</p></div>
                 @else
                 <div class="stay-date-fields">
-                    <label>Check in<input id="check-in-display" type="text" placeholder="Select a date" readonly required><input id="check-in" name="check_in" type="hidden" value="{{ old('check_in', $bookingSearch['check_in'] ?? null) }}" required></label>
-                    <label>Check out<input id="check-out-display" type="text" placeholder="Select a date" readonly required><input id="check-out" name="check_out" type="hidden" value="{{ old('check_out') }}" required></label>
+                    <label>Check in<input id="check-in-display" type="text" placeholder="Select a date" readonly required aria-controls="availability-calendar" aria-expanded="false"><input id="check-in" name="check_in" type="hidden" value="{{ old('check_in', $bookingSearch['check_in'] ?? null) }}" required></label>
+                    <label>Check out<input id="check-out-display" type="text" placeholder="Select a date" readonly required aria-controls="availability-calendar" aria-expanded="false"><input id="check-out" name="check_out" type="hidden" value="{{ old('check_out') }}" required></label>
                 </div>
-                <section class="availability-calendar" aria-label="Room availability calendar" data-availability-url="{{ route('rooms.availability', $room) }}">
-                    <div class="calendar-heading"><div><strong>Room availability</strong><small>Red dates mark times when the room is occupied.</small></div><div class="calendar-controls"><button type="button" id="previous-month" aria-label="Previous month">‹</button><b id="calendar-month"></b><button type="button" id="next-month" aria-label="Next month">›</button></div></div>
+                <section class="availability-calendar" id="availability-calendar" hidden aria-label="Room availability calendar" data-availability-url="{{ route('rooms.availability', $room) }}">
+                    <div class="calendar-heading"><div><strong>Room availability</strong><small>Red dates mark times when the room is occupied.</small></div><div class="calendar-controls"><button type="button" id="previous-month" aria-label="Previous month">‹</button><b id="calendar-month"></b><button type="button" id="next-month" aria-label="Next month">›</button><button type="button" id="close-availability-calendar" class="calendar-close" aria-label="Close availability calendar">×</button></div></div>
                     <div class="calendar-weekdays"><span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span></div>
                     <div class="calendar-days" id="calendar-days"></div>
                     <p class="calendar-note" id="calendar-note" aria-live="polite"></p>
@@ -437,6 +437,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const checkOut = document.getElementById('check-out');
     const checkInDisplay = document.getElementById('check-in-display');
     const checkOutDisplay = document.getElementById('check-out-display');
+    const availabilityCalendar = document.getElementById('availability-calendar');
     const days = document.getElementById('calendar-days');
     const monthLabel = document.getElementById('calendar-month');
     const note = document.getElementById('calendar-note');
@@ -456,6 +457,7 @@ document.addEventListener('DOMContentLoaded', () => {
         else if (overlap(checkIn.value, value)) { note.textContent = 'Those dates include an unavailable stay. Please choose dates outside the red period.'; return; }
         else { checkOut.value = value; note.textContent = 'Your selected dates are available.'; }
         refreshInputs(); render();
+        if (checkIn.value && checkOut.value) setAvailabilityCalendarOpen(false);
         checkIn.dispatchEvent(new Event('change', { bubbles: true }));
         checkOut.dispatchEvent(new Event('change', { bubbles: true }));
     };
@@ -481,8 +483,15 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     document.getElementById('previous-month').addEventListener('click', () => { const previous = new Date(cursor.getFullYear(), cursor.getMonth() - 1, 1); if (previous >= new Date(today.getFullYear(), today.getMonth(), 1)) { cursor = previous; render(); } });
     document.getElementById('next-month').addEventListener('click', () => { cursor = new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1); render(); });
-    checkInDisplay.addEventListener('click', () => document.querySelector('.availability-calendar').scrollIntoView({ behavior: 'smooth', block: 'center' }));
-    checkOutDisplay.addEventListener('click', () => document.querySelector('.availability-calendar').scrollIntoView({ behavior: 'smooth', block: 'center' }));
+    const setAvailabilityCalendarOpen = open => {
+        availabilityCalendar.hidden = !open;
+        checkInDisplay.setAttribute('aria-expanded', String(open));
+        checkOutDisplay.setAttribute('aria-expanded', String(open));
+        if (open) availabilityCalendar.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    };
+    checkInDisplay.addEventListener('click', () => setAvailabilityCalendarOpen(true));
+    checkOutDisplay.addEventListener('click', () => setAvailabilityCalendarOpen(true));
+    document.getElementById('close-availability-calendar').addEventListener('click', () => setAvailabilityCalendarOpen(false));
     const updatePropertyDate = () => {
         const currentDate = propertyDate();
         const dayChanged = currentDate !== todayValue;
