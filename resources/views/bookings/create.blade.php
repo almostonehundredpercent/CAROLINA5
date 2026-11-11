@@ -90,6 +90,17 @@
 @media(max-width:520px){.booking-page{width:calc(100% - 24px);grid-template-columns:minmax(0,1fr);grid-template-areas:"heading" "summary" "form";gap:14px;margin:22px auto}.booking-page-heading .booking-context-box{margin-bottom:12px}.booking-page-heading h1{font-size:clamp(2.3rem,10vw,3.3rem)}.booking-page .booking-form{padding:0}.booking-page .booking-summary{grid-template-columns:88px minmax(0,1fr);padding:9px}.booking-summary-head{padding-bottom:7px}.booking-summary-image{width:88px;height:78px}.booking-summary-content{padding-left:10px}.booking-summary-content>p{font-size:.72rem}.booking-summary-rate{align-items:center;flex-direction:row;gap:4px}.booking-summary-rate strong{text-align:right}.booking-summary-total{padding:8px 10px}.booking-summary-total small{font-size:.7rem}.stay-date-fields{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.availability-calendar{padding:12px}.party-detail-fields{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.party-capacity{padding:9px 8px;font-size:.78rem}.booking-type-selector{padding:12px}.booking-type-options{grid-template-columns:1fr 1fr;gap:8px}.booking-type-options a{padding:10px}.booking-type-options strong{font-size:.82rem}.booking-type-options small{font-size:.68rem}.booking-contact-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.booking-contact-fields>label:first-child{grid-column:1/-1}.promo-entry-row{grid-template-columns:minmax(0,1fr) auto}.promo-entry-row button{min-height:42px}.booking-page .booking-form form{gap:12px}}
 @media(max-width:360px){.stay-date-fields,.booking-contact-fields,.party-detail-fields{grid-template-columns:1fr}.booking-contact-fields>label:first-child{grid-column:auto}.booking-type-options{grid-template-columns:1fr}.booking-page .booking-summary{grid-template-columns:76px minmax(0,1fr)}.booking-summary-image{width:76px;height:72px}}
 .dark-mode .booking-page-heading .booking-context-back{color:#ffe0ad}
+.checkout-choice{display:flex;width:max-content;max-width:100%;gap:4px;margin:0 0 12px;padding:4px;border:1px solid var(--line);border-radius:9px;background:var(--sand)}
+.checkout-choice a{display:inline-flex;align-items:center;justify-content:center;min-height:38px;padding:7px 12px;border:1px solid transparent;border-radius:6px;color:var(--muted);font-size:.82rem;font-weight:700}
+.checkout-choice a.active{border-color:var(--line);background:var(--paper);color:var(--ink);box-shadow:0 2px 6px rgba(45,37,31,.06)}
+.booking-contact-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.booking-contact-fields>label:first-child{grid-column:1/-1}
+.booking-step-actions #booking-submit{flex:1;min-height:48px;justify-content:center}
+.dark-mode .checkout-choice{border-color:var(--line);background:#211a15}
+.dark-mode .checkout-choice a.active{border-color:var(--line);background:#30251f;color:var(--ink);box-shadow:none}
+@media(max-width:800px){.checkout-choice{width:100%}.checkout-choice a{flex:1}}
+@media(max-width:520px){.booking-contact-fields{gap:10px}}
+@media(max-width:360px){.booking-contact-fields{grid-template-columns:1fr}.booking-contact-fields>label:first-child{grid-column:auto}}
 </style>
 <section class="booking-page">
     <header class="booking-page-heading">
