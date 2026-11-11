@@ -42,7 +42,7 @@ Route::get('/', function () {
     ])->header('Cache-Control', 'private, no-store');
 })->name('home');
 Route::get('/sitemap.xml', function () {
-    $urls = collect([route('home'), route('rooms.index'), route('contact'), route('bookings.lookup'), route('privacy'), route('terms')])->merge(Room::where('is_active', true)->pluck('slug')->map(fn ($slug) => route('rooms.show', $slug)));
+    $urls = collect([route('home'), route('rooms.index'), route('about'), route('contact'), route('bookings.lookup'), route('privacy'), route('terms')])->merge(Room::where('is_active', true)->pluck('slug')->map(fn ($slug) => route('rooms.show', $slug)));
 
     return response()->view('sitemap', compact('urls'))->header('Content-Type', 'application/xml');
 })->name('sitemap');
@@ -55,6 +55,7 @@ Route::view('/privacy', 'legal.privacy')->name('privacy');
 Route::view('/terms', 'legal.terms')->name('terms');
 Route::get('/book', [RoomController::class, 'bookingStart'])->name('booking.start');
 Route::get('/rooms', [RoomController::class, 'index'])->name('rooms.index');
+Route::view('/about', 'about')->name('about');
 Route::get('/contact', [ContactController::class, 'show'])->name('contact');
 Route::get('/rooms/{room:slug}', [RoomController::class, 'show'])->name('rooms.show');
 Route::get('/rooms/{room:slug}/availability', [BookingController::class, 'availability'])->middleware('throttle:30,1')->name('rooms.availability');

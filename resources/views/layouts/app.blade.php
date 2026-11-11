@@ -53,7 +53,7 @@
             <a href="{{ route('home') }}">Home</a>
             <a href="{{ route('rooms.index') }}">Rooms</a>
             @guest<a href="{{ route('bookings.lookup') }}">Find booking</a>@endguest
-            <a href="{{ route('home') }}#about">About</a>
+            <a href="{{ route('about') }}">About</a>
             <a href="{{ route('contact') }}">Contact</a>
             @auth
                 @if(auth()->user()->is_admin)
@@ -105,7 +105,7 @@
                 <a href="{{ route('rooms.index') }}">Rooms</a>
                 <a href="{{ route('contact') }}">Contact</a>
                 @auth<a href="{{ route('bookings.index') }}">My bookings</a>@else<a href="{{ route('bookings.lookup') }}">Find booking</a>@endauth
-                <a href="{{ route('home') }}#about">About</a>
+                <a href="{{ route('about') }}">About</a>
             </nav>
 
             <section class="footer-column footer-contact">
