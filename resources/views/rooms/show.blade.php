@@ -38,9 +38,9 @@
 @php
     $roomGalleryImages = match ($room->slug) {
         'air-conditioned-room-couple' => [
+            asset('images/rooms/room-2-angle-3.jpg'),
             asset('images/rooms/room-2-angle-1.jpg'),
             asset('images/rooms/room-2-angle-2.jpg'),
-            asset('images/rooms/room-2-angle-3.jpg'),
         ],
         'fan-room-couple' => [
             asset('images/rooms/room-3-angle-1.jpg'),
