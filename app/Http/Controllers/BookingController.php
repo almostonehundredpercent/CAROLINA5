@@ -726,7 +726,8 @@ class BookingController extends Controller
                     ? 'GCash payment confirmed by PayMongo. Your reservation is confirmed.'
                     : ($booking->deposit_status === 'verified'
                         ? 'GCash downpayment confirmed by PayMongo. Your room time is protected while Carolina reviews your reservation.'
-                        : 'GCash payment confirmed by PayMongo. Contact Carolina for staff resolution.')));
+                        : 'GCash payment confirmed by PayMongo. Contact Carolina for staff resolution.')))
+                ->with('booking_payment_success', true);
         }
         if ($request->query('outcome') === 'cancelled') {
             if ($adjustment) {
@@ -774,7 +775,8 @@ class BookingController extends Controller
                 ? 'GCash test payment confirmed. Your reservation is confirmed.'
                 : ($booking->deposit_status === 'verified'
                     ? 'GCash downpayment confirmed. Your room time is protected while Carolina reviews your reservation.'
-                    : 'GCash test payment confirmed. Contact Carolina for staff resolution.')));
+                    : 'GCash test payment confirmed. Contact Carolina for staff resolution.')))
+            ->with('booking_payment_success', true);
     }
 
     public function cancel(Request $request, Booking $booking)

@@ -75,6 +75,21 @@
     @keyframes paymongo-spin{to{transform:rotate(360deg)}}
     @media(prefers-reduced-motion:reduce){.paymongo-spinner{animation-duration:1.8s}}
     .receipt-actions{margin:14px auto 0}
+    .receipt-success-modal{width:min(470px,calc(100% - 32px));max-width:none;max-height:min(90dvh,760px);margin:auto;padding:30px;border:1px solid #e3b35d;border-radius:20px;background:var(--paper);color:var(--ink);text-align:center;box-shadow:0 28px 90px rgba(0,0,0,.48)}
+    .receipt-success-modal::backdrop{background:rgba(15,11,8,.76);backdrop-filter:blur(4px)}
+    .receipt-success-dismiss{display:flex;justify-content:flex-end;margin:-13px -13px 3px}
+    .receipt-success-dismiss button{width:34px;height:34px;border:1px solid var(--line);border-radius:50%;background:transparent;color:var(--muted);font-size:1.3rem;cursor:pointer}
+    .receipt-success-icon{display:grid;place-items:center;width:54px;height:54px;margin:0 auto 14px;border-radius:50%;background:#bd7100;color:#fff;font-size:1.8rem;font-weight:800}
+    .receipt-success-modal h2{margin:0 0 9px;color:var(--ink);font:700 1.65rem/1.15 'DM Sans',sans-serif}
+    .receipt-success-modal p{margin:0;color:var(--muted);font-size:.96rem;line-height:1.55}
+    .receipt-success-reference{margin-top:14px!important;font-size:.82rem!important}
+    .receipt-success-reference strong{color:var(--ink);letter-spacing:.04em}
+    .receipt-success-actions{display:grid;gap:9px;margin-top:22px}
+    .receipt-success-actions .button{width:100%;min-height:48px;justify-content:center;margin:0}
+    .dark-mode .receipt-success-modal{border-color:#80602e;background:#211a15;color:#fff4e8}
+    .dark-mode .receipt-success-icon{background:#d99223;color:#21170e}
+    .dark-mode .receipt-success-dismiss button{border-color:#574638;color:#d4c3b2}
+    .dark-mode .receipt-success-modal h2,.dark-mode .receipt-success-reference strong{color:#fff4e8}
     @media(max-width:900px){.receipt-layout{grid-template-columns:minmax(0,1fr) minmax(280px,.85fr);gap:12px}}
     @media(max-width:800px){.confirmation.receipt-page{padding:34px 20px 42px}.receipt-page>h1{font-size:clamp(2.15rem,6vw,3rem)}.receipt-layout{grid-template-columns:1fr;max-width:700px}.receipt-card{grid-template-columns:repeat(2,minmax(0,1fr))}}
     @media(max-width:600px){.confirmation.receipt-page{padding:24px 16px 34px}.receipt-page>h1{font-size:clamp(2rem,9vw,2.6rem)}.receipt-summary{padding:17px}.receipt-summary-grid{grid-template-columns:1fr}.receipt-payment-heading{align-items:flex-start}.receipt-hold-alert{padding:11px 12px}.receipt-card{padding:16px;gap:11px 12px}.receipt-card b{overflow-wrap:anywhere}}
@@ -172,13 +187,44 @@
         <div><small>Pets</small><b>{{ $booking->pets_count ? $booking->pets_count . ' pet' . ($booking->pets_count > 1 ? 's' : '') : 'None' }}</b></div>
     </div>
     </div>
-    @include('bookings.partials.location-map', ['booking' => $booking])
     <div class="receipt-actions">
         <a class="button" href="{{ \App\Http\Controllers\StayController::link($booking) }}">Your arrival page</a>
         <a class="button button-outline" href="{{ route('home') }}">Back to home</a>
         <button class="button light" type="button" onclick="window.print()">Print / save receipt</button>
     </div>
 </section>
+@if(session('booking_payment_success'))
+<dialog class="receipt-success-modal" id="receipt-success-modal" aria-labelledby="receipt-success-title" aria-describedby="receipt-success-copy">
+    <form method="dialog" class="receipt-success-dismiss"><button type="submit" aria-label="Close confirmation">×</button></form>
+    <div class="receipt-success-icon" aria-hidden="true">✓</div>
+    <h2 id="receipt-success-title">Booking received!</h2>
+    <p id="receipt-success-copy">
+        @if($booking->payment_status === 'partial')
+            Your downpayment was processed. Carolina will review your reservation and email you about the next steps.
+        @elseif($booking->status === 'confirmed')
+            Your payment was processed and your reservation is confirmed. Check your email for booking updates.
+        @else
+            Your payment was processed. Carolina will review your reservation and email you about the next steps.
+        @endif
+    </p>
+    <p class="receipt-success-reference">Reference: <strong>{{ $booking->reference }}</strong></p>
+    <div class="receipt-success-actions">
+        @if($booking->user_id && auth()->id() === $booking->user_id)
+            <a class="button" href="{{ route('bookings.index') }}">View My Bookings</a>
+        @else
+            <a class="button" href="{{ \App\Http\Controllers\StayController::link($booking) }}">View This Booking</a>
+        @endif
+        <a class="button button-outline" href="{{ route('home') }}">Back to Home</a>
+    </div>
+</dialog>
+<script>
+    (() => {
+        const dialog = document.getElementById('receipt-success-modal');
+        if (!dialog || typeof dialog.showModal !== 'function') return;
+        dialog.showModal();
+    })();
+</script>
+@endif
 <script>
     const checkoutForm = document.getElementById('paymongo-checkout-form');
     checkoutForm?.querySelectorAll('input[name="payment_option"]').forEach(option => option.addEventListener('change', () => {
