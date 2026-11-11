@@ -5,6 +5,7 @@
 .booking-page{width:min(calc(100% - 40px),1360px);max-width:1360px;grid-template-columns:minmax(0,1.12fr) minmax(320px,.88fr);gap:clamp(20px,3vw,40px)}
 .booking-form,.booking-summary{min-width:0}
 .booking-form{padding:clamp(20px,3vw,40px)}
+.booking-page .booking-form{background:transparent;border:0;border-radius:0;box-shadow:none}
 .booking-summary{--summary-title:#34291f;--summary-copy:#65594e;--summary-muted:#75685c;--summary-accent:#995b0d;--summary-chip-bg:#fff1dc;--summary-chip-line:rgba(153,91,13,.24);--summary-inset-bg:rgba(119,60,18,.045);--summary-inset-line:rgba(119,60,18,.17);align-self:start;position:relative;overflow:hidden;padding:0;border:1px solid rgba(205,139,54,.55);border-radius:20px;background:linear-gradient(155deg,#fffaf2 0%,#f4e9d9 100%);box-shadow:0 22px 52px rgba(59,38,16,.13);color:var(--summary-title)}
 .booking-summary::before{content:"";position:absolute;top:0;right:0;width:190px;height:190px;background:radial-gradient(circle,rgba(208,133,35,.17),transparent 70%);pointer-events:none}
 .booking-summary-head{position:relative;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:20px 20px 14px}
@@ -66,7 +67,7 @@
 .dark-mode .booking-field-error{color:#ffb8ae}
 </style>
 <section class="booking-page">
-    @include('bookings.partials.context-bar', ['backUrl' => route('rooms.show', $room), 'backLabel' => 'room details', 'roomName' => $room->name])
+    @include('bookings.partials.context-bar', ['backUrl' => route('rooms.show', $room), 'backLabel' => 'room details'])
     <div class="booking-form">
         <span class="eyebrow">RESERVATION DETAILS</span>
         <h1>Complete your booking.</h1>
