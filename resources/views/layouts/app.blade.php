@@ -56,7 +56,6 @@
             <a href="{{ route('about') }}" @if(request()->routeIs('about')) aria-current="page" @endif>About</a>
             <a href="{{ route('contact') }}" @if(request()->routeIs('contact')) aria-current="page" @endif>Contact</a>
             @auth
-                <a href="{{ route('bookings.index') }}" @if(request()->routeIs('bookings.index')) aria-current="page" @endif>My bookings</a>
                 @if(auth()->user()->is_admin)
                     <a href="{{ route('admin.dashboard') }}" @if(request()->routeIs('admin.*')) aria-current="page" @endif>Admin</a>
                 @endif
