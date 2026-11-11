@@ -192,7 +192,6 @@
                 </section>
 
                 @if($isGuest)
-                    <hr>
                     <h3>Guest contact information</h3>
                     <div class="booking-contact-fields">
                     <label>Full name<input id="guest-name" name="guest_name" value="{{ old('guest_name') }}" placeholder="e.g., Maria Santos" autocomplete="name" maxlength="255" required @error('guest_name') aria-invalid="true" aria-describedby="guest-name-error" @enderror>@error('guest_name')<small class="booking-field-error" id="guest-name-error">{{ $message }}</small>@enderror</label>

@@ -44,6 +44,12 @@ test('date calendar starts closed and guest mode does not repeat the sign-in/gue
     assert.match(guestBlock, /@if\(!\$isGuest\)[\s\S]*?<div class="checkout-choice"/, 'account and guest actions should only appear before guest mode is selected');
 });
 
+test('guest contact section does not render an orphan divider between booking details', () => {
+    const guestContactTransition = view.match(/<section class="stay-party-details"[\s\S]*?<\/section>([\s\S]*?)<h3>Guest contact information<\/h3>/)?.[1] ?? '';
+
+    assert.doesNotMatch(guestContactTransition, /<hr\b/i, 'the guest-details-to-contact transition should not include a standalone divider');
+});
+
 test('date fields open the hidden availability calendar and its close button dismisses it', async () => {
     const page = await browser.newPage({ viewport: { width: 390, height: 900 } });
     try {
