@@ -118,6 +118,26 @@ test('booking form and room summary align on desktop and stack without horizonta
     }
 });
 
+test('booking form starts near the heading while keeping a clear breathing gap', async () => {
+    for (const width of [1440]) {
+        const page = await browser.newPage({ viewport: { width, height: 900 } });
+        try {
+            await page.setContent(`<html><head><style>${baseStyles}\n${paletteStyles}\n${bookingStyles}</style></head><body>
+                <section class="booking-page"><header class="booking-page-heading"><span class="eyebrow">RESERVATION DETAILS</span><h1>Complete your booking.</h1><p>Choose your stay details and guest information.</p></header><main class="booking-form"><form><section class="booking-review-panel"><h2>Review your reservation</h2><p>This is a summary only.</p></section></form></main><aside class="booking-summary">Room summary</aside></section>
+            </body></html>`);
+            const gap = await page.evaluate(() => {
+                const heading = document.querySelector('.booking-page-heading').getBoundingClientRect();
+                const form = document.querySelector('.booking-review-panel').getBoundingClientRect();
+                return form.top - heading.bottom;
+            });
+
+            assert.ok(gap >= 28 && gap <= 48, `booking form should sit close with a comfortable gap at ${width}px; got ${gap}px`);
+        } finally {
+            await page.close();
+        }
+    }
+});
+
 test('date selectors are easy to tap and guest contact fields sit on a visible surface', async () => {
     assert.match(view, /<section class="guest-contact-section"[\s\S]*?Guest contact information[\s\S]*?booking-contact-fields/);
 

@@ -15,6 +15,7 @@
 .booking-availability-status{margin-top:16px;padding:14px;border:1px solid #d8c5ab;border-radius:10px;background:#fffaf2;color:var(--ink)}
 .dark-mode .booking-page .booking-form textarea,.dark-mode .booking-availability-status{background:#211a15;border-color:var(--line);color:var(--ink)}
 .booking-page .booking-form{background:transparent;border:0;border-radius:0;box-shadow:none}
+.booking-page .booking-form form{margin-top:12px}
 .booking-page-heading .booking-context-back:hover{border-color:#c97900;background:#fff1da;color:#573718}
 .dark-mode .booking-page-heading .booking-context-back{border-color:#785629;background:#292019;color:#ffe0ad}
 .dark-mode .booking-page-heading .booking-context-back:hover{border-color:#d48b22;background:#3b2c20;color:#fff0d5}
@@ -52,7 +53,7 @@
 .hourly-time-legend:before{content:"";flex:0 0 10px;width:10px;height:10px;border-radius:3px;background:#c63e36}
 @media(max-width:1000px){.booking-page{grid-template-columns:minmax(0,1.25fr) minmax(270px,.85fr);column-gap:28px}}
 </style><style>
-.booking-review-panel{margin-top:14px;padding:clamp(14px,2vw,20px);border:1px solid #d5a553;border-radius:14px;background:linear-gradient(145deg,#fffaf1,#fffdf9);box-shadow:0 8px 20px rgba(85,57,22,.07)}
+.booking-review-panel{margin-top:8px;padding:clamp(14px,2vw,20px);border:1px solid #d5a553;border-radius:14px;background:linear-gradient(145deg,#fffaf1,#fffdf9);box-shadow:0 8px 20px rgba(85,57,22,.07)}
 .booking-review-panel[hidden],#booking-entry-fields[hidden],#booking-previous[hidden]{display:none!important}
 .booking-review-heading{margin-bottom:12px}.booking-review-kicker{display:block;margin:0 0 4px;color:#a05d00;font-size:.68rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase}.booking-review-heading h2{margin:0 0 5px;color:var(--ink);font:700 1.35rem/1.2 'DM Sans',sans-serif}.booking-review-heading p{margin:0;color:var(--muted);font-size:.86rem;line-height:1.45}
 .booking-review-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 22px;margin:0}.booking-review-item{min-width:0;padding:9px 0;border-bottom:1px solid var(--line)}.booking-review-item--wide{grid-column:1/-1}.booking-review-item dt{margin-bottom:3px;color:var(--muted);font-size:.74rem}.booking-review-item dd{margin:0;color:var(--ink);font-size:.92rem;font-weight:700;line-height:1.4;overflow-wrap:anywhere}
