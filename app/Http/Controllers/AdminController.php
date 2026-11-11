@@ -736,8 +736,11 @@ class AdminController extends Controller
     {
         $booking->load(['user', 'room', 'payments.recordedBy', 'activityLogs.user']);
         $financial = FinancialSummary::forBooking($booking);
+        $backUrl = $request->query('from') === 'today'
+            ? route('admin.frontdesk')
+            : route('admin.bookings');
 
-        return view('admin.booking-show', compact('booking', 'financial'));
+        return view('admin.booking-show', compact('booking', 'financial', 'backUrl'));
     }
 
     public function exportBookings(Request $request)

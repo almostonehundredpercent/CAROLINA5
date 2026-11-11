@@ -62,7 +62,7 @@
                                 <div><dt>Check-out</dt><dd><time datetime="{{ $booking->check_out_at?->toIso8601String() }}">{{ $booking->check_out_at?->format('M j, Y') ?? $booking->check_out?->format('M j, Y') }}</time></dd><dd>{{ $booking->check_out_at?->format('g:i A') ?? 'Time not recorded' }}</dd></div>
                             </dl>
                             <div class="today-actions">
-                                <a class="status-select" href="{{ route('admin.bookings.show', $booking) }}">View booking</a>
+                                <a class="status-select" href="{{ route('admin.bookings.show', ['booking' => $booking, 'from' => 'today']) }}">View booking</a>
                                 @if($booking->check_in_at?->lte($propertyNow))
                                     <form method="POST" action="{{ route('admin.bookings.check-in', $booking) }}" data-admin-confirm data-confirm-title="Check in this guest?" data-confirm-message="Check in {{ $booking->guest_name ?? $booking->user?->name ?? 'this guest' }} now? This marks the reservation as checked in." data-confirm-action="Check in guest">
                                         @csrf<input type="hidden" name="action" value="check_in"><button class="status-select confirmed">Check in</button>
@@ -86,7 +86,7 @@
                                 <div><dt>Check-in</dt><dd><time datetime="{{ $booking->check_in_at?->toIso8601String() }}">{{ $booking->check_in_at?->format('M j, Y') ?? $booking->check_in?->format('M j, Y') }}</time></dd><dd>{{ $booking->check_in_at?->format('g:i A') ?? 'Time not recorded' }}</dd></div>
                                 <div><dt>Check-out</dt><dd><time datetime="{{ $booking->check_out_at?->toIso8601String() }}">{{ $booking->check_out_at?->format('M j, Y') ?? $booking->check_out?->format('M j, Y') }}</time></dd><dd>{{ $booking->check_out_at?->format('g:i A') ?? 'Time not recorded' }}</dd></div>
                             </dl>
-                            <div class="today-actions"><a class="status-select" href="{{ route('admin.bookings.show', $booking) }}">View booking</a></div>
+                            <div class="today-actions"><a class="status-select" href="{{ route('admin.bookings.show', ['booking' => $booking, 'from' => 'today']) }}">View booking</a></div>
                         </article>
                     @empty
                         <p class="empty-copy">No guests are currently checked in.</p>
@@ -108,7 +108,7 @@
                                 <form method="POST" action="{{ route('admin.bookings.check-out', $booking) }}" data-admin-confirm data-confirm-kicker="GUEST DEPARTURE" data-confirm-title="Check out this guest?" data-confirm-message="Check out {{ $booking->guest_name ?? $booking->user?->name ?? 'this guest' }} now? This records the departure and marks the room for cleaning." data-confirm-action="Check out guest">
                                     @csrf<input type="hidden" name="action" value="check_out"><button class="status-select">Check out</button>
                                 </form>
-                                <a class="status-select" href="{{ route('admin.bookings.show', $booking) }}">View booking</a>
+                                <a class="status-select" href="{{ route('admin.bookings.show', ['booking' => $booking, 'from' => 'today']) }}">View booking</a>
                             </div>
                         </article>
                     @empty

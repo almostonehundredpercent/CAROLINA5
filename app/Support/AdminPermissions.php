@@ -72,7 +72,6 @@ final class AdminPermissions
             ['label' => 'CAROL · Decision support', 'route' => 'admin.decision-support', 'icon' => '◈', 'ability' => 'decision_support', 'group' => 'more'],
             ['label' => 'Promo codes', 'route' => 'admin.promos', 'icon' => '%', 'ability' => 'promos', 'group' => 'more'],
             ['label' => 'Activity log', 'route' => 'admin.activity', 'icon' => '◷', 'ability' => 'activity', 'group' => 'more'],
-            ['label' => 'Staff access', 'route' => 'admin.staff', 'icon' => '♙', 'ability' => 'staff', 'group' => 'more'],
         ];
     }
 }
