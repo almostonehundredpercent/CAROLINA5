@@ -43,6 +43,7 @@
 .rooms-search > .button { border:1px solid rgba(255,205,128,.48); background:linear-gradient(135deg,#d98914,#b85b00); box-shadow:0 8px 18px rgba(146,81,9,.2),inset 0 1px 0 rgba(255,232,187,.35); transition:transform .18s ease,box-shadow .18s ease,filter .18s ease; }
 .rooms-search > .button:hover { transform:translateY(-2px); filter:brightness(1.06); box-shadow:0 13px 25px rgba(146,81,9,.27),inset 0 1px 0 rgba(255,232,187,.45); }
 .rooms-search > .button:active { transform:translateY(0); }
+.rooms-search > .button,.rooms-results > .ber-promo-rooms .button { color:#f5f5f0; }
 .dark-mode .rooms-sort-control { border-color:#4c3930; background:#2a211b; color:#d2bba7; }
 .dark-mode .rooms-sort-control > button { color:#fff1e3; }
 .dark-mode .rooms-sort-control > button::after { color:#f1b25b; }
