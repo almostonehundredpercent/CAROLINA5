@@ -68,6 +68,30 @@ test('back-to-home action has an opaque branded surface and warm white text in b
     }
 });
 
+test('PayMongo payment button uses readable warm-white text in both themes', async () => {
+    const luminance = color => {
+        const [red, green, blue] = color.match(/[\d.]+/g).map(Number).map(channel => channel / 255).map(channel => channel <= 0.04045 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4);
+        return 0.2126 * red + 0.7152 * green + 0.0722 * blue;
+    };
+
+    for (const mode of ['light', 'dark']) {
+        const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
+        try {
+            await page.setContent(`<html class="${mode === 'dark' ? 'dark-mode' : ''}"><head><style>${baseStyles}\n${paletteStyles}\n${receiptStyles}</style></head><body><section class="confirmation receipt-page"><button class="button paymongo-submit">Pay downpayment ₱239.70 with GCash</button></section></body></html>`);
+            const colors = await page.locator('.paymongo-submit').evaluate(button => {
+                const style = getComputedStyle(button);
+                return { background: style.backgroundColor, text: style.color };
+            });
+            const contrast = (Math.max(luminance(colors.background), luminance(colors.text)) + 0.05) / (Math.min(luminance(colors.background), luminance(colors.text)) + 0.05);
+
+            assert.equal(colors.text, 'rgb(246, 241, 233)', `${mode} payment action should use warm off-white text`);
+            assert.ok(contrast >= 4.5, `${mode} payment action should meet readable text contrast; got ${contrast.toFixed(2)}:1`);
+        } finally {
+            await page.close();
+        }
+    }
+});
+
 test('payment summary is readable and stays within desktop and mobile viewports in both themes', async () => {
     for (const mode of ['light', 'dark']) {
         for (const width of [1440, 768, 390, 320]) {

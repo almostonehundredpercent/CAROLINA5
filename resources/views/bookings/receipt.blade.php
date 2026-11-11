@@ -62,7 +62,8 @@
     .receipt-hold-alert{margin:12px 0 0;padding:12px 14px;border:1px solid #e9c17e;border-radius:9px;background:#fff3d9;color:#65400d}
     .receipt-hold-alert>p{margin:5px 0 0;font-size:.9rem;line-height:1.5}
     .receipt-hold-alert strong{color:#50320b}
-    .paymongo-submit{display:flex;align-items:center;justify-content:center;gap:9px;width:100%;min-height:52px;margin-top:12px;padding:12px 18px;font-size:1rem;font-weight:800}
+    .paymongo-submit{display:flex;align-items:center;justify-content:center;gap:9px;width:100%;min-height:52px;margin-top:12px;padding:12px 18px;border-color:#9b5700;background:#9b5700;color:#f6f1e9;font-size:1rem;font-weight:800}
+    .paymongo-submit:hover{border-color:#874b00;background:#874b00;color:#f6f1e9}
     .paymongo-submit:disabled{cursor:wait;opacity:.82}
     .payment-options{display:grid;gap:9px;margin:14px 0 4px}
     .payment-option{display:flex;align-items:flex-start;gap:10px;padding:12px;border:1px solid var(--line);border-radius:10px;background:rgba(255,255,255,.55);cursor:pointer}
