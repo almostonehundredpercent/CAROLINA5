@@ -119,10 +119,12 @@
 </style>
 <style>
     .promo-entry>summary { background:var(--auth-canvas); border-radius:8px; transition:background-color .16s ease; }
+    .promo-entry[open] { background:var(--auth-canvas); }
     .promo-entry[open]>summary { border-radius:8px 8px 0 0; }
     .promo-entry>summary:hover { background:var(--surface); }
     .promo-entry>summary:focus-visible { outline:3px solid var(--gold); outline-offset:2px; }
     .dark-mode .promo-entry>summary { background:var(--deep); }
+    .dark-mode .promo-entry[open] { background:var(--deep); }
     .dark-mode .promo-entry>summary::after { color:#FFE6C2; }
     .dark-mode .promo-entry>summary:hover { background:#63300D; }
 </style>

@@ -41,9 +41,13 @@ test('promo code disclosure uses a distinct solid surface in light and dark mode
     $html = $response->getContent();
     preg_match_all('/\.promo-entry>summary\s*\{([^}]*)\}/', $html, $summaryRules);
     preg_match_all('/\.dark-mode \.promo-entry>summary\s*\{([^}]*)\}/', $html, $darkSummaryRules);
+    preg_match_all('/\.promo-entry\[open\]\s*\{([^}]*)\}/', $html, $expandedRules);
+    preg_match_all('/\.dark-mode \.promo-entry\[open\]\s*\{([^}]*)\}/', $html, $darkExpandedRules);
 
     expect(implode(';', $summaryRules[1] ?? []))->toContain('background:var(--auth-canvas)')
-        ->and(implode(';', $darkSummaryRules[1] ?? []))->toContain('background:var(--deep)');
+        ->and(implode(';', $darkSummaryRules[1] ?? []))->toContain('background:var(--deep)')
+        ->and(implode(';', $expandedRules[1] ?? []))->toContain('background:var(--auth-canvas)')
+        ->and(implode(';', $darkExpandedRules[1] ?? []))->toContain('background:var(--deep)');
 });
 
 test('invalid guest phone is explained inline while submitted guest details are retained', function () {
