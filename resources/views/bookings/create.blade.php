@@ -96,7 +96,7 @@
 .checkout-choice a.active{border-color:var(--line);background:var(--paper);color:var(--ink);box-shadow:0 2px 6px rgba(45,37,31,.06)}
 .booking-contact-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
 .booking-contact-fields>label:first-child{grid-column:1/-1}
-#booking-submit.button{color:#fff7ee}
+#booking-submit.button{color:#f5f5f0}
 .booking-step-actions #booking-submit{flex:1;min-height:48px;justify-content:center}
 .dark-mode .checkout-choice{border-color:var(--line);background:#211a15}
 .dark-mode .checkout-choice a.active{border-color:var(--line);background:#30251f;color:var(--ink);box-shadow:none}

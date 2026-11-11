@@ -208,7 +208,7 @@ test('reservation review stays compact, readable, and keeps every booking value 
     }
 });
 
-test('booking primary actions use warm off-white labels in light and dark themes', async () => {
+test('booking primary actions use dirty-white labels in light and dark themes', async () => {
     for (const mode of ['light', 'dark']) {
         const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
         try {
@@ -227,8 +227,8 @@ test('booking primary actions use warm off-white labels in light and dark themes
                 };
             });
 
-            assert.equal(result.continueColor, 'rgb(255, 247, 238)', `Continue to review should use warm off-white text in ${mode} mode`);
-            assert.equal(result.paymentColor, 'rgb(255, 247, 238)', `Proceed to payment should use warm off-white text in ${mode} mode`);
+            assert.equal(result.continueColor, 'rgb(245, 245, 240)', `Continue to review should use dirty-white text in ${mode} mode`);
+            assert.equal(result.paymentColor, 'rgb(245, 245, 240)', `Proceed to payment should use dirty-white text in ${mode} mode`);
             assert.notEqual(result.previousColor, result.continueColor, 'The muted Previous button should retain its separate text treatment');
         } finally {
             await page.close();
