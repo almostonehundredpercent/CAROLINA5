@@ -36,7 +36,7 @@
                 <form class="account-settings-form" method="POST" action="{{ route('admin.account.email') }}">
                     @csrf
                     @method('PATCH')
-                    <label>Current password<input name="current_password" type="password" autocomplete="current-password" required></label>
+                    <label>Current password<span class="account-password-field"><input name="current_password" type="password" autocomplete="current-password" data-password-input required><button class="account-password-toggle" type="button" data-password-toggle aria-label="Show password" aria-pressed="false">Show</button></span></label>
                     <label>Full name<input name="name" type="text" value="{{ old('name', auth()->user()->name) }}" autocomplete="name" maxlength="255" required></label>
                     <label>Email address<input name="email" type="email" value="{{ old('email', auth()->user()->email) }}" autocomplete="email" maxlength="255" required></label>
                     <div class="account-verification {{ auth()->user()->hasVerifiedEmail() ? 'is-verified' : 'is-unverified' }}">
@@ -59,7 +59,7 @@
                         @csrf
                         @method('PATCH')
                         <label>Rate approval email<input name="recipient_email" type="email" value="{{ old('recipient_email', $rateApprovalEmail) }}" autocomplete="email" maxlength="255" required></label>
-                        <label>Current password<input name="current_password" type="password" autocomplete="current-password" required></label>
+                        <label>Current password<span class="account-password-field"><input name="current_password" type="password" autocomplete="current-password" data-password-input required><button class="account-password-toggle" type="button" data-password-toggle aria-label="Show password" aria-pressed="false">Show</button></span></label>
                         <button class="account-primary" type="submit">Save approval email</button>
                     </form>
                 </article>
@@ -75,14 +75,29 @@
                 <form class="account-settings-form" method="POST" action="{{ route('admin.account.password') }}">
                     @csrf
                     @method('PATCH')
-                    <label>Current password<input name="current_password" type="password" autocomplete="current-password" required></label>
-                    <label>New password<input name="password" type="password" autocomplete="new-password" minlength="12" required></label>
-                    <label>Confirm new password<input name="password_confirmation" type="password" autocomplete="new-password" minlength="12" required></label>
+                    <label>Current password<span class="account-password-field"><input name="current_password" type="password" autocomplete="current-password" data-password-input required><button class="account-password-toggle" type="button" data-password-toggle aria-label="Show password" aria-pressed="false">Show</button></span></label>
+                    <label>New password<span class="account-password-field"><input name="password" type="password" autocomplete="new-password" minlength="12" data-password-input required><button class="account-password-toggle" type="button" data-password-toggle aria-label="Show password" aria-pressed="false">Show</button></span></label>
+                    <label>Confirm new password<span class="account-password-field"><input name="password_confirmation" type="password" autocomplete="new-password" minlength="12" data-password-input required><button class="account-password-toggle" type="button" data-password-toggle aria-label="Show password" aria-pressed="false">Show</button></span></label>
                     <button class="account-primary" type="submit">Update password</button>
                 </form>
             </article>
         </section>
     </main>
 </div>
+<script>
+    document.addEventListener('click', (event) => {
+        const toggle = event.target.closest('[data-password-toggle]');
+        if (!toggle) return;
+
+        const input = toggle.closest('.account-password-field')?.querySelector('[data-password-input]');
+        if (!input) return;
+
+        const isVisible = input.type === 'password';
+        input.type = isVisible ? 'text' : 'password';
+        toggle.textContent = isVisible ? 'Hide' : 'Show';
+        toggle.setAttribute('aria-label', isVisible ? 'Hide password' : 'Show password');
+        toggle.setAttribute('aria-pressed', String(isVisible));
+    });
+</script>
 </body>
 </html>

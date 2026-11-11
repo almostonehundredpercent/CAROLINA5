@@ -12,6 +12,11 @@
 .account-settings-form label { display: grid; gap: 7px; color: var(--ink); font-size: 12px; font-weight: 700; }
 .account-settings-form input { width: 100%; min-height: 46px; padding: 11px 13px; border: 1px solid var(--line); border-radius: 10px; background: var(--paper); color: var(--ink); font: inherit; font-weight: 500; }
 .account-settings-form input:focus-visible { outline: 3px solid rgba(220,133,0,.3); outline-offset: 1px; border-color: var(--orange); }
+.account-password-field { position: relative; display: block; }
+.account-password-field input { padding-right: 68px; }
+.account-password-toggle { position: absolute; top: 50%; right: 9px; min-width: 48px; min-height: 34px; padding: 5px 8px; transform: translateY(-50%); border: 0; border-radius: 7px; background: transparent; color: var(--orange-dark); font: inherit; font-size: 12px; font-weight: 800; cursor: pointer; }
+.account-password-toggle:hover { background: rgba(220,133,0,.1); }
+.account-password-toggle:focus-visible { outline: 3px solid rgba(220,133,0,.3); outline-offset: 1px; }
 .account-verification { display: flex; align-items: flex-start; gap: 9px; padding: 11px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--paper); }
 .account-verification > span { display: grid; width: 20px; height: 20px; flex: 0 0 20px; place-items: center; border-radius: 50%; background: #e8f5eb; color: #24723a; font-size: 12px; font-weight: 800; }
 .account-verification p { margin: 1px 0 0; color: var(--muted); font-size: 12px; line-height: 1.5; }
@@ -23,6 +28,8 @@ html.dark-mode .account-settings-card { border-color: rgba(231,236,239,.2); back
 html.dark-mode .account-card-heading h2, html.dark-mode .account-settings-form label { color: #e7ecef; }
 html.dark-mode .account-card-icon { border-color: rgba(255,193,107,.2); background: rgba(220,133,0,.12); color: #ffc16b; }
 html.dark-mode .account-settings-form input { background: #15110e !important; color: #fff4e8 !important; border-color: #594838 !important; }
+html.dark-mode .account-password-toggle { color: #ffc16b; }
+html.dark-mode .account-password-toggle:hover { background: rgba(255,193,107,.12); }
 html.dark-mode .account-verification { border-color: #594838; background: #211a15; }
 html.dark-mode .account-verification > span { background: #1d4930; color: #b2efc2; }
 html.dark-mode .account-verification.is-unverified > span { background: #4a301b; color: #ffcf82; }
