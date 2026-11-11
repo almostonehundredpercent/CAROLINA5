@@ -65,12 +65,12 @@
                     <span>Dark mode</span>
                 </button>
                 @unless(request()->routeIs('bookings.index'))<a class="nav-button nav-profile" href="{{ route('bookings.index') }}">Profile</a>@endunless
-                @unless(request()->routeIs('home'))
+                @if(request()->routeIs('bookings.index'))
                     <form method="POST" action="{{ route('logout') }}">
                         @csrf
                         <button class="nav-button" type="submit">Sign out</button>
                     </form>
-                @endunless
+                @endif
             @else
                 <a class="nav-button nav-book-now" href="{{ route('booking.start') }}">Book now</a>
                 <button class="theme-toggle nav-theme-toggle" type="button" aria-label="Enable dark mode" aria-pressed="false">
