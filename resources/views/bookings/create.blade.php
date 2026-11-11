@@ -2,54 +2,55 @@
 
 @section('content')
 <style>
-.booking-page{width:min(calc(100% - 40px),1360px);max-width:1360px;grid-template-columns:minmax(0,1.12fr) minmax(320px,.88fr);gap:clamp(20px,3vw,40px)}
+.booking-page{width:min(calc(100% - 40px),1240px);max-width:1240px;grid-template-columns:minmax(0,1.45fr) minmax(300px,.8fr);grid-template-areas:"heading summary" "form summary";column-gap:clamp(28px,5vw,68px);row-gap:18px;align-items:start}
+.booking-page-heading{grid-area:heading;min-width:0;margin:0}
+.booking-page-heading .booking-context-box{display:flex;align-items:center;justify-content:flex-start;padding:0;margin:0 0 18px;border:0;border-radius:0;background:transparent;box-shadow:none}
+.booking-page-heading .booking-context-back{min-height:42px;padding:9px 13px;border:1px solid rgba(153,91,13,.25);border-radius:8px;background:#fffaf2;color:#573718}
+.booking-page-heading .eyebrow{margin-bottom:8px}
+.booking-page-heading h1{max-width:720px;margin:0;color:var(--ink);font-size:clamp(2.6rem,5vw,4.5rem);line-height:.98;letter-spacing:-.045em}
+.booking-page-heading>p{margin:10px 0 0;color:var(--muted);font-size:.95rem}
 .booking-form,.booking-summary{min-width:0}
-.booking-form{padding:clamp(20px,3vw,40px)}
+.booking-form{grid-area:form;padding:0}
 .booking-page .booking-form textarea{background:#fffaf2;border-color:#d8c5ab}
 .booking-availability-status{margin-top:16px;padding:14px;border:1px solid #d8c5ab;border-radius:10px;background:#fffaf2;color:var(--ink)}
 .dark-mode .booking-page .booking-form textarea,.dark-mode .booking-availability-status{background:#211a15;border-color:var(--line);color:var(--ink)}
 .booking-page .booking-form{background:transparent;border:0;border-radius:0;box-shadow:none}
-.booking-page .booking-form > .booking-context-box{display:flex;align-items:center;justify-content:flex-start;padding:0;margin:0 0 22px;border:0;border-radius:0;background:transparent;box-shadow:none}
-.booking-page .booking-form > .booking-context-box .booking-context-back{min-height:46px;padding:10px 15px;border:1px solid rgba(153,91,13,.32);border-radius:11px;background:linear-gradient(180deg,#fffaf2,#f4e8d8);color:#573718;box-shadow:0 5px 14px rgba(76,53,31,.08)}
-.booking-page .booking-form > .booking-context-box .booking-context-back:hover{border-color:#c97900;background:#fff1da;color:#573718;box-shadow:0 8px 18px rgba(76,53,31,.13)}
-.dark-mode .booking-page .booking-form > .booking-context-box .booking-context-back{border-color:#785629;background:linear-gradient(180deg,#34291f,#292019);color:#ffe0ad;box-shadow:0 5px 16px rgba(0,0,0,.18)}
-.dark-mode .booking-page .booking-form > .booking-context-box .booking-context-back:hover{border-color:#d48b22;background:#3b2c20;color:#fff0d5}
+.booking-page-heading .booking-context-back:hover{border-color:#c97900;background:#fff1da;color:#573718}
+.dark-mode .booking-page-heading .booking-context-back{border-color:#785629;background:#292019;color:#ffe0ad}
+.dark-mode .booking-page-heading .booking-context-back:hover{border-color:#d48b22;background:#3b2c20;color:#fff0d5}
 .booking-page .hourly-booked-summary.is-clear{border-color:#e6d4bd;background:#f7efe4;color:#746558}
 .booking-page .hourly-rental{border-color:#e5d4be;border-radius:14px;background:linear-gradient(145deg,#fffaf2,#f6ecdf);color:#34291f;box-shadow:0 10px 24px rgba(76,53,31,.07)}
 .booking-page .hourly-rental #hourly-total{background:#f0dfc9;color:#773c12}
 .dark-mode .booking-page .hourly-booked-summary.is-clear{border-color:var(--line);background:#211a15;color:var(--muted)}
 .dark-mode .booking-page .hourly-rental{border-color:var(--line);background:#211a15;color:var(--ink);box-shadow:none}
 .dark-mode .booking-page .hourly-rental #hourly-total{background:#3a2c22;color:#ffe2af}
-.booking-summary{--summary-title:#34291f;--summary-copy:#65594e;--summary-muted:#75685c;--summary-accent:#995b0d;--summary-chip-bg:#fff1dc;--summary-chip-line:rgba(153,91,13,.24);--summary-inset-bg:rgba(119,60,18,.045);--summary-inset-line:rgba(119,60,18,.17);align-self:start;margin-top:clamp(130px,10vw,150px);position:relative;overflow:hidden;padding:0;border:1px solid rgba(205,139,54,.55);border-radius:20px;background:linear-gradient(155deg,#fffaf2 0%,#f4e9d9 100%);box-shadow:0 22px 52px rgba(59,38,16,.13);color:var(--summary-title)}
-.booking-summary::before{content:"";position:absolute;top:0;right:0;width:190px;height:190px;background:radial-gradient(circle,rgba(208,133,35,.17),transparent 70%);pointer-events:none}
-.booking-summary-head{position:relative;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:20px 20px 14px}
+.booking-summary{--summary-title:#34291f;--summary-copy:#65594e;--summary-muted:#75685c;--summary-accent:#995b0d;--summary-inset-bg:#f6f1e9;--summary-inset-line:#e8ded2;grid-area:summary;align-self:start;margin-top:0;position:relative;overflow:hidden;padding:0;border:1px solid #e8ded2;border-radius:12px;background:#fffdf9;box-shadow:0 12px 34px rgba(59,38,16,.08);color:var(--summary-title)}
+.booking-summary-head{position:relative;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 18px 12px}
 .booking-summary-kicker{color:var(--summary-accent);font-size:.68rem;font-weight:800;letter-spacing:.13em;text-transform:uppercase}
-.booking-summary-chip{padding:7px 10px;border:1px solid var(--summary-chip-line);border-radius:999px;background:var(--summary-chip-bg);color:var(--summary-accent);font-size:.7rem;font-weight:700;white-space:nowrap}
-.booking-summary-image{position:relative;overflow:hidden;margin:0 18px;border:1px solid rgba(255,255,255,.12);border-radius:14px;background:#17120f;box-shadow:0 12px 26px rgba(0,0,0,.2)}
+.booking-summary-image{position:relative;overflow:hidden;margin:0 18px;border-radius:8px;background:#17120f}
 .booking-summary-image-link{position:relative;display:block;color:inherit;text-decoration:none;cursor:pointer}
 .booking-summary-image:focus-within{outline:3px solid #f1ad4b;outline-offset:3px}
-.booking-summary-image::after{content:"";position:absolute;inset:35% 0 0;background:linear-gradient(transparent,rgba(18,13,10,.58));pointer-events:none}
-.booking-summary img{display:block;width:100%;height:clamp(190px,22vw,270px);object-fit:cover;object-position:center 55%;border-radius:0;transition:transform .45s ease}
+.booking-summary-image::after{content:"";position:absolute;inset:45% 0 0;background:linear-gradient(transparent,rgba(18,13,10,.48));pointer-events:none}
+.booking-summary img{display:block;width:100%;height:clamp(150px,18vw,220px);object-fit:cover;object-position:center 55%;border-radius:0;transition:transform .45s ease}
 .booking-summary-image-link:hover img,.booking-summary-image-link:focus-visible img{transform:scale(1.025)}
 .booking-summary-image-label{position:absolute;z-index:1;bottom:12px;left:13px;display:inline-flex;align-items:center;gap:8px;padding:7px 10px;border:1px solid rgba(255,255,255,.26);border-radius:999px;background:rgba(31,23,17,.76);backdrop-filter:blur(8px);color:#fff7ec;font-size:.68rem;font-weight:700;letter-spacing:.03em;pointer-events:none}
 .booking-summary-image-label span{font-size:.82rem;line-height:1}
-.booking-summary-content{position:relative;padding:17px 20px 20px}
+.booking-summary-content{position:relative;padding:14px 18px 16px}
 .booking-summary h3{margin:0;color:var(--summary-title);font:700 1.5rem/1.2 'Playfair Display',serif;letter-spacing:-.02em}
 .booking-summary p{margin:8px 0 0;color:var(--summary-copy);line-height:1.5}
-.booking-summary-rate{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:17px;padding:13px 14px;border:1px solid var(--summary-inset-line);border-radius:12px;background:var(--summary-inset-bg)}
+.booking-summary-rate{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:14px;padding:11px 0;border-top:1px solid var(--summary-inset-line);border-radius:0;background:transparent}
 .booking-summary-rate-label{color:var(--summary-muted);font-size:.75rem;font-weight:600}
 .booking-summary-rate strong{color:var(--summary-accent);font-size:1.02rem;text-align:right}
 .booking-summary-rate strong small{color:var(--summary-muted);font-size:.75rem;font-weight:500}
-.booking-summary-guidance{display:flex;align-items:flex-start;gap:10px;margin-top:15px;padding:13px 14px;border-left:3px solid #d78c27;border-radius:0 10px 10px 0;background:var(--summary-inset-bg)}
-.booking-summary-guidance-mark{display:grid;flex:0 0 20px;width:20px;height:20px;place-items:center;border:1px solid rgba(153,91,13,.34);border-radius:50%;color:var(--summary-accent);font-size:.72rem;font-weight:800}
-.booking-summary-guidance p{margin:0;color:var(--summary-copy);font-size:.79rem;line-height:1.55}
-.dark-mode .booking-summary{--summary-title:#fff5e8;--summary-copy:#d2c3b2;--summary-muted:#c8b5a0;--summary-accent:#ffd28e;--summary-chip-bg:rgba(198,121,0,.1);--summary-chip-line:rgba(205,139,54,.35);--summary-inset-bg:rgba(255,255,255,.035);--summary-inset-line:rgba(205,139,54,.25);border-color:rgba(205,139,54,.55);background:linear-gradient(155deg,#30241b 0%,#211914 72%);box-shadow:0 22px 52px rgba(0,0,0,.25)}
+.booking-summary-total{display:grid;grid-template-columns:1fr auto;align-items:center;gap:3px 12px;margin:0 18px 18px;padding:13px 14px;border-radius:8px;background:#f6f1e9}
+.booking-summary-total span{color:var(--summary-muted);font-size:.8rem;font-weight:650}
+.booking-summary-total strong{color:var(--summary-accent);font-size:1.22rem;text-align:right}
+.booking-summary-total small{grid-column:1/-1;color:var(--summary-copy);font-size:.74rem}
+.dark-mode .booking-summary{--summary-title:#fff5e8;--summary-copy:#d2c3b2;--summary-muted:#c8b5a0;--summary-accent:#ffd28e;--summary-inset-bg:rgba(255,255,255,.035);--summary-inset-line:rgba(205,139,54,.25);border-color:rgba(205,139,54,.48);background:#211914;box-shadow:0 16px 36px rgba(0,0,0,.22)}
+.dark-mode .booking-summary-total{background:#30251f}
 .hourly-time-legend{display:flex;align-items:center;gap:7px;margin:0 0 9px;color:var(--muted);font-size:.68rem;line-height:1.4}
 .hourly-time-legend:before{content:"";flex:0 0 10px;width:10px;height:10px;border-radius:3px;background:#c63e36}
-@media(max-width:1000px){.booking-page{grid-template-columns:minmax(0,1.1fr) minmax(270px,.9fr);gap:24px}}
-@media(max-width:800px){.booking-page{width:min(calc(100% - 28px),680px);grid-template-columns:minmax(0,1fr);gap:18px;margin:28px auto}.booking-page .booking-summary{order:0;margin-top:0}.booking-page .booking-form{order:1}}
-@media(max-width:600px){.booking-page .booking-form > .booking-context-box{margin-bottom:18px}}
-@media(max-width:520px){.booking-page{width:calc(100% - 20px);padding:0;gap:14px}.booking-form{padding:20px 16px}.booking-summary{border-radius:16px}.booking-summary-head{padding:16px 16px 12px}.booking-summary-image{margin:0 14px}.booking-summary img{height:auto;aspect-ratio:1.55}.booking-summary-content{padding:15px 16px 16px}.booking-summary h3{font-size:1.35rem}.booking-summary-rate{align-items:flex-start;flex-direction:column;gap:4px}.booking-summary-rate strong{text-align:left}}
+@media(max-width:1000px){.booking-page{grid-template-columns:minmax(0,1.25fr) minmax(270px,.85fr);column-gap:28px}}
 </style><style>
 .booking-review-panel{margin-top:18px;padding:clamp(18px,3vw,26px);border:1px solid #d5a553;border-radius:16px;background:linear-gradient(145deg,#fffaf1,#fffdf9);box-shadow:0 12px 28px rgba(85,57,22,.08)}
 .booking-review-panel[hidden],#booking-entry-fields[hidden],#booking-previous[hidden]{display:none!important}
@@ -74,7 +75,7 @@
 <style>.hourly-calendar-day.booked{background:#f8dcd9;color:#8f332d;cursor:pointer}.hourly-calendar-day.booked:disabled{color:#8f332d;opacity:1}</style>
 <style>.hourly-time-option.booked,.hourly-time-option.booked:disabled{background:#f8dcd9;color:#8f332d;cursor:not-allowed;opacity:1}.hourly-time-option.booked::after{content:'Occupied';font-size:.54rem}.dark-mode .hourly-time-option.booked,.dark-mode .hourly-time-option.booked:disabled{background:#492522;color:#ffc1b9}</style>
 <style>.hourly-booked-summary{grid-column:1/-1;padding:12px 14px;border:1px solid #efc4be;border-radius:8px;background:#fff3f1;color:#762e28;font-size:.8rem;line-height:1.45}.hourly-booked-summary strong{display:block;margin-bottom:5px;font-size:.82rem}.hourly-booked-summary ul{display:flex;flex-wrap:wrap;gap:6px;margin:0;padding:0;list-style:none}.hourly-booked-summary li{padding:5px 9px;border:1px solid #efc4be;border-radius:999px;background:#fff;color:#762e28;font-weight:700}.hourly-booked-summary.is-clear{border-color:var(--line);background:var(--sand);color:var(--muted)}.hourly-booked-summary.is-clear li{border-color:var(--line);background:transparent;color:var(--ink);font-weight:500}.dark-mode .hourly-booked-summary{border-color:#653a33;background:#382320;color:#ffd5ce}.dark-mode .hourly-booked-summary li{border-color:#70443c;background:#492522;color:#ffd5ce}.dark-mode .hourly-booked-summary.is-clear{border-color:var(--line);background:#211a15;color:var(--muted)}.dark-mode .hourly-booked-summary.is-clear li{background:transparent;color:var(--ink)}.hourly-calendar-hint{display:block;margin-top:9px;color:var(--muted);font-size:.68rem;line-height:1.4}</style>
-<style>.promo-entry{display:grid;gap:10px;padding:16px;border:1px solid #efc47d;border-radius:10px;background:#fff8ec}.promo-entry>strong{font-size:.94rem}.promo-entry-row{display:grid;grid-template-columns:1fr auto;gap:8px}.promo-entry-row input{min-width:0;text-transform:uppercase}.promo-entry-row button{padding:0 16px;border:0;border-radius:7px;background:var(--gold);color:#fff;font-weight:800;cursor:pointer}.promo-message{margin:0;color:var(--muted);font-size:.78rem;line-height:1.45}.promo-message.success{color:#1f7a42;font-weight:700}.promo-message.error{color:#a23d2e;font-weight:700}.promo-offer{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 12px;border-radius:7px;background:#fff}.promo-offer b{color:var(--deep)}.promo-offer small{color:var(--muted)}.promo-offer code{color:var(--orange-dark);font-weight:800}.dark-mode .promo-entry{background:#30251f;border-color:#76552e}.dark-mode .promo-offer{background:#211a15}@media(max-width:520px){.promo-entry-row{grid-template-columns:1fr}.promo-entry-row button{min-height:42px}.promo-offer{align-items:flex-start;flex-direction:column}}</style>
+<style>.promo-entry{display:block;padding:0;border:1px solid var(--line);border-radius:9px;background:var(--paper)}.promo-entry>summary{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:46px;padding:11px 14px;color:var(--ink);font-weight:700;cursor:pointer;list-style:none}.promo-entry>summary::-webkit-details-marker{display:none}.promo-entry>summary::after{content:'＋';color:var(--deep);font-size:1.05rem}.promo-entry[open]>summary::after{content:'−'}.promo-entry>summary span{margin-left:auto;color:var(--muted);font-size:.76rem;font-weight:500}.promo-entry-body{display:grid;gap:10px;padding:0 14px 14px}.promo-entry-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px}.promo-entry-row input{min-width:0;text-transform:uppercase}.promo-entry-row button{padding:0 16px;border:0;border-radius:7px;background:var(--gold);color:#fff;font-weight:800;cursor:pointer}.promo-message{margin:0;color:var(--muted);font-size:.78rem;line-height:1.45}.promo-message.success{color:#1f7a42;font-weight:700}.promo-message.error{color:#a23d2e;font-weight:700}.promo-offer{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 12px;border-radius:7px;background:var(--sand)}.promo-offer b{color:var(--deep)}.promo-offer small{color:var(--muted)}.promo-offer code{color:var(--orange-dark);font-weight:800}.dark-mode .promo-entry{background:#30251f;border-color:#76552e}.dark-mode .promo-entry>summary{color:var(--ink)}.dark-mode .promo-offer{background:#211a15}@media(max-width:520px){.promo-entry-row{grid-template-columns:minmax(0,1fr) auto}.promo-entry-row button{min-height:42px}.promo-offer{align-items:flex-start;flex-direction:column}}</style>
 <style>
 .booking-validation-summary{margin:0 0 16px;padding:14px 16px;border:1px solid #d98c82;border-radius:10px;background:#fff1ef;color:#6e2d27;line-height:1.45}
 .booking-validation-summary strong{display:block;margin-bottom:6px}
@@ -84,12 +85,20 @@
 .dark-mode .booking-validation-summary{border-color:#74413c;background:#3b2421;color:#ffd8d2}
 .dark-mode .booking-field-error{color:#ffb8ae}
 </style>
+<style>
+@media(max-width:800px){.booking-page{width:min(calc(100% - 28px),680px);grid-template-columns:minmax(0,1fr);grid-template-areas:"heading" "summary" "form";gap:16px;margin:28px auto}.booking-page .booking-summary{position:relative;top:auto;display:grid;grid-template-columns:108px minmax(0,1fr);align-items:center;margin:0;padding:10px;border-radius:10px}.booking-summary-head{grid-column:1/-1;padding:0 0 9px}.booking-summary-image{grid-column:1;grid-row:2 / span 2;width:108px;height:88px;margin:0}.booking-summary img{width:100%;height:100%;object-fit:cover}.booking-summary-image::after,.booking-summary-image-label{display:none}.booking-summary-content{grid-column:2;grid-row:2;padding:0 0 0 12px}.booking-summary h3{font-size:1.08rem}.booking-summary-content>p{margin-top:3px;font-size:.78rem}.booking-summary-rate{margin-top:5px;padding:5px 0 0}.booking-summary-rate-label{font-size:.7rem}.booking-summary-rate strong{font-size:.9rem}.booking-summary-total{grid-column:1/-1;margin:9px 0 0;padding:9px 11px}.booking-summary-total strong{font-size:1rem}}
+@media(max-width:520px){.booking-page{width:calc(100% - 24px);grid-template-columns:minmax(0,1fr);grid-template-areas:"heading" "summary" "form";gap:14px;margin:22px auto}.booking-page-heading .booking-context-box{margin-bottom:12px}.booking-page-heading h1{font-size:clamp(2.3rem,10vw,3.3rem)}.booking-page .booking-form{padding:0}.booking-page .booking-summary{grid-template-columns:88px minmax(0,1fr);padding:9px}.booking-summary-head{padding-bottom:7px}.booking-summary-image{width:88px;height:78px}.booking-summary-content{padding-left:10px}.booking-summary-content>p{font-size:.72rem}.booking-summary-rate{align-items:center;flex-direction:row;gap:4px}.booking-summary-rate strong{text-align:right}.booking-summary-total{padding:8px 10px}.booking-summary-total small{font-size:.7rem}.stay-date-fields{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.availability-calendar{padding:12px}.party-detail-fields{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.party-capacity{padding:9px 8px;font-size:.78rem}.booking-type-selector{padding:12px}.booking-type-options{grid-template-columns:1fr 1fr;gap:8px}.booking-type-options a{padding:10px}.booking-type-options strong{font-size:.82rem}.booking-type-options small{font-size:.68rem}.booking-contact-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.booking-contact-fields>label:first-child{grid-column:1/-1}.promo-entry-row{grid-template-columns:minmax(0,1fr) auto}.promo-entry-row button{min-height:42px}.booking-page .booking-form form{gap:12px}}
+@media(max-width:360px){.stay-date-fields,.booking-contact-fields,.party-detail-fields{grid-template-columns:1fr}.booking-contact-fields>label:first-child{grid-column:auto}.booking-type-options{grid-template-columns:1fr}.booking-page .booking-summary{grid-template-columns:76px minmax(0,1fr)}.booking-summary-image{width:76px;height:72px}}
+.dark-mode .booking-page-heading .booking-context-back{color:#ffe0ad}
+</style>
 <section class="booking-page">
-    <div class="booking-form">
+    <header class="booking-page-heading">
         @include('bookings.partials.context-bar', ['backUrl' => route('rooms.show', $room), 'backLabel' => 'room details'])
         <span class="eyebrow">RESERVATION DETAILS</span>
         <h1>Complete your booking.</h1>
-
+        <p>Choose your stay details and guest information.</p>
+    </header>
+    <div class="booking-form">
         @guest
             <div class="checkout-choice">
                 <a class="{{ !$isGuest ? 'active' : '' }}" href="{{ route('login', ['room' => $room->slug] + $bookingSearch) }}">Sign in</a>
@@ -173,18 +182,22 @@
                 @if($isGuest)
                     <hr>
                     <h3>Guest contact information</h3>
+                    <div class="booking-contact-fields">
                     <label>Full name<input id="guest-name" name="guest_name" value="{{ old('guest_name') }}" placeholder="e.g., Maria Santos" autocomplete="name" maxlength="255" required @error('guest_name') aria-invalid="true" aria-describedby="guest-name-error" @enderror>@error('guest_name')<small class="booking-field-error" id="guest-name-error">{{ $message }}</small>@enderror</label>
                     <label>Email address<input id="guest-email" type="email" name="guest_email" value="{{ old('guest_email') }}" placeholder="e.g., maria@example.com" autocomplete="email" inputmode="email" autocapitalize="none" spellcheck="false" maxlength="255" required @error('guest_email') aria-invalid="true" aria-describedby="guest-email-error" @enderror>@error('guest_email')<small class="booking-field-error" id="guest-email-error">{{ $message }}</small>@enderror</label>
                     <label>Phone number<input id="guest-phone" type="tel" name="guest_phone" value="{{ old('guest_phone') }}" placeholder="09XX XXX XXXX" autocomplete="tel" inputmode="tel" maxlength="20" title="Enter a Philippine mobile number, such as 09XX XXX XXXX or +63 9XX XXX XXXX." required @error('guest_phone') aria-invalid="true" aria-describedby="guest-phone-error" @enderror>@error('guest_phone')<small class="booking-field-error" id="guest-phone-error">{{ $message }}</small>@enderror</label>
+                    </div>
                 @endif
-                <section class="promo-entry" data-promo-quote-url="{{ route('rooms.promos.quote', $room) }}">
-                    <strong>Promo code</strong>
+                <details class="promo-entry" data-promo-quote-url="{{ route('rooms.promos.quote', $room) }}" @if(old('promo_code')) open @endif>
+                    <summary>Promo code <span>Optional</span></summary>
+                    <div class="promo-entry-body">
                     @foreach($roomPromos as $availablePromo)
                         <div class="promo-offer"><span><b>{{ $availablePromo->name }}</b><br><small>{{ $availablePromo->description }}</small></span><code>{{ $availablePromo->code }}</code></div>
                     @endforeach
                     <div class="promo-entry-row"><input id="promo-code" name="promo_code" value="{{ old('promo_code') }}" maxlength="40" placeholder="Enter promo code" autocomplete="off"><button id="apply-promo" type="button">Apply</button></div>
                     <p class="promo-message" id="promo-message" role="status" aria-live="polite">Choose your stay, enter a code, then tap Apply to see the discounted total.</p>
-                </section>
+                    </div>
+                </details>
                 <label class="checkbox"><input name="terms_accepted" type="checkbox" value="1" @checked(old('terms_accepted')) required><span><strong>Accept reservation terms</strong><small>I understand this is a reservation request, subject to staff confirmation. Online cancellation and refund eligibility require at least 3 days before check-in. <a href="{{ route('terms') }}" target="_blank">Read terms</a>.</small></span></label>
 
                 <label>Special request<textarea name="special_request" rows="3" placeholder="e.g., Extra pillow, if available.">{{ old('special_request') }}</textarea></label>
@@ -202,7 +215,7 @@
                 <div id="booking-availability-status" class="booking-availability-status" role="status" aria-live="polite">Choose your stay dates to check availability. Unpaid requests hold their slot for {{ \App\Models\Booking::holdMinutes() }} minutes; paid or confirmed reservations remain reserved.</div>
                 <div class="booking-step-actions">
                     <button class="button button-outline" id="booking-previous" type="button" hidden>Previous</button>
-                    <button class="button" id="booking-submit" type="submit">Continue</button>
+                    <button class="button" id="booking-submit" type="submit">Continue to review</button>
                 </div>
             </form>
         @endif
@@ -211,7 +224,6 @@
     <aside class="booking-summary" aria-label="Selected room summary">
         <div class="booking-summary-head">
             <span class="booking-summary-kicker">Your selected room</span>
-            <span class="booking-summary-chip">Carolina stay</span>
         </div>
         <div class="booking-summary-image">
             <a class="booking-summary-image-link" href="{{ route('rooms.show', $room) }}" aria-label="View {{ $room->name }} photos and details">
@@ -230,10 +242,11 @@
                     <strong>₱{{ number_format($room->price_per_night) }} <small>{{ $room->rate_label }}</small></strong>
                 @endif
             </div>
-            <div class="booking-summary-guidance">
-                <span class="booking-summary-guidance-mark" aria-hidden="true">i</span>
-                <p>{{ $bookingMode === 'hourly' ? 'Choose your stay length to see the estimated total.' : 'Your estimate updates from the dates you choose.' }} Review your details before continuing to payment. Final pricing and payment options appear on the next page.</p>
-            </div>
+        </div>
+        <div class="booking-summary-total" aria-live="polite">
+            <span>Estimated total</span>
+            <strong id="booking-summary-total" data-night-rate="{{ $room->price_per_night }}" data-hourly-rate="{{ $room->price_per_night / 24 }}" data-package-rate="{{ $room->rental_hours ? $room->price_per_night : '' }}" data-package-hours="{{ $room->rental_hours ?: '' }}">Choose dates</strong>
+            <small id="booking-summary-period">Choose your stay to see an estimate.</small>
         </div>
     </aside>
 </section>
@@ -502,6 +515,56 @@ document.addEventListener('DOMContentLoaded', () => {
 @endif
 <script>
 document.addEventListener('DOMContentLoaded', () => {
+    const total = document.getElementById('booking-summary-total');
+    const period = document.getElementById('booking-summary-period');
+    const form = document.getElementById('booking-submit')?.form;
+    if (!total || !period || !form) return;
+    const currency = new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP', maximumFractionDigits: 2 });
+    let quotedPromoTotal = null;
+    const formatDate = value => value ? new Date(`${value}T00:00:00`).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' }) : '';
+    const update = () => {
+        const data = new FormData(form), hourly = data.get('booking_type') === 'hourly';
+        let amount = null, detail = 'Choose your stay to see an estimate.';
+        if (hourly) {
+            const hours = Number(data.get('hours') || 0), packageHours = Number(total.dataset.packageHours || 0), packageRate = Number(total.dataset.packageRate || 0);
+            const multiplier = ({48:2,72:3,96:4,120:5,168:7,720:30})[hours] || 1;
+            amount = packageRate ? packageRate * multiplier : Number(total.dataset.hourlyRate || 0) * hours;
+            const length = hours === 720 ? '1 month' : hours >= 24 ? `${hours / 24} day${hours === 24 ? '' : 's'}` : `${hours} hours`;
+            detail = `${length}${data.get('hourly_date') ? ` · ${formatDate(data.get('hourly_date'))}` : ''}${packageHours && hours === packageHours ? ' · fixed package' : ''}`;
+        } else {
+            const start = data.get('check_in'), end = data.get('check_out');
+            if (start && end) {
+                const nights = Math.round((Date.parse(`${end}T00:00:00Z`) - Date.parse(`${start}T00:00:00Z`)) / 86400000);
+                if (nights > 0) {
+                    amount = Number(total.dataset.nightRate || 0) * nights;
+                    detail = `${nights} night${nights === 1 ? '' : 's'} · ${formatDate(start)} – ${formatDate(end)}`;
+                }
+            }
+        }
+        if (amount === null || !Number.isFinite(amount)) {
+            total.textContent = 'Choose dates';
+            period.textContent = detail;
+            return;
+        }
+        total.textContent = currency.format(quotedPromoTotal ?? amount);
+        period.textContent = quotedPromoTotal === null ? detail : `${detail} · promo applied`;
+    };
+    const refreshEstimate = event => {
+        if (event.target.id === 'promo-code' || !event.target.closest('.promo-entry')) quotedPromoTotal = null;
+        update();
+    };
+    form.addEventListener('input', refreshEstimate);
+    form.addEventListener('change', refreshEstimate);
+    window.addEventListener('booking:promo-quote', event => {
+        const value = Number(event.detail?.total);
+        quotedPromoTotal = event.detail?.total !== null && Number.isFinite(value) ? value : null;
+        update();
+    });
+    update();
+});
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
     const section = document.querySelector('.promo-entry');
     if (!section) return;
     const form = section.closest('form'), input = document.getElementById('promo-code'), button = document.getElementById('apply-promo'), message = document.getElementById('promo-message');
@@ -521,6 +584,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!response.ok) throw new Error(result.errors?.promo_code?.[0] || result.message || 'This promo could not be applied.');
             message.className = 'promo-message success';
             message.textContent = `${result.name}: ${money(result.original)} → ${money(result.total)}. You save ${money(result.discount)}. Downpayment (30% of original, up to final total): ${money(Math.min(result.original * 0.30, result.total))}.`;
+            window.dispatchEvent(new CustomEvent('booking:promo-quote', { detail: { total: result.total } }));
         } catch (error) {
             message.className = 'promo-message error'; message.textContent = error.message;
         } finally { button.disabled = false; }
@@ -607,7 +671,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     const showEntryFields = () => {
         reviewing = false; entryFields.hidden = false; reviewPanel.hidden = true; previous.hidden = true;
-        submit.textContent = 'Continue';
+        submit.textContent = 'Continue to review';
         entryFields.scrollIntoView({behavior:'smooth', block:'start'});
         entryFields.querySelector('input:not([type="hidden"]), button, a')?.focus({preventScroll:true});
     };
