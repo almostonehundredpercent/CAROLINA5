@@ -28,7 +28,7 @@
 
     @include('rooms.partials.promo-banner')
     @if($bookingMode)
-        <p class="result-count">{{ $rooms->whereNull('availability_reason')->count() }} available · {{ $rooms->whereNotNull('availability_reason')->count() }} unavailable{{ isset($filters['check_in']) ? ' for your stay' : ' right now' }}</p>
+        <p class="result-count">{{ $rooms->count() }} room{{ $rooms->count() === 1 ? '' : 's' }} available{{ isset($filters['check_in']) ? ' for your stay' : ' right now' }}.</p>
     @else
         <p class="result-count">Browse details and rates for {{ $rooms->count() }} room options.</p>
     @endif
@@ -78,7 +78,7 @@
                     </div>
                 </div>
             @empty
-                <div class="room-grid"><div class="empty-state"><h2>{{ $bookingMode ? 'No rooms found' : 'Room information is coming soon' }}</h2><p>{{ $bookingMode ? 'Try another date, stay length, or smaller group.' : 'Room details will appear here when the catalogue is ready.' }}</p><a class="text-link" href="{{ route($bookingMode ? 'booking.start' : 'rooms.index') }}">{{ $bookingMode ? 'Clear search' : 'Browse rooms' }}</a></div></div>
+                <div class="room-grid"><div class="empty-state"><h2>{{ $bookingMode ? 'No rooms available' : 'Room information is coming soon' }}</h2><p>{{ $bookingMode ? 'Try a different date or stay length, or choose a smaller group.' : 'Room details will appear here when the catalogue is ready.' }}</p><a class="text-link" href="{{ route($bookingMode ? 'booking.start' : 'rooms.index') }}">{{ $bookingMode ? 'Clear search' : 'Browse rooms' }}</a></div></div>
             @endforelse
         </div>
         <nav class="rooms-pagination" aria-label="Room pages" @if($roomPages->count() < 2) hidden @endif>

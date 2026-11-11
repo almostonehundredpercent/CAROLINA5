@@ -76,6 +76,41 @@ test('guest room results show booked cleaning and maintenance rooms as unavailab
     expect($this->get(route('rooms.index'))->viewData('rooms')->firstWhere('id', $booked->id)->availability_reason)->toBeNull();
 });
 
+test('booking availability results include only rooms available for the selected stay', function () {
+    $start = now()->addDays(3)->setTime(13, 0);
+    $end = $start->copy()->addHours(6);
+    $booked = statusTestRoom('Hidden Booked Room');
+    $cleaning = statusTestRoom('Hidden Cleaning Room');
+    $maintenance = statusTestRoom('Hidden Maintenance Room');
+    $free = statusTestRoom('Only Available Room');
+    statusTestBooking($booked, $start, $end);
+    foreach (['cleaning' => $cleaning, 'maintenance' => $maintenance] as $status => $room) {
+        RoomBlock::create(['room_id' => $room->id, 'status' => $status, 'starts_at' => $start, 'ends_at' => $end]);
+    }
+
+    $response = $this->get(route('booking.start', [
+        'check_in' => $start->toDateString(), 'check_in_time' => '13:00', 'stay' => '6',
+    ]))->assertOk();
+
+    expect($response->viewData('rooms')->pluck('name')->all())->toBe([$free->name]);
+    $response->assertSee('Only Available Room')
+        ->assertDontSee('Hidden Booked Room')
+        ->assertDontSee('Hidden Cleaning Room')
+        ->assertDontSee('Hidden Maintenance Room');
+});
+
+test('booking availability without dates hides rooms unavailable right now', function () {
+    $now = statusTestPropertyNow();
+    $occupied = statusTestRoom('Occupied Right Now');
+    $free = statusTestRoom('Free Right Now');
+    statusTestBooking($occupied, $now->copy()->subHour(), $now->copy()->addHour());
+
+    $response = $this->get(route('booking.start'))->assertOk();
+
+    expect($response->viewData('rooms')->pluck('name')->all())->toBe([$free->name]);
+    $response->assertSee('Free Right Now')->assertDontSee('Occupied Right Now');
+});
+
 test('room detail shows the next full-stay opening after consecutive reservations and cleaning', function () {
     $room = statusTestRoom('Next Opening Room');
     $room->update(['rental_hours' => 6]);
