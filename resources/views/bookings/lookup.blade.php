@@ -1,6 +1,6 @@
 @extends('layouts.app')
 @section('content')
-<section class="auth-page">
+<section class="auth-page booking-lookup-page">
     <form class="auth-card" method="POST" action="{{ route('bookings.lookup.submit') }}">
         @csrf
         <a class="booking-context-back lookup-back-link" href="{{ route('home') }}"><span aria-hidden="true">←</span><span>Back to home</span></a>
