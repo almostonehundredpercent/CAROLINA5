@@ -5,6 +5,9 @@
 .booking-page{width:min(calc(100% - 40px),1360px);max-width:1360px;grid-template-columns:minmax(0,1.12fr) minmax(320px,.88fr);gap:clamp(20px,3vw,40px)}
 .booking-form,.booking-summary{min-width:0}
 .booking-form{padding:clamp(20px,3vw,40px)}
+.booking-page .booking-form textarea{background:#fffaf2;border-color:#d8c5ab}
+.booking-availability-status{margin-top:16px;padding:14px;border:1px solid #d8c5ab;border-radius:10px;background:#fffaf2;color:var(--ink)}
+.dark-mode .booking-page .booking-form textarea,.dark-mode .booking-availability-status{background:#211a15;border-color:var(--line);color:var(--ink)}
 .booking-page .booking-form{background:transparent;border:0;border-radius:0;box-shadow:none}
 .booking-page .booking-form > .booking-context-box{display:flex;align-items:center;justify-content:flex-start;padding:0;margin:0 0 22px;border:0;border-radius:0;background:transparent;box-shadow:none}
 .booking-page .booking-form > .booking-context-box .booking-context-back{min-height:46px;padding:10px 15px;border:1px solid rgba(153,91,13,.32);border-radius:11px;background:linear-gradient(180deg,#fffaf2,#f4e8d8);color:#573718;box-shadow:0 5px 14px rgba(76,53,31,.08)}
@@ -196,7 +199,7 @@
                     <dl class="booking-review-grid" id="booking-review-grid"></dl>
                     <p class="booking-review-note">This is not a confirmed booking. Your request will be submitted when you choose Proceed to payment. The final amount and payment choices will appear on the next page.</p>
                 </section>
-                <div id="booking-availability-status" role="status" aria-live="polite" style="margin-top:16px;padding:14px;border:1px solid var(--line);border-radius:10px;background:var(--paper);color:var(--ink)">Choose your stay dates to check availability. Unpaid requests hold their slot for {{ \App\Models\Booking::holdMinutes() }} minutes; paid or confirmed reservations remain reserved.</div>
+                <div id="booking-availability-status" class="booking-availability-status" role="status" aria-live="polite">Choose your stay dates to check availability. Unpaid requests hold their slot for {{ \App\Models\Booking::holdMinutes() }} minutes; paid or confirmed reservations remain reserved.</div>
                 <div class="booking-step-actions">
                     <button class="button button-outline" id="booking-previous" type="button" hidden>Previous</button>
                     <button class="button" id="booking-submit" type="submit">Continue</button>
