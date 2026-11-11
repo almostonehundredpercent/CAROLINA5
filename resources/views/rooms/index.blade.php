@@ -5,9 +5,10 @@
 @endpush
 @section('content')
 <style>.room-promo-badge{display:inline-flex;margin:8px 0 0;padding:6px 9px;border-radius:999px;background:#fff0d8;color:#a05200;font-size:.72rem;font-weight:800}.dark-mode .room-promo-badge{background:#4a3220;color:#ffd391}</style>
-<section class="page-hero rooms-hero"><div><h1>{{ $bookingMode ? 'Choose a room to book' : 'Find a room' }}</h1><p>{{ $bookingMode ? 'Choose a room to continue straight to booking.' : 'Choose your dates and stay length.' }}</p></div></section>
+<section class="page-hero rooms-hero"><div><h1>{{ $bookingMode ? 'Choose a room to book' : 'Our rooms' }}</h1><p>{{ $bookingMode ? 'Choose a room to continue straight to booking.' : 'Compare room details, amenities, and rates.' }}</p></div></section>
 <section class="section compact rooms-results">
-    <form class="filter-bar rooms-search" method="GET" action="{{ $bookingMode ? route('booking.start') : route('rooms.index') }}">
+    @if($bookingMode)
+    <form class="filter-bar rooms-search" method="GET" action="{{ route('booking.start') }}">
         <input id="rooms-check-in" type="hidden" name="check_in" value="{{ $filters['check_in'] ?? '' }}">
         <div class="rooms-date-control" id="rooms-date-control"><button class="rooms-date-trigger" id="rooms-check-in-trigger" type="button" aria-expanded="false" aria-controls="rooms-search-calendar"><svg class="rooms-mobile-icon" data-room-icon="calendar" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M16 3v4M8 3v4M3 10h18"></path></svg><span class="rooms-date-copy"><span>Check-in date</span><b>Choose date</b></span></button>
         <section class="rooms-search-calendar" id="rooms-search-calendar" hidden aria-label="Choose check-in date"><div class="rooms-calendar-head"><button type="button" id="rooms-calendar-prev" aria-label="Previous month">‹</button><b id="rooms-calendar-month"></b><button type="button" id="rooms-calendar-next" aria-label="Next month">›</button></div><div class="rooms-calendar-week"><span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span></div><div class="rooms-calendar-days" id="rooms-calendar-days"></div><p class="rooms-calendar-note" id="rooms-calendar-note" aria-live="polite">Choose your check-in date and time. Your stay length sets the check-out automatically.</p></section></div>
@@ -23,9 +24,14 @@
         <div class="rooms-sort-control" id="rooms-sort-control"><span class="rooms-field-label" id="rooms-sort-label"><svg class="rooms-mobile-icon" data-room-icon="sort" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M7 12h10M10 18h4"></path></svg><span>Sort by price</span></span><input id="rooms-sort" type="hidden" name="sort" value="{{ $roomSort }}"><button id="rooms-sort-trigger" type="button" aria-labelledby="rooms-sort-label rooms-sort-current" aria-expanded="false" aria-controls="rooms-sort-menu"><span id="rooms-sort-current">{{ ['recommended' => 'Recommended', 'price_asc' => 'Lowest first', 'price_desc' => 'Highest first'][$roomSort] ?? 'Recommended' }}</span></button><div class="rooms-sort-menu" id="rooms-sort-menu" role="group" aria-label="Sort by price" hidden>@foreach(['recommended' => ['Recommended', 'Best overall match'], 'price_asc' => ['Lowest first', 'Lower price to higher'], 'price_desc' => ['Highest first', 'Higher price to lower']] as $sortValue => [$sortLabel, $sortDescription])<button type="button" data-sort="{{ $sortValue }}" aria-pressed="{{ $roomSort === $sortValue ? 'true' : 'false' }}"><span>{{ $sortLabel }}</span><small>{{ $sortDescription }}</small><b class="rooms-sort-check" aria-hidden="true">✓</b></button>@endforeach</div></div>
         <button class="button">Check availability<svg class="rooms-action-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"></circle><path d="m16 16 4.5 4.5M8 10.5h5M10.5 8v5"></path></svg></button>
     </form>
+@endif
 
     @include('rooms.partials.promo-banner')
-    <p class="result-count">{{ $rooms->whereNull('availability_reason')->count() }} available · {{ $rooms->whereNotNull('availability_reason')->count() }} unavailable{{ isset($filters['check_in']) ? ' for your stay' : ' right now' }}</p>
+    @if($bookingMode)
+        <p class="result-count">{{ $rooms->whereNull('availability_reason')->count() }} available · {{ $rooms->whereNotNull('availability_reason')->count() }} unavailable{{ isset($filters['check_in']) ? ' for your stay' : ' right now' }}</p>
+    @else
+        <p class="result-count">Browse details and rates for {{ $rooms->count() }} room options.</p>
+    @endif
     @php($roomPages = $rooms->chunk(6)->values())
     <div class="rooms-carousel" id="rooms-carousel">
         <div class="rooms-page-track" id="rooms-page-track">
@@ -39,8 +45,9 @@
                                     <span>{{ $room->room_type }} · {{ $room->beds }} bed{{ $room->beds > 1 ? 's' : '' }} · {{ $room->guests }} guests</span>
                                     <h3>{{ $room->name }}</h3>
                                     @php($hasStaySearch = isset($filters['check_in']))
-                                    <div class="room-availability-line"><span class="room-availability-badge {{ $room->availability_reason ? 'is-unavailable' : 'is-available' }}">{{ $room->availability_reason ? ($hasStaySearch ? 'Unavailable for stay' : 'Unavailable now') : ($hasStaySearch ? 'Available for stay' : 'Available now') }}</span>@if($room->availability_reason)<small>{{ $room->availability_reason === 'Maintenance' ? '(Maintenance)' : $room->availability_reason }}</small>@endif</div>
-                                    <section class="room-card-availability" data-availability-url="{{ route('rooms.availability', $room) }}">
+                                    @if($bookingMode)
+                                        <div class="room-availability-line"><span class="room-availability-badge {{ $room->availability_reason ? 'is-unavailable' : 'is-available' }}">{{ $room->availability_reason ? ($hasStaySearch ? 'Unavailable for stay' : 'Unavailable now') : ($hasStaySearch ? 'Available for stay' : 'Available now') }}</span>@if($room->availability_reason)<small>{{ $room->availability_reason === 'Maintenance' ? '(Maintenance)' : $room->availability_reason }}</small>@endif</div>
+                                        <section class="room-card-availability" data-availability-url="{{ route('rooms.availability', $room) }}">
                                         <button class="room-availability-toggle" type="button" aria-expanded="false" aria-controls="room-availability-{{ $room->id }}">
                                             <span><b>View booked dates</b><small>Unavailable dates are marked in red.</small></span><span aria-hidden="true">＋</span>
                                         </button>
@@ -53,14 +60,17 @@
                                                 <p class="room-availability-legend"><i aria-hidden="true"></i>Booked or unavailable</p>
                                             </div>
                                         </div>
-                                    </section>
+                                        </section>
+                                    @else
+                                        @if($room->amenities)<div class="room-info-amenities">@foreach($room->amenities as $amenity)<span>{{ $amenity }}</span>@endforeach</div>@endif
+                                    @endif
                                     <div class="room-card-social">
                                         @if($room->promoCodes->isNotEmpty())<small class="room-promo-badge">{{ $room->promoCodes->first()->name }} · {{ $room->promoCodes->first()->code }}</small>@endif
                                         @include('rooms.partials.card-rating', ['room' => $room])
                                     </div>
                                     <p>{{ Str::limit($room->description, 86) }}</p>
                                     @php($roomActionUrl = $bookingMode ? route('bookings.create', ['room' => $room] + $filters + (auth()->guest() ? ['guest' => 1] : [])) : route('rooms.show', ['room' => $room] + $filters))
-                                    @php($roomActionLabel = $bookingMode ? 'Book this room' : ($room->availability_reason ? ($hasStaySearch ? 'Try other dates' : 'Check dates') : 'View room'))
+                                    @php($roomActionLabel = $bookingMode ? 'Book this room' : 'View room details')
                                     <div class="rooms-card-footer"><strong>₱{{ number_format($room->price_per_night) }} <small>{{ $room->rate_label }}</small></strong><a class="button small" href="{{ $roomActionUrl }}">{{ $roomActionLabel }} <span aria-hidden="true">→</span></a></div>
                                 </div>
                             </article>
@@ -68,7 +78,7 @@
                     </div>
                 </div>
             @empty
-                <div class="room-grid"><div class="empty-state"><h2>No rooms found</h2><p>Try another date, stay length, or smaller group.</p><a class="text-link" href="{{ route('rooms.index') }}">Clear search</a></div></div>
+                <div class="room-grid"><div class="empty-state"><h2>{{ $bookingMode ? 'No rooms found' : 'Room information is coming soon' }}</h2><p>{{ $bookingMode ? 'Try another date, stay length, or smaller group.' : 'Room details will appear here when the catalogue is ready.' }}</p><a class="text-link" href="{{ route($bookingMode ? 'booking.start' : 'rooms.index') }}">{{ $bookingMode ? 'Clear search' : 'Browse rooms' }}</a></div></div>
             @endforelse
         </div>
         <nav class="rooms-pagination" aria-label="Room pages" @if($roomPages->count() < 2) hidden @endif>
@@ -81,6 +91,7 @@
         </nav>
     </div>
 </section>
+@if($bookingMode)
 <script>
 document.addEventListener('DOMContentLoaded', () => {
     const calendar=document.getElementById('rooms-search-calendar'),days=document.getElementById('rooms-calendar-days'),month=document.getElementById('rooms-calendar-month'),note=document.getElementById('rooms-calendar-note'),checkIn=document.getElementById('rooms-check-in'),trigger=document.getElementById('rooms-check-in-trigger'),stay=document.getElementById('rooms-stay'),stayChoice=document.getElementById('rooms-stay-choice'),stayTrigger=document.getElementById('rooms-stay-trigger'),stayMenu=document.getElementById('rooms-stay-menu'),guests=document.getElementById('rooms-guests'),guestsChoice=document.getElementById('rooms-guests-choice'),guestsTrigger=document.getElementById('rooms-guests-trigger'),guestsMenu=document.getElementById('rooms-guests-menu'),timeField=document.getElementById('rooms-time-field'),timeValue=document.getElementById('rooms-check-in-time'),timeTrigger=document.getElementById('rooms-time-trigger'),timeMenu=document.getElementById('rooms-time-menu'),sortControl=document.getElementById('rooms-sort-control'),sortTrigger=document.getElementById('rooms-sort-trigger'),sortMenu=document.getElementById('rooms-sort-menu'),sortValue=document.getElementById('rooms-sort'),sortCurrent=document.getElementById('rooms-sort-current');

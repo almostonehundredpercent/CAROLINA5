@@ -103,6 +103,9 @@
 .dark-mode .room-availability-line small { color:#d7c4b5; }
 .rooms-card .card-rating { margin-bottom:3px; color:#9a611b; }
 .rooms-card .room-card-body > p { margin:12px 0 21px; color:#6f6258; font-size:.91rem; }
+.room-info-amenities { display:flex; flex-wrap:wrap; gap:6px; margin:5px 0 10px; }
+.room-info-amenities span { padding:5px 9px; border:1px solid #eadbca; border-radius:999px; background:#fff8ef; color:#70512f; font-size:.68rem; font-weight:700; line-height:1.25; }
+.dark-mode .room-info-amenities span { border-color:#594332; background:#30231b; color:#efcfaa; }
 .rooms-card-footer { display:flex; align-items:flex-end; justify-content:space-between; gap:13px; margin-top:auto; }
 .rooms-card-footer strong { color:#2e241d; font-size:1.05rem; }
 .rooms-card-footer strong small { display:block; margin-top:3px; color:#83766a; font-size:.72rem; font-weight:500; }
