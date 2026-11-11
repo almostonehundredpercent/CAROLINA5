@@ -18,6 +18,11 @@
         <a class="customer-profile-action" href="{{ route('contact') }}"><span aria-hidden="true">✉</span><strong>Contact Carolina</strong><small>Get help with your stay</small></a>
     </div>
 
+    <nav class="customer-profile-tabs" aria-label="Jump to profile section">
+        <a href="#profile-information" aria-current="location">Profile information</a>
+        <a href="#your-bookings">My bookings</a>
+    </nav>
+
     <article class="customer-profile-information" id="profile-information">
         <div class="customer-profile-card-heading"><div><span class="profile-kicker">ACCOUNT DETAILS</span><h2>Personal information</h2></div><span class="profile-member-badge">Member since {{ auth()->user()->created_at->format('Y') }}</span></div>
         <form class="customer-profile-form" method="POST" action="{{ route('profile.update') }}">
