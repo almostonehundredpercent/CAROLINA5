@@ -112,6 +112,7 @@ Route::post('/webhooks/paymongo', PayMongoWebhookController::class)->name('booki
 Route::get('/owner/rate-approvals/{change}/{token}', [RoomPriceApprovalController::class, 'show'])->middleware(['signed', 'throttle:30,1'])->name('room-price-approval.show');
 Route::post('/owner/rate-approvals/{change}/{token}', [RoomPriceApprovalController::class, 'decide'])->middleware(['signed', 'throttle:10,1'])->name('room-price-approval.decide');
 Route::middleware('auth')->group(function () {
+    Route::get('/profile', [ProfileController::class, 'show'])->name('profile.show');
     Route::get('/bookings', [BookingController::class, 'index'])->name('bookings.index');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::patch('/bookings/{booking}/cancel', [BookingController::class, 'cancel'])->name('bookings.cancel');

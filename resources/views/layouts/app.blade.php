@@ -56,6 +56,7 @@
             <a href="{{ route('about') }}" @if(request()->routeIs('about')) aria-current="page" @endif>About</a>
             <a href="{{ route('contact') }}" @if(request()->routeIs('contact')) aria-current="page" @endif>Contact</a>
             @auth
+                <a href="{{ route('bookings.index') }}" @if(request()->routeIs('bookings.index')) aria-current="page" @endif>My bookings</a>
                 @if(auth()->user()->is_admin)
                     <a href="{{ route('admin.dashboard') }}" @if(request()->routeIs('admin.*')) aria-current="page" @endif>Admin</a>
                 @endif
@@ -64,8 +65,8 @@
                     <svg viewBox="0 0 24 24" aria-hidden="true"></svg>
                     <span>Dark mode</span>
                 </button>
-                @unless(request()->routeIs('bookings.index'))<a class="nav-button nav-profile" href="{{ route('bookings.index') }}">Profile</a>@endunless
-                @if(request()->routeIs('bookings.index'))
+                @unless(request()->routeIs('profile.show'))<a class="nav-button nav-profile" href="{{ route('profile.show') }}" @if(request()->routeIs('profile.show')) aria-current="page" @endif>Profile</a>@endunless
+                @if(request()->routeIs('profile.show', 'bookings.index'))
                     <form method="POST" action="{{ route('logout') }}">
                         @csrf
                         <button class="nav-button" type="submit">Sign out</button>

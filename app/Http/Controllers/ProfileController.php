@@ -9,6 +9,11 @@ use Throwable;
 
 class ProfileController extends Controller
 {
+    public function show()
+    {
+        return view('profile.index');
+    }
+
     public function update(Request $request)
     {
         $user = $request->user();
@@ -37,7 +42,7 @@ class ProfileController extends Controller
         $user->save();
 
         if (! $emailChanged) {
-            return redirect()->route('bookings.index')->with('profile_success', 'Your profile details have been saved.');
+            return redirect()->route('profile.show')->with('profile_success', 'Your profile details have been saved.');
         }
 
         try {
@@ -48,6 +53,6 @@ class ProfileController extends Controller
             $message = 'Your profile was saved. Verify your new email address from the verification page.';
         }
 
-        return redirect()->route('bookings.index')->with('profile_success', $message);
+        return redirect()->route('profile.show')->with('profile_success', $message);
     }
 }
