@@ -203,11 +203,16 @@
     .home-calendar-head button:hover { transform:none; }
 }
 .home-lookup { max-width:1240px; padding-top:0; padding-bottom:78px; }
-.home-lookup .empty-state { min-height:0; padding:43px 48px; border:0; border-radius:20px; background:linear-gradient(125deg,#2a211b,#473224); color:#fff; display:flex; align-items:center; justify-content:space-between; gap:30px; text-align:left; box-shadow:0 16px 40px rgba(38,25,13,.15); }
-.home-lookup .eyebrow { color:#f5b354; }
-.home-lookup h2 { margin:0 0 8px; color:#fff8ef; font-family:'DM Sans',sans-serif; font-size:clamp(1.75rem,3vw,2.4rem); letter-spacing:-.045em; }
-.home-lookup p { max-width:600px; margin:0; color:rgba(255,245,232,.7); }
-.home-lookup .button { flex:0 0 auto; border-radius:999px; background:#fff9f1; color:#322217; white-space:nowrap; }
+.home-lookup .empty-state { min-height:0; padding:43px 48px; border:1px solid #e6d2b8; border-radius:20px; background:linear-gradient(125deg,#fffaf2,#f1e3d1); color:#34291f; display:flex; align-items:center; justify-content:space-between; gap:30px; text-align:left; box-shadow:0 16px 40px rgba(76,53,31,.12); }
+.home-lookup .eyebrow { color:#a35e08; }
+.home-lookup h2 { margin:0 0 8px; color:#34291f; font-family:'DM Sans',sans-serif; font-size:clamp(1.75rem,3vw,2.4rem); letter-spacing:-.045em; }
+.home-lookup p { max-width:600px; margin:0; color:#6e6257; }
+.home-lookup .button { flex:0 0 auto; border:1px solid #c97900; border-radius:999px; background:#c97900; color:#20160d; white-space:nowrap; }
+.dark-mode .home-lookup .empty-state { border-color:rgba(205,139,54,.32); background:linear-gradient(125deg,#2a211b,#473224); color:#fff; box-shadow:0 16px 40px rgba(0,0,0,.25); }
+.dark-mode .home-lookup .eyebrow { color:#f5b354; }
+.dark-mode .home-lookup h2 { color:#fff8ef; }
+.dark-mode .home-lookup p { color:rgba(255,245,232,.7); }
+.dark-mode .home-lookup .button { border-color:transparent; background:#fff9f1; color:#322217; }
 .home-benefits { padding-top:76px; padding-bottom:84px; background:#f5efe7; }
 .benefits.section.home-benefits { background:#f5efe7; }
 .home-benefits .section-heading p { max-width:460px; margin:0 auto; }
