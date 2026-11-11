@@ -94,7 +94,7 @@
     text-decoration: none;
 }
 
-.customer-profile-tabs a:first-child,
+.customer-profile-tabs a[aria-current="page"],
 .customer-profile-tabs a:hover,
 .customer-profile-tabs a:focus-visible {
     background: var(--customer-profile-surface);

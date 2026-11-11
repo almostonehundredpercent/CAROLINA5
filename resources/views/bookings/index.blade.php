@@ -19,10 +19,11 @@
     </div>
 
     <nav class="customer-profile-tabs" aria-label="Profile sections">
-        <a href="#profile-information">Profile information</a>
-        <a href="#your-bookings">My bookings</a>
+        <a href="{{ route('bookings.index', ['section' => 'profile']) }}" @if($activeSection === 'profile') aria-current="page" @endif>Profile information</a>
+        <a href="{{ route('bookings.index', ['section' => 'bookings']) }}" @if($activeSection === 'bookings') aria-current="page" @endif>My bookings</a>
     </nav>
 
+    @if($activeSection === 'profile')
     <article class="customer-profile-information" id="profile-information">
         <div class="customer-profile-card-heading"><div><span class="profile-kicker">ACCOUNT DETAILS</span><h2>Personal information</h2></div><span class="profile-member-badge">Member since {{ auth()->user()->created_at->format('Y') }}</span></div>
         <form class="customer-profile-form" method="POST" action="{{ route('profile.update') }}">
@@ -38,6 +39,7 @@
             </div>
         </form>
     </article>
+    @else
 
     <section class="customer-profile-stays" id="your-bookings" aria-labelledby="your-bookings-title">
         <div class="customer-profile-section-heading"><div><span class="profile-kicker">BOOKING HISTORY</span><h2 id="your-bookings-title">My bookings</h2><p>See your reservations, payment details, and stay updates in one place.</p></div><span class="profile-stay-count">{{ $bookings->total() }} {{ \Illuminate\Support\Str::plural('booking', $bookings->total()) }}</span></div>
@@ -116,8 +118,9 @@
 @endforelse
 </div>
 </section>
+    @endif
 </section>
-@if($bookings->hasPages())
+@if($activeSection === 'bookings' && $bookings->hasPages())
     <nav class="booking-pagination" aria-label="Booking pages">
         @if($bookings->onFirstPage())<span class="booking-pagination-disabled" aria-disabled="true">Previous</span>@else<a href="{{ $bookings->previousPageUrl() }}">Previous</a>@endif
         <span class="booking-pagination-page" aria-current="page">Page {{ $bookings->currentPage() }} of {{ $bookings->lastPage() }}</span>
