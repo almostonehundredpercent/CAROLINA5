@@ -101,14 +101,21 @@
     .receipt-success-icon{display:grid;place-items:center;width:54px;height:54px;margin:0 auto 14px;border-radius:50%;background:#bd7100;color:#fff;font-size:1.8rem;font-weight:800}
     .receipt-success-modal h2{margin:0 0 9px;color:var(--ink);font:700 1.65rem/1.15 'DM Sans',sans-serif}
     .receipt-success-modal p{margin:0;color:var(--muted);font-size:.96rem;line-height:1.55}
-    .receipt-success-reference{margin-top:14px!important;font-size:.82rem!important}
+    .receipt-success-reference{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:8px;margin-top:14px!important;font-size:.82rem!important}
     .receipt-success-reference strong{color:var(--ink);letter-spacing:.04em}
+    .receipt-copy-reference{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:36px;padding:6px 10px;border:1px solid var(--line);border-radius:8px;background:var(--sand);color:var(--ink);font:700 .78rem/1 'DM Sans',sans-serif;cursor:pointer;transition:background-color .16s ease,border-color .16s ease}
+    .receipt-copy-reference:hover{background:var(--surface)}
+    .receipt-copy-reference:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+    .receipt-copy-reference svg{width:15px;height:15px;flex:0 0 auto}
+    .receipt-copy-status{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
     .receipt-success-actions{display:grid;gap:9px;margin-top:22px}
     .receipt-success-actions .button{width:100%;min-height:48px;justify-content:center;margin:0}
     .dark-mode .receipt-success-modal{border-color:#80602e;background:#211a15;color:#fff4e8}
     .dark-mode .receipt-success-icon{background:#d99223;color:#21170e}
     .dark-mode .receipt-success-dismiss button{border-color:#574638;color:#d4c3b2}
     .dark-mode .receipt-success-modal h2,.dark-mode .receipt-success-reference strong{color:#fff4e8}
+    .dark-mode .receipt-copy-reference{border-color:#80602e;background:#33271c;color:#fff4e8}
+    .dark-mode .receipt-copy-reference:hover{background:#463627}
     @media(max-width:900px){.receipt-layout{grid-template-columns:minmax(0,1fr) minmax(280px,.85fr);gap:12px}}
     @media(max-width:800px){.confirmation.receipt-page{padding:34px 20px 42px}.receipt-page>h1{font-size:clamp(2.15rem,6vw,3rem)}.receipt-layout{grid-template-columns:1fr;max-width:700px}.receipt-card{grid-template-columns:repeat(2,minmax(0,1fr))}}
     @media(max-width:600px){.confirmation.receipt-page{padding:24px 16px 34px}.receipt-page>h1{font-size:clamp(2rem,9vw,2.6rem)}.receipt-summary{padding:17px}.receipt-summary-grid,.receipt-payment-facts{grid-template-columns:1fr}.receipt-payment-heading{align-items:flex-start}.receipt-hold-alert{padding:11px 12px}.receipt-card{padding:16px;gap:11px 12px}.receipt-card b{overflow-wrap:anywhere}}
@@ -293,7 +300,14 @@
             Your payment was processed. Carolina will review your reservation and email you about the next steps.
         @endif
     </p>
-    <p class="receipt-success-reference">Reference: <strong>{{ $booking->reference }}</strong></p>
+    <p class="receipt-success-reference">
+        <span>Reference: <strong>{{ $booking->reference }}</strong></span>
+        <button type="button" class="receipt-copy-reference" data-copy-reference="{{ $booking->reference }}" aria-label="Copy booking reference">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></svg>
+            <span data-copy-label>Copy</span>
+        </button>
+        <span class="receipt-copy-status" data-copy-status role="status" aria-live="polite"></span>
+    </p>
     <div class="receipt-success-actions">
         @if($booking->user_id && auth()->id() === $booking->user_id)
             <a class="button" href="{{ route('bookings.index', ['section' => 'bookings']) }}">View Bookings</a>
@@ -303,6 +317,48 @@
         <a class="button button-outline" href="{{ route('home') }}">Back to Home</a>
     </div>
 </dialog>
+<script data-receipt-reference-copy>
+    (() => {
+        const button = document.querySelector('[data-copy-reference]');
+        if (!button) return;
+        const reference = button.dataset.copyReference;
+        const label = button.querySelector('[data-copy-label]');
+        const status = button.parentElement.querySelector('[data-copy-status]');
+        let resetTimer;
+
+        button.addEventListener('click', async () => {
+            try {
+                if (navigator.clipboard?.writeText) {
+                    await navigator.clipboard.writeText(reference);
+                } else {
+                    const field = document.createElement('textarea');
+                    field.value = reference;
+                    field.setAttribute('readonly', '');
+                    field.style.position = 'fixed';
+                    field.style.opacity = '0';
+                    document.body.appendChild(field);
+                    field.select();
+                    const copied = document.execCommand('copy');
+                    field.remove();
+                    if (!copied) throw new Error('Clipboard unavailable');
+                }
+
+                label.textContent = 'Copied!';
+                button.setAttribute('aria-label', 'Booking reference copied');
+                status.textContent = 'Booking reference copied.';
+                window.clearTimeout(resetTimer);
+                resetTimer = window.setTimeout(() => {
+                    label.textContent = 'Copy';
+                    button.setAttribute('aria-label', 'Copy booking reference');
+                    status.textContent = '';
+                }, 2200);
+            } catch {
+                label.textContent = 'Try again';
+                status.textContent = 'Could not copy. Select the reference code to copy it manually.';
+            }
+        });
+    })();
+</script>
 <script>
     (() => {
         const dialog = document.getElementById('receipt-success-modal');

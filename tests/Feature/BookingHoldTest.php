@@ -315,6 +315,19 @@ test('receipt shows a server-authoritative live countdown for an active hold', f
         ->assertSee('30 minutes');
 });
 
+test('payment confirmation provides a copy control for the booking reference', function () {
+    $booking = heldBooking(holdRoom());
+
+    $this->withSession([
+        'guest_booking_reference' => $booking->reference,
+        'booking_payment_success' => true,
+    ])->get(route('bookings.receipt', $booking))
+        ->assertOk()
+        ->assertSee('data-copy-reference="'.$booking->reference.'"', false)
+        ->assertSee('aria-label="Copy booking reference"', false)
+        ->assertSee('data-receipt-reference-copy', false);
+});
+
 test('confirmed unpaid receipt explains that the request hold timer no longer applies', function () {
     $booking = heldBooking(holdRoom(), ['status' => 'confirmed', 'payment_status' => 'pending']);
 
