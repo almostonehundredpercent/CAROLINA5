@@ -1,5 +1,5 @@
 (() => {
-    const targets = document.querySelectorAll('.home-rooms .room-card, .rooms-page .rooms-card, .ber-promo');
+    const targets = document.querySelectorAll('.rooms-page .rooms-card, .ber-promo');
     if (!targets.length || !('IntersectionObserver' in window) || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
     const observer = new IntersectionObserver((entries, activeObserver) => {

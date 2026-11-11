@@ -171,6 +171,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
     if (carousel.children.length < 2) return;
+    carousel.scrollLeft = 0;
 
     const gap = () => Number.parseFloat(getComputedStyle(carousel).gap) || 0;
     const step = () => carousel.querySelector('.room-card')?.getBoundingClientRect().width + gap() || carousel.clientWidth;
