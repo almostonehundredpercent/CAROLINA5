@@ -3,7 +3,7 @@
         <span aria-hidden="true">←</span>
         <span>Back to {{ $backLabel }}</span>
     </a>
-    <div class="booking-context-identifiers">
+    <div class="booking-context-identifiers" role="group" aria-label="Room and booking reference">
         <div class="booking-context-item">
             <small>Room</small>
             <strong>{{ $roomName }}</strong>
