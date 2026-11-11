@@ -37,6 +37,19 @@ test('every room card exposes its own booked-date calendar', function () {
     }
 });
 
+test('booking date calendar is compact and still explains unavailable dates', function () {
+    $room = availabilityTestRoom('Compact calendar room');
+
+    $html = $this->get(route('bookings.create', ['room' => $room, 'guest' => 1]))
+        ->assertOk()
+        ->getContent();
+
+    expect($html)
+        ->toContain('max-width:330px')
+        ->toContain('Red dates are occupied.')
+        ->toContain('aria-label="Close availability calendar"');
+});
+
 test('rooms search renders descriptive field icons without changing its controls', function () {
     availabilityTestRoom('Icon Search Room');
 
