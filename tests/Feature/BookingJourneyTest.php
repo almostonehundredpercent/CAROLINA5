@@ -36,6 +36,18 @@ test('room search choices survive the detail and guest booking journey', functio
         ->and($document->evaluate('string(//input[@name="guests"]/@value)'))->toBe('2');
 });
 
+test('back to room details preserves the guest booking search choices', function () {
+    $this->travelTo(Carbon::parse('2026-10-03 01:00:00', 'UTC'));
+    $room = journeyRoom();
+    $choices = ['check_in' => '2026-10-05', 'stay' => '6', 'check_in_time' => '13:00', 'guests' => '2', 'sort' => 'price_asc'];
+    $response = $this->get(route('bookings.create', ['room' => $room, 'guest' => 1] + $choices))->assertOk();
+    $backUrl = journeyDocument($response->getContent())->evaluate('string(//a[contains(@class,"booking-context-back")]/@href)');
+
+    expect(parse_url($backUrl, PHP_URL_PATH))->toBe(parse_url(route('rooms.show', $room), PHP_URL_PATH));
+    parse_str(parse_url($backUrl, PHP_URL_QUERY) ?? '', $backQuery);
+    expect($backQuery)->toBe($choices);
+});
+
 test('the hourly field and its first summary use Manila today before UTC midnight', function () {
     $this->travelTo(Carbon::parse('2026-10-02 18:00:00', 'UTC'));
     $room = journeyRoom();
