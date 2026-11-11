@@ -75,27 +75,53 @@ test('Book now reads as a regular navigation link in guest and signed-in headers
     }
 });
 
-test('selected Book now is filled and highlighted instead of relying on an outline', async () => {
+test('selected Book now uses the same underline treatment as the active navigation link', async () => {
     const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
     try {
         await page.setContent(`<!doctype html><html><head><style>${publicStyles}</style></head><body>
             <header class="nav"><a class="brand" href="#">Carolina</a><nav>
-                <a href="#rooms">Rooms</a>
+                <a href="#contact" aria-current="page">Contact</a>
                 <a class="nav-button nav-book-now" href="#book" aria-current="page">Book now</a>
                 <a class="nav-button" href="#sign-in">Sign in</a>
             </nav></header>
         </body></html>`);
 
-        const activeStyle = await page.locator('.nav-book-now').evaluate(element => {
-            const style = getComputedStyle(element);
-            return { backgroundImage: style.backgroundImage, backgroundColor: style.backgroundColor };
-        });
+        const desktopStyles = await page.evaluate(() => Object.fromEntries(
+            ['a[href="#contact"]', '.nav-book-now'].map(selector => {
+                const element = document.querySelector(selector);
+                const style = getComputedStyle(element);
+                const underline = getComputedStyle(element, '::after');
+                return [selector, {
+                    color: style.color,
+                    fontWeight: style.fontWeight,
+                    backgroundColor: style.backgroundColor,
+                    backgroundImage: style.backgroundImage,
+                    underlineHeight: underline.height,
+                    underlineColor: underline.backgroundColor,
+                    underlineDisplay: underline.display,
+                }];
+            }),
+        ));
 
-        assert.ok(activeStyle.backgroundImage !== 'none' || activeStyle.backgroundColor !== 'rgba(0, 0, 0, 0)', 'the selected navigation item needs a visible filled surface');
+        assert.equal(desktopStyles['.nav-book-now'].color, desktopStyles['a[href="#contact"]'].color);
+        assert.equal(desktopStyles['.nav-book-now'].fontWeight, desktopStyles['a[href="#contact"]'].fontWeight);
+        assert.equal(desktopStyles['.nav-book-now'].backgroundColor, 'rgba(0, 0, 0, 0)');
+        assert.equal(desktopStyles['.nav-book-now'].backgroundImage, 'none');
+        assert.equal(desktopStyles['.nav-book-now'].underlineHeight, desktopStyles['a[href="#contact"]'].underlineHeight);
+        assert.equal(desktopStyles['.nav-book-now'].underlineColor, desktopStyles['a[href="#contact"]'].underlineColor);
+        assert.equal(desktopStyles['.nav-book-now'].underlineDisplay, 'block');
 
         await page.setViewportSize({ width: 390, height: 844 });
-        const mobileStyle = await page.locator('.nav-book-now').evaluate(element => getComputedStyle(element).backgroundImage);
-        assert.notEqual(mobileStyle, 'none', 'the selected Book now item should stay filled in the mobile menu');
+        await page.locator('nav').evaluate(element => element.classList.add('is-open'));
+        const mobileStyles = await page.evaluate(() => Object.fromEntries(
+            ['a[href="#contact"]', '.nav-book-now'].map(selector => {
+                const element = document.querySelector(selector);
+                const style = getComputedStyle(element);
+                return [selector, { color: style.color, backgroundColor: style.backgroundColor, borderLeft: style.borderLeft, underlineDisplay: getComputedStyle(element, '::after').display }];
+            }),
+        ));
+        assert.deepEqual(mobileStyles['.nav-book-now'], mobileStyles['a[href="#contact"]']);
+        assert.equal(mobileStyles['.nav-book-now'].underlineDisplay, 'block');
     } finally {
         await page.close();
     }
