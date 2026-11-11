@@ -357,6 +357,7 @@ class BookingController extends Controller
     public function index(Request $request)
     {
         return view('bookings.index', [
+            'activeSection' => $request->query('section') === 'bookings' ? 'bookings' : 'profile',
             'bookings' => $request->user()->bookings()->with(['room', 'review', 'payments'])->latest()->paginate(10)->withQueryString(),
         ]);
     }
