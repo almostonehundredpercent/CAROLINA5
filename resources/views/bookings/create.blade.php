@@ -5,12 +5,32 @@
 .booking-page{width:min(calc(100% - 40px),1360px);max-width:1360px;grid-template-columns:minmax(0,1.12fr) minmax(320px,.88fr);gap:clamp(20px,3vw,40px)}
 .booking-form,.booking-summary{min-width:0}
 .booking-form{padding:clamp(20px,3vw,40px)}
-.booking-summary{align-self:start}
+.booking-summary{--summary-title:#34291f;--summary-copy:#65594e;--summary-muted:#75685c;--summary-accent:#995b0d;--summary-chip-bg:#fff1dc;--summary-chip-line:rgba(153,91,13,.24);--summary-inset-bg:rgba(119,60,18,.045);--summary-inset-line:rgba(119,60,18,.17);align-self:start;position:relative;overflow:hidden;padding:0;border:1px solid rgba(205,139,54,.55);border-radius:20px;background:linear-gradient(155deg,#fffaf2 0%,#f4e9d9 100%);box-shadow:0 22px 52px rgba(59,38,16,.13);color:var(--summary-title)}
+.booking-summary::before{content:"";position:absolute;top:0;right:0;width:190px;height:190px;background:radial-gradient(circle,rgba(208,133,35,.17),transparent 70%);pointer-events:none}
+.booking-summary-head{position:relative;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:20px 20px 14px}
+.booking-summary-kicker{color:var(--summary-accent);font-size:.68rem;font-weight:800;letter-spacing:.13em;text-transform:uppercase}
+.booking-summary-chip{padding:7px 10px;border:1px solid var(--summary-chip-line);border-radius:999px;background:var(--summary-chip-bg);color:var(--summary-accent);font-size:.7rem;font-weight:700;white-space:nowrap}
+.booking-summary-image{position:relative;overflow:hidden;margin:0 18px;border:1px solid rgba(255,255,255,.12);border-radius:14px;background:#17120f;box-shadow:0 12px 26px rgba(0,0,0,.2)}
+.booking-summary-image::after{content:"";position:absolute;inset:35% 0 0;background:linear-gradient(transparent,rgba(18,13,10,.58));pointer-events:none}
+.booking-summary img{display:block;width:100%;height:clamp(190px,22vw,270px);object-fit:cover;object-position:center 55%;border-radius:0;transition:transform .45s ease}
+.booking-summary:hover img{transform:scale(1.025)}
+.booking-summary-image-label{position:absolute;z-index:1;bottom:12px;left:13px;padding:7px 10px;border:1px solid rgba(255,255,255,.26);border-radius:999px;background:rgba(31,23,17,.76);backdrop-filter:blur(8px);color:#fff7ec;font-size:.68rem;font-weight:700;letter-spacing:.03em}
+.booking-summary-content{position:relative;padding:17px 20px 20px}
+.booking-summary h3{margin:0;color:var(--summary-title);font:700 1.5rem/1.2 'Playfair Display',serif;letter-spacing:-.02em}
+.booking-summary p{margin:8px 0 0;color:var(--summary-copy);line-height:1.5}
+.booking-summary-rate{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:17px;padding:13px 14px;border:1px solid var(--summary-inset-line);border-radius:12px;background:var(--summary-inset-bg)}
+.booking-summary-rate-label{color:var(--summary-muted);font-size:.75rem;font-weight:600}
+.booking-summary-rate strong{color:var(--summary-accent);font-size:1.02rem;text-align:right}
+.booking-summary-rate strong small{color:var(--summary-muted);font-size:.75rem;font-weight:500}
+.booking-summary-guidance{display:flex;align-items:flex-start;gap:10px;margin-top:15px;padding:13px 14px;border-left:3px solid #d78c27;border-radius:0 10px 10px 0;background:var(--summary-inset-bg)}
+.booking-summary-guidance-mark{display:grid;flex:0 0 20px;width:20px;height:20px;place-items:center;border:1px solid rgba(153,91,13,.34);border-radius:50%;color:var(--summary-accent);font-size:.72rem;font-weight:800}
+.booking-summary-guidance p{margin:0;color:var(--summary-copy);font-size:.79rem;line-height:1.55}
+.dark-mode .booking-summary{--summary-title:#fff5e8;--summary-copy:#d2c3b2;--summary-muted:#c8b5a0;--summary-accent:#ffd28e;--summary-chip-bg:rgba(198,121,0,.1);--summary-chip-line:rgba(205,139,54,.35);--summary-inset-bg:rgba(255,255,255,.035);--summary-inset-line:rgba(205,139,54,.25);border-color:rgba(205,139,54,.55);background:linear-gradient(155deg,#30241b 0%,#211914 72%);box-shadow:0 22px 52px rgba(0,0,0,.25)}
 .hourly-time-legend{display:flex;align-items:center;gap:7px;margin:0 0 9px;color:var(--muted);font-size:.68rem;line-height:1.4}
 .hourly-time-legend:before{content:"";flex:0 0 10px;width:10px;height:10px;border-radius:3px;background:#c63e36}
 @media(max-width:1000px){.booking-page{grid-template-columns:minmax(0,1.1fr) minmax(270px,.9fr);gap:24px}}
 @media(max-width:800px){.booking-page{width:min(calc(100% - 28px),680px);grid-template-columns:minmax(0,1fr);gap:18px;margin:28px auto}.booking-page>.booking-context-box{order:-1;margin-bottom:0}.booking-page .booking-summary{order:0}.booking-page .booking-form{order:1}}
-@media(max-width:520px){.booking-page{width:calc(100% - 20px);padding:0;gap:14px}.booking-form{padding:20px 16px}.booking-summary img{height:190px}}
+@media(max-width:520px){.booking-page{width:calc(100% - 20px);padding:0;gap:14px}.booking-form{padding:20px 16px}.booking-summary{border-radius:16px}.booking-summary-head{padding:16px 16px 12px}.booking-summary-image{margin:0 14px}.booking-summary img{height:auto;aspect-ratio:1.55}.booking-summary-content{padding:15px 16px 16px}.booking-summary h3{font-size:1.35rem}.booking-summary-rate{align-items:flex-start;flex-direction:column;gap:4px}.booking-summary-rate strong{text-align:left}}
 </style><style>
 .booking-review-panel{margin-top:18px;padding:clamp(18px,3vw,26px);border:1px solid #d5a553;border-radius:16px;background:linear-gradient(145deg,#fffaf1,#fffdf9);box-shadow:0 12px 28px rgba(85,57,22,.08)}
 .booking-review-panel[hidden],#booking-entry-fields[hidden],#booking-previous[hidden]{display:none!important}
@@ -169,17 +189,31 @@
         @endif
     </div>
 
-    <aside class="booking-summary">
-        <img src="{{ $room->image_url }}" alt="{{ $room->name }}">
-        <h3>{{ $room->name }}</h3>
-        <p>{{ $room->room_type }} · Up to {{ $room->guests }} guests</p>
-        @if($bookingMode === 'hourly')
-            <strong>₱{{ number_format($room->rental_hours ? $room->price_per_night : $room->price_per_night / 24, 2) }} <small>{{ $room->rental_hours ? $room->rate_label : '/ hour' }}</small></strong>
-        @else
-            <strong>₱{{ number_format($room->price_per_night) }} <small>{{ $room->rate_label }}</small></strong>
-        @endif
-        <hr>
-        <small>{{ $bookingMode === 'hourly' ? 'Choose your stay length and see the estimated total before continuing.' : 'The total is estimated from your selected dates.' }} Continue to review your details, then proceed to payment to submit the request. Final pricing and payment options appear on the next page.</small>
+    <aside class="booking-summary" aria-label="Selected room summary">
+        <div class="booking-summary-head">
+            <span class="booking-summary-kicker">Your selected room</span>
+            <span class="booking-summary-chip">Carolina stay</span>
+        </div>
+        <div class="booking-summary-image">
+            <img src="{{ $room->image_url }}" alt="{{ $room->name }}">
+            <span class="booking-summary-image-label">Room preview</span>
+        </div>
+        <div class="booking-summary-content">
+            <h3>{{ $room->name }}</h3>
+            <p>{{ $room->room_type }} · Up to {{ $room->guests }} guests</p>
+            <div class="booking-summary-rate">
+                <span class="booking-summary-rate-label">Room rate</span>
+                @if($bookingMode === 'hourly')
+                    <strong>₱{{ number_format($room->rental_hours ? $room->price_per_night : $room->price_per_night / 24, 2) }} <small>{{ $room->rental_hours ? $room->rate_label : '/ hour' }}</small></strong>
+                @else
+                    <strong>₱{{ number_format($room->price_per_night) }} <small>{{ $room->rate_label }}</small></strong>
+                @endif
+            </div>
+            <div class="booking-summary-guidance">
+                <span class="booking-summary-guidance-mark" aria-hidden="true">i</span>
+                <p>{{ $bookingMode === 'hourly' ? 'Choose your stay length to see the estimated total.' : 'Your estimate updates from the dates you choose.' }} Review your details before continuing to payment. Final pricing and payment options appear on the next page.</p>
+            </div>
+        </div>
     </aside>
 </section>
 @if(auth()->check() || $isGuest)
