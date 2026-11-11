@@ -7,6 +7,10 @@
 .booking-form{padding:clamp(20px,3vw,40px)}
 .booking-page .booking-form{background:transparent;border:0;border-radius:0;box-shadow:none}
 .booking-page .booking-form > .booking-context-box{display:flex;align-items:center;justify-content:flex-start;padding:0;margin:0 0 22px;border:0;border-radius:0;background:transparent;box-shadow:none}
+.booking-page .booking-form > .booking-context-box .booking-context-back{min-height:46px;padding:10px 15px;border:1px solid rgba(153,91,13,.32);border-radius:11px;background:linear-gradient(180deg,#fffaf2,#f4e8d8);color:#573718;box-shadow:0 5px 14px rgba(76,53,31,.08)}
+.booking-page .booking-form > .booking-context-box .booking-context-back:hover{border-color:#c97900;background:#fff1da;color:#573718;box-shadow:0 8px 18px rgba(76,53,31,.13)}
+.dark-mode .booking-page .booking-form > .booking-context-box .booking-context-back{border-color:#785629;background:linear-gradient(180deg,#34291f,#292019);color:#ffe0ad;box-shadow:0 5px 16px rgba(0,0,0,.18)}
+.dark-mode .booking-page .booking-form > .booking-context-box .booking-context-back:hover{border-color:#d48b22;background:#3b2c20;color:#fff0d5}
 .booking-page .hourly-booked-summary.is-clear{border-color:#e6d4bd;background:#f7efe4;color:#746558}
 .booking-page .hourly-rental{border-color:#e5d4be;border-radius:14px;background:linear-gradient(145deg,#fffaf2,#f6ecdf);color:#34291f;box-shadow:0 10px 24px rgba(76,53,31,.07)}
 .booking-page .hourly-rental #hourly-total{background:#f0dfc9;color:#773c12}

@@ -21,8 +21,8 @@
 .home-hero-details span:first-child { padding-left:0; border-left:0; }
 .home-hero-details b { display:block; margin-bottom:3px; color:#fff; font-size:1.08rem; }
 .home-availability-wrap { z-index:3; margin-top:-46px; }
-.home-availability { max-width:1110px; padding:27px 29px; border:1px solid rgba(255,255,255,.8); border-radius:18px; box-shadow:0 22px 55px rgba(43,30,18,.16); }
-.home-availability-top { gap:42px; }
+.home-availability { max-width:1110px; padding:22px 26px; border:1px solid rgba(120,83,47,.16); border-radius:18px; background:linear-gradient(145deg,#fffdfa,#f8f1e8); box-shadow:0 18px 44px rgba(43,30,18,.13); }
+.home-availability-top { gap:30px; }
 .home-availability-top b { font:650 clamp(1.28rem,2vw,1.7rem)/1.2 'DM Sans',sans-serif; letter-spacing:-.035em; }
 .home-calendar-note { margin-top:8px; }
 .home-room-picker { color:#5c5149; font-size:.72rem; letter-spacing:.08em; text-transform:uppercase; }
@@ -55,16 +55,22 @@
 .home-room-picker-label { font-size:.72rem; font-weight:700; letter-spacing:.08em; text-transform:uppercase; }
 @media(max-width:800px) { .home-room-trigger { min-height:54px; }.home-room-options { max-height:min(360px,45vh); max-height:min(360px,45dvh); } }
 @media(prefers-reduced-motion:reduce) { .home-hero .home-hero-primary,.home-hero-arrow,.home-room-trigger,.home-room-trigger>svg,.home-room-option { transition:none; }.home-hero .home-hero-primary:hover,.home-hero-primary:hover .home-hero-arrow { transform:none; } }
-.home-calendar { max-width: 560px; margin:26px auto 0; padding:22px; border:1px solid var(--line); border-radius:14px; background:#fffcf8; }
-.home-calendar-head { margin-bottom:18px; }
-.home-calendar-head b { font-size:1.02rem; }
-.home-calendar-head button { width:34px; height:34px; border-radius:50%; transition:background .2s ease,color .2s ease; }
-.home-calendar-head button:hover { background:var(--gold); color:#fff; }
-.home-week,.home-days { row-gap:7px; }
-.home-week span { font-size:.67rem; }
-.home-day,.home-blank { font-size:.82rem; }
-.home-booked-list { margin-top:18px; }
-.home-booked-list span { padding:9px 11px; border-radius:8px; }
+.home-calendar { width:min(100%,480px); margin:18px auto 0; padding:15px 17px; border:1px solid #e8d9c8; border-radius:13px; background:#fffaf3; color:#34291f; }
+.home-calendar-head { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:10px; }
+.home-calendar-head b { color:inherit; font-size:.96rem; }
+.home-calendar-head button { display:grid; width:30px; height:30px; place-items:center; padding:0; border:1px solid #e6d6c4; border-radius:8px; background:#fff; color:#653d1b; font-size:1.15rem; line-height:1; cursor:pointer; transition:background .2s ease,color .2s ease; }
+.home-calendar-head button:hover { border-color:var(--gold); background:var(--gold); color:#fff; }
+.home-week,.home-days { display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); column-gap:4px; row-gap:4px; }
+.home-week { margin-bottom:5px; }
+.home-week span { color:#776b60; font-size:.65rem; font-weight:700; text-align:center; }
+.home-day,.home-blank { display:grid; min-width:0; min-height:34px; place-items:center; border-radius:7px; color:#3b3026; font-size:.76rem; line-height:1; }
+.home-day.booked { background:#f8e2df; color:#963d36; }
+.home-day.booked-start { border-radius:7px 0 0 7px; }
+.home-day.booked-end { border-radius:0 7px 7px 0; }
+.home-day.booked-start.booked-end { border-radius:7px; }
+.home-calendar-note { margin:11px 0 0; color:#71665d; font-size:.72rem; line-height:1.45; }
+.home-booked-list { display:grid; gap:5px; margin-top:10px; }
+.home-booked-list span { display:block; padding:7px 9px; border:1px solid #efd4d0; border-radius:7px; background:#fff0ee; color:#853b34; font-size:.69rem; line-height:1.4; }
 .home-rooms { max-width:1240px; padding-top:92px; padding-bottom:75px; }
 .home-location { width:100%; max-width:none; padding:0 24px 64px; }
 .home-location .booking-location { max-width:none; margin:0; }
@@ -221,9 +227,13 @@
 .home-benefits .benefit-grid b { width:52px; height:52px; background:#fffaf4; color:#bd700d; border:1px solid #ead9c6; box-shadow:none; }
 .home-benefits .benefit-grid h3 { color:#352b23; font-size:1rem; }
 .home-benefits .benefit-grid p { color:#6c6258; font-size:.9rem; }
-.dark-mode .home-availability { background:#211b17; border-color:#49382d; box-shadow:0 22px 55px rgba(0,0,0,.36); }
-.dark-mode .home-calendar { background:#2b231d; border-color:#49382d; }
+.dark-mode .home-availability { background:linear-gradient(145deg,#29211b,#211a15); border-color:#49382d; box-shadow:0 22px 55px rgba(0,0,0,.36); }
+.dark-mode .home-calendar { background:#2b231d; border-color:#49382d; color:#fff4e8; }
 .dark-mode .home-calendar-head button { background:#342a23; border-color:#584438; color:#fff4e8; }
+.dark-mode .home-week span,.dark-mode .home-calendar-note { color:#c9baaa; }
+.dark-mode .home-day,.dark-mode .home-blank { color:#f7ede0; }
+.dark-mode .home-day.booked { background:#492522; color:#ffc1b9; }
+.dark-mode .home-booked-list span { border-color:#653a33; background:#3b201e; color:#ffd2cd; }
 .dark-mode .home-rooms .text-link { color:#fff3e4; border-color:#514035; background:#251e19; }
 .dark-mode .home-room-navigation button { border-color:#554134; background:#30251f; color:#ffd28b; }
 .dark-mode .home-room-navigation button:hover { border-color:#c9801a; background:#3a2b20; }
@@ -238,7 +248,7 @@
 .dark-mode .home-benefits .benefit-grid h3 { color:#fff4e8; }
 .dark-mode .home-benefits .benefit-grid p { color:#d5c5b4; }
 .dark-mode .home-benefits .benefit-grid b { background:#2b211b; border-color:#4a382c; color:#f1a234; }
-@media (max-width:800px) { .home-hero { min-height:100vh; min-height:100svh; padding:78px 7% 54px; background-position:62% center; background-image:linear-gradient(90deg, rgba(20,17,14,.87) 0%, rgba(25,20,16,.64) 46%, rgba(30,23,17,.2) 100%), url('https://images.unsplash.com/photo-1601918774946-25832a4be0d6?auto=format&fit=crop&w=900&q=75'); }.home-hero h1 { font-size:clamp(3rem,14vw,4.4rem); }.home-hero-details { margin-top:49px; }.home-availability-wrap { margin-top:-30px; padding:0 5%; }.home-availability { padding:22px 19px; border-radius:15px; }.home-rooms { padding:65px 6% 54px; }.home-rooms .section-heading { align-items:flex-start; gap:18px; flex-direction:column; }.home-room-heading-actions { width:100%; justify-content:space-between; }.home-room-carousel .room-card img { height:215px; }.home-lookup { padding:0 6% 57px; }.home-lookup .empty-state { padding:31px 25px; align-items:flex-start; flex-direction:column; }.home-benefits { padding:55px 6%; } }
+@media (max-width:800px) { .home-hero { min-height:100vh; min-height:100svh; padding:78px 7% 54px; background-position:62% center; background-image:linear-gradient(90deg, rgba(20,17,14,.87) 0%, rgba(25,20,16,.64) 46%, rgba(30,23,17,.2) 100%), url('https://images.unsplash.com/photo-1601918774946-25832a4be0d6?auto=format&fit=crop&w=900&q=75'); }.home-hero h1 { font-size:clamp(3rem,14vw,4.4rem); }.home-hero-details { margin-top:49px; }.home-availability-wrap { margin-top:-30px; padding:0 5%; }.home-availability { padding:18px 17px; border-radius:15px; }.home-availability-top { gap:18px; }.home-calendar { margin-top:14px; padding:13px; }.home-day,.home-blank { min-height:32px; }.home-rooms { padding:65px 6% 54px; }.home-rooms .section-heading { align-items:flex-start; gap:18px; flex-direction:column; }.home-room-heading-actions { width:100%; justify-content:space-between; }.home-room-carousel .room-card img { height:215px; }.home-lookup { padding:0 6% 57px; }.home-lookup .empty-state { padding:31px 25px; align-items:flex-start; flex-direction:column; }.home-benefits { padding:55px 6%; } }
 @media (max-width:800px) {
     .home-reviews { padding:8px 5% 24px; }
     .home-reviews .section-heading { margin-bottom:12px; }

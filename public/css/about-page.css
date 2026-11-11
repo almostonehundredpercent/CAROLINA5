@@ -45,13 +45,18 @@
 .dark-mode .about-feature-card { border-color: rgba(201, 121, 0, .3); background: #2b211b; }
 .dark-mode .about-feature-number { border-color: rgba(201, 121, 0, .36); background: #3a2a1e; }
 
-.about-visit-card { display: flex; align-items: center; justify-content: space-between; gap: 24px; margin-top: 22px; padding: 24px 26px; border: 1px solid rgba(201, 121, 0, .35); border-radius: 18px; background: radial-gradient(circle at 100% 0, rgba(201, 121, 0, .15), transparent 18rem), linear-gradient(145deg, #35271e, #211914 76%); color: #fff5e9; }
-.about-visit-card .eyebrow { margin-bottom: 7px; color: #f0b45f; }
-.about-visit-card h2 { margin: 0; color: #fff5e9; font-size: clamp(1.55rem, 2.8vw, 2rem); }
-.about-visit-card p { margin: 8px 0 0; color: #d4c4b5; font-size: .9rem; }
+.about-visit-card { display: flex; align-items: center; justify-content: space-between; gap: 24px; margin-top: 22px; padding: 24px 26px; border: 1px solid #e6d2b8; border-radius: 18px; background: radial-gradient(circle at 100% 0, rgba(201, 121, 0, .1), transparent 18rem), linear-gradient(145deg, #fffaf2, #f1e3d1); color: #34291f; box-shadow: 0 12px 30px rgba(76, 53, 31, .1); }
+.about-visit-card .eyebrow { margin-bottom: 7px; color: #a35e08; }
+.about-visit-card h2 { margin: 0; color: #34291f; font-size: clamp(1.55rem, 2.8vw, 2rem); }
+.about-visit-card p { margin: 8px 0 0; color: #6e6257; font-size: .9rem; }
 .about-visit-actions { display: flex; flex: 0 0 auto; flex-wrap: wrap; gap: 10px; }
 .about-visit-actions .button { min-height: 46px; }
-.about-visit-actions .button-outline { border-color: rgba(240, 180, 95, .55); color: #f0b45f; }
+.about-visit-actions .button-outline { border-color: #b77820; color: #784307; }
+.dark-mode .about-visit-card { border-color: rgba(201, 121, 0, .35); background: radial-gradient(circle at 100% 0, rgba(201, 121, 0, .15), transparent 18rem), linear-gradient(145deg, #35271e, #211914 76%); color: #fff5e9; box-shadow: 0 16px 34px rgba(0, 0, 0, .2); }
+.dark-mode .about-visit-card .eyebrow { color: #f0b45f; }
+.dark-mode .about-visit-card h2 { color: #fff5e9; }
+.dark-mode .about-visit-card p { color: #d4c4b5; }
+.dark-mode .about-visit-actions .button-outline { border-color: rgba(240, 180, 95, .55); color: #f0b45f; }
 .about-page :focus-visible,.about-page-hero :focus-visible { outline: 3px solid var(--gold); outline-offset: 3px; }
 
 @media (max-width: 800px) {

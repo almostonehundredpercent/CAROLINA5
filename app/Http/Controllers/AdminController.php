@@ -13,6 +13,7 @@ use App\Models\GuestRestriction;
 use App\Models\Payment;
 use App\Models\Review;
 use App\Models\Room;
+use App\Models\RateApprovalSetting;
 use App\Models\RoomPriceChangeRequest;
 use App\Models\RoomBlock;
 use App\Models\User;
@@ -29,6 +30,7 @@ use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
@@ -542,7 +544,7 @@ class AdminController extends Controller
             'action' => route('admin.rooms.update', $room),
             'method' => 'PATCH',
             'priceChanges' => $room->priceChangeRequests()->latest()->take(8)->get(),
-            'ownerEmailConfigured' => (bool) config('mail.room_price_owner_address'),
+            'ownerEmailConfigured' => (bool) (RateApprovalSetting::query()->find(1)?->recipient_email ?: config('mail.room_price_owner_address')),
         ]);
     }
 
@@ -559,7 +561,7 @@ class AdminController extends Controller
     public function requestRoomPriceChange(Request $request, Room $room)
     {
         abort_unless($request->user()->isAdmin(), 403, 'Only Organization Admins can request a room rate change.');
-        $ownerEmail = (string) config('mail.room_price_owner_address');
+        $ownerEmail = (string) (RateApprovalSetting::query()->find(1)?->recipient_email ?: config('mail.room_price_owner_address'));
         if (! filter_var($ownerEmail, FILTER_VALIDATE_EMAIL)) {
             return back()->withErrors(['owner_email' => 'Configure ROOM_PRICE_OWNER_ADDRESS (or MAIL_ADMIN_ADDRESS) before requesting a rate change.']);
         }
@@ -864,6 +866,87 @@ class AdminController extends Controller
         return back()->with('success', 'Review '.$data['status'].'.');
     }
 
+    public function account()
+    {
+        return view('admin.account', [
+            'rateApprovalEmail' => RateApprovalSetting::query()->find(1)?->recipient_email ?: config('mail.room_price_owner_address'),
+        ]);
+    }
+
+    public function updateAccountEmail(Request $request)
+    {
+        $user = $request->user();
+        $request->merge(['email' => Str::lower(trim((string) $request->input('email')))]);
+        $data = $request->validate([
+            'current_password' => ['required', 'current_password'],
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'email:rfc', 'max:255', Rule::unique('users', 'email')->ignore($user->id)],
+        ]);
+        $email = Str::lower(trim($data['email']));
+        $before = ['name' => $user->name, 'email' => $user->email];
+        $changed = Str::lower($user->email) !== $email;
+        $user->name = trim($data['name']);
+        if ($changed) {
+            $user->email = $email;
+            $user->email_verified_at = null;
+        }
+        $user->save();
+        $this->audit($user->id, 'staff_account_updated', 'Staff member updated their account details.', $user, $before, ['name' => $user->name, 'email' => $user->email]);
+
+        if ($changed) {
+            try {
+                $user->sendEmailVerificationNotification();
+            } catch (\Throwable $exception) {
+                report($exception);
+
+                return back()->with('success', 'Account updated. The new email is saved; use the verification page to request another verification link.');
+            }
+
+            return back()->with('success', 'Account updated. Check the new email address for a verification link.');
+        }
+
+        return back()->with('success', 'Account details saved.');
+    }
+
+    public function updateRateApprovalEmail(Request $request)
+    {
+        abort_unless($request->user()->isAdmin(), 403, 'Only Organization Admins can change the rate approval inbox.');
+
+        $data = $request->validate([
+            'current_password' => ['required', 'current_password'],
+            'recipient_email' => ['required', 'email:rfc', 'max:255'],
+        ]);
+        $setting = RateApprovalSetting::query()->find(1);
+        $before = ['recipient_email' => $setting?->recipient_email ?: config('mail.room_price_owner_address')];
+        $setting = RateApprovalSetting::query()->updateOrCreate(
+            ['id' => 1],
+            ['recipient_email' => Str::lower(trim($data['recipient_email'])), 'updated_by' => $request->user()->id]
+        );
+        $this->audit($request->user()->id, 'rate_approval_email_updated', 'Organization Admin changed the room rate approval inbox.', $setting, $before, [
+            'recipient_email' => $setting->recipient_email,
+        ]);
+
+        return back()->with('success', 'Rate approval inbox updated. New rate requests will be sent to the new address; existing requests keep their original recipient.');
+    }
+
+    public function updateAccountPassword(Request $request)
+    {
+        $data = $request->validate([
+            'current_password' => ['required', 'current_password'],
+            'password' => ['required', 'string', 'min:12', 'confirmed'],
+        ]);
+        $user = $request->user();
+        $user->forceFill([
+            'password' => Hash::make($data['password']),
+            'remember_token' => Str::random(60),
+        ])->save();
+        Auth::logoutOtherDevices($data['password']);
+        $request->session()->regenerate();
+        $this->audit($user->id, 'staff_password_updated', 'Staff member changed their account password.', $user);
+
+        return back()->with('success', 'Password changed. Other signed-in sessions have been signed out.');
+    }
+
     public function reports(Request $request)
     {
         $this->refreshInventory();
@@ -949,7 +1032,7 @@ class AdminController extends Controller
         }
         $paymentStart = $periodStart;
         $paymentEnd = $periodEnd;
-        $paymentGroups = Payment::whereIn('status', ['paid', 'refunded'])->whereBetween('paid_at', [$paymentStart, $paymentEnd])->get()
+        $paymentGroups = Payment::with(['booking.user', 'booking.room'])->whereIn('status', ['paid', 'refunded'])->whereBetween('paid_at', [$paymentStart, $paymentEnd])->get()
             ->groupBy(fn (Payment $payment) => $period === 'custom'
                 ? ($customWeeklyBuckets ? $customBucketKeyForDate($payment->paid_at) : $payment->paid_at->toDateString())
                 : $this->reportKey($payment->paid_at, $period));
@@ -978,6 +1061,80 @@ class AdminController extends Controller
             return (int) $booking->nights > 0 ? (float) $booking->nights * 24 : null;
         })->filter(fn (?float $duration) => $duration !== null);
 
+        $financialMetrics = array_merge(
+            FinancialSummary::forBookings($bookings),
+            ['period_ledger' => FinancialSummary::forPayments($paymentGroups->flatten())]
+        );
+
+        if ($request->query('export') === 'csv') {
+            $filename = 'carolina-report-'.$metric.'-'.$period.'-'.now()->format('Y-m-d').'.csv';
+            $this->audit($request->user()->id, 'report_csv_exported', 'Admin report CSV exported.', $request->user(), [], [
+                'metric' => $metric,
+                'period' => $period,
+                'range' => $range,
+            ]);
+
+            return response()->streamDownload(function () use ($metric, $bookings, $paymentGroups) {
+                $out = fopen('php://output', 'w');
+                if ($metric === 'payments') {
+                    fputcsv($out, ['Payment date', 'Booking reference', 'Guest', 'Room', 'Payment status', 'Payment method', 'Amount (PHP)', 'Net impact (PHP)']);
+                    $paidTotal = 0.0;
+                    $refundTotal = 0.0;
+                    foreach ($paymentGroups->flatten()->sortBy('paid_at') as $payment) {
+                        $amount = (float) $payment->amount;
+                        $isRefund = $payment->status === 'refunded';
+                        $paidTotal += $isRefund ? 0 : $amount;
+                        $refundTotal += $isRefund ? $amount : 0;
+                        $booking = $payment->booking;
+                        fputcsv($out, array_map(fn ($value) => $this->csvValue($value), [
+                            $payment->paid_at?->toIso8601String(),
+                            $booking?->reference,
+                            $booking?->guest_name ?? $booking?->user?->name ?? 'Guest',
+                            $booking?->room?->name,
+                            $payment->status,
+                            $payment->method,
+                            number_format($amount, 2, '.', ''),
+                            number_format($isRefund ? -$amount : $amount, 2, '.', ''),
+                        ]));
+                    }
+                    fputcsv($out, []);
+                    fputcsv($out, ['TOTALS']);
+                    fputcsv($out, ['Total paid (PHP)', number_format($paidTotal, 2, '.', '')]);
+                    fputcsv($out, ['Total refunded (PHP)', number_format($refundTotal, 2, '.', '')]);
+                    fputcsv($out, ['Net collected (PHP)', number_format($paidTotal - $refundTotal, 2, '.', '')]);
+                } else {
+                    fputcsv($out, ['Booking date', 'Booking reference', 'Guest', 'Email', 'Room', 'Check-in', 'Check-out', 'Status', 'Booking total (PHP)', 'Amount paid (PHP)', 'Refunds (PHP)', 'Net collected (PHP)', 'Remaining balance (PHP)']);
+                    $totals = ['booking' => 0.0, 'paid' => 0.0, 'refunds' => 0.0, 'net' => 0.0, 'balance' => 0.0];
+                    foreach ($bookings->sortByDesc('created_at') as $booking) {
+                        $financial = FinancialSummary::forBooking($booking);
+                        $totals['booking'] += $financial['booking_value'];
+                        $totals['paid'] += $financial['paid'];
+                        $totals['refunds'] += $financial['refunds'];
+                        $totals['net'] += $financial['net_collected'];
+                        $totals['balance'] += $financial['outstanding'];
+                        fputcsv($out, array_map(fn ($value) => $this->csvValue($value), [
+                            $booking->created_at?->toIso8601String(),
+                            $booking->reference,
+                            $booking->guest_name ?? $booking->user?->name ?? 'Guest',
+                            $booking->guest_email ?? $booking->user?->email,
+                            $booking->room?->name,
+                            $booking->check_in_at?->toIso8601String() ?? $booking->check_in?->toDateString(),
+                            $booking->check_out_at?->toIso8601String() ?? $booking->check_out?->toDateString(),
+                            $booking->status,
+                            number_format($financial['booking_value'], 2, '.', ''),
+                            number_format($financial['paid'], 2, '.', ''),
+                            number_format($financial['refunds'], 2, '.', ''),
+                            number_format($financial['net_collected'], 2, '.', ''),
+                            number_format($financial['outstanding'], 2, '.', ''),
+                        ]));
+                    }
+                    fputcsv($out, []);
+                    fputcsv($out, ['TOTALS', '', '', '', '', '', '', '', number_format($totals['booking'], 2, '.', ''), number_format($totals['paid'], 2, '.', ''), number_format($totals['refunds'], 2, '.', ''), number_format($totals['net'], 2, '.', ''), number_format($totals['balance'], 2, '.', '')]);
+                }
+                fclose($out);
+            }, $filename, ['Content-Type' => 'text/csv; charset=UTF-8']);
+        }
+
         return view('admin.reports', [
             'metric' => $metric,
             'period' => $period,
@@ -1001,10 +1158,7 @@ class AdminController extends Controller
                 'returning' => $guestGroups->keys()->filter(fn (string $key) => $previousGuestKeys->has($key))->count(),
                 'averageDurationHours' => $durationHours->isNotEmpty() ? round((float) $durationHours->avg(), 1) : null,
             ] : null,
-            'financialMetrics' => array_merge(
-                FinancialSummary::forBookings($bookings),
-                ['period_ledger' => FinancialSummary::forPayments($paymentGroups->flatten())]
-            ),
+            'financialMetrics' => $financialMetrics,
         ]);
     }
 

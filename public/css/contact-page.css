@@ -83,19 +83,25 @@
     flex-direction: column;
     align-items: flex-start;
     padding: clamp(22px, 3vw, 32px);
-    border: 1px solid rgba(201, 121, 0, .35);
+    border: 1px solid #e6d2b8;
     border-radius: 18px;
-    background: radial-gradient(circle at 100% 0, rgba(201, 121, 0, .17), transparent 15rem), linear-gradient(150deg, #35271e, #211914 75%);
-    color: #fff5e9;
-    box-shadow: 0 16px 34px rgba(45, 30, 18, .12);
+    background: radial-gradient(circle at 100% 0, rgba(201, 121, 0, .12), transparent 15rem), linear-gradient(150deg, #fffaf2, #f1e3d1 85%);
+    color: #34291f;
+    box-shadow: 0 14px 32px rgba(76, 53, 31, .1);
 }
 
-.contact-location-icon { display: grid; place-items: center; width: 48px; height: 48px; margin-bottom: 24px; border: 1px solid rgba(240, 180, 95, .3); border-radius: 15px; background: rgba(201, 121, 0, .13); color: #f0b45f; font-size: 1.65rem; }
-.contact-address-card .eyebrow { margin-bottom: 8px; color: #f0b45f; }
-.contact-address-card h2 { margin: 0; color: #fff5e9; font-size: clamp(1.65rem, 2.6vw, 2.1rem); line-height: 1.16; }
-.contact-address-card p { margin: 12px 0 22px; color: #d4c4b5; font-size: .91rem; line-height: 1.6; }
+.contact-location-icon { display: grid; place-items: center; width: 48px; height: 48px; margin-bottom: 24px; border: 1px solid rgba(153, 91, 13, .25); border-radius: 15px; background: rgba(201, 121, 0, .1); color: #9b5b0a; font-size: 1.65rem; }
+.contact-address-card .eyebrow { margin-bottom: 8px; color: #a35e08; }
+.contact-address-card h2 { margin: 0; color: #34291f; font-size: clamp(1.65rem, 2.6vw, 2.1rem); line-height: 1.16; }
+.contact-address-card p { margin: 12px 0 22px; color: #6e6257; font-size: .91rem; line-height: 1.6; }
 .contact-address-card .button { min-height: 46px; margin-top: auto; }
-.contact-address-card > small { margin-top: 13px; color: #cbb9a8; font-size: .76rem; }
+.contact-address-card > small { margin-top: 13px; color: #75685c; font-size: .76rem; }
+.dark-mode .contact-address-card { border-color: rgba(201, 121, 0, .35); background: radial-gradient(circle at 100% 0, rgba(201, 121, 0, .17), transparent 15rem), linear-gradient(150deg, #35271e, #211914 75%); color: #fff5e9; box-shadow: 0 16px 34px rgba(0, 0, 0, .2); }
+.dark-mode .contact-location-icon { border-color: rgba(240, 180, 95, .3); background: rgba(201, 121, 0, .13); color: #f0b45f; }
+.dark-mode .contact-address-card .eyebrow { color: #f0b45f; }
+.dark-mode .contact-address-card h2 { color: #fff5e9; }
+.dark-mode .contact-address-card p { color: #d4c4b5; }
+.dark-mode .contact-address-card > small { color: #cbb9a8; }
 .contact-page .booking-location { max-width: none; margin-top: 24px; }
 .contact-page .booking-location-copy { padding: 22px 24px; }
 .contact-page .booking-location iframe { height: 390px; }

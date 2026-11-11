@@ -43,6 +43,7 @@
         const label = document.querySelector('[data-admin-theme-label]');
         const sync = () => {
             const dark = root.classList.contains('dark-mode');
+            document.body.classList.toggle('admin-dark', dark);
             toggle?.setAttribute('aria-pressed', String(dark));
             if (label) label.textContent = dark ? 'Light mode' : 'Dark mode';
         };

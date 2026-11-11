@@ -28,6 +28,8 @@ final class AdminPermissions
         'decision_support' => ['organization_admin'],
         'activity' => ['organization_admin'],
         'staff' => ['organization_admin'],
+        'account' => ['organization_admin', 'front_desk', 'housekeeping', 'viewer'],
+        'rate_approval_settings' => ['organization_admin'],
         'elevate_staff' => ['organization_admin'],
         'exports' => ['organization_admin', 'front_desk'],
     ];
@@ -65,13 +67,13 @@ final class AdminPermissions
         return [
             ['label' => 'Today', 'route' => 'admin.frontdesk', 'icon' => '◷', 'ability' => 'frontdesk', 'group' => 'primary'],
             ['label' => 'Bookings', 'route' => 'admin.bookings', 'icon' => '▤', 'ability' => 'bookings', 'group' => 'primary'],
-            ['label' => 'Rooms', 'route' => 'admin.rooms', 'icon' => '⌂', 'ability' => 'rooms', 'group' => 'primary'],
             ['label' => 'Guests', 'route' => 'admin.guests', 'icon' => '♙', 'ability' => 'guests', 'group' => 'primary'],
             ['label' => 'Overview', 'route' => 'admin.dashboard', 'icon' => '▦', 'ability' => 'dashboard', 'group' => 'more'],
             ['label' => 'Reports', 'route' => 'admin.reports', 'icon' => '⌁', 'ability' => 'reports', 'group' => 'more'],
             ['label' => 'CAROL · Decision support', 'route' => 'admin.decision-support', 'icon' => '◈', 'ability' => 'decision_support', 'group' => 'more'],
             ['label' => 'Promo codes', 'route' => 'admin.promos', 'icon' => '%', 'ability' => 'promos', 'group' => 'more'],
             ['label' => 'Activity log', 'route' => 'admin.activity', 'icon' => '◷', 'ability' => 'activity', 'group' => 'more'],
+            ['label' => 'Account settings', 'route' => 'admin.account', 'icon' => '⚙', 'ability' => 'account', 'group' => 'more'],
         ];
     }
 }

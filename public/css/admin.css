@@ -494,6 +494,26 @@ body.admin-dark .report-period button.active { background-color: var(--deep); co
 body.admin-dark .booking-directory code { background-color: var(--deep); color: var(--ink); }
 body.admin-dark .line-graph .chart-empty { background-color: var(--admin-card); color: var(--ink); }
 
+.report-tabs > .report-export {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    flex: 0 0 auto;
+    margin: 0 0 7px 2px;
+    padding: 8px 12px;
+    border: 1px solid var(--orange);
+    border-radius: 8px;
+    background: var(--orange);
+    color: #17110a;
+    line-height: 1.2;
+}
+.report-tabs > .report-export:hover { filter: brightness(1.06); }
+html.dark-mode .report-tabs > .report-export { background: var(--orange); color: #17110a; }
+@media (max-width: 700px) {
+    .report-tabs > .report-export { padding: 8px 10px; }
+}
+
 /* Keep pagers consistent with the new palette, including late overrides. */
 .booking-directory nav[aria-label="Pagination Navigation"] a,
 .booking-directory nav[aria-label="Pagination Navigation"] [aria-disabled="true"] > span,

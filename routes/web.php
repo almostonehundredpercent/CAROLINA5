@@ -145,6 +145,10 @@ Route::middleware(['auth', 'admin', 'staff.mfa'])->prefix('admin')->name('admin.
     Route::get('/walk-ins', [AdminController::class, 'walkInForm'])->middleware('admin.permission:frontdesk')->name('walk-ins.create');
     Route::post('/walk-ins', [AdminController::class, 'storeWalkIn'])->middleware('admin.permission:frontdesk')->name('walk-ins.store');
     Route::get('/reports', [AdminController::class, 'reports'])->middleware('admin.permission:reports')->name('reports');
+    Route::get('/account', [AdminController::class, 'account'])->middleware('admin.permission:account')->name('account');
+    Route::patch('/account/email', [AdminController::class, 'updateAccountEmail'])->middleware('admin.permission:account')->name('account.email');
+    Route::patch('/account/password', [AdminController::class, 'updateAccountPassword'])->middleware('admin.permission:account')->name('account.password');
+    Route::patch('/account/rate-approval-email', [AdminController::class, 'updateRateApprovalEmail'])->middleware('admin.permission:rate_approval_settings')->name('account.rate-approval-email');
     Route::get('/decision-support', [DecisionSupportController::class, 'index'])->middleware('admin.permission:decision_support')->name('decision-support');
     Route::patch('/decision-support/settings', [DecisionSupportController::class, 'updateSettings'])->middleware('admin.permission:decision_support')->name('decision-support.settings');
     Route::post('/decision-support/seasons', [DecisionSupportController::class, 'storeSeason'])->middleware('admin.permission:decision_support')->name('decision-support.seasons.store');
