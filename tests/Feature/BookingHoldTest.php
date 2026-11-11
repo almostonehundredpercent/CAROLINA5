@@ -289,7 +289,7 @@ test('expired receipt explains availability and removes the payment action', fun
     $this->withSession(['guest_booking_reference' => $booking->reference])->get(route('bookings.receipt', $booking))
         ->assertOk()
         ->assertSee('Reservation hold expired')
-        ->assertSee('Online checkout is unavailable for this request')
+        ->assertSee('This request no longer reserves the room.')
         ->assertDontSee('Pay online with')
         ->assertDontSee('id="paymongo-checkout-form"', false);
 });
@@ -299,7 +299,7 @@ test('cancelled unpaid receipt does not advertise unavailable online checkout', 
     $this->withSession(['guest_booking_reference' => $booking->reference])->get(route('bookings.receipt', $booking))
         ->assertOk()
         ->assertSee('This reservation was cancelled.')
-        ->assertSee('Online checkout is unavailable for this request')
+        ->assertSee('This request no longer reserves the room.')
         ->assertDontSee('Pay online with')
         ->assertDontSee('id="paymongo-checkout-form"', false);
 });
@@ -330,6 +330,7 @@ test('unpaid booking receipt leads with the amount due and payment action', func
 
     $response = $this->withSession(['guest_booking_reference' => $booking->reference])->get(route('bookings.receipt', $booking))
         ->assertOk()
+        ->assertSee('Amount to pay now')
         ->assertSee('Amount to pay')
         ->assertSee('₱450.00')
         ->assertSee('Payment Pending')
@@ -337,7 +338,7 @@ test('unpaid booking receipt leads with the amount due and payment action', func
         ->assertSee('For thesis testing only. No real money is collected.');
 
     expect(strpos($response->getContent(), 'class="receipt-summary receipt-payment-primary"'))
-        ->toBeLessThan(strpos($response->getContent(), 'class="confirmation-card receipt-card"'));
+        ->toBeLessThan(strpos($response->getContent(), 'class="receipt-stay-details"'));
 });
 
 test('receipt groups payment and reservation details in one compact layout', function () {
@@ -352,7 +353,20 @@ test('receipt groups payment and reservation details in one compact layout', fun
     expect($layouts->length)->toBe(1);
     $layout = $layouts->item(0);
     expect($xpath->query('.//*[contains(concat(" ", normalize-space(@class), " "), " receipt-payment-primary ")]', $layout)->length)->toBe(1)
-        ->and($xpath->query('.//*[contains(concat(" ", normalize-space(@class), " "), " receipt-card ")]', $layout)->length)->toBe(1);
+        ->and($xpath->query('.//*[contains(concat(" ", normalize-space(@class), " "), " receipt-stay-details ")]', $layout)->length)->toBe(1)
+        ->and($xpath->query('.//*[contains(concat(" ", normalize-space(@class), " "), " receipt-pay-now ")]', $layout)->length)->toBe(1)
+        ->and($xpath->query('.//*[contains(concat(" ", normalize-space(@class), " "), " receipt-financial-breakdown ")]', $layout)->length)->toBe(1)
+        ->and($xpath->query('.//*[contains(concat(" ", normalize-space(@class), " "), " receipt-financial-item ")]', $layout)->length)->toBe(4);
+
+    expect(strpos($response->getContent(), 'class="receipt-pay-now"'))
+        ->toBeLessThan(strpos($response->getContent(), 'class="receipt-financial-breakdown"'));
+    $response->assertSee('Amount to pay now')
+        ->assertSee('Booking total')
+        ->assertSee('Room rate when booked')
+        ->assertSee('Amount paid')
+        ->assertSee('Remaining balance')
+        ->assertSee('30-minute payment window')
+        ->assertSee('payment-option');
 });
 
 test('booking confirmation email explains the hold and links to secure booking lookup', function () {

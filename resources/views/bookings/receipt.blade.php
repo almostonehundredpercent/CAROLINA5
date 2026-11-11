@@ -52,13 +52,8 @@
     .receipt-payment-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
     .receipt-payment-heading>span:first-child{color:#935300;font-size:.72rem;font-weight:800;letter-spacing:.12em}
     .receipt-payment-title{margin:0 0 14px;color:var(--ink);font-size:1.25rem}
-    .receipt-summary-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:0 0 12px}
-    .receipt-summary-grid div{min-width:0;padding:12px;border:1px solid rgba(116,81,42,.1);border-radius:9px;background:#fff}
-    .receipt-summary-grid small{display:block;margin-bottom:5px;color:var(--muted)}
-    .receipt-summary-grid b{font-size:1.12rem}
-    .receipt-summary-grid .receipt-amount-card b{display:block;color:#7d4300;font-size:clamp(1.8rem,4vw,2.25rem);line-height:1.1;letter-spacing:-.035em}
-    .receipt-payment-facts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:0 0 12px}
-    .receipt-payment-facts>div{display:grid;gap:4px;min-width:0;padding:10px 12px;border:1px solid rgba(116,81,42,.1);border-radius:9px;background:rgba(255,255,255,.65)}
+    .receipt-payment-facts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 16px;margin:0 0 12px}
+    .receipt-payment-facts>div{display:grid;align-content:start;gap:3px;min-width:0;padding:8px 0;border-bottom:1px solid rgba(116,81,42,.16)}
     .receipt-payment-facts small{color:var(--muted);font-size:.72rem}
     .receipt-payment-facts b{color:var(--ink);font-size:.86rem;overflow-wrap:anywhere}
     .receipt-status{display:inline-flex;padding:7px 11px;border-radius:999px;background:#fff0d4;color:#805000;font-size:.78rem;font-weight:800}
@@ -84,10 +79,7 @@
     .paymongo-loading-message.error{color:#b42318;font-weight:600}
     .dark-mode .receipt-summary{border-color:#80602e;background:linear-gradient(145deg,#33271c,#251d17);box-shadow:0 16px 32px rgba(0,0,0,.24)}
     .dark-mode .receipt-payment-heading>span:first-child{color:#ffc16b}
-    .dark-mode .receipt-summary-grid div{border-color:rgba(255,220,182,.1);background:#1d1713;color:#fff4e8}
-    .dark-mode .receipt-summary-grid small,.dark-mode .receipt-note{color:#d4c3b2}
-    .dark-mode .receipt-summary-grid .receipt-amount-card b{color:#ffd18a}
-    .dark-mode .receipt-payment-facts>div{border-color:rgba(255,220,182,.1);background:#1d1713}
+    .dark-mode .receipt-note{color:#d4c3b2}
     .dark-mode .receipt-payment-facts b{color:#fff4e8}
     .dark-mode .receipt-status.paid{background:#17432b;color:#b7f7c5}
     .dark-mode .receipt-card{border-color:#80602e;background:linear-gradient(145deg,#33271c,#251d17);box-shadow:0 16px 32px rgba(0,0,0,.24)}
@@ -134,16 +126,16 @@
     .receipt-context-identifiers b{color:#302317;font-size:.85rem;overflow-wrap:anywhere}
     .receipt-layout{grid-template-columns:minmax(0,1.35fr) minmax(250px,.75fr);gap:0;max-width:none;margin:0;text-align:left}
     .receipt-summary{padding:24px;border:0;border-radius:0;background:transparent;box-shadow:none}
-    .receipt-summary-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}
-    .receipt-summary-grid>div{display:flex;flex-direction:column;align-items:flex-start;justify-content:center;min-height:96px;padding:12px;border-color:rgba(116,81,42,.16);background:#fff}
-    .receipt-summary-grid small{font-size:.73rem;line-height:1.4}
-    .receipt-summary-grid b{font-size:1.08rem;line-height:1.25;overflow-wrap:anywhere}
-    .receipt-summary-grid .receipt-amount-card b{font-size:clamp(1.25rem,2vw,1.7rem)}
-    .receipt-summary-grid .receipt-balance-card{border-color:#dbb879;background:#fff7e8}
-    .receipt-selected-payment-grid{margin-top:-3px}
-    .receipt-selected-payment-grid>div{grid-column:1/-1;min-height:72px}
-    .receipt-payment-facts{gap:8px}
-    .receipt-payment-facts>div{background:rgba(255,255,255,.76)}
+    .receipt-pay-now{display:flex;align-items:center;justify-content:space-between;gap:14px;margin:0 0 12px;padding:13px 15px;border:1px solid #dfb16b;border-radius:11px;background:#fff2dc}
+    .receipt-pay-now>div{display:grid;gap:3px;min-width:0}
+    .receipt-pay-now small{color:#765e41;font-size:.76rem;line-height:1.35}
+    .receipt-pay-now b{color:#7d4300;font-size:clamp(1.7rem,3vw,2.1rem);line-height:1.05;letter-spacing:-.025em;overflow-wrap:anywhere}
+    .receipt-financial-breakdown{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 18px;margin:0 0 10px}
+    .receipt-financial-item{display:grid;align-content:start;gap:3px;min-width:0;padding:9px 0;border-bottom:1px solid rgba(116,81,42,.16)}
+    .receipt-financial-item small{color:var(--muted);font-size:.72rem;line-height:1.35}
+    .receipt-financial-item b{color:var(--ink);font-size:.9rem;line-height:1.3;overflow-wrap:anywhere}
+    .receipt-financial-item .receipt-financial-note{font-size:.7rem}
+    .payment-options{grid-template-columns:repeat(2,minmax(0,1fr));margin:12px 0 4px}
     .receipt-stay-details{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-content:start;gap:13px 16px;margin:0;padding:24px;border:0;border-left:1px solid rgba(116,81,42,.2);border-radius:0;background:rgba(245,232,212,.42);box-shadow:none;text-align:left}
     .receipt-stay-details .receipt-details-title{grid-column:1/-1;margin:0 0 2px;color:var(--ink);font:700 1.15rem 'DM Sans',sans-serif}
     .receipt-stay-details>div{min-width:0;padding:0 0 10px;border-bottom:1px solid rgba(116,81,42,.16)}
@@ -155,13 +147,15 @@
     .dark-mode .receipt-back-link,.dark-mode .receipt-context-identifiers b,.dark-mode .receipt-stay-details .receipt-details-title,.dark-mode .receipt-stay-details b{color:#fff4e8}
     .dark-mode .receipt-context-identifiers small{color:#d0ae7b}
     .dark-mode .receipt-summary{background:transparent}
-    .dark-mode .receipt-summary-grid>div,.dark-mode .receipt-payment-facts>div{border-color:rgba(255,220,182,.12);background:#30251f}
-    .dark-mode .receipt-summary-grid .receipt-balance-card{border-color:#80602e;background:#382b1c}
-    .dark-mode .receipt-summary-grid small,.dark-mode .receipt-payment-facts small,.dark-mode .receipt-stay-details small{color:#d4c3b2}
+    .dark-mode .receipt-pay-now{border-color:#80602e;background:#382b1c}
+    .dark-mode .receipt-pay-now small,.dark-mode .receipt-financial-item small,.dark-mode .receipt-payment-facts small,.dark-mode .receipt-stay-details small{color:#d4c3b2}
+    .dark-mode .receipt-pay-now b{color:#ffd18a}
+    .dark-mode .receipt-financial-item{border-color:#4b3930}
+    .dark-mode .receipt-financial-item b,.dark-mode .receipt-payment-facts b{color:#fff4e8}
     .dark-mode .receipt-stay-details{border-color:#4b3930;background:rgba(255,255,255,.025)}
     .dark-mode .receipt-stay-details>div{border-color:#4b3930}
     @media(max-width:900px){.receipt-layout{grid-template-columns:1fr}.receipt-stay-details{border-top:1px solid rgba(116,81,42,.2);border-left:0}.dark-mode .receipt-stay-details{border-top-color:#4b3930}}
-    @media(max-width:600px){.confirmation.receipt-page{padding:26px 14px 36px}.receipt-page>h1{font-size:clamp(2rem,9vw,2.65rem)}.receipt-page>h1+p{margin-bottom:16px}.receipt-unified-card{border-radius:15px}.receipt-booking-context{align-items:stretch;flex-direction:column;gap:12px;padding:15px}.receipt-context-identifiers{justify-content:flex-start;gap:16px}.receipt-context-identifiers>div{flex:1}.receipt-summary{padding:17px}.receipt-summary-grid{grid-template-columns:1fr}.receipt-summary-grid>div{min-height:78px}.receipt-stay-details{grid-template-columns:1fr 1fr;padding:17px}.receipt-payment-facts{grid-template-columns:1fr}.receipt-actions{justify-content:stretch}.receipt-actions .button{flex:1 1 100%}}
+    @media(max-width:600px){.confirmation.receipt-page{padding:26px 14px 36px}.receipt-page>h1{font-size:clamp(2rem,9vw,2.65rem)}.receipt-page>h1+p{margin-bottom:16px}.receipt-unified-card{border-radius:15px}.receipt-booking-context{align-items:stretch;flex-direction:column;gap:12px;padding:15px}.receipt-context-identifiers{justify-content:flex-start;gap:16px}.receipt-context-identifiers>div{flex:1}.receipt-summary{padding:17px}.receipt-financial-breakdown{grid-template-columns:repeat(2,minmax(0,1fr));gap:0 14px}.receipt-financial-item{padding:8px 0}.receipt-stay-details{grid-template-columns:1fr 1fr;padding:17px}.payment-options{grid-template-columns:1fr}.receipt-actions{justify-content:stretch}.receipt-actions .button{flex:1 1 100%}}
 </style>
 <section class="confirmation receipt-page">
     <span class="eyebrow">{{ $booking->payment_status === 'refunded' ? 'REFUND RECORD' : ($booking->payment_status === 'paid' ? 'PAYMENT RECEIPT' : ($booking->status === 'confirmed' ? 'BOOKING CONFIRMED' : 'REQUEST RECEIVED')) }}</span>
@@ -183,23 +177,25 @@
             <span class="receipt-status {{ $booking->payment_status ?? 'pending' }}">{{ $expiredHold ? 'Hold expired' : 'Payment ' . ucfirst($booking->payment_status ?? 'pending') }}</span>
         </div>
         <h2 class="receipt-payment-title">{{ $booking->payment_status === 'paid' ? 'Payment recorded' : ($booking->payment_status === 'refunded' ? 'Refund recorded' : ($depositVerified ? 'Downpayment received' : ($unavailable ? 'Payment summary' : ($hasDeposit ? 'Complete your downpayment' : 'Complete your payment')))) }}</h2>
-        <div class="receipt-summary-grid">
-            <div class="receipt-amount-card"><small>Booking total</small><b>₱{{ number_format($booking->total_amount, 2) }}</b>@if($booking->discount_amount > 0)<small><s>₱{{ number_format($booking->original_amount, 2) }}</s> · {{ $booking->promo_code }} saved ₱{{ number_format($booking->discount_amount, 2) }}</small>@endif</div>
-            <div><small>Room rate when booked</small><b>{{ $booking->room_rate_at_booking !== null ? '₱'.number_format((float) $booking->room_rate_at_booking, 2) : 'Not recorded' }}</b><small>{{ $booking->room_rate_at_booking !== null ? ($booking->room?->rate_label ?? 'Rate') : 'This older booking total remains saved as originally recorded.' }}</small></div>
-            <div>
+        @if($canPayOnline)
+            <div class="receipt-pay-now" aria-label="Selected payment amount">
+                <div><small>Amount to pay now</small><b id="selected-payment-amount" aria-live="polite">₱{{ number_format($hasDeposit && $selectedPaymentOption === 'full' ? $fullPaymentAmount : $amountDueNow, 2) }}</b></div>
+            </div>
+        @endif
+        <div class="receipt-financial-breakdown" aria-label="Payment summary">
+            <div class="receipt-financial-item"><small>Booking total</small><b>₱{{ number_format($booking->total_amount, 2) }}</b>@if($booking->discount_amount > 0)<small class="receipt-financial-note"><s>₱{{ number_format($booking->original_amount, 2) }}</s> · {{ $booking->promo_code }} saved ₱{{ number_format($booking->discount_amount, 2) }}</small>@endif</div>
+            <div class="receipt-financial-item"><small>Room rate when booked</small><b>{{ $booking->room_rate_at_booking !== null ? '₱'.number_format((float) $booking->room_rate_at_booking, 2) : 'Not recorded' }}</b><small class="receipt-financial-note">{{ $booking->room_rate_at_booking !== null ? ($booking->room?->rate_label ?? 'Rate') : 'This older booking total remains saved as originally recorded.' }}</small></div>
+            <div class="receipt-financial-item">
                 @if($booking->payment_status === 'refunded')
-                    <small>Refund recorded</small><b>₱{{ number_format((float) $financial['refunds'], 2) }}</b><small>{{ strtoupper($booking->payment_method ?? 'payment') }} refund</small>
+                    <small>Refund recorded</small><b>₱{{ number_format((float) $financial['refunds'], 2) }}</b><small class="receipt-financial-note">{{ strtoupper($booking->payment_method ?? 'payment') }} refund</small>
                 @else
-                    <small>Amount paid</small><b>₱{{ number_format($amountPaid, 2) }}</b><small>{{ $paidInFull ? 'Paid in full' : ($amountPaid > 0 ? 'Payment received' : 'No payment received yet') }}</small>
+                    <small>Amount paid</small><b>₱{{ number_format($amountPaid, 2) }}</b><small class="receipt-financial-note">{{ $paidInFull ? 'Paid in full' : ($amountPaid > 0 ? 'Payment received' : 'No payment received yet') }}</small>
                 @endif
             </div>
-            <div class="receipt-balance-card"><small>{{ $booking->payment_status === 'refunded' ? 'Balance after refund' : 'Remaining balance' }}</small><b>₱{{ number_format($remainingBalance, 2) }}</b><small>@if($paidInFull)Paid in full.@elseif($booking->payment_status === 'refunded')Refund recorded.@elseif($booking->status === 'cancelled')No balance is due on this cancelled reservation.@elseif($unavailable)This expired reservation is inactive; contact Carolina before making another payment.@elseif($depositVerified)Due at the property after Carolina reviews your booking.@else Remaining amount for this reservation.@endif</small></div>
+            <div class="receipt-financial-item"><small>{{ $booking->payment_status === 'refunded' ? 'Balance after refund' : 'Remaining balance' }}</small><b>₱{{ number_format($remainingBalance, 2) }}</b><small class="receipt-financial-note">@if($paidInFull)Paid in full.@elseif($booking->payment_status === 'refunded')Refund recorded.@elseif($booking->status === 'cancelled')No balance is due on this cancelled reservation.@elseif($unavailable)This expired reservation is inactive; contact Carolina before making another payment.@elseif($depositVerified)Due at the property after Carolina reviews your booking.@else Remaining amount for this reservation.@endif</small></div>
         </div>
-        @if($canPayOnline && $amountPaid <= 0)
-            <div class="receipt-summary-grid receipt-selected-payment-grid"><div><small>Selected amount to pay now</small><b id="selected-payment-amount">₱{{ number_format($hasDeposit && $selectedPaymentOption === 'full' ? $fullPaymentAmount : $amountDueNow, 2) }}</b><small>{{ $selectedPaymentOption === 'full' ? 'Full payment selected' : 'Downpayment selected' }}</small></div></div>
-        @endif
         <div class="receipt-payment-facts" aria-label="Payment details">
-            <div><small>Payment option</small><b>{{ $paymentModeLabel }}</b></div>
+            <div><small>Payment option</small><b id="payment-option-label">{{ $paymentModeLabel }}</b></div>
             <div><small>Payment method</small><b>{{ $paymentMethodLabel }}</b></div>
         </div>
         @if($temporaryHold)
@@ -317,11 +313,12 @@
     const checkoutForm = document.getElementById('paymongo-checkout-form');
     checkoutForm?.querySelectorAll('input[name="payment_option"]').forEach(option => option.addEventListener('change', () => {
         const label = checkoutForm.querySelector('.paymongo-submit-label');
-        if (!label) return;
         const amount = option.value === 'full' ? @json(number_format($fullPaymentAmount, 2)) : @json(number_format($amountDueNow, 2));
-        label.textContent = `${option.value === 'full' ? 'Pay in full' : 'Pay downpayment'} ₱${amount} with GCash`;
+        if (label) label.textContent = `${option.value === 'full' ? 'Pay in full' : 'Pay downpayment'} ₱${amount} with GCash`;
         const summaryAmount = document.getElementById('selected-payment-amount');
         if (summaryAmount) summaryAmount.textContent = `₱${amount}`;
+        const paymentOptionLabel = document.getElementById('payment-option-label');
+        if (paymentOptionLabel) paymentOptionLabel.textContent = option.value === 'full' ? 'Full payment selected' : 'Downpayment selected';
     }));
 
     checkoutForm?.addEventListener('submit', async function (event) {
