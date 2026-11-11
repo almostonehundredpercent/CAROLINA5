@@ -102,7 +102,7 @@
                     <h2>Payment hold expired</h2>
                     <p>This reservation no longer holds the room for these dates. You can look for another available stay.</p>
                     <a class="button" href="{{ route('rooms.index') }}">Find another room</a>
-                    <a class="button secondary" href="{{ route('bookings.receipt', $booking) }}">View payment status</a>
+                    <a class="button secondary" href="{{ \App\Http\Controllers\StayController::link($booking) }}">View payment status</a>
                 </section>
             @elseif($canResumePayment)
                 <section class="portal-action-card">

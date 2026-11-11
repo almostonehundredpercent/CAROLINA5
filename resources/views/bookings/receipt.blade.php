@@ -269,7 +269,7 @@
     </div>
     </article>
     <div class="receipt-actions">
-        <a class="button" href="{{ \App\Http\Controllers\StayController::link($booking) }}">Your arrival page</a>
+        <a class="button" href="{{ \App\Http\Controllers\StayController::link($booking) }}">Booking summary</a>
         <a class="button button-outline" href="{{ route('home') }}">Back to home</a>
         <button class="button light" type="button" onclick="window.print()">Print / save receipt</button>
     </div>

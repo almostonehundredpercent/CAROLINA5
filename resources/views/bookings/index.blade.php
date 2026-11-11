@@ -64,12 +64,12 @@
             <strong>₱{{ number_format($booking->total_amount) }}</strong>
             <a class="text-link" href="{{ route('bookings.confirmation', $booking) }}">View details</a>
             @if($holdExpired)
-                <a class="button button-outline booking-receipt-link" href="{{ route('bookings.receipt', $booking) }}">View payment status</a>
+                <a class="button button-outline booking-receipt-link" href="{{ \App\Http\Controllers\StayController::link($booking) }}">View payment status</a>
             @elseif($booking->status === 'pending' && ! $booking->hasProtectedInventory())
                 <a class="button booking-receipt-link" href="{{ route('bookings.receipt', $booking) }}">Continue payment</a>
             @endif
             @if($booking->status === 'confirmed' || in_array($booking->payment_status, ['paid', 'partial', 'refunded'], true))
-                <a class="button button-outline booking-receipt-link" href="{{ route('bookings.receipt', $booking) }}">{{ $booking->payment_status === 'partial' ? 'View downpayment receipt' : 'View receipt' }}</a>
+                <a class="button button-outline booking-receipt-link" href="{{ \App\Http\Controllers\StayController::link($booking) }}">{{ $booking->payment_status === 'partial' ? 'View downpayment receipt' : 'View receipt' }}</a>
             @endif
             @if($booking->status !== 'cancelled' && $booking->check_in->isFuture())
                 @if($booking->canCancelOnline())
