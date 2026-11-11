@@ -169,99 +169,28 @@ document.addEventListener('DOMContentLoaded', () => {
     const carousel = document.querySelector('.home-room-carousel');
     if (!carousel) return;
 
-    const mobileViewport = window.matchMedia('(max-width: 800px)');
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
-    const originalCards = [...carousel.children];
-    let clonedCards = [];
-    let autoAdvance = null;
-    let paused = false;
-    let loopWidth = 0;
-
-    if (originalCards.length < 2) return;
+    if (carousel.children.length < 2) return;
 
     const gap = () => Number.parseFloat(getComputedStyle(carousel).gap) || 0;
-    const measureLoop = () => {
-        const middleCards = [...carousel.children].slice(originalCards.length, originalCards.length * 2);
-        loopWidth = middleCards.reduce((total, card) => total + card.getBoundingClientRect().width, 0)
-            + gap() * (middleCards.length - 1);
-    };
-    const step = () => originalCards[0]?.getBoundingClientRect().width + gap() || 0;
+    const step = () => carousel.querySelector('.room-card')?.getBoundingClientRect().width + gap() || carousel.clientWidth;
     const moveByControl = direction => {
         const maxScroll = carousel.scrollWidth - carousel.clientWidth;
-        if (mobileViewport.matches && direction < 0 && carousel.scrollLeft <= 2) {
-            carousel.scrollTo({ left: maxScroll, behavior: 'auto' });
+        const left = carousel.scrollLeft;
+        const behavior = reducedMotion.matches ? 'auto' : 'smooth';
+
+        if (direction < 0 && left <= 2) {
+            carousel.scrollTo({ left: maxScroll, behavior });
             return;
         }
-        if (mobileViewport.matches && direction > 0 && carousel.scrollLeft >= maxScroll - 2) {
-            carousel.scrollTo({ left: 0, behavior: reducedMotion.matches ? 'auto' : 'smooth' });
+        if (direction > 0 && left >= maxScroll - 2) {
+            carousel.scrollTo({ left: 0, behavior });
             return;
         }
-        carousel.scrollBy({ left: direction * (step() || carousel.clientWidth), behavior: reducedMotion.matches ? 'auto' : 'smooth' });
+        carousel.scrollTo({ left: Math.max(0, Math.min(maxScroll, left + direction * step())), behavior });
     };
     document.querySelector('[data-room-previous]')?.addEventListener('click', () => moveByControl(-1));
     document.querySelector('[data-room-next]')?.addEventListener('click', () => moveByControl(1));
-    const navigation = document.querySelector('.home-room-navigation');
-    navigation?.addEventListener('pointerenter', () => { paused = true; });
-    navigation?.addEventListener('pointerleave', () => { paused = false; });
-    navigation?.addEventListener('focusin', () => { paused = true; });
-    navigation?.addEventListener('focusout', event => { if (!navigation.contains(event.relatedTarget)) paused = false; });
-
-    const stopDesktopLoop = () => {
-        window.clearInterval(autoAdvance);
-        autoAdvance = null;
-        clonedCards.forEach(card => card.remove());
-        clonedCards = [];
-        loopWidth = 0;
-        carousel.scrollLeft = 0;
-    };
-
-    const startDesktopLoop = () => {
-        stopDesktopLoop();
-        if (mobileViewport.matches || reducedMotion.matches) return;
-
-        const duplicate = card => {
-            const copy = card.cloneNode(true);
-            copy.setAttribute('aria-hidden', 'true');
-            copy.querySelectorAll('a').forEach(link => { link.tabIndex = -1; });
-            clonedCards.push(copy);
-            return copy;
-        };
-
-        originalCards.forEach(card => carousel.appendChild(duplicate(card)));
-        originalCards.slice().reverse().forEach(card => carousel.insertBefore(duplicate(card), carousel.firstChild));
-
-        requestAnimationFrame(() => {
-            if (mobileViewport.matches || reducedMotion.matches || !clonedCards.length) return;
-            measureLoop();
-            carousel.scrollLeft = loopWidth;
-        });
-
-        autoAdvance = window.setInterval(() => {
-            if (!paused) carousel.scrollBy({ left: step(), behavior: 'smooth' });
-        }, 4200);
-    };
-
-    ['pointerenter', 'focusin', 'touchstart'].forEach(event => {
-        carousel.addEventListener(event, () => { paused = true; }, { passive: true });
-    });
-    ['pointerleave', 'focusout', 'touchend'].forEach(event => {
-        carousel.addEventListener(event, () => { paused = false; });
-    });
-    carousel.addEventListener('scroll', () => {
-        if (!loopWidth || mobileViewport.matches) return;
-        if (carousel.scrollLeft < loopWidth * .45) carousel.scrollLeft += loopWidth;
-        else if (carousel.scrollLeft > loopWidth * 1.55) carousel.scrollLeft -= loopWidth;
-    }, { passive: true });
-    window.addEventListener('resize', () => {
-        if (mobileViewport.matches || reducedMotion.matches || !clonedCards.length) return;
-        measureLoop();
-        carousel.scrollLeft = loopWidth;
-    });
-
-    const onModeChange = () => startDesktopLoop();
-    mobileViewport.addEventListener?.('change', onModeChange);
-    reducedMotion.addEventListener?.('change', onModeChange);
-    startDesktopLoop();
 });
 </script>
 <script>document.addEventListener('DOMContentLoaded',()=>{const roomCalendar=document.getElementById('home-room-calendar');if(!roomCalendar)return;const refresh=()=>{if(!document.hidden&&roomCalendar.value)roomCalendar.dispatchEvent(new Event('change'))};setInterval(refresh,15000);document.addEventListener('visibilitychange',refresh)});</script>
