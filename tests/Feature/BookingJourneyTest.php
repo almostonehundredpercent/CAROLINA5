@@ -36,16 +36,22 @@ test('room search choices survive the detail and guest booking journey', functio
         ->and($document->evaluate('string(//input[@name="guests"]/@value)'))->toBe('2');
 });
 
-test('back to rooms preserves the guest booking search choices', function () {
+test('booking form back links return to the book-now listing and preserve search choices', function () {
     $this->travelTo(Carbon::parse('2026-10-03 01:00:00', 'UTC'));
     $room = journeyRoom();
     $choices = ['check_in' => '2026-10-05', 'stay' => '6', 'check_in_time' => '13:00', 'guests' => '2', 'sort' => 'price_asc'];
     $response = $this->get(route('bookings.create', ['room' => $room, 'guest' => 1] + $choices))->assertOk();
-    $backUrl = journeyDocument($response->getContent())->evaluate('string(//a[contains(@class,"booking-context-back")]/@href)');
+    $document = journeyDocument($response->getContent());
+    $backUrl = $document->evaluate('string(//a[contains(@class,"booking-context-back")]/@href)');
+    $bottomBackUrl = $document->evaluate('string(//div[contains(@class,"booking-step-actions")]//a[contains(@class,"booking-back-to-rooms")]/@href)');
 
-    expect(parse_url($backUrl, PHP_URL_PATH))->toBe(parse_url(route('rooms.index'), PHP_URL_PATH));
+    expect(parse_url($backUrl, PHP_URL_PATH))->toBe(parse_url(route('booking.start'), PHP_URL_PATH))
+        ->and(parse_url($bottomBackUrl, PHP_URL_PATH))->toBe(parse_url(route('booking.start'), PHP_URL_PATH));
     parse_str(parse_url($backUrl, PHP_URL_QUERY) ?? '', $backQuery);
     expect($backQuery)->toBe($choices);
+    parse_str(parse_url($bottomBackUrl, PHP_URL_QUERY) ?? '', $bottomBackQuery);
+    expect($bottomBackQuery)->toBe($choices)
+        ->and($document->evaluate('string(//div[contains(@class,"booking-step-actions")]//a[contains(@class,"booking-back-to-rooms")])'))->toBe('← Back to rooms');
 });
 
 test('the hourly field and its first summary use Manila today before UTC midnight', function () {
