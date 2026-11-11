@@ -24,19 +24,18 @@
                 <p>For booking questions, include your room and reservation reference when available.</p>
             </div>
             <div class="contact-method-grid">
-                @if($contact?->phone)
-                    <a class="contact-method-card" href="tel:{{ preg_replace('/[^+0-9]/', '', $contact->phone) }}">
-                        <span class="contact-method-icon" aria-hidden="true">☎</span><span class="contact-method-label">Call us</span><strong>{{ $contact->phone }}</strong><small>Tap to call Carolina</small>
-                    </a>
-                @endif
+                <a class="contact-method-card contact-method-card--primary" href="{{ $contact?->facebook_url ?: 'https://www.facebook.com/profile.php?id=61556306344437' }}" target="_blank" rel="noopener noreferrer">
+                    <span class="contact-method-icon" aria-hidden="true">f</span><span class="contact-method-label">Message Carolina</span><strong>Facebook Messenger</strong><small>Open our Facebook page</small>
+                </a>
+                @php($contactPhone = $contact?->phone ?: '0994 995 2174')
+                <a class="contact-method-card" href="tel:{{ preg_replace('/[^+0-9]/', '', $contactPhone) }}">
+                    <span class="contact-method-icon" aria-hidden="true">☎</span><span class="contact-method-label">Call us</span><strong>{{ $contactPhone }}</strong><small>Tap to call Carolina</small>
+                </a>
                 @if($contact?->email)
                     <a class="contact-method-card" href="mailto:{{ $contact->email }}">
                         <span class="contact-method-icon" aria-hidden="true">✉</span><span class="contact-method-label">Email</span><strong>{{ $contact->email }}</strong><small>Send us your question</small>
                     </a>
                 @endif
-                <a class="contact-method-card contact-method-card--primary" href="{{ $contact?->facebook_url ?: 'https://www.facebook.com/profile.php?id=61556306344437' }}" target="_blank" rel="noopener noreferrer">
-                    <span class="contact-method-icon" aria-hidden="true">f</span><span class="contact-method-label">Message Carolina</span><strong>Facebook Messenger</strong><small>Open our Facebook page</small>
-                </a>
                 @if($contact?->hours)
                     <article class="contact-method-card contact-method-card--hours">
                         <span class="contact-method-icon" aria-hidden="true">◷</span><span class="contact-method-label">Contact hours</span><strong>{{ $contact->hours }}</strong><small>We’ll get back to you as soon as we can.</small>
