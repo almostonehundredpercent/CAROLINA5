@@ -51,6 +51,7 @@ Route::get('/health', function () {
 })->name('health');
 Route::view('/privacy', 'legal.privacy')->name('privacy');
 Route::view('/terms', 'legal.terms')->name('terms');
+Route::get('/book', [RoomController::class, 'bookingStart'])->name('booking.start');
 Route::get('/rooms', [RoomController::class, 'index'])->name('rooms.index');
 Route::get('/rooms/{room:slug}', [RoomController::class, 'show'])->name('rooms.show');
 Route::get('/rooms/{room:slug}/availability', [BookingController::class, 'availability'])->middleware('throttle:30,1')->name('rooms.availability');

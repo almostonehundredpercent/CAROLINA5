@@ -5,9 +5,9 @@
 @endpush
 @section('content')
 <style>.room-promo-badge{display:inline-flex;margin:8px 0 0;padding:6px 9px;border-radius:999px;background:#fff0d8;color:#a05200;font-size:.72rem;font-weight:800}.dark-mode .room-promo-badge{background:#4a3220;color:#ffd391}</style>
-<section class="page-hero rooms-hero"><div><h1>Find a room</h1><p>Choose your dates and stay length.</p></div></section>
+<section class="page-hero rooms-hero"><div><h1>{{ $bookingMode ? 'Choose a room to book' : 'Find a room' }}</h1><p>{{ $bookingMode ? 'Choose a room to continue straight to booking.' : 'Choose your dates and stay length.' }}</p></div></section>
 <section class="section compact rooms-results">
-    <form class="filter-bar rooms-search" method="GET">
+    <form class="filter-bar rooms-search" method="GET" action="{{ $bookingMode ? route('booking.start') : route('rooms.index') }}">
         <input id="rooms-check-in" type="hidden" name="check_in" value="{{ $filters['check_in'] ?? '' }}">
         <div class="rooms-date-control" id="rooms-date-control"><button class="rooms-date-trigger" id="rooms-check-in-trigger" type="button" aria-expanded="false" aria-controls="rooms-search-calendar"><svg class="rooms-mobile-icon" data-room-icon="calendar" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M16 3v4M8 3v4M3 10h18"></path></svg><span class="rooms-date-copy"><span>Check-in date</span><b>Choose date</b></span></button>
         <section class="rooms-search-calendar" id="rooms-search-calendar" hidden aria-label="Choose check-in date"><div class="rooms-calendar-head"><button type="button" id="rooms-calendar-prev" aria-label="Previous month">‹</button><b id="rooms-calendar-month"></b><button type="button" id="rooms-calendar-next" aria-label="Next month">›</button></div><div class="rooms-calendar-week"><span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span></div><div class="rooms-calendar-days" id="rooms-calendar-days"></div><p class="rooms-calendar-note" id="rooms-calendar-note" aria-live="polite">Choose your check-in date and time. Your stay length sets the check-out automatically.</p></section></div>
@@ -59,7 +59,9 @@
                                         @include('rooms.partials.card-rating', ['room' => $room])
                                     </div>
                                     <p>{{ Str::limit($room->description, 86) }}</p>
-                                    <div class="rooms-card-footer"><strong>₱{{ number_format($room->price_per_night) }} <small>{{ $room->rate_label }}</small></strong><a class="button small" href="{{ route('rooms.show', ['room' => $room] + $filters) }}">{{ $room->availability_reason ? ($hasStaySearch ? 'Try other dates' : 'Check dates') : 'View room' }} <span aria-hidden="true">→</span></a></div>
+                                    @php($roomActionUrl = $bookingMode ? route('bookings.create', ['room' => $room] + $filters + (auth()->guest() ? ['guest' => 1] : [])) : route('rooms.show', ['room' => $room] + $filters))
+                                    @php($roomActionLabel = $bookingMode ? 'Book this room' : ($room->availability_reason ? ($hasStaySearch ? 'Try other dates' : 'Check dates') : 'View room'))
+                                    <div class="rooms-card-footer"><strong>₱{{ number_format($room->price_per_night) }} <small>{{ $room->rate_label }}</small></strong><a class="button small" href="{{ $roomActionUrl }}">{{ $roomActionLabel }} <span aria-hidden="true">→</span></a></div>
                                 </div>
                             </article>
                         @endforeach

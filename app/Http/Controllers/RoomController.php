@@ -9,7 +9,7 @@ use Illuminate\Http\Request;
 
 class RoomController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request, bool $bookingMode = false)
     {
         $rooms = Room::where('is_active', true)
             ->with(['promoCodes' => fn ($query) => $query->where('promo_codes.is_active', true)
@@ -39,7 +39,13 @@ class RoomController extends Controller
             // are the original profiles and the following twelve are units).
             'rooms' => RoomAvailability::annotate($rooms->get(), $startsAt, $endsAt),
             'filters' => $filters,
+            'bookingMode' => $bookingMode,
         ])->header('Cache-Control', 'private, no-store');
+    }
+
+    public function bookingStart(Request $request)
+    {
+        return $this->index($request, true);
     }
 
     public function show(Request $request, Room $room)
