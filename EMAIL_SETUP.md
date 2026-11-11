@@ -17,7 +17,10 @@ MAIL_PASSWORD=<your Resend API key>
 MAIL_FROM_ADDRESS=bookings@yourdomain.com
 MAIL_FROM_NAME="Carolina Transient & Airbnb"
 MAIL_ADMIN_ADDRESS=<the Carolina staff inbox>
+ROOM_PRICE_OWNER_ADDRESS=<the room owner's approval inbox>
 ```
+
+`ROOM_PRICE_OWNER_ADDRESS` receives room-rate approval requests and an email record of each decision and applied rate. If the owner inbox is the same as the staff inbox, it can be left blank and `MAIL_ADMIN_ADDRESS` is used as the fallback. Keep approval requests disabled until the owner inbox is configured.
 
 3. Deploy, then submit one controlled booking using an email address you can read. The guest and `MAIL_ADMIN_ADDRESS` should both receive an email.
 
@@ -29,5 +32,6 @@ Until those values are configured, the app uses Laravel's log mailer. Booking an
 - New reservation request (staff inbox)
 - Booking confirmed, cancelled, extended, checked in, or checked out (guest)
 - Password reset (account holder)
+- Room rate approval request, decision record, and applied-rate record (room owner)
 
 Use a verified domain before sending real guest emails. Do not use a personal mailbox as the From address for a production reservation system.

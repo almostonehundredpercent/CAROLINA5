@@ -121,4 +121,6 @@ return [
         'address' => env('MAIL_ADMIN_ADDRESS'),
     ],
 
+    'room_price_owner_address' => env('ROOM_PRICE_OWNER_ADDRESS') ?: env('MAIL_ADMIN_ADDRESS'),
+
 ];

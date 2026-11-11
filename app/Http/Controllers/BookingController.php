@@ -256,11 +256,6 @@ class BookingController extends Controller
             $checkInAt = Carbon::parse($data['hourly_date'].' '.$data['check_in_time'], 'UTC');
             $checkOutAt = $checkInAt->copy()->addHours((int) $data['hours']);
             $nights = max(1, (int) ceil($data['hours'] / 24));
-            $total = $room->rental_hours
-                ? round($room->price_per_night * match ((int) $data['hours']) {
-                    48 => 2, 72 => 3, 96 => 4, 120 => 5, 168 => 7, 720 => 30, default => 1
-                }, 2)
-                : round(($room->price_per_night / 24) * $data['hours'], 2);
             $data['check_in'] = $checkInAt->toDateString();
             $data['check_out'] = $checkOutAt->toDateString();
             $data['check_in_at'] = $checkInAt;
@@ -269,13 +264,12 @@ class BookingController extends Controller
             $checkInAt = Carbon::parse($data['check_in'])->startOfDay();
             $checkOutAt = Carbon::parse($data['check_out'])->startOfDay();
             $nights = $checkInAt->diffInDays($checkOutAt);
-            $total = $nights * $room->price_per_night;
             $data['check_in_at'] = $checkInAt;
             $data['check_out_at'] = $checkOutAt;
         }
         $guestData = $data['checkout_type'] === 'guest' ? ['guest_name' => $data['guest_name'], 'guest_email' => $data['guest_email'], 'guest_phone' => $data['guest_phone']] : [];
         try {
-            $booking = DB::transaction(function () use ($room, $data, $guestData, $request, $nights, $total, $checkInAt, $checkOutAt) {
+            $booking = DB::transaction(function () use ($room, $data, $guestData, $request, $nights, $checkInAt, $checkOutAt) {
                 $lockedRoom = Room::whereKey($room->id)->lockForUpdate()->firstOrFail();
                 abort_if(! $lockedRoom->is_active, 422, 'This room is unavailable.');
                 if ($data['booking_type'] === 'hourly' && $checkInAt->lt(PropertyTime::now())) {
@@ -295,17 +289,25 @@ class BookingController extends Controller
                 }
 
                 $hours = $data['booking_type'] === 'hourly' ? (int) $data['hours'] : $nights * 24;
-                $pricing = ! empty($data['promo_code']) ? PromoPricing::quote($data['promo_code'], $lockedRoom, $hours, $total, true) : null;
+                $baseTotal = $data['booking_type'] === 'hourly'
+                    ? ($lockedRoom->rental_hours
+                        ? round($lockedRoom->price_per_night * match ((int) $data['hours']) {
+                            48 => 2, 72 => 3, 96 => 4, 120 => 5, 168 => 7, 720 => 30, default => 1,
+                        }, 2)
+                        : round(($lockedRoom->price_per_night / 24) * $data['hours'], 2))
+                    : round($nights * $lockedRoom->price_per_night, 2);
+                $pricing = ! empty($data['promo_code']) ? PromoPricing::quote($data['promo_code'], $lockedRoom, $hours, $baseTotal, true) : null;
                 $booking = Booking::create($data + $guestData + [
                     'user_id' => $request->user()?->id,
                     'room_id' => $lockedRoom->id,
+                    'room_rate_at_booking' => $lockedRoom->price_per_night,
                     'promo_code_id' => $pricing ? $pricing['promo']->id : null,
                     'promo_code' => $pricing ? $pricing['promo']->code : null,
                     'nights' => $nights,
-                    'total_amount' => $pricing ? $pricing['total'] : $total,
-                    'original_amount' => $pricing ? $pricing['original'] : $total,
+                    'total_amount' => $pricing ? $pricing['total'] : $baseTotal,
+                    'original_amount' => $pricing ? $pricing['original'] : $baseTotal,
                     'discount_amount' => $pricing ? $pricing['discount'] : 0,
-                    'deposit_amount' => min(round((($pricing ? $pricing['original'] : $total) * 0.30), 2), (float) ($pricing ? $pricing['total'] : $total)),
+                    'deposit_amount' => min(round((($pricing ? $pricing['original'] : $baseTotal) * 0.30), 2), (float) ($pricing ? $pricing['total'] : $baseTotal)),
                     'deposit_status' => 'awaiting_payment',
                     'deposit_due_at' => now()->addMinutes(Booking::holdMinutes()),
                     'add_ons' => [],

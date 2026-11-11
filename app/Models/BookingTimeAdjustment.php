@@ -44,7 +44,8 @@ class BookingTimeAdjustment extends Model
     public static function quoteAmount(Booking $booking, int $hours): float
     {
         $ratePeriodHours = max(1, (int) ($booking->room?->rental_hours ?: 24));
+        $bookedRate = $booking->room_rate_at_booking ?? $booking->room?->price_per_night;
 
-        return round((float) $booking->room?->price_per_night * ($hours / $ratePeriodHours), 2);
+        return round((float) $bookedRate * ($hours / $ratePeriodHours), 2);
     }
 }

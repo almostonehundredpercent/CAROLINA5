@@ -61,6 +61,11 @@ class Room extends Model
         return $this->hasMany(Booking::class);
     }
 
+    public function priceChangeRequests()
+    {
+        return $this->hasMany(RoomPriceChangeRequest::class);
+    }
+
     public function promoCodes()
     {
         return $this->belongsToMany(PromoCode::class);

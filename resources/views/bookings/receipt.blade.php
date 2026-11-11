@@ -185,6 +185,7 @@
         <h2 class="receipt-payment-title">{{ $booking->payment_status === 'paid' ? 'Payment recorded' : ($booking->payment_status === 'refunded' ? 'Refund recorded' : ($depositVerified ? 'Downpayment received' : ($unavailable ? 'Payment summary' : ($hasDeposit ? 'Complete your downpayment' : 'Complete your payment')))) }}</h2>
         <div class="receipt-summary-grid">
             <div class="receipt-amount-card"><small>Booking total</small><b>₱{{ number_format($booking->total_amount, 2) }}</b>@if($booking->discount_amount > 0)<small><s>₱{{ number_format($booking->original_amount, 2) }}</s> · {{ $booking->promo_code }} saved ₱{{ number_format($booking->discount_amount, 2) }}</small>@endif</div>
+            <div><small>Room rate when booked</small><b>{{ $booking->room_rate_at_booking !== null ? '₱'.number_format((float) $booking->room_rate_at_booking, 2) : 'Not recorded' }}</b><small>{{ $booking->room_rate_at_booking !== null ? ($booking->room?->rate_label ?? 'Rate') : 'This older booking total remains saved as originally recorded.' }}</small></div>
             <div>
                 @if($booking->payment_status === 'refunded')
                     <small>Refund recorded</small><b>₱{{ number_format((float) $financial['refunds'], 2) }}</b><small>{{ strtoupper($booking->payment_method ?? 'payment') }} refund</small>

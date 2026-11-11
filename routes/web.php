@@ -9,6 +9,7 @@ use App\Http\Controllers\DecisionSupportController;
 use App\Http\Controllers\PayMongoWebhookController;
 use App\Http\Controllers\PromoCodeController;
 use App\Http\Controllers\RoomController;
+use App\Http\Controllers\RoomPriceApprovalController;
 use App\Http\Controllers\StaffMfaController;
 use App\Http\Controllers\StayController;
 use App\Http\Middleware\RequireStaffMfaEnabled;
@@ -108,6 +109,8 @@ Route::get('/bookings/{booking}/confirmation', [BookingController::class, 'confi
 Route::post('/bookings/{booking}/paymongo', [BookingController::class, 'startPayMongoCheckout'])->middleware('throttle:5,1')->name('bookings.paymongo.start');
 Route::get('/bookings/{booking}/paymongo/return', [BookingController::class, 'returnFromPayMongo'])->middleware('throttle:15,1')->name('bookings.paymongo.return');
 Route::post('/webhooks/paymongo', PayMongoWebhookController::class)->name('bookings.paymongo.webhook');
+Route::get('/owner/rate-approvals/{change}/{token}', [RoomPriceApprovalController::class, 'show'])->middleware(['signed', 'throttle:30,1'])->name('room-price-approval.show');
+Route::post('/owner/rate-approvals/{change}/{token}', [RoomPriceApprovalController::class, 'decide'])->middleware(['signed', 'throttle:10,1'])->name('room-price-approval.decide');
 Route::middleware('auth')->group(function () {
     Route::get('/bookings', [BookingController::class, 'index'])->name('bookings.index');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
@@ -127,6 +130,8 @@ Route::middleware(['auth', 'admin', 'staff.mfa'])->prefix('admin')->name('admin.
     Route::post('/rooms', [AdminController::class, 'storeRoom'])->middleware('admin.permission:staff')->name('rooms.store');
     Route::get('/rooms/{room}/edit', [AdminController::class, 'editRoom'])->middleware('admin.permission:staff')->name('rooms.edit');
     Route::patch('/rooms/{room}', [AdminController::class, 'updateRoom'])->middleware('admin.permission:staff')->name('rooms.update');
+    Route::post('/rooms/{room}/price-change-requests', [AdminController::class, 'requestRoomPriceChange'])->middleware('admin.permission:staff')->name('rooms.price-changes.store');
+    Route::post('/rooms/{room}/price-change-requests/{change}/apply', [AdminController::class, 'applyApprovedRoomPriceChange'])->middleware('admin.permission:staff')->name('rooms.price-changes.apply');
     Route::delete('/rooms/{room}', [AdminController::class, 'archiveRoom'])->middleware('admin.permission:staff')->name('rooms.archive');
     Route::patch('/rooms/{room}/status', [AdminController::class, 'updateRoomStatus'])->middleware('admin.permission:room_operations')->name('rooms.status');
     Route::get('/bookings', [AdminController::class, 'bookings'])->middleware('admin.permission:bookings')->name('bookings');

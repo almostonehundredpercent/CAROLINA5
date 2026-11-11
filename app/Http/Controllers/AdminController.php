@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Mail\BookingUpdate;
+use App\Mail\RoomPriceChangeRequested;
+use App\Mail\RoomPriceChangeApplied;
 use App\Models\ActivityLog;
 use App\Models\Booking;
 use App\Models\BookingTimeAdjustment;
@@ -11,6 +13,7 @@ use App\Models\GuestRestriction;
 use App\Models\Payment;
 use App\Models\Review;
 use App\Models\Room;
+use App\Models\RoomPriceChangeRequest;
 use App\Models\RoomBlock;
 use App\Models\User;
 use App\Services\OperationalDecisionSupport;
@@ -29,6 +32,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
@@ -476,6 +480,7 @@ class AdminController extends Controller
             return Booking::create([
                 'user_id' => null,
                 'room_id' => $room->id,
+                'room_rate_at_booking' => $room->price_per_night,
                 'guest_name' => $data['guest_name'],
                 'guest_email' => $data['guest_email'],
                 'guest_phone' => $data['guest_phone'],
@@ -532,17 +537,141 @@ class AdminController extends Controller
     {
         abort_unless($request->user()->isAdmin(), 403, 'Only Organization Admins can edit room details.');
 
-        return view('admin.room-form', ['room' => $room, 'action' => route('admin.rooms.update', $room), 'method' => 'PATCH']);
+        return view('admin.room-form', [
+            'room' => $room,
+            'action' => route('admin.rooms.update', $room),
+            'method' => 'PATCH',
+            'priceChanges' => $room->priceChangeRequests()->latest()->take(8)->get(),
+            'ownerEmailConfigured' => (bool) config('mail.room_price_owner_address'),
+        ]);
     }
 
     public function updateRoom(Request $request, Room $room)
     {
         abort_unless($request->user()->isAdmin(), 403, 'Only Organization Admins can edit room details.');
-        $before = $room->only(['name', 'room_type', 'description', 'price_per_night', 'guests', 'beds', 'amenities', 'image_url', 'is_active']);
+        $before = $room->only(['name', 'room_type', 'description', 'guests', 'beds', 'amenities', 'image_url', 'is_active']);
         $room->update($this->roomData($request, $room));
-        $this->audit($request->user()->id, 'room_updated', 'Room details updated.', $room, $before, $room->fresh()->only(['name', 'room_type', 'description', 'price_per_night', 'guests', 'beds', 'amenities', 'image_url', 'is_active']));
+        $this->audit($request->user()->id, 'room_updated', 'Room details updated. Base rate is controlled by the owner-approval workflow.', $room, $before, $room->fresh()->only(['name', 'room_type', 'description', 'guests', 'beds', 'amenities', 'image_url', 'is_active']));
 
         return redirect()->route('admin.rooms')->with('success', 'Room details updated.');
+    }
+
+    public function requestRoomPriceChange(Request $request, Room $room)
+    {
+        abort_unless($request->user()->isAdmin(), 403, 'Only Organization Admins can request a room rate change.');
+        $ownerEmail = (string) config('mail.room_price_owner_address');
+        if (! filter_var($ownerEmail, FILTER_VALIDATE_EMAIL)) {
+            return back()->withErrors(['owner_email' => 'Configure ROOM_PRICE_OWNER_ADDRESS (or MAIL_ADMIN_ADDRESS) before requesting a rate change.']);
+        }
+        $data = $request->validate([
+            'proposed_price' => 'required|numeric|min:0.01|max:999999|decimal:0,2',
+            'reason' => 'required|string|min:10|max:1000',
+        ]);
+        $plainToken = Str::random(64);
+        $change = DB::transaction(function () use ($room, $request, $data, $ownerEmail, $plainToken) {
+            $lockedRoom = Room::query()->whereKey($room->id)->lockForUpdate()->firstOrFail();
+            RoomPriceChangeRequest::query()
+                ->where('room_id', $lockedRoom->id)
+                ->where('status', 'requested')
+                ->where('approval_expires_at', '<=', now())
+                ->update(['status' => 'expired', 'approval_token_hash' => null, 'updated_at' => now()]);
+
+            if (RoomPriceChangeRequest::query()->where('room_id', $lockedRoom->id)->whereIn('status', ['requested', 'approved'])->exists()) {
+                throw ValidationException::withMessages(['proposed_price' => 'Resolve the current pending or approved rate request before creating another.']);
+            }
+
+            $currentCents = (int) round((float) $lockedRoom->price_per_night * 100);
+            $proposedCents = (int) round((float) $data['proposed_price'] * 100);
+            if ($currentCents === $proposedCents) {
+                throw ValidationException::withMessages(['proposed_price' => 'The proposed rate must differ from the current room rate.']);
+            }
+
+            $change = RoomPriceChangeRequest::create([
+                'room_id' => $lockedRoom->id,
+                'requested_by' => $request->user()->id,
+                'reference' => 'RATE-'.Str::upper(Str::random(10)),
+                'old_price' => $lockedRoom->price_per_night,
+                'proposed_price' => number_format($proposedCents / 100, 2, '.', ''),
+                'owner_email' => $ownerEmail,
+                'reason' => trim($data['reason']),
+                'status' => 'requested',
+                'approval_token_hash' => hash('sha256', $plainToken),
+                'approval_expires_at' => now()->addDays(7),
+            ]);
+
+            $this->audit($request->user()->id, 'room_rate_change_requested', 'Owner approval requested for a room rate change.', $change, [
+                'room_id' => $lockedRoom->id,
+                'room_name' => $lockedRoom->name,
+                'price_per_night' => $lockedRoom->price_per_night,
+            ], [
+                'reference' => $change->reference,
+                'old_price' => $change->old_price,
+                'proposed_price' => $change->proposed_price,
+                'reason' => $change->reason,
+                'owner_email' => $ownerEmail,
+                'requested_at' => now()->toIso8601String(),
+                'approval_expires_at' => $change->approval_expires_at->toIso8601String(),
+            ]);
+
+            return $change;
+        });
+
+        $reviewUrl = URL::temporarySignedRoute('room-price-approval.show', now()->addDays(7), ['change' => $change->id, 'token' => $plainToken]);
+        try {
+            Mail::to($ownerEmail)->send(new RoomPriceChangeRequested($change->load(['room', 'requester']), $reviewUrl));
+        } catch (\Throwable $exception) {
+            report($exception);
+            $change->update(['status' => 'email_failed', 'approval_token_hash' => null]);
+            $this->audit($request->user()->id, 'room_rate_change_email_failed', 'The owner approval email could not be delivered; no rate was changed.', $change, [], [
+                'reference' => $change->reference,
+                'owner_email' => $ownerEmail,
+                'failed_at' => now()->toIso8601String(),
+            ]);
+
+            return back()->withErrors(['owner_email' => 'The request was recorded, but the owner email could not be sent. Check mail configuration and submit a new request.']);
+        }
+
+        return back()->with('success', "Approval request {$change->reference} emailed to the owner. The live rate is unchanged until approval and admin application.");
+    }
+
+    public function applyApprovedRoomPriceChange(Request $request, Room $room, RoomPriceChangeRequest $change)
+    {
+        abort_unless($request->user()->isAdmin(), 403, 'Only Organization Admins can apply an approved room rate.');
+
+        DB::transaction(function () use ($request, $room, $change) {
+            $lockedRoom = Room::query()->whereKey($room->id)->lockForUpdate()->firstOrFail();
+            $lockedChange = RoomPriceChangeRequest::query()->whereKey($change->id)->lockForUpdate()->firstOrFail();
+            abort_unless((int) $lockedChange->room_id === (int) $lockedRoom->id, 404);
+            abort_unless($lockedChange->status === 'approved', 422, 'Only an owner-approved request can be applied.');
+            if ((int) round((float) $lockedRoom->price_per_night * 100) !== (int) round((float) $lockedChange->old_price * 100)) {
+                throw ValidationException::withMessages(['price_change' => 'The room rate changed after this approval was requested. Ask the owner to review a fresh request.']);
+            }
+
+            $lockedRoom->update(['price_per_night' => $lockedChange->proposed_price]);
+            $lockedChange->update(['status' => 'applied', 'applied_by' => $request->user()->id, 'applied_at' => now()]);
+            $this->audit($request->user()->id, 'room_rate_change_applied', 'Owner-approved room rate applied by an authorized administrator.', $lockedChange, [
+                'room_id' => $lockedRoom->id,
+                'room_name' => $lockedRoom->name,
+                'price_per_night' => $lockedChange->old_price,
+            ], [
+                'reference' => $lockedChange->reference,
+                'old_price' => $lockedChange->old_price,
+                'new_price' => $lockedChange->proposed_price,
+                'owner_email' => $lockedChange->owner_email,
+                'approved_at' => $lockedChange->approved_at?->toIso8601String(),
+                'applied_at' => $lockedChange->applied_at?->toIso8601String(),
+                'applied_by' => $request->user()->id,
+            ]);
+        });
+
+        try {
+            Mail::to($change->owner_email)->send(new RoomPriceChangeApplied($change->fresh()->load(['room', 'applier'])));
+        } catch (\Throwable $exception) {
+            report($exception);
+            return back()->with('success', "Approved rate applied. The owner-copy email could not be delivered; approval reference {$change->reference} is saved in the activity log.");
+        }
+
+        return back()->with('success', "Approved rate applied. Approval reference: {$change->reference}.");
     }
 
     public function archiveRoom(Request $request, Room $room)
@@ -629,12 +758,12 @@ class AdminController extends Controller
 
         return response()->streamDownload(function () use ($query) {
             $out = fopen('php://output', 'w');
-            fputcsv($out, ['Reference', 'Guest', 'Email', 'Phone', 'Room', 'Check-in', 'Check-out', 'Status', 'Payment status', 'Total']);
+            fputcsv($out, ['Reference', 'Guest', 'Email', 'Phone', 'Room', 'Room rate at booking', 'Check-in', 'Check-out', 'Status', 'Payment status', 'Total']);
             $query->chunkById(200, function ($bookings) use ($out) {
                 foreach ($bookings as $booking) {
                     fputcsv($out, array_map(fn ($value) => $this->csvValue($value), [
                         $booking->reference, $booking->guest_name ?? $booking->user?->name, $booking->guest_email ?? $booking->user?->email, $booking->guest_phone,
-                        $booking->room?->name, $booking->check_in_at?->toIso8601String() ?? $booking->check_in->toDateString(), $booking->check_out_at?->toIso8601String() ?? $booking->check_out->toDateString(),
+                        $booking->room?->name, $booking->room_rate_at_booking ?? 'Not recorded', $booking->check_in_at?->toIso8601String() ?? $booking->check_in->toDateString(), $booking->check_out_at?->toIso8601String() ?? $booking->check_out->toDateString(),
                         $booking->status, $booking->payment_status, $booking->total_amount,
                     ]));
                 }
@@ -981,10 +1110,17 @@ class AdminController extends Controller
         $data = $request->validate([
             'name' => 'required|string|max:255', 'slug' => $slugRule, 'room_type' => 'required|string|max:100',
             'description' => 'required|string|max:3000', 'beds' => 'required|integer|min:1|max:20', 'guests' => 'required|integer|min:1|max:30',
-            'price_per_night' => 'required|numeric|min:0|max:999999', 'rental_hours' => 'nullable|integer|in:3,6,12,22,24', 'default_check_in_time' => 'nullable|date_format:H:i',
+            'price_per_night' => $room ? 'sometimes|numeric|min:0|max:999999|decimal:0,2' : 'required|numeric|min:0|max:999999|decimal:0,2', 'rental_hours' => 'nullable|integer|in:3,6,12,22,24', 'default_check_in_time' => 'nullable|date_format:H:i',
             'amenities' => 'nullable|string|max:1200', 'image_url' => 'nullable|url|max:2048', 'image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:5120',
             'is_active' => 'nullable|boolean', 'remove_image' => 'nullable|boolean',
         ]);
+        if ($room) {
+            if (array_key_exists('price_per_night', $data)
+                && (int) round((float) $data['price_per_night'] * 100) !== (int) round((float) $room->fresh()->price_per_night * 100)) {
+                throw ValidationException::withMessages(['price_per_night' => 'Room rates are locked. Request owner approval to change this rate.']);
+            }
+            unset($data['price_per_night']);
+        }
         if ($request->boolean('remove_image')) {
             $data['image_url'] = null;
         }
