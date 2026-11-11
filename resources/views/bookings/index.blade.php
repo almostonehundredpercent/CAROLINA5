@@ -1,10 +1,41 @@
 @extends('layouts.app')
 @push('styles')
 <link rel="stylesheet" href="{{ asset('css/booking-pagination.css') }}?v={{ filemtime(public_path('css/booking-pagination.css')) }}">
+<link rel="stylesheet" href="{{ asset('css/customer-profile.css') }}?v={{ filemtime(public_path('css/customer-profile.css')) }}">
 @endpush
 @section('content')
-<section class="page-hero slim"><span class="eyebrow">YOUR STAYS</span><h1>My bookings</h1></section>
-<section class="section compact"><div class="booking-list">
+<section class="page-hero slim customer-profile-hero">
+    <div class="customer-profile-head">
+        <span class="eyebrow">YOUR ACCOUNT</span>
+        <h1>Welcome back, {{ auth()->user()->name }}!</h1>
+        <p>Manage your profile and view your Carolina stays.</p>
+    </div>
+</section>
+<section class="section compact customer-profile">
+    <div class="customer-profile-actions" aria-label="Quick actions">
+        <a class="customer-profile-action" href="{{ route('booking.start') }}"><span aria-hidden="true">＋</span><strong>New booking</strong><small>Find your next stay</small></a>
+        <a class="customer-profile-action" href="#your-bookings"><span aria-hidden="true">▣</span><strong>Your stays</strong><small>View reservations and receipts</small></a>
+        <a class="customer-profile-action" href="#contact"><span aria-hidden="true">✉</span><strong>Contact Carolina</strong><small>Get help with your stay</small></a>
+    </div>
+
+    <nav class="customer-profile-tabs" aria-label="Profile sections">
+        <a href="#profile-information">Profile information</a>
+        <a href="#your-bookings">My bookings</a>
+    </nav>
+
+    <article class="customer-profile-information" id="profile-information">
+        <div class="customer-profile-card-heading"><div><span class="profile-kicker">ACCOUNT DETAILS</span><h2>Personal information</h2></div><span class="profile-member-badge">Member since {{ auth()->user()->created_at->format('Y') }}</span></div>
+        <dl class="customer-profile-details">
+            <div><dt>Full name</dt><dd>{{ auth()->user()->name }}</dd></div>
+            <div><dt>Email address</dt><dd>{{ auth()->user()->email }}</dd></div>
+            <div><dt>Email status</dt><dd>{{ auth()->user()->hasVerifiedEmail() ? 'Verified' : 'Not verified' }}</dd></div>
+            <div><dt>Account created</dt><dd>{{ auth()->user()->created_at->format('F j, Y') }}</dd></div>
+        </dl>
+    </article>
+
+    <section class="customer-profile-stays" id="your-bookings" aria-labelledby="your-bookings-title">
+        <div class="customer-profile-section-heading"><div><span class="profile-kicker">YOUR STAYS</span><h2 id="your-bookings-title">My bookings</h2><p>See your reservations, payment details, and stay updates in one place.</p></div><span class="profile-stay-count">{{ $bookings->total() }} {{ \Illuminate\Support\Str::plural('booking', $bookings->total()) }}</span></div>
+        <div class="booking-list">
 @forelse($bookings as $booking)
     <article class="booking-row">
         <picture>@if($roomWebpSrcset = $booking->room->responsiveWebpSrcset())<source type="image/webp" srcset="{{ $roomWebpSrcset }}" sizes="(max-width: 800px) 80px, 140px">@endif<img src="{{ $booking->room->image_url }}" alt="{{ $booking->room->name }}" @if($roomSrcset = $booking->room->responsiveImageSrcset()) srcset="{{ $roomSrcset }}" sizes="(max-width: 800px) 80px, 140px" @endif loading="lazy" decoding="async"></picture>
@@ -77,7 +108,9 @@
 @empty
     <div class="empty-state"><h2>No bookings yet</h2><p>Your upcoming stays will appear here.</p><a class="button" href="{{ route('rooms.index') }}">Browse rooms</a></div>
 @endforelse
-</div></section>
+</div>
+</section>
+</section>
 @if($bookings->hasPages())
     <nav class="booking-pagination" aria-label="Booking pages">
         @if($bookings->onFirstPage())<span class="booking-pagination-disabled" aria-disabled="true">Previous</span>@else<a href="{{ $bookings->previousPageUrl() }}">Previous</a>@endif

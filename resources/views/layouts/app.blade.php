@@ -49,6 +49,7 @@
             <span></span><span></span><span></span>
         </button>
         <nav id="primary-navigation">
+            <a href="{{ route('home') }}">Home</a>
             <a href="{{ route('rooms.index') }}">Rooms</a>
             @guest<a href="{{ route('bookings.lookup') }}">Find booking</a>@endguest
             <a href="{{ route('home') }}#about">About</a>
