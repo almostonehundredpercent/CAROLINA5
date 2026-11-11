@@ -24,7 +24,7 @@ test('guest booking form shows useful examples in contact and special request fi
         ->assertSee('placeholder="e.g., Extra pillow, if available."', false);
 });
 
-test('promo code disclosure uses a solid surface in light and dark mode', function () {
+test('promo code disclosure uses a distinct solid surface in light and dark mode', function () {
     $room = Room::create([
         'name' => 'Promo Surface Test Room',
         'slug' => 'promo-surface-test-room',
@@ -42,8 +42,8 @@ test('promo code disclosure uses a solid surface in light and dark mode', functi
     preg_match_all('/\.promo-entry>summary\s*\{([^}]*)\}/', $html, $summaryRules);
     preg_match_all('/\.dark-mode \.promo-entry>summary\s*\{([^}]*)\}/', $html, $darkSummaryRules);
 
-    expect(implode(';', $summaryRules[1] ?? []))->toContain('background:var(--sand)')
-        ->and(implode(';', $darkSummaryRules[1] ?? []))->toContain('background:var(--sand)');
+    expect(implode(';', $summaryRules[1] ?? []))->toContain('background:var(--auth-canvas)')
+        ->and(implode(';', $darkSummaryRules[1] ?? []))->toContain('background:var(--deep)');
 });
 
 test('invalid guest phone is explained inline while submitted guest details are retained', function () {
