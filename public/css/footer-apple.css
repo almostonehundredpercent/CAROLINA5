@@ -1,12 +1,12 @@
 /* A deliberately quiet footer: focused hierarchy, generous rhythm, and one clear action. */
 .site-footer {
-    --footer-bg: #E9D4AD;
-    --footer-panel: rgba(255, 255, 255, .28);
-    --footer-line: rgba(57, 57, 58, .22);
-    --footer-text: #25201B;
-    --footer-muted: #25201B;
-    --footer-accent: #25201B;
-    --footer-gradient: linear-gradient(105deg, #C97900 0%, #D4861E 22%, #D8953D 42%, #DDAA61 62%, #E3BF8B 82%, #E9D4AD 100%);
+    --footer-bg: #39393A;
+    --footer-panel: rgba(0, 0, 0, .2);
+    --footer-line: rgba(255, 255, 255, .22);
+    --footer-text: #F5F0E8;
+    --footer-muted: #F5F0E8;
+    --footer-accent: #F5F0E8;
+    --footer-gradient: linear-gradient(105deg, #A84F00 0%, #934609 22%, #773C12 42%, #5C321F 62%, #47403A 82%, #39393A 100%);
     display: block;
     padding: 0;
     color: var(--footer-text);

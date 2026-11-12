@@ -5,7 +5,7 @@ import { chromium } from 'playwright';
 
 const stylesheets = await Promise.all(['site.css', 'palette.css', 'responsive.css', 'footer-apple.css'].map(file =>
     readFile(new URL(`../../public/css/${file}`, import.meta.url), 'utf8')));
-const paletteColors = ['C97900', 'D4861E', 'D8953D', 'DDAA61', 'E3BF8B', 'E9D4AD'];
+const paletteColors = ['A84F00', '934609', '773C12', '5C321F', '47403A', '39393A'];
 const luminance = (rgb) => {
     const [r, g, b] = rgb.match(/\d+/g).map(Number).map(value => {
         const channel = value / 255;
@@ -33,14 +33,15 @@ test('footer uses the supplied warm gradient with readable text in both themes',
                 overflow: document.documentElement.scrollWidth > innerWidth,
             }));
             assert.ok(footer.background.includes('linear-gradient'), `${theme} footer should use the palette gradient`);
-            for (const color of ['201, 121, 0', '216, 149, 61', '233, 212, 173']) {
+            for (const color of ['168, 79, 0', '119, 60, 18', '57, 57, 58']) {
                 assert.ok(footer.background.includes(color), `${theme} footer gradient should include ${color}`);
             }
-            assert.equal(footer.text, 'rgb(37, 32, 27)', `${theme} footer links should use the high-contrast footer text color`);
+            assert.equal(footer.text, 'rgb(245, 240, 232)', `${theme} footer links should use the high-contrast warm-white text color`);
             const textLuminance = luminance(footer.text);
             for (const color of paletteColors) {
                 const rgb = `rgb(${parseInt(color.slice(0, 2), 16)}, ${parseInt(color.slice(2, 4), 16)}, ${parseInt(color.slice(4, 6), 16)})`;
-                const contrast = (luminance(rgb) + 0.05) / (textLuminance + 0.05);
+                const backgroundLuminance = luminance(rgb);
+                const contrast = (Math.max(backgroundLuminance, textLuminance) + 0.05) / (Math.min(backgroundLuminance, textLuminance) + 0.05);
                 assert.ok(contrast >= 4.5, `${theme} footer text contrast against #${color} should be at least 4.5:1, got ${contrast.toFixed(2)}:1`);
             }
             assert.equal(footer.overflow, false, `${theme} footer should not overflow on mobile`);
