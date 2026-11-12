@@ -246,7 +246,7 @@
     .rooms-card .room-card-body > p { margin:8px 0 10px; font-size:.82rem; line-height:1.42; }
     .rooms-card-footer { align-items:center; gap:10px; padding-top:9px; border-top:1px solid #efe6dc; }
     .rooms-card-footer strong { font-size:1rem; }
-    .rooms-card-footer strong small { display:block; margin:3px 0 0; font-size:.7rem; }
+    .rooms-card-footer strong small { display:inline; margin:0 0 0 3px; font-size:.7rem; }
     .rooms-card .button.small { min-height:44px; padding:10px 13px; border-radius:11px; }
     .dark-mode .rooms-card-footer { border-top-color:#443329; }
 }
