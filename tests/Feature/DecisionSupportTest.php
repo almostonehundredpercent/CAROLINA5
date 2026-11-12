@@ -229,6 +229,11 @@ test('payment report shows verified payments, refunds, and net collected for the
 
 test('dashboard fallback keeps operational signals renderable when a summary query fails', function () {
     $admin = User::factory()->create(['is_admin' => true]);
+    $guest = User::factory()->create(['name' => 'Checked-in guest']);
+    $room = decisionSupportTestRoom('checked-in-dashboard-fallback');
+    decisionSupportTestBooking($guest, $room, now()->subHour(), now()->addDay(), 'confirmed')->update([
+        'checked_in_at' => now()->subHour(),
+    ]);
     $failingSupport = new class extends OperationalDecisionSupport
     {
         public function upcomingTurnovers(): Collection
@@ -242,5 +247,10 @@ test('dashboard fallback keeps operational signals renderable when a summary que
         ->get(route('admin.dashboard'))
         ->assertOk()
         ->assertSee('The dashboard is showing core booking data while a non-essential operational summary is restored.')
-        ->assertSee('Review bookings');
+        ->assertSee('Review bookings')
+        ->assertViewHas('checkedInCount', 1)
+        ->assertViewHas('roomsByStatus', fn (array $status) => $status['occupied'] === 1);
+
+    $today = $this->actingAsStaff($admin)->get(route('admin.frontdesk'))->assertOk();
+    expect($today->viewData('activeStays')->count())->toBe(1);
 });

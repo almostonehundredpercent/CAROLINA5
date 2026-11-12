@@ -59,6 +59,7 @@ class AdminController extends Controller
             [$revenue, $paymentPending, $paymentSourceLabel] = $this->paymentDashboardMetrics();
             $recentBookings = Booking::with(['user', 'room'])->latest()->take(8)->get();
             $rooms = $this->roomsWithDisplayStatus();
+            $operationalMetrics = $this->dashboardOperationalMetrics($rooms);
             $chartStart = now()->subDays(6)->startOfDay();
             $bookingsByDay = Booking::where('created_at', '>=', $chartStart)
                 ->get()
@@ -73,36 +74,11 @@ class AdminController extends Controller
                 'revenue' => $revenue,
                 'paymentPending' => $paymentPending,
                 'paymentSourceLabel' => $paymentSourceLabel,
-                'checkedInCount' => Booking::whereNotNull('checked_in_at')->whereNull('checked_out_at')->count(),
-                'checkedOutCount' => Booking::whereDate('checked_out_at', PropertyTime::today())->count(),
+                'checkedInCount' => $operationalMetrics['checkedInCount'],
+                'checkedOutCount' => $operationalMetrics['checkedOutCount'],
                 'cancelledCount' => Booking::where('status', 'cancelled')->count(),
-                'roomsByStatus' => [
-                    'available' => $rooms->where('display_status', 'available')->count(),
-                    'occupied' => $rooms->where('display_status', 'occupied')->count(),
-                    'maintenance' => $rooms->whereIn('display_status', ['maintenance', 'cleaning'])->count(),
-                ],
-                'alerts' => [
-                    'arrivals' => Booking::where('status', 'confirmed')->whereNull('checked_in_at')->whereNull('checked_out_at')
-                        ->where(fn ($stay) => $stay->where('check_out_at', '>', PropertyTime::now())
-                            ->orWhere(fn ($legacy) => $legacy->whereNull('check_out_at')->whereDate('check_out', '>=', PropertyTime::today())))
-                        ->where(fn ($query) => $query->where('check_in_at', '<=', PropertyTime::now())
-                            ->orWhere(fn ($legacy) => $legacy->whereNull('check_in_at')->whereDate('check_in', '<=', PropertyTime::today())))
-                        ->count(),
-                    'departures' => Booking::whereNotNull('checked_in_at')->whereNull('checked_out_at')
-                        ->where(fn ($query) => $query->where('check_out_at', '<=', PropertyTime::now())
-                            ->orWhere(fn ($legacy) => $legacy->whereNull('check_out_at')->whereDate('check_out', '<=', PropertyTime::today())))
-                        ->count(),
-                    'pending' => Booking::query()->blocking()->where('status', 'pending')->count(),
-                    'roomBlocks' => RoomBlock::whereNull('completed_at')
-                        ->whereHas('room', fn ($room) => $room->where('is_active', true))
-                        ->where('starts_at', '<=', PropertyTime::now()->addDay())
-                        ->where('ends_at', '>', PropertyTime::now())
-                        ->distinct()->pluck('room_id')
-                        ->merge(Room::where('is_active', true)->whereIn('operational_status', ['maintenance', 'cleaning'])
-                            ->where(fn ($query) => $query->whereNull('operational_until')->orWhere('operational_until', '>', PropertyTime::now()))
-                            ->pluck('id'))
-                        ->unique()->count(),
-                ],
+                'roomsByStatus' => $operationalMetrics['roomsByStatus'],
+                'alerts' => $operationalMetrics['alerts'],
                 'bookings' => $recentBookings,
                 'recentActivity' => ActivityLog::with(['booking.room', 'user'])->latest()->take(6)->get(),
                 'topRooms' => Booking::query()->where('status', 'confirmed')->selectRaw('room_id, count(*) as bookings_count')->groupBy('room_id')->orderByDesc('bookings_count')->with('room')->take(3)->get(),
@@ -118,26 +94,30 @@ class AdminController extends Controller
                 'exception' => $exception,
             ]);
 
+            // Summary-only failures should not turn live inventory into plausible-looking zeros.
+            // Reuse already-loaded room state when available; otherwise make a fresh read.
+            $fallbackRooms = $rooms ?? $this->roomsWithDisplayStatus();
+            $operationalMetrics = $operationalMetrics ?? $this->dashboardOperationalMetrics($fallbackRooms);
+
             $bookingCount = Booking::count();
             $pendingCount = Booking::query()->blocking()->where('status', 'pending')->count();
             $confirmedCount = Booking::where('status', 'confirmed')->count();
             $cancelledCount = Booking::where('status', 'cancelled')->count();
-            $roomCount = Room::where('is_active', true)->count();
 
             return view('admin.admin_dashboard', [
                 'viewer' => AdminPermissions::role(request()->user()) === 'viewer',
                 'bookingCount' => $bookingCount,
                 'pendingCount' => $pendingCount,
                 'confirmedCount' => $confirmedCount,
-                'roomCount' => $roomCount,
+                'roomCount' => $fallbackRooms->count(),
                 'revenue' => Booking::where('payment_status', 'paid')->sum('total_amount'),
                 'paymentPending' => Booking::where('status', '!=', 'cancelled')->where('payment_status', '!=', 'paid')->count(),
                 'paymentSourceLabel' => 'Legacy booking payment records (ledger unavailable)',
-                'checkedInCount' => 0,
-                'checkedOutCount' => Booking::whereDate('checked_out_at', PropertyTime::today())->count(),
+                'checkedInCount' => $operationalMetrics['checkedInCount'],
+                'checkedOutCount' => $operationalMetrics['checkedOutCount'],
                 'cancelledCount' => $cancelledCount,
-                'roomsByStatus' => ['available' => $roomCount, 'occupied' => 0, 'maintenance' => 0],
-                'alerts' => ['arrivals' => 0, 'departures' => 0, 'pending' => $pendingCount, 'roomBlocks' => 0],
+                'roomsByStatus' => $operationalMetrics['roomsByStatus'],
+                'alerts' => $operationalMetrics['alerts'],
                 'bookings' => Booking::with(['user', 'room'])->latest()->take(8)->get(),
                 'recentActivity' => collect(),
                 'topRooms' => collect(),
@@ -1308,6 +1288,44 @@ class AdminController extends Controller
         unset($data['image'], $data['remove_image']);
 
         return $data;
+    }
+
+    private function dashboardOperationalMetrics($rooms): array
+    {
+        $now = PropertyTime::now();
+        $today = PropertyTime::today();
+
+        return [
+            'checkedInCount' => Booking::whereNotNull('checked_in_at')->whereNull('checked_out_at')->count(),
+            'checkedOutCount' => Booking::whereDate('checked_out_at', $today)->count(),
+            'roomsByStatus' => [
+                'available' => $rooms->where('display_status', 'available')->count(),
+                'occupied' => $rooms->where('display_status', 'occupied')->count(),
+                'maintenance' => $rooms->whereIn('display_status', ['maintenance', 'cleaning'])->count(),
+            ],
+            'alerts' => [
+                'arrivals' => Booking::where('status', 'confirmed')->whereNull('checked_in_at')->whereNull('checked_out_at')
+                    ->where(fn ($stay) => $stay->where('check_out_at', '>', $now)
+                        ->orWhere(fn ($legacy) => $legacy->whereNull('check_out_at')->whereDate('check_out', '>=', $today)))
+                    ->where(fn ($query) => $query->where('check_in_at', '<=', $now)
+                        ->orWhere(fn ($legacy) => $legacy->whereNull('check_in_at')->whereDate('check_in', '<=', $today)))
+                    ->count(),
+                'departures' => Booking::whereNotNull('checked_in_at')->whereNull('checked_out_at')
+                    ->where(fn ($query) => $query->where('check_out_at', '<=', $now)
+                        ->orWhere(fn ($legacy) => $legacy->whereNull('check_out_at')->whereDate('check_out', '<=', $today)))
+                    ->count(),
+                'pending' => Booking::query()->blocking()->where('status', 'pending')->count(),
+                'roomBlocks' => RoomBlock::whereNull('completed_at')
+                    ->whereHas('room', fn ($room) => $room->where('is_active', true))
+                    ->where('starts_at', '<=', $now->copy()->addDay())
+                    ->where('ends_at', '>', $now)
+                    ->distinct()->pluck('room_id')
+                    ->merge(Room::where('is_active', true)->whereIn('operational_status', ['maintenance', 'cleaning'])
+                        ->where(fn ($query) => $query->whereNull('operational_until')->orWhere('operational_until', '>', $now))
+                        ->pluck('id'))
+                    ->unique()->count(),
+            ],
+        ];
     }
 
     private function roomsWithDisplayStatus()
