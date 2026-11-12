@@ -27,6 +27,7 @@
         }
     </script>
     <link rel="stylesheet" href="{{ asset('css/site.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/room-photo-orientation.css') }}?v={{ filemtime(public_path('css/room-photo-orientation.css')) }}">
     <link rel="stylesheet" href="{{ asset('css/booking-context.css') }}?v={{ filemtime(public_path('css/booking-context.css')) }}">
     <link rel="stylesheet" href="{{ asset('css/palette.css') }}?v={{ filemtime(public_path('css/palette.css')) }}">
     <link rel="stylesheet" href="{{ asset('css/password-toggle.css') }}">

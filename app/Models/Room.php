@@ -19,6 +19,10 @@ class Room extends Model
 
     public function getRateLabelAttribute($value): string
     {
+        if ($value !== null) {
+            return (string) $value;
+        }
+
         return $this->rental_hours ? "per {$this->rental_hours}-hour stay" : 'per night';
     }
 

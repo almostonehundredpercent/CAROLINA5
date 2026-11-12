@@ -1,0 +1,3 @@
+img[src*="/images/rooms/room-11-angle-3.jpg"] {
+    transform: scaleX(-1);
+}

@@ -74,6 +74,16 @@ class RoomSeeder extends Seeder
                     ->all();
             }
 
+            if ($number === 11) {
+                $room->room_type = 'Fan room';
+                $room->beds = 1;
+                $room->guests = 4;
+                $room->price_per_night = 450;
+                $room->rate_label = '';
+                $room->rental_hours = 22;
+                $room->description = 'A comfortable fan room with one bed for up to four guests. Prices start at ₱450 for a 22-hour stay beginning at noon.';
+            }
+
             $room->save();
 
             if ($isNew) {

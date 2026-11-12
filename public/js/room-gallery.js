@@ -161,7 +161,7 @@ document.addEventListener('DOMContentLoaded', () => {
         panY = 0;
         const imageCount = roomGallery.images.length;
         const source = roomGallery.images[activeIndex];
-        mirrorActiveImage = source.includes('room-10-angle-3.jpg');
+        mirrorActiveImage = source.includes('room-10-angle-3.jpg') || source.includes('room-11-angle-3.jpg');
         const imageLabel = imageCount > 1
             ? `${roomGallery.room} photo ${activeIndex + 1} of ${imageCount}`
             : `${roomGallery.room} photo`;
