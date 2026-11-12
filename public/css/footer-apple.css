@@ -1,16 +1,19 @@
 /* A deliberately quiet footer: focused hierarchy, generous rhythm, and one clear action. */
 .site-footer {
-    --footer-bg: #191716;
-    --footer-panel: rgba(255, 255, 255, .055);
-    --footer-line: rgba(255, 255, 255, .13);
-    --footer-text: #f8f5f0;
-    --footer-muted: #b9b1a8;
-    --footer-accent: #f3a12b;
+    --footer-bg: #FEEFDC;
+    --footer-panel: rgba(255, 255, 255, .28);
+    --footer-line: rgba(57, 57, 58, .22);
+    --footer-text: #39393A;
+    --footer-muted: #51402F;
+    --footer-accent: #5D351C;
+    --footer-gradient: linear-gradient(105deg, #FB9E2D 0%, #FCAE50 22%, #FCBE73 42%, #FDCF96 62%, #FEDFB9 82%, #FEEFDC 100%);
     display: block;
     padding: 0;
     color: var(--footer-text);
-    background: radial-gradient(circle at 10% 0%, rgba(202, 117, 22, .24), transparent 30rem), var(--footer-bg);
+    background-color: var(--footer-bg);
+    background-image: var(--footer-gradient);
 }
+.dark-mode .site-footer { background-color: var(--footer-bg); background-image: var(--footer-gradient); }
 .site-footer .footer-content {
     width: min(100%, 1240px);
     margin: 0 auto;
@@ -34,7 +37,7 @@
 .site-footer .footer-social { display: inline-flex; align-items: center; gap: 9px; margin-top: 4px; padding: 9px 12px; border: 1px solid var(--footer-line); border-radius: 10px; background: var(--footer-panel); transition: border-color .2s ease, background .2s ease; }
 .site-footer .footer-social svg { width: 16px; height: 16px; fill: currentColor; }
 .site-footer .footer-social span { display: inline; width: auto; color: inherit; font-weight: 700; text-align: left; white-space: nowrap; }
-.site-footer .footer-social:hover { border-color: rgba(243,161,43,.7); background: rgba(243,161,43,.12); color: var(--footer-accent); }
+.site-footer .footer-social:hover { border-color: rgba(93,53,28,.62); background: rgba(255,255,255,.52); color: var(--footer-accent); }
 .site-footer .footer-bottom { width: min(100%, 1240px); margin: 0 auto; padding: 19px 32px 24px; border-top: 1px solid var(--footer-line); display: flex; justify-content: space-between; align-items: center; gap: 18px; }
 .site-footer .footer-bottom small, .site-footer .footer-bottom a { color: var(--footer-muted); font: 500 .78rem/1.4 'DM Sans', sans-serif; }
 .site-footer .footer-bottom-actions { display: flex; align-items: center; gap: 19px; }
