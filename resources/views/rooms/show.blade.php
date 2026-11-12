@@ -75,8 +75,8 @@
             asset('images/rooms/room-11-angle-3.jpg'),
         ],
         'carolina-room-13' => [
-            $room->versionedImageUrl(asset('images/rooms/room-13-angle-1.jpg')),
             $room->versionedImageUrl(asset('images/rooms/room-13-angle-2.jpg')),
+            $room->versionedImageUrl(asset('images/rooms/room-13-angle-1.jpg')),
         ],
         default => $room->image_url ? [$room->versionedImageUrl()] : [],
     };
