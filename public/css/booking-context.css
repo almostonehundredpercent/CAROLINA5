@@ -105,6 +105,46 @@
 .auth-page.booking-lookup-page::after { right: -16%; bottom: -48%; }
 .auth-page.booking-lookup-page > .auth-card { position: relative; z-index: 1; }
 
+.auth-page.sign-in-page {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    background:
+        radial-gradient(ellipse at 12% 12%, rgba(201, 121, 0, .13), transparent 32rem),
+        radial-gradient(ellipse at 91% 88%, rgba(119, 60, 18, .1), transparent 35rem),
+        linear-gradient(135deg, #eee5da 0%, #f7f3ed 52%, #e4d8ca 100%);
+}
+
+.auth-page.sign-in-page::before,
+.auth-page.sign-in-page::after {
+    position: absolute;
+    z-index: 0;
+    width: clamp(280px, 38vw, 560px);
+    aspect-ratio: 1;
+    border: 1px solid rgba(119, 60, 18, .12);
+    border-radius: 50%;
+    box-shadow: 0 0 0 28px rgba(119, 60, 18, .035), 0 0 0 58px rgba(119, 60, 18, .022);
+    content: "";
+    pointer-events: none;
+}
+
+.auth-page.sign-in-page::before { top: -37%; left: -17%; }
+.auth-page.sign-in-page::after { right: -16%; bottom: -49%; }
+.auth-page.sign-in-page > .auth-card { position: relative; z-index: 1; }
+
+.dark-mode .auth-page.sign-in-page {
+    background:
+        radial-gradient(ellipse at 12% 12%, rgba(211, 132, 23, .2), transparent 32rem),
+        radial-gradient(ellipse at 91% 88%, rgba(119, 60, 18, .25), transparent 35rem),
+        linear-gradient(135deg, #2d2119 0%, #171310 52%, #282019 100%);
+}
+
+.dark-mode .auth-page.sign-in-page::before,
+.dark-mode .auth-page.sign-in-page::after {
+    border-color: rgba(237, 177, 91, .11);
+    box-shadow: 0 0 0 28px rgba(237, 177, 91, .026), 0 0 0 58px rgba(237, 177, 91, .018);
+}
+
 .dark-mode .auth-page.booking-lookup-page {
     background:
         radial-gradient(ellipse at 14% 18%, rgba(211, 132, 23, .2), transparent 30rem),
@@ -124,6 +164,8 @@
 @media (max-width: 600px) {
     .auth-page.booking-lookup-page::before { top: -12%; left: -55%; }
     .auth-page.booking-lookup-page::after { right: -55%; bottom: -15%; }
+    .auth-page.sign-in-page::before { top: -9%; left: -57%; }
+    .auth-page.sign-in-page::after { right: -57%; bottom: -13%; }
     .booking-context-box { align-items: stretch; flex-direction: column; gap: 12px; padding: 13px; }
     .booking-page > .booking-context-box { margin-bottom: 0; }
     .booking-context-back { justify-content: flex-start; align-self: flex-start; }
