@@ -7,10 +7,7 @@
 <style>.room-unavailable{display:grid;gap:5px;margin:20px 0;padding:14px 16px;border:1px solid #f0c5bd;border-radius:8px;background:#fff1ee;color:#973e32}.room-unavailable span{font-size:.88rem;line-height:1.45}.room-unavailable .room-next-opening{margin:5px 0;padding:10px 12px;border-radius:7px;background:#fffaf7;color:#622d22}.room-next-opening strong{display:block;font-size:.83rem}.dark-mode .room-unavailable{background:#43231e;border-color:#9a5143;color:#ffd5c9}.dark-mode .room-unavailable .room-next-opening{background:#2b1b18;color:#ffe8d8}.room-promo{margin:18px 0;padding:14px 16px;border:1px solid #efc47d;border-radius:9px;background:#fff8ec;color:#6b3b05}.room-promo b,.room-promo small{display:block}.room-promo code{display:inline-block;margin-top:7px;color:#a05200;font-weight:800}.dark-mode .room-promo{background:#30251f;border-color:#76552e;color:#ffd391}</style>
 @section('content')
 <section class="room-detail">
-    <a class="room-detail-back" href="{{ route('rooms.index', request()->query()) }}" data-room-detail-back aria-label="Back to previous page">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5m7 7-7-7 7-7"/></svg>
-        <span>Back to previous page</span>
-    </a>
+    <x-site-back-link :href="route('rooms.index', request()->query())" label="Back to previous page" :history="true" class="room-detail-back" />
     <img src="{{ $room->image_url }}" alt="{{ $room->name }}">
     <div>
         <span class="eyebrow">{{ $room->room_type }}</span>
@@ -88,6 +85,5 @@
     <script id="room-gallery-data" type="application/json">@json(['room' => $room->name, 'images' => $roomGalleryImages])</script>
     <script src="{{ asset('js/room-gallery.js') }}?v={{ filemtime(public_path('js/room-gallery.js')) }}" defer></script>
 @endif
-<script src="{{ asset('js/room-detail-back.js') }}?v={{ filemtime(public_path('js/room-detail-back.js')) }}" defer></script>
 @include('rooms.partials.refresh-on-property-day-change')
 @endsection

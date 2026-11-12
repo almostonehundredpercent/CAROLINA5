@@ -175,7 +175,7 @@
 
     <article class="receipt-unified-card">
     <header class="receipt-booking-context">
-        <a class="receipt-back-link" href="{{ auth()->check() && auth()->id() === $booking->user_id ? route('bookings.index', ['section' => 'bookings']) : (session('guest_booking_reference') === $booking->reference ? route('bookings.confirmation', $booking) : route('bookings.lookup')) }}"><span aria-hidden="true">←</span> {{ auth()->check() && auth()->id() === $booking->user_id ? 'Back to my bookings' : (session('guest_booking_reference') === $booking->reference ? 'Back to booking details' : 'Back to find booking') }}</a>
+        <x-site-back-link :href="auth()->check() && auth()->id() === $booking->user_id ? route('bookings.index', ['section' => 'bookings']) : (session('guest_booking_reference') === $booking->reference ? route('bookings.confirmation', $booking) : route('bookings.lookup') )" :label="auth()->check() && auth()->id() === $booking->user_id ? 'Back to my bookings' : (session('guest_booking_reference') === $booking->reference ? 'Back to booking details' : 'Back to find booking')" class="receipt-back-link" />
         <div class="receipt-context-identifiers">
             <div><small>ROOM</small><b>{{ $booking->room?->name ?? 'Room unavailable' }}</b></div>
             <div><small>BOOKING REFERENCE</small><b>{{ $booking->reference }}</b></div>

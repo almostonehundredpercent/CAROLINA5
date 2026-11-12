@@ -17,7 +17,7 @@
     .guest-portal-header{display:flex;align-items:flex-end;justify-content:space-between;gap:28px;margin-bottom:28px;padding-bottom:24px;border-bottom:1px solid var(--line)}
     .guest-portal-context{display:flex;align-items:center;justify-content:space-between;gap:20px;margin-bottom:26px;padding:0}
     .guest-portal-back{display:inline-flex;align-items:center;gap:8px;min-height:40px;color:var(--ink);font-size:.84rem;font-weight:750;text-decoration:none}
-    .guest-portal-back span{color:var(--gold);font-size:1.1rem}
+    .guest-portal-back .site-back-button-icon{color:var(--gold)}
     .guest-portal-back:hover{color:var(--gold)}
     .guest-portal-identifiers{display:flex;align-items:stretch;min-width:0}
     .guest-portal-identifiers>div{display:grid;align-content:center;gap:3px;min-width:130px;padding:2px 13px}
@@ -77,7 +77,7 @@
 
 <section class="guest-portal" aria-labelledby="guest-portal-title">
     <nav class="guest-portal-context" aria-label="Booking context">
-        <a class="guest-portal-back" href="{{ route('bookings.lookup') }}"><span aria-hidden="true">←</span> Back to Find booking</a>
+        <x-site-back-link :href="route('bookings.lookup')" label="Back to Find booking" class="guest-portal-back" />
         <div class="guest-portal-identifiers" role="group" aria-label="Room and booking reference">
             <div><small>Room</small><strong>{{ $booking->room?->name ?? 'Room unavailable' }}</strong></div>
             <div><small>Booking reference</small><strong>{{ $booking->reference }}</strong></div>

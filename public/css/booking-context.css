@@ -29,7 +29,7 @@
     transition: background .16s ease, border-color .16s ease, transform .16s ease;
 }
 
-.booking-context-back > span:first-child { color: var(--gold); font-size: 1.1rem; }
+.booking-context-back .site-back-button-icon { color: var(--gold); }
 .booking-context-back:hover { transform: translateY(-1px); border-color: var(--gold); background: var(--sand); }
 
 .booking-context-identifiers {

@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import { runInNewContext } from 'node:vm';
 
-const script = readFileSync(new URL('../../public/js/room-detail-back.js', import.meta.url), 'utf8');
+const script = readFileSync(new URL('../../public/js/site-back.js', import.meta.url), 'utf8');
 
 function clickBackLink({ currentUrl, referrer, historyLength = 2 }) {
     const backLink = { href: 'https://carolina.example/rooms' };
@@ -28,7 +28,7 @@ function clickBackLink({ currentUrl, referrer, historyLength = 2 }) {
     });
 
     clickHandler({
-        target: { closest: (selector) => selector === '[data-room-detail-back]' ? backLink : null },
+        target: { closest: (selector) => selector === '[data-site-back]' ? backLink : null },
         preventDefault: () => { prevented = true; },
         stopImmediatePropagation: () => { stopped = true; },
     });

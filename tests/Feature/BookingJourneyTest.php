@@ -49,7 +49,7 @@ test('booking form keeps only the bottom return link and preserves search choice
         ->and(parse_url($bottomBackUrl, PHP_URL_PATH))->toBe(parse_url(route('booking.start'), PHP_URL_PATH));
     parse_str(parse_url($bottomBackUrl, PHP_URL_QUERY) ?? '', $bottomBackQuery);
     expect($bottomBackQuery)->toBe($choices)
-        ->and($document->evaluate('string(//div[contains(@class,"booking-step-actions")]//a[contains(@class,"booking-back-to-rooms")])'))->toBe('← Back to rooms');
+        ->and(trim(preg_replace('/\\s+/', ' ', $document->evaluate('string(//div[contains(@class,"booking-step-actions")]//a[contains(@class,"booking-back-to-rooms")])'))))->toBe('Back to rooms');
 });
 
 test('the hourly field and its first summary use Manila today before UTC midnight', function () {

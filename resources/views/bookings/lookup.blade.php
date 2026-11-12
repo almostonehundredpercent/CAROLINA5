@@ -3,7 +3,7 @@
 <section class="auth-page booking-lookup-page">
     <form class="auth-card" method="POST" action="{{ route('bookings.lookup.submit') }}">
         @csrf
-        <a class="booking-context-back lookup-back-link" href="{{ route('home') }}"><span aria-hidden="true">←</span><span>Back to home</span></a>
+        <x-site-back-link :href="route('home')" label="Back to home" class="booking-context-back lookup-back-link" />
         <span class="eyebrow">GUEST BOOKING</span>
         <h1>Find your booking.</h1>
         <p>Enter the email address and reference code from your confirmation email.</p>

@@ -1,8 +1,5 @@
 <nav class="booking-context-box" aria-label="Booking navigation">
-    <a class="booking-context-back" href="{{ $backUrl }}">
-        <span aria-hidden="true">←</span>
-        <span>Back to {{ $backLabel }}</span>
-    </a>
+    <x-site-back-link :href="$backUrl" :label="'Back to '.$backLabel" class="booking-context-back" />
     @if(!empty($roomName) || !empty($bookingReference))
         <div class="booking-context-identifiers" role="group" aria-label="Room and booking reference">
             @if(!empty($roomName))

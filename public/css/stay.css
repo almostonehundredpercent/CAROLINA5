@@ -6,7 +6,7 @@
 .stay-unified-header{padding:20px clamp(20px,3vw,32px) 25px;border-bottom:1px solid #dfd4c7;background:linear-gradient(135deg,#fffaf3,#f7eee3)}
 .stay-booking-context{display:flex;align-items:center;justify-content:space-between;gap:18px;padding-bottom:17px;border-bottom:1px solid #e4d8ca}
 .stay-back-link{display:inline-flex;align-items:center;gap:8px;min-height:40px;padding:8px 11px;border:1px solid #dfd4c7;border-radius:9px;color:#2d251f;font-size:.84rem;font-weight:750;text-decoration:none;white-space:nowrap}
-.stay-back-link span{color:#a85b08;font-size:1.1rem}
+.stay-back-link .site-back-button-icon{color:#a85b08}
 .stay-back-link:hover{border-color:#c9801a;background:#f7eee3}
 .stay-identifiers{display:flex;align-items:stretch;min-width:0}
 .stay-identifiers>div{display:grid;align-content:center;gap:3px;min-width:130px;padding:2px 13px}

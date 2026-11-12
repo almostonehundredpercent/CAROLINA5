@@ -40,7 +40,7 @@ test('room details provide a back link with the room catalogue as a safe fallbac
 
     $this->get(route('rooms.show', $room))
         ->assertOk()
-        ->assertSee('data-room-detail-back', false)
+        ->assertSee('data-site-back', false)
         ->assertSee('href="'.route('rooms.index').'"', false)
         ->assertSee('Back to previous page');
 });

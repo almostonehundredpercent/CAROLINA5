@@ -30,7 +30,7 @@
     <article class="stay-unified-card">
         <header class="stay-unified-header">
             <div class="stay-booking-context">
-                <a class="stay-back-link" href="{{ $backUrl }}"><span aria-hidden="true">←</span> Back to {{ $backLabel }}</a>
+                <x-site-back-link :href="$backUrl" :label="'Back to '.$backLabel" class="stay-back-link" />
                 <div class="stay-identifiers" role="group" aria-label="Room and booking reference">
                     <div><small>Room</small><strong>{{ $booking->room?->name ?? 'Room unavailable' }}</strong></div>
                     <div><small>Booking reference</small><strong>{{ $booking->reference }}</strong></div>

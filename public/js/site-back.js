@@ -1,5 +1,5 @@
 document.addEventListener('click', (event) => {
-    const backLink = event.target.closest('[data-room-detail-back]');
+    const backLink = event.target.closest('[data-site-back]');
 
     if (!backLink || !document.referrer || window.history.length < 2) return;
 
@@ -11,6 +11,6 @@ document.addEventListener('click', (event) => {
         event.stopImmediatePropagation();
         window.history.back();
     } catch {
-        // Keep the room catalogue link as the fallback if referrer parsing fails.
+        // Keep the explicit destination as the fallback if referrer parsing fails.
     }
 }, true);

@@ -37,6 +37,7 @@
     <link rel="stylesheet" href="{{ asset('css/motion.css') }}?v={{ filemtime(public_path('css/motion.css')) }}">
     <link rel="stylesheet" href="{{ asset('css/navigation-glass.css') }}?v={{ filemtime(public_path('css/navigation-glass.css')) }}">
     <link rel="stylesheet" href="{{ asset('css/button-refinement.css') }}?v={{ filemtime(public_path('css/button-refinement.css')) }}">
+    <link rel="stylesheet" href="{{ asset('css/site-back-button.css') }}?v={{ filemtime(public_path('css/site-back-button.css')) }}">
 </head>
 <body>
     <div class="page-loader" id="page-loader" role="status" aria-live="polite" aria-label="Loading">
@@ -224,5 +225,6 @@
             }));
         });
     </script>
+    <script src="{{ asset('js/site-back.js') }}?v={{ filemtime(public_path('js/site-back.js')) }}" defer></script>
 </body>
 </html>

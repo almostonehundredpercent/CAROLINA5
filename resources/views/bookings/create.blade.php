@@ -257,7 +257,7 @@
                 </section>
                 <div id="booking-availability-status" class="booking-availability-status" role="status" aria-live="polite">Choose your stay dates to check availability. Unpaid requests hold their slot for {{ \App\Models\Booking::holdMinutes() }} minutes; paid or confirmed reservations remain reserved.</div>
                 <div class="booking-step-actions">
-                    <a class="button button-outline booking-back-to-rooms" href="{{ route('booking.start', $bookingSearch) }}"><span aria-hidden="true">←</span> Back to rooms</a>
+                    <x-site-back-link :href="route('booking.start', $bookingSearch)" label="Back to rooms" :history="true" class="booking-back-to-rooms" />
                     <button class="button button-outline" id="booking-previous" type="button" hidden>Previous</button>
                     <button class="button" id="booking-submit" type="submit">Continue to review</button>
                 </div>
