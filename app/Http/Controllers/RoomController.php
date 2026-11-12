@@ -33,15 +33,12 @@ class RoomController extends Controller
         }
 
         [$startsAt, $endsAt] = RoomAvailability::window($filters);
-        $availableRooms = RoomAvailability::annotate($rooms->get(), $startsAt, $endsAt);
-        if ($bookingMode) {
-            $availableRooms = $availableRooms->whereNull('availability_reason')->values();
-        }
+        $roomListings = RoomAvailability::annotate($rooms->get(), $startsAt, $endsAt);
 
         return response()->view('rooms.index', [
             // Keep the numbered inventory in room-number order (the first six
             // are the original profiles and the following twelve are units).
-            'rooms' => $availableRooms,
+            'rooms' => $roomListings,
             'filters' => $filters,
             'bookingMode' => $bookingMode,
         ])->header('Cache-Control', 'private, no-store');
