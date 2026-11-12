@@ -60,7 +60,7 @@ class RoomSeeder extends Seeder
             7 => '/images/rooms/room-7-angle-1.jpg',
             10 => '/images/rooms/room-10-angle-1.jpg',
             11 => '/images/rooms/room-11-angle-1.jpg',
-            13 => '/images/rooms/room-13-angle-1.jpg',
+            13 => '/images/rooms/room-13-angle-3.jpg',
         ];
         $amenitiesByRoom = [
             7 => ['Common CR', 'Air conditioning'],
