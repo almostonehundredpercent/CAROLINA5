@@ -1,0 +1,25 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        if (! Schema::hasTable('rooms')) {
+            return;
+        }
+
+        DB::table('rooms')->where('slug', 'air-conditioned-room-couple')->update([
+            'description' => 'A comfortable air-conditioned room with one bed for up to two guests and access to a shared bathroom. Price starts at ₱450.',
+            'updated_at' => now(),
+        ]);
+    }
+
+    public function down(): void
+    {
+        // Keep the guest-facing description accurate if this migration is rolled back.
+    }
+};
