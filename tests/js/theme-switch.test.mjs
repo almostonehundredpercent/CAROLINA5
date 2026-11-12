@@ -64,6 +64,13 @@ test('theme switches stay synchronized, persist the choice, and fit a mobile nav
         const adminTrack = await page.locator('[data-admin-theme-toggle] .theme-switch-track').boundingBox();
         assert.equal(Math.round(adminTrack.width), 52, 'staff switch should use the same track width');
         assert.equal(Math.round(adminTrack.height), 30, 'staff switch should use the same track height');
+        const adminControlLayout = await page.locator('[data-admin-theme-toggle]').evaluate(element => {
+            const style = getComputedStyle(element);
+            return { justifyContent: style.justifyContent, boxSizing: style.boxSizing, height: element.getBoundingClientRect().height };
+        });
+        assert.equal(adminControlLayout.justifyContent, 'space-between', 'staff label and switch should sit at opposite ends of the row');
+        assert.equal(adminControlLayout.boxSizing, 'border-box', 'staff theme control height should include its padding');
+        assert.ok(adminControlLayout.height <= 52, `staff theme control should stay compact, got ${adminControlLayout.height}px`);
 
         await page.setViewportSize({ width: 1280, height: 800 });
         await publicSwitch.focus();
