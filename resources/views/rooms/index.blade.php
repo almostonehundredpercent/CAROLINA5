@@ -73,8 +73,7 @@
                                     @php($roomActionLabel = $bookingMode ? ($room->availability_reason ? 'View other stay options' : 'Book this room') : 'View room details')
                                     @php
                                         $roomCardRateLabel = match ($room->slug) {
-                                            'air-conditioned-room-couple' => 'starting rate',
-                                            'air-conditioned-day-stay', 'carolina-room-11' => 'per 22-hour stay',
+                                            'air-conditioned-room-couple', 'air-conditioned-day-stay', 'carolina-room-11' => 'Starting price',
                                             default => $room->rate_label,
                                         };
                                     @endphp
