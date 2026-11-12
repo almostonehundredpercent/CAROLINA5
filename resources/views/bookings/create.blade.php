@@ -284,9 +284,9 @@
             <div class="booking-summary-rate">
                 <span class="booking-summary-rate-label">Room rate</span>
                 @if($bookingMode === 'hourly')
-                    <strong>@if($room->slug === 'carolina-room-11') ₱{{ number_format($room->price_per_night) }}@elseif($room->rental_hours && !$room->rate_label) Price starts at ₱{{ number_format($room->price_per_night) }}@else ₱{{ number_format($room->rental_hours ? $room->price_per_night : $room->price_per_night / 24, 2) }}@if(!$room->rental_hours || $room->rate_label) <small>{{ $room->rental_hours ? $room->rate_label : '/ hour' }}</small>@endif @endif</strong>
+                    <strong>@if($room->slug === 'carolina-room-11') ₱{{ number_format($room->price_per_night) }} <small>per night</small>@elseif($room->rental_hours && !$room->rate_label) Price starts at ₱{{ number_format($room->price_per_night) }}@else ₱{{ number_format($room->rental_hours ? $room->price_per_night : $room->price_per_night / 24, 2) }}@if(!$room->rental_hours || $room->rate_label) <small>{{ $room->rental_hours ? $room->rate_label : '/ hour' }}</small>@endif @endif</strong>
                 @else
-                    <strong>@if($room->slug === 'carolina-room-11') ₱{{ number_format($room->price_per_night) }}@elseif(!$room->rate_label) Price starts at ₱{{ number_format($room->price_per_night) }}@else ₱{{ number_format($room->price_per_night) }} <small>{{ $room->rate_label }}</small>@endif</strong>
+                    <strong>@if($room->slug === 'carolina-room-11') ₱{{ number_format($room->price_per_night) }} <small>per night</small>@elseif(!$room->rate_label) Price starts at ₱{{ number_format($room->price_per_night) }}@else ₱{{ number_format($room->price_per_night) }} <small>{{ $room->rate_label }}</small>@endif</strong>
                 @endif
             </div>
         </div>
