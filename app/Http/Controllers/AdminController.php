@@ -93,7 +93,9 @@ class AdminController extends Controller
                             ->orWhere(fn ($legacy) => $legacy->whereNull('check_out_at')->whereDate('check_out', '<=', PropertyTime::today())))
                         ->count(),
                     'pending' => Booking::query()->blocking()->where('status', 'pending')->count(),
-                    'roomBlocks' => RoomBlock::where('starts_at', '<=', PropertyTime::now()->addDay())
+                    'roomBlocks' => RoomBlock::whereNull('completed_at')
+                        ->whereHas('room', fn ($room) => $room->where('is_active', true))
+                        ->where('starts_at', '<=', PropertyTime::now()->addDay())
                         ->where('ends_at', '>', PropertyTime::now())
                         ->distinct()->pluck('room_id')
                         ->merge(Room::where('is_active', true)->whereIn('operational_status', ['maintenance', 'cleaning'])

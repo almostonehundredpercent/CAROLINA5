@@ -121,6 +121,30 @@ test('dashboard shift alerts and live inventory count the same current operation
             'operational_status' => 'maintenance',
             'operational_until' => now()->addHours(9),
         ]);
+        RoomBlock::create([
+            'room_id' => $maintenanceRoom->id,
+            'status' => 'cleaning',
+            'starts_at' => PropertyTime::now()->subHour(),
+            'ends_at' => PropertyTime::now()->addMinutes(20),
+        ]);
+
+        $completedBlockRoom = adminDayRoom('dashboard-completed-block-room');
+        RoomBlock::create([
+            'room_id' => $completedBlockRoom->id,
+            'status' => 'maintenance',
+            'starts_at' => PropertyTime::now()->subHour(),
+            'ends_at' => PropertyTime::now()->addHour(),
+            'completed_at' => PropertyTime::now()->subMinutes(5),
+        ]);
+
+        $inactiveBlockRoom = adminDayRoom('dashboard-inactive-block-room');
+        $inactiveBlockRoom->update(['is_active' => false]);
+        RoomBlock::create([
+            'room_id' => $inactiveBlockRoom->id,
+            'status' => 'cleaning',
+            'starts_at' => PropertyTime::now()->subHour(),
+            'ends_at' => PropertyTime::now()->addHour(),
+        ]);
 
         $departureRoom = adminDayRoom('dashboard-legacy-departure-room');
         adminDayBooking($departureRoom, $guest, [
@@ -170,6 +194,7 @@ test('dashboard shift alerts and live inventory count the same current operation
         $response->assertSee('Booked or held right now')
             ->assertSee('Guests checked in')
             ->assertSee('Guests checked out today')
+            ->assertSee('Future reservations are not counted as in-house until their stay begins')
             ->assertSee('dashboard-summary-panel');
         expect($response->viewData('alerts'))->toMatchArray([
             'arrivals' => 2,

@@ -6186,6 +6186,18 @@ html.dark-mode .admin-main {
 }
 
 /* Compact dashboard summaries while keeping their labels readable. */
+.dashboard-summary-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.1fr) minmax(280px, 0.9fr);
+    align-items: stretch;
+    gap: 14px;
+    margin-bottom: 20px;
+}
+.dashboard-summary-grid > .dashboard-summary-panel {
+    min-width: 0;
+    height: 100%;
+    box-sizing: border-box;
+}
 .dashboard-summary-panel {
     padding: 16px 20px !important;
 }
@@ -6233,6 +6245,9 @@ html.dark-mode .dashboard-summary-panel .admin-kicker {
     color: #ffd08a !important;
 }
 @media (max-width: 700px) {
+    .dashboard-summary-grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
     .dashboard-summary-panel {
         padding: 14px 16px !important;
     }
@@ -6242,5 +6257,13 @@ html.dark-mode .dashboard-summary-panel .admin-kicker {
     }
     .dashboard-summary-panel .status-row span {
         font-size: 14px !important;
+    }
+}
+@media (min-width: 701px) and (max-width: 1199px) {
+    .dashboard-summary-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .dashboard-summary-grid > .dashboard-summary-panel:first-child {
+        grid-column: 1 / -1;
     }
 }
