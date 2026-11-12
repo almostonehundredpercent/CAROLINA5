@@ -67,14 +67,14 @@ class AdminController extends Controller
             return view('admin.admin_dashboard', [
                 'viewer' => AdminPermissions::role(request()->user()) === 'viewer',
                 'bookingCount' => Booking::count(),
-                'pendingCount' => Booking::where('status', 'pending')->count(),
+                'pendingCount' => Booking::query()->blocking()->where('status', 'pending')->count(),
                 'confirmedCount' => Booking::where('status', 'confirmed')->count(),
                 'roomCount' => $rooms->count(),
                 'revenue' => $revenue,
                 'paymentPending' => $paymentPending,
                 'paymentSourceLabel' => $paymentSourceLabel,
                 'checkedInCount' => Booking::whereNotNull('checked_in_at')->whereNull('checked_out_at')->count(),
-                'checkedOutCount' => Booking::whereNotNull('checked_out_at')->count(),
+                'checkedOutCount' => Booking::whereDate('checked_out_at', PropertyTime::today())->count(),
                 'cancelledCount' => Booking::where('status', 'cancelled')->count(),
                 'roomsByStatus' => [
                     'available' => $rooms->where('display_status', 'available')->count(),
@@ -82,10 +82,24 @@ class AdminController extends Controller
                     'maintenance' => $rooms->whereIn('display_status', ['maintenance', 'cleaning'])->count(),
                 ],
                 'alerts' => [
-                    'arrivals' => Booking::where('status', 'confirmed')->whereNull('checked_in_at')->where('check_in_at', '<=', PropertyTime::now())->count(),
-                    'departures' => Booking::whereNotNull('checked_in_at')->whereNull('checked_out_at')->where('check_out_at', '<=', PropertyTime::now())->count(),
-                    'pending' => Booking::where('status', 'pending')->count(),
-                    'roomBlocks' => RoomBlock::where('starts_at', '<=', PropertyTime::now()->addDay())->where('ends_at', '>', PropertyTime::now())->count(),
+                    'arrivals' => Booking::where('status', 'confirmed')->whereNull('checked_in_at')->whereNull('checked_out_at')
+                        ->where(fn ($stay) => $stay->where('check_out_at', '>', PropertyTime::now())
+                            ->orWhere(fn ($legacy) => $legacy->whereNull('check_out_at')->whereDate('check_out', '>=', PropertyTime::today())))
+                        ->where(fn ($query) => $query->where('check_in_at', '<=', PropertyTime::now())
+                            ->orWhere(fn ($legacy) => $legacy->whereNull('check_in_at')->whereDate('check_in', '<=', PropertyTime::today())))
+                        ->count(),
+                    'departures' => Booking::whereNotNull('checked_in_at')->whereNull('checked_out_at')
+                        ->where(fn ($query) => $query->where('check_out_at', '<=', PropertyTime::now())
+                            ->orWhere(fn ($legacy) => $legacy->whereNull('check_out_at')->whereDate('check_out', '<=', PropertyTime::today())))
+                        ->count(),
+                    'pending' => Booking::query()->blocking()->where('status', 'pending')->count(),
+                    'roomBlocks' => RoomBlock::where('starts_at', '<=', PropertyTime::now()->addDay())
+                        ->where('ends_at', '>', PropertyTime::now())
+                        ->distinct()->pluck('room_id')
+                        ->merge(Room::where('is_active', true)->whereIn('operational_status', ['maintenance', 'cleaning'])
+                            ->where(fn ($query) => $query->whereNull('operational_until')->orWhere('operational_until', '>', PropertyTime::now()))
+                            ->pluck('id'))
+                        ->unique()->count(),
                 ],
                 'bookings' => $recentBookings,
                 'recentActivity' => ActivityLog::with(['booking.room', 'user'])->latest()->take(6)->get(),
@@ -103,7 +117,7 @@ class AdminController extends Controller
             ]);
 
             $bookingCount = Booking::count();
-            $pendingCount = Booking::where('status', 'pending')->count();
+            $pendingCount = Booking::query()->blocking()->where('status', 'pending')->count();
             $confirmedCount = Booking::where('status', 'confirmed')->count();
             $cancelledCount = Booking::where('status', 'cancelled')->count();
             $roomCount = Room::where('is_active', true)->count();
@@ -118,7 +132,7 @@ class AdminController extends Controller
                 'paymentPending' => Booking::where('status', '!=', 'cancelled')->where('payment_status', '!=', 'paid')->count(),
                 'paymentSourceLabel' => 'Legacy booking payment records (ledger unavailable)',
                 'checkedInCount' => 0,
-                'checkedOutCount' => 0,
+                'checkedOutCount' => Booking::whereDate('checked_out_at', PropertyTime::today())->count(),
                 'cancelledCount' => $cancelledCount,
                 'roomsByStatus' => ['available' => $roomCount, 'occupied' => 0, 'maintenance' => 0],
                 'alerts' => ['arrivals' => 0, 'departures' => 0, 'pending' => $pendingCount, 'roomBlocks' => 0],
@@ -1317,7 +1331,11 @@ class AdminController extends Controller
                 $upcomingBlock = $room->blocks->first(fn (RoomBlock $block) => $block->starts_at->gt($now));
                 $room->display_booking = $currentBooking ?? $upcomingBooking;
                 $room->display_block = $currentBlock ?? $upcomingBlock;
-                $room->display_status = $currentBlock?->status ?? ($currentBooking ? 'occupied' : ($upcomingBooking ? 'reserved' : 'available'));
+                $legacyRoomBlock = in_array($room->operational_status, ['maintenance', 'cleaning'], true)
+                    && (! $room->operational_until || $room->operational_until->gt($now))
+                    ? $room->operational_status
+                    : null;
+                $room->display_status = $currentBlock?->status ?? $legacyRoomBlock ?? ($currentBooking ? 'occupied' : ($upcomingBooking ? 'reserved' : 'available'));
 
                 return $room;
             });

@@ -88,6 +88,104 @@ test('check-in confirmation is rendered in the admin interface on front desk and
     }
 });
 
+test('dashboard shift alerts and live inventory count the same current operational state', function () {
+    Carbon::setTestNow('2026-10-23 12:00:00');
+
+    try {
+        $admin = User::factory()->create(['is_admin' => true]);
+        $guest = User::factory()->create(['name' => 'Dashboard guest']);
+
+        $scheduledRoom = adminDayRoom('dashboard-scheduled-room');
+        adminDayBooking($scheduledRoom, $guest, ['status' => 'confirmed']);
+
+        $legacyArrivalRoom = adminDayRoom('dashboard-legacy-arrival-room');
+        adminDayBooking($legacyArrivalRoom, $guest, [
+            'status' => 'confirmed',
+            'check_in' => '2026-10-23',
+            'check_out' => '2026-10-24',
+            'check_in_at' => null,
+            'check_out_at' => null,
+        ]);
+
+        $staleLegacyArrivalRoom = adminDayRoom('dashboard-stale-legacy-arrival-room');
+        adminDayBooking($staleLegacyArrivalRoom, $guest, [
+            'status' => 'confirmed',
+            'check_in' => '2026-10-21',
+            'check_out' => '2026-10-22',
+            'check_in_at' => null,
+            'check_out_at' => null,
+        ]);
+
+        $maintenanceRoom = adminDayRoom('dashboard-legacy-maintenance-room');
+        $maintenanceRoom->update([
+            'operational_status' => 'maintenance',
+            'operational_until' => now()->addHours(9),
+        ]);
+
+        $departureRoom = adminDayRoom('dashboard-legacy-departure-room');
+        adminDayBooking($departureRoom, $guest, [
+            'status' => 'confirmed',
+            'check_in' => '2026-10-22',
+            'check_out' => '2026-10-23',
+            'check_in_at' => now()->subDay(),
+            'check_out_at' => null,
+            'checked_in_at' => now()->subDay(),
+        ]);
+
+        $checkedOutTodayRoom = adminDayRoom('dashboard-checked-out-today-room');
+        adminDayBooking($checkedOutTodayRoom, $guest, [
+            'status' => 'confirmed',
+            'check_in' => '2026-10-22',
+            'check_out' => '2026-10-23',
+            'check_in_at' => now()->subDay(),
+            'check_out_at' => now()->subHour(),
+            'checked_in_at' => now()->subDay(),
+            'checked_out_at' => now()->subHour(),
+        ]);
+
+        $checkedOutEarlierRoom = adminDayRoom('dashboard-checked-out-earlier-room');
+        adminDayBooking($checkedOutEarlierRoom, $guest, [
+            'status' => 'confirmed',
+            'check_in' => '2026-10-21',
+            'check_out' => '2026-10-22',
+            'check_in_at' => now()->subDays(2),
+            'check_out_at' => now()->subDay(),
+            'checked_in_at' => now()->subDays(2),
+            'checked_out_at' => now()->subDay(),
+        ]);
+
+        $activeRequestRoom = adminDayRoom('dashboard-active-request-room');
+        adminDayBooking($activeRequestRoom, $guest, [
+            'status' => 'pending',
+            'hold_expires_at' => now()->addMinutes(20),
+        ]);
+
+        $expiredRequestRoom = adminDayRoom('dashboard-expired-request-room');
+        adminDayBooking($expiredRequestRoom, $guest, [
+            'status' => 'pending',
+            'hold_expires_at' => now()->subMinute(),
+        ]);
+
+        $response = $this->actingAsStaff($admin)->get(route('admin.dashboard'))->assertOk();
+        $response->assertSee('Booked or held right now')
+            ->assertSee('Guests checked in')
+            ->assertSee('Guests checked out today')
+            ->assertSee('dashboard-summary-panel');
+        expect($response->viewData('alerts'))->toMatchArray([
+            'arrivals' => 2,
+            'departures' => 1,
+            'pending' => 1,
+            'roomBlocks' => 1,
+        ])->and($response->viewData('roomsByStatus'))->toMatchArray([
+            'occupied' => 3,
+            'maintenance' => 1,
+        ])->and($response->viewData('checkedInCount'))->toBe(1)
+            ->and($response->viewData('checkedOutCount'))->toBe(1);
+    } finally {
+        Carbon::setTestNow();
+    }
+});
+
 test('Manila check-in time enables and accepts check-in even while UTC is earlier', function () {
     Carbon::setTestNow(Carbon::parse('2026-10-30 13:00:00', 'UTC'));
 
