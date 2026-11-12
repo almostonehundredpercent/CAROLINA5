@@ -100,8 +100,8 @@
 .home-room-carousel { gap:20px; padding:4px 2px 18px; }
 .home-room-carousel .room-card { border:0; border-radius:18px; box-shadow:0 4px 18px rgba(48,35,21,.1); }
 .home-room-carousel .room-card img { height:230px; }
-.home-room-carousel .room-card img[src*="/images/rooms/room-4-angle-"],
 .home-room-carousel .room-card img[src*="/images/rooms/room-5-angle-"] { object-position:center 95%; }
+.home-room-carousel .room-card img[src*="/images/rooms/room-4-angle-"] { object-position:35% 100%; }
 .home-room-carousel .room-card img[src*="/images/rooms/room-3-angle-"] { object-position:center 68%; transform:scaleX(-1); }
 .home-room-carousel .room-card img[src*="/images/rooms/room-2-angle-"] { object-position:center 68%; }
 .home-room-carousel .room-card-body { padding:20px; }
