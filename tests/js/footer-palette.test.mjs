@@ -5,7 +5,7 @@ import { chromium } from 'playwright';
 
 const stylesheets = await Promise.all(['site.css', 'palette.css', 'responsive.css', 'footer-apple.css'].map(file =>
     readFile(new URL(`../../public/css/${file}`, import.meta.url), 'utf8')));
-const paletteColors = ['E58F29', 'E69F49', 'E6AE69', 'E7BD89', 'E8CCA9', 'E8DCCB'];
+const paletteColors = ['C97900', 'D4861E', 'D8953D', 'DDAA61', 'E3BF8B', 'E9D4AD'];
 const luminance = (rgb) => {
     const [r, g, b] = rgb.match(/\d+/g).map(Number).map(value => {
         const channel = value / 255;
@@ -33,10 +33,10 @@ test('footer uses the supplied warm gradient with readable text in both themes',
                 overflow: document.documentElement.scrollWidth > innerWidth,
             }));
             assert.ok(footer.background.includes('linear-gradient'), `${theme} footer should use the palette gradient`);
-            for (const color of ['229, 143, 41', '230, 174, 105', '232, 220, 203']) {
+            for (const color of ['201, 121, 0', '216, 149, 61', '233, 212, 173']) {
                 assert.ok(footer.background.includes(color), `${theme} footer gradient should include ${color}`);
             }
-            assert.equal(footer.text, 'rgb(57, 57, 58)', `${theme} footer links should use the dark readable text color`);
+            assert.equal(footer.text, 'rgb(37, 32, 27)', `${theme} footer links should use the high-contrast footer text color`);
             const textLuminance = luminance(footer.text);
             for (const color of paletteColors) {
                 const rgb = `rgb(${parseInt(color.slice(0, 2), 16)}, ${parseInt(color.slice(2, 4), 16)}, ${parseInt(color.slice(4, 6), 16)})`;
