@@ -118,7 +118,7 @@ test('booking form and room summary align on desktop and stack without horizonta
     }
 });
 
-test('booking form starts near the heading while keeping a clear breathing gap', async () => {
+test('booking form starts near the heading while keeping a compact breathing gap', async () => {
     for (const width of [1440]) {
         const page = await browser.newPage({ viewport: { width, height: 900 } });
         try {
@@ -131,10 +131,28 @@ test('booking form starts near the heading while keeping a clear breathing gap',
                 return form.top - heading.bottom;
             });
 
-            assert.ok(gap >= 28 && gap <= 48, `booking form should sit close with a comfortable gap at ${width}px; got ${gap}px`);
+            assert.ok(gap >= 14 && gap <= 28, `booking form should sit close with a comfortable gap at ${width}px; got ${gap}px`);
         } finally {
             await page.close();
         }
+    }
+});
+
+test('hourly booked-time notice is readable at a glance', async () => {
+    const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
+    try {
+        await page.setContent(`<html><head><style>${baseStyles}\n${paletteStyles}\n${bookingStyles}</style></head><body>
+            <div class="hourly-booked-summary"><strong>Booked times on Nov 18, 2026</strong><p>No existing reservations block this date.</p></div>
+        </body></html>`);
+        const sizes = await page.evaluate(() => ({
+            body: parseFloat(getComputedStyle(document.querySelector('.hourly-booked-summary')).fontSize),
+            heading: parseFloat(getComputedStyle(document.querySelector('.hourly-booked-summary strong')).fontSize),
+        }));
+
+        assert.ok(sizes.body >= 14, `notice text should be at least 14px; got ${sizes.body}px`);
+        assert.ok(sizes.heading >= 15, `notice heading should be at least 15px; got ${sizes.heading}px`);
+    } finally {
+        await page.close();
     }
 });
 
