@@ -60,6 +60,20 @@ class RoomSeeder extends Seeder
                 $room->operational_until = null;
             }
 
+            if ($number === 10) {
+                $room->room_type = 'Air-conditioned room';
+                $room->beds = 1;
+                $room->guests = 2;
+                $room->price_per_night = 450;
+                $room->rate_label = 'per night';
+                $room->rental_hours = null;
+                $room->description = 'A one-bedroom, air-conditioned stay with one bed for up to two guests. Rates start at ₱450 per night.';
+                $room->amenities = collect($room->amenities ?? [])
+                    ->reject(fn ($amenity) => is_string($amenity) && strtolower(trim($amenity)) === 'complete kitchen wares')
+                    ->values()
+                    ->all();
+            }
+
             $room->save();
 
             if ($isNew) {
