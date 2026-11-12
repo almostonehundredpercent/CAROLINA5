@@ -77,6 +77,7 @@
         'carolina-room-13' => [
             asset('images/rooms/room-13-angle-1.jpg'),
             asset('images/rooms/room-13-angle-2.jpg'),
+            asset('images/rooms/room-13-angle-3.jpg'),
         ],
         default => $room->image_url ? [$room->image_url] : [],
     };
