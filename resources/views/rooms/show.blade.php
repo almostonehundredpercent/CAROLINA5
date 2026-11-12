@@ -51,7 +51,6 @@
         ],
         'air-conditioned-day-stay' => [
             asset('images/rooms/room-4-angle-1.jpg'),
-            asset('images/rooms/room-4-angle-2.jpg'),
             asset('images/rooms/room-4-angle-3.jpg'),
         ],
         'whole-house-panal-10-guests' => [
