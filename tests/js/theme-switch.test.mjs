@@ -43,18 +43,8 @@ test('theme switches stay synchronized, persist the choice, and fit a mobile nav
         await assert.equal(await publicSwitch.getAttribute('aria-checked'), 'true');
         await assert.equal(await staffSwitch.getAttribute('aria-checked'), 'true');
         await assert.equal(await page.evaluate(() => localStorage.getItem('carolina-theme')), 'dark');
-        const moonAlignment = await Promise.all([publicSwitch, staffSwitch].map(control => control.evaluate(element => {
-            const path = element.querySelector('.theme-switch-thumb svg path');
-            const bounds = path.getBBox();
-            return {
-                x: bounds.x + bounds.width / 2,
-                y: bounds.y + bounds.height / 2,
-            };
-        })));
-        for (const center of moonAlignment) {
-            assert.ok(Math.abs(center.x - 12) <= 0.05, `moon should be horizontally centered in its icon, got x=${center.x}`);
-            assert.ok(Math.abs(center.y - 12) <= 0.05, `moon should be vertically centered in its icon, got y=${center.y}`);
-        }
+        const darkIcons = await Promise.all([publicSwitch, staffSwitch].map(control => control.locator('.theme-switch-thumb svg').evaluate(icon => icon.innerHTML)));
+        assert.deepEqual(darkIcons, ['', ''], 'dark-mode switch thumbs should contain no moon artwork');
         await page.waitForTimeout(250);
         const darkThumbPlacement = await publicSwitch.evaluate(element => {
             const track = element.querySelector('.theme-switch-track').getBoundingClientRect();
