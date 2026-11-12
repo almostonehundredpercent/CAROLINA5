@@ -71,8 +71,7 @@
                                     <p>{{ Str::limit($room->description, 86) }}</p>
                                     @php($roomActionUrl = $bookingMode ? route('bookings.create', ['room' => $room] + $filters + (auth()->guest() ? ['guest' => 1] : [])) : route('rooms.show', ['room' => $room] + $filters))
                                     @php($roomActionLabel = $bookingMode ? ($room->availability_reason ? 'View other stay options' : 'Book this room') : 'View room details')
-                                    @php($roomRateCaption = trim((string) $room->rate_label) ?: 'Starting price')
-                                    <div class="rooms-card-footer"><strong><span>₱{{ number_format($room->price_per_night) }}</span><small>{{ $roomRateCaption }}</small></strong><a class="button small" href="{{ $roomActionUrl }}">{{ $roomActionLabel }} <span aria-hidden="true">→</span></a></div>
+                                    <div class="rooms-card-footer"><strong><span>₱{{ number_format($room->price_per_night) }}</span><small>Starting price</small></strong><a class="button small" href="{{ $roomActionUrl }}">{{ $roomActionLabel }} <span aria-hidden="true">→</span></a></div>
                                 </div>
                             </article>
                         @endforeach
