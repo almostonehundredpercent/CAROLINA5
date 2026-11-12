@@ -27,7 +27,7 @@
         <div class="booking-list">
 @forelse($bookings as $booking)
     <article class="booking-row">
-        <picture>@if($roomWebpSrcset = $booking->room->responsiveWebpSrcset())<source type="image/webp" srcset="{{ $roomWebpSrcset }}" sizes="(max-width: 800px) 80px, 140px">@endif<img src="{{ $booking->room->image_url }}" alt="{{ $booking->room->name }}" @if($roomSrcset = $booking->room->responsiveImageSrcset()) srcset="{{ $roomSrcset }}" sizes="(max-width: 800px) 80px, 140px" @endif loading="lazy" decoding="async"></picture>
+        <picture>@if($roomWebpSrcset = $booking->room->responsiveWebpSrcset())<source type="image/webp" srcset="{{ $roomWebpSrcset }}" sizes="(max-width: 800px) 80px, 140px">@endif<img src="{{ $booking->room->versionedImageUrl() }}" alt="{{ $booking->room->name }}" @if($roomSrcset = $booking->room->responsiveImageSrcset()) srcset="{{ $roomSrcset }}" sizes="(max-width: 800px) 80px, 140px" @endif loading="lazy" decoding="async"></picture>
         <div class="booking-details">
             @php($holdExpired = $booking->hasExpiredHold() || $booking->isExpiredHoldRecord())
             <span class="status {{ $holdExpired ? 'cancelled' : $booking->status }}">{{ $holdExpired ? 'Payment hold expired' : ucfirst($booking->status) }}</span>

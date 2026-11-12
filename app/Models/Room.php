@@ -22,6 +22,31 @@ class Room extends Model
         return $this->rental_hours ? "per {$this->rental_hours}-hour stay" : 'per night';
     }
 
+    public function versionedImageUrl(?string $imageUrl = null): ?string
+    {
+        $imageUrl ??= $this->image_url;
+        $parts = parse_url($imageUrl ?? '');
+        $path = is_array($parts) ? ($parts['path'] ?? null) : null;
+
+        if (! is_string($path) || ! preg_match('~^/images/rooms/(room-\d+-angle-[1-4]\.jpg|room-\d+-angle-[1-4]-\d+\.webp)$~', $path, $matches)) {
+            return $imageUrl;
+        }
+
+        $filePath = public_path('images/rooms/'.$matches[1]);
+        if (! is_file($filePath)) {
+            return $imageUrl;
+        }
+
+        $query = [];
+        parse_str(is_array($parts) ? ($parts['query'] ?? '') : '', $query);
+        $query['v'] = substr(sha1_file($filePath), 0, 12);
+        $origin = is_array($parts) && isset($parts['scheme'], $parts['host'])
+            ? $parts['scheme'].'://'.$parts['host'].(isset($parts['port']) ? ':'.$parts['port'] : '')
+            : '';
+
+        return $origin.$path.'?'.http_build_query($query).(is_array($parts) && isset($parts['fragment']) ? '#'.$parts['fragment'] : '');
+    }
+
     public function responsiveImageSrcset(): ?string
     {
         $url = parse_url($this->image_url ?? '');
@@ -51,7 +76,7 @@ class Room extends Model
         $variants = collect([480, 800, 1200])
             ->map(fn (int $width): string => "{$matches[1]}-{$width}")
             ->filter(fn (string $filename): bool => is_file(public_path("images/rooms/{$filename}.webp")))
-            ->map(fn (string $filename): string => asset("images/rooms/{$filename}.webp").' '.substr($filename, strrpos($filename, '-') + 1).'w');
+            ->map(fn (string $filename): string => $this->versionedImageUrl(asset("images/rooms/{$filename}.webp")).' '.substr($filename, strrpos($filename, '-') + 1).'w');
 
         return $variants->isEmpty() ? null : $variants->implode(', ');
     }

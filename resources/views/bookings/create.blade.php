@@ -273,7 +273,7 @@
             <a class="booking-summary-image-link" href="{{ route('rooms.show', $room) }}" aria-label="View {{ $room->name }} photos and details">
                 <picture>
                     @if($roomWebpSrcset = $room->responsiveWebpSrcset())<source type="image/webp" srcset="{{ $roomWebpSrcset }}" sizes="(max-width: 520px) 88px, (max-width: 800px) 108px, 380px">@endif
-                    @if($roomSrcset = $room->responsiveImageSrcset())<img src="{{ $room->image_url }}" srcset="{{ $roomSrcset }}" sizes="(max-width: 520px) 88px, (max-width: 800px) 108px, 380px" alt="{{ $room->name }} room photo" fetchpriority="high" decoding="async">@else<img src="{{ $room->image_url }}" alt="{{ $room->name }} room photo" fetchpriority="high" decoding="async">@endif
+                    @if($roomSrcset = $room->responsiveImageSrcset())<img src="{{ $room->versionedImageUrl() }}" srcset="{{ $roomSrcset }}" sizes="(max-width: 520px) 88px, (max-width: 800px) 108px, 380px" alt="{{ $room->name }} room photo" fetchpriority="high" decoding="async">@else<img src="{{ $room->versionedImageUrl() }}" alt="{{ $room->name }} room photo" fetchpriority="high" decoding="async">@endif
                 </picture>
                 <span class="booking-summary-image-label">View room photos <span aria-hidden="true">↗</span></span>
             </a>

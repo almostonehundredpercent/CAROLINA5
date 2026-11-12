@@ -8,7 +8,7 @@
 @section('content')
 <section class="room-detail">
     <x-site-back-link :href="route('rooms.index', request()->query())" label="Back to previous page" :history="true" class="room-detail-back" />
-    <img src="{{ $room->image_url }}" alt="{{ $room->name }}">
+    <img src="{{ $room->versionedImageUrl() }}" alt="{{ $room->name }}">
     <div>
         <span class="eyebrow">{{ $room->room_type }}</span>
         <h1>{{ $room->name }}</h1>
@@ -75,12 +75,12 @@
             asset('images/rooms/room-11-angle-3.jpg'),
         ],
         'carolina-room-13' => [
-            asset('images/rooms/room-13-angle-1.jpg'),
-            asset('images/rooms/room-13-angle-2.jpg'),
-            asset('images/rooms/room-13-angle-3.jpg'),
-            asset('images/rooms/room-13-angle-4.jpg'),
+            $room->versionedImageUrl(asset('images/rooms/room-13-angle-1.jpg')),
+            $room->versionedImageUrl(asset('images/rooms/room-13-angle-2.jpg')),
+            $room->versionedImageUrl(asset('images/rooms/room-13-angle-3.jpg')),
+            $room->versionedImageUrl(asset('images/rooms/room-13-angle-4.jpg')),
         ],
-        default => $room->image_url ? [$room->image_url] : [],
+        default => $room->image_url ? [$room->versionedImageUrl()] : [],
     };
 @endphp
 @if (count($roomGalleryImages) > 0)
