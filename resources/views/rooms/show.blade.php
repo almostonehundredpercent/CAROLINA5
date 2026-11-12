@@ -70,9 +70,9 @@
             asset('images/rooms/room-10-angle-3.jpg'),
         ],
         'carolina-room-11' => [
+            asset('images/rooms/room-11-angle-3.jpg'),
             asset('images/rooms/room-11-angle-1.jpg'),
             asset('images/rooms/room-11-angle-2.jpg'),
-            asset('images/rooms/room-11-angle-3.jpg'),
         ],
         'carolina-room-13' => [
             $room->versionedImageUrl(asset('images/rooms/room-13-angle-2.jpg')),
