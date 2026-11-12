@@ -48,6 +48,25 @@ class AdminController extends Controller
 
             return view('admin.viewer-dashboard', compact('rooms'));
         }
+
+        // Keep booking activity available even if one of the optional dashboard
+        // summaries fails. The chart covers the last seven calendar days.
+        $chartDates = collect(range(6, 0))->map(fn ($daysAgo) => now()->startOfDay()->subDays($daysAgo));
+        $chartLabels = $chartDates->map(fn ($date) => $date->format('M j'));
+        $chartValues = collect(array_fill(0, 7, 0));
+        try {
+            $chartStart = $chartDates->first()->copy();
+            $chartEnd = $chartDates->last()->copy()->addDay();
+            $bookingsByDay = Booking::query()
+                ->where('created_at', '>=', $chartStart)
+                ->where('created_at', '<', $chartEnd)
+                ->get(['created_at'])
+                ->groupBy(fn (Booking $booking) => $booking->created_at->toDateString());
+            $chartValues = $chartDates->map(fn ($date) => $bookingsByDay->get($date->toDateString(), collect())->count());
+        } catch (\Throwable $exception) {
+            Log::warning('Admin booking activity chart query failed.', ['exception' => $exception]);
+        }
+
         try {
             try {
                 $this->refreshInventory();
@@ -60,10 +79,6 @@ class AdminController extends Controller
             $recentBookings = Booking::with(['user', 'room'])->latest()->take(8)->get();
             $rooms = $this->roomsWithDisplayStatus();
             $operationalMetrics = $this->dashboardOperationalMetrics($rooms);
-            $chartStart = now()->subDays(6)->startOfDay();
-            $bookingsByDay = Booking::where('created_at', '>=', $chartStart)
-                ->get()
-                ->groupBy(fn (Booking $booking) => $booking->created_at->toDateString());
 
             return view('admin.admin_dashboard', [
                 'viewer' => AdminPermissions::role(request()->user()) === 'viewer',
@@ -83,8 +98,8 @@ class AdminController extends Controller
                 'recentActivity' => ActivityLog::with(['booking.room', 'user'])->latest()->take(6)->get(),
                 'topRooms' => Booking::query()->where('status', 'confirmed')->selectRaw('room_id, count(*) as bookings_count')->groupBy('room_id')->orderByDesc('bookings_count')->with('room')->take(3)->get(),
                 'turnovers' => $decisionSupport->upcomingTurnovers(),
-                'chartLabels' => collect(range(0, 6))->map(fn ($day) => now()->subDays(6 - $day)->format('D')),
-                'chartValues' => collect(range(0, 6))->map(fn ($day) => $bookingsByDay->get(now()->subDays(6 - $day)->toDateString(), collect())->count()),
+                'chartLabels' => $chartLabels,
+                'chartValues' => $chartValues,
                 'recommendations' => $decisionSupport->dashboardSignals($rooms),
             ]);
         } catch (\Throwable $exception) {
@@ -122,8 +137,8 @@ class AdminController extends Controller
                 'recentActivity' => collect(),
                 'topRooms' => collect(),
                 'turnovers' => collect(),
-                'chartLabels' => collect(range(0, 6))->map(fn ($day) => now()->subDays(6 - $day)->format('D')),
-                'chartValues' => collect(array_fill(0, 7, 0)),
+                'chartLabels' => $chartLabels,
+                'chartValues' => $chartValues,
                 'recommendations' => collect([[
                     'title' => 'Operational summary temporarily unavailable',
                     'evidence' => 'The dashboard is showing core booking data while a non-essential operational summary is restored.',
