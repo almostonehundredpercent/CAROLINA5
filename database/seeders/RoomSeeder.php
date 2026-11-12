@@ -45,6 +45,12 @@ class RoomSeeder extends Seeder
                     'rental_hours', 'description', 'image_url', 'amenities',
                     'default_check_in_time',
                 ]));
+
+                if ($number === 13) {
+                    $room->guests = 2;
+                    $room->description = 'A comfortable stay for solo travelers, with space for up to two guests. Rates start at ₱450 per night.';
+                }
+
                 $room->operational_status = 'available';
                 $room->operational_until = null;
             }
