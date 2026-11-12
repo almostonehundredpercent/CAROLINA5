@@ -38,6 +38,8 @@
     <link rel="stylesheet" href="{{ asset('css/navigation-glass.css') }}?v={{ filemtime(public_path('css/navigation-glass.css')) }}">
     <link rel="stylesheet" href="{{ asset('css/button-refinement.css') }}?v={{ filemtime(public_path('css/button-refinement.css')) }}">
     <link rel="stylesheet" href="{{ asset('css/site-back-button.css') }}?v={{ filemtime(public_path('css/site-back-button.css')) }}">
+    <link rel="stylesheet" href="{{ asset('css/theme-switch.css') }}?v={{ filemtime(public_path('css/theme-switch.css')) }}">
+    <script src="{{ asset('js/theme-switch.js') }}?v={{ filemtime(public_path('js/theme-switch.js')) }}" defer></script>
 </head>
 <body>
     <div class="page-loader" id="page-loader" role="status" aria-live="polite" aria-label="Loading">
@@ -63,9 +65,9 @@
                     <a href="{{ route('admin.dashboard') }}" @if(request()->routeIs('admin.*')) aria-current="page" @endif>Admin</a>
                 @endif
                 <a class="nav-button nav-book-now" href="{{ route('booking.start') }}" @if(request()->routeIs('booking.start', 'bookings.create', 'bookings.receipt', 'bookings.confirmation', 'bookings.paymongo.return')) aria-current="page" @endif>Book now</a>
-                <button class="theme-toggle nav-theme-toggle" type="button" aria-label="Enable dark mode" aria-pressed="false">
-                    <svg viewBox="0 0 24 24" aria-hidden="true"></svg>
-                    <span>Dark mode</span>
+                <button class="theme-toggle nav-theme-toggle" type="button" role="switch" aria-label="Dark mode" aria-checked="false">
+                    <span class="sr-only">Dark mode</span>
+                    <span class="theme-switch-track" aria-hidden="true"><span class="theme-switch-thumb"><svg viewBox="0 0 24 24"></svg></span></span>
                 </button>
                 @unless(request()->routeIs('profile.show', 'bookings.index'))<a class="nav-button nav-profile" href="{{ route('profile.show') }}">Profile</a>@endunless
                 @if(request()->routeIs('profile.show', 'bookings.index'))
@@ -76,9 +78,9 @@
                 @endif
             @else
                 <a class="nav-button nav-book-now" href="{{ route('booking.start') }}" @if(request()->routeIs('booking.start', 'bookings.create', 'bookings.receipt', 'bookings.confirmation', 'bookings.paymongo.return')) aria-current="page" @endif>Book now</a>
-                <button class="theme-toggle nav-theme-toggle" type="button" aria-label="Enable dark mode" aria-pressed="false">
-                    <svg viewBox="0 0 24 24" aria-hidden="true"></svg>
-                    <span>Dark mode</span>
+                <button class="theme-toggle nav-theme-toggle" type="button" role="switch" aria-label="Dark mode" aria-checked="false">
+                    <span class="sr-only">Dark mode</span>
+                    <span class="theme-switch-track" aria-hidden="true"><span class="theme-switch-thumb"><svg viewBox="0 0 24 24"></svg></span></span>
                 </button>
                 <a class="nav-button" href="{{ route('login') }}">Sign in</a>
             @endauth
@@ -164,7 +166,6 @@
         document.addEventListener('DOMContentLoaded', () => {
             const toggle = document.querySelector('.menu-toggle');
             const navigation = document.querySelector('#primary-navigation');
-            const themeToggle = document.querySelector('.theme-toggle');
             const glassHeader = document.querySelector('.nav--over-hero');
             const homeHero = document.querySelector('.home-hero');
             if (glassHeader && homeHero) {
@@ -172,25 +173,6 @@
                 updateGlassHeader();
                 window.addEventListener('scroll', updateGlassHeader, { passive: true });
             }
-            const setThemeToggle = () => {
-                const dark = document.documentElement.classList.contains('dark-mode');
-                themeToggle?.setAttribute('aria-pressed', String(dark));
-                themeToggle?.setAttribute('aria-label', dark ? 'Enable light mode' : 'Enable dark mode');
-                if (themeToggle) {
-                    themeToggle.querySelector('span').textContent = dark ? 'Light mode' : 'Dark mode';
-                    themeToggle.querySelector('svg').innerHTML = dark
-                        ? '<circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"></path>'
-                        : '<path d="M20.6 15.3A8.3 8.3 0 0 1 8.7 3.4 8.4 8.4 0 1 0 20.6 15.3Z"></path>';
-                }
-            };
-
-            setThemeToggle();
-            themeToggle?.addEventListener('click', () => {
-                document.documentElement.classList.toggle('dark-mode');
-                localStorage.setItem('carolina-theme', document.documentElement.classList.contains('dark-mode') ? 'dark' : 'light');
-                setThemeToggle();
-            });
-
             document.querySelectorAll('.password-toggle').forEach((button) => {
                 button.addEventListener('click', () => {
                     const input = button.closest('.password-field')?.querySelector('input');

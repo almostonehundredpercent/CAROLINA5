@@ -30,31 +30,19 @@
             <a class="{{ request()->routeIs($item['route']) ? 'active' : '' }}" href="{{ route($item['route']) }}">@include('admin.partials.sidebar-icon', ['route' => $item['route']]){{ $item['label'] }}</a>
         @endforeach
     </nav>
-    <button class="admin-theme-toggle" type="button" data-admin-theme-toggle aria-pressed="false">
-        <span aria-hidden="true">◐</span><span data-admin-theme-label>Dark mode</span>
+    <button class="admin-theme-toggle" type="button" data-admin-theme-toggle role="switch" aria-label="Dark mode" aria-checked="false">
+        <span data-admin-theme-label>Dark mode</span>
+        <span class="theme-switch-track" aria-hidden="true"><span class="theme-switch-thumb"><svg viewBox="0 0 24 24"></svg></span></span>
     </button>
     <form method="POST" action="{{ route('logout') }}" class="admin-logout">@csrf<button class="logout-button" type="submit"><i aria-hidden="true">⎋</i>Log out</button></form>
 </aside>
 <script>
     (() => {
         const root = document.documentElement;
-        const toggle = document.querySelector('[data-admin-theme-toggle]');
-        const label = document.querySelector('[data-admin-theme-label]');
-        const sync = () => {
-            const dark = root.classList.contains('dark-mode');
-            document.body.classList.toggle('admin-dark', dark);
-            toggle?.setAttribute('aria-pressed', String(dark));
-            if (label) label.textContent = dark ? 'Light mode' : 'Dark mode';
-        };
         const saved = localStorage.getItem('carolina-theme');
         if (saved === 'dark' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches)) root.classList.add('dark-mode');
         else root.classList.remove('dark-mode');
-        sync();
-        toggle?.addEventListener('click', () => {
-            root.classList.toggle('dark-mode');
-            localStorage.setItem('carolina-theme', root.classList.contains('dark-mode') ? 'dark' : 'light');
-            sync();
-        });
     })();
 </script>
+<script src="{{ asset('js/theme-switch.js') }}?v={{ filemtime(public_path('js/theme-switch.js')) }}"></script>
 <script src="{{ asset('js/admin-mobile-tables.js') }}?v={{ filemtime(public_path('js/admin-mobile-tables.js')) }}" defer></script>
