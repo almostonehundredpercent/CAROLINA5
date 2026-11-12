@@ -109,6 +109,7 @@ document.addEventListener('DOMContentLoaded', () => {
     thumbnails.setAttribute('aria-label', `${roomGallery.room} photos`);
 
     let activeIndex = 0;
+    let mirrorActiveImage = false;
     let zoom = 1;
     let panX = 0;
     let panY = 0;
@@ -132,7 +133,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const limits = panLimits();
         panX = clamp(panX, -limits.x, limits.x);
         panY = clamp(panY, -limits.y, limits.y);
-        enlargedImage.style.transform = `translate3d(${panX}px, ${panY}px, 0) scale(${zoom})`;
+        enlargedImage.style.transform = `translate3d(${panX}px, ${panY}px, 0) scale(${zoom})${mirrorActiveImage ? ' scaleX(-1)' : ''}`;
         lightbox.dataset.zoomed = String(zoom > 1);
         zoomOut.disabled = zoom <= 1;
         zoomIn.disabled = zoom >= 4;
@@ -160,6 +161,7 @@ document.addEventListener('DOMContentLoaded', () => {
         panY = 0;
         const imageCount = roomGallery.images.length;
         const source = roomGallery.images[activeIndex];
+        mirrorActiveImage = source.includes('room-10-angle-3.jpg');
         const imageLabel = imageCount > 1
             ? `${roomGallery.room} photo ${activeIndex + 1} of ${imageCount}`
             : `${roomGallery.room} photo`;

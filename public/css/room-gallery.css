@@ -28,6 +28,11 @@
     object-fit: cover;
 }
 
+.room-gallery-main-image[src*="room-10-angle-3.jpg"],
+.room-gallery-thumbnail img[src*="room-10-angle-3.jpg"] {
+    transform: scaleX(-1);
+}
+
 .room-gallery-open {
     display: block;
     width: 100%;

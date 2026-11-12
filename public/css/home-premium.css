@@ -104,6 +104,7 @@
 .home-room-carousel .room-card img[src*="/images/rooms/room-4-angle-"] { object-position:35% 100%; }
 .home-room-carousel .room-card img[src*="/images/rooms/room-3-angle-"] { object-position:center 68%; transform:scaleX(-1); }
 .home-room-carousel .room-card img[src*="/images/rooms/room-2-angle-"] { object-position:center 68%; }
+.home-room-carousel .room-card img[src*="/images/rooms/room-10-angle-3.jpg"] { transform:scaleX(-1); }
 .home-room-carousel .room-card-body { padding:20px; }
 .home-room-carousel .room-card-body > span { color:#a3610d; font-size:.7rem; letter-spacing:.03em; }
 .home-room-carousel .room-card h3 { margin:9px 0 7px; font-size:1.22rem; letter-spacing:-.025em; }

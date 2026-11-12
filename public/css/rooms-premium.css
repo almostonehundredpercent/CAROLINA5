@@ -7,6 +7,7 @@
 .rooms-card img[src*="/images/rooms/room-4-angle-"] { object-position:35% 100%; }
 .rooms-card img[src*="/images/rooms/room-3-angle-"] { object-position:center 68%; transform:scaleX(-1); }
 .rooms-card img[src*="/images/rooms/room-2-angle-"] { object-position:center 68%; }
+.rooms-card img[src*="/images/rooms/room-10-angle-3.jpg"] { transform:scaleX(-1); }
 .rooms-hero { max-width:1424px; min-height:0; margin:0 auto; padding:34px 48px 7px; overflow:visible; text-align:left; background:transparent; }
 .rooms-hero::after { display:none; }
 .rooms-hero > div { max-width:700px; }
