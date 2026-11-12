@@ -113,8 +113,8 @@
 .room-info-amenities span { padding:5px 9px; border:1px solid #eadbca; border-radius:999px; background:#fff8ef; color:#70512f; font-size:.68rem; font-weight:700; line-height:1.25; }
 .dark-mode .room-info-amenities span { border-color:#594332; background:#30231b; color:#efcfaa; }
 .rooms-card-footer { display:flex; align-items:flex-end; justify-content:space-between; gap:13px; margin-top:auto; }
-.rooms-card-footer strong { color:#2e241d; font-size:1.05rem; }
-.rooms-card-footer strong small { display:block; margin-top:3px; color:#83766a; font-size:.72rem; font-weight:500; }
+.rooms-card-footer strong { display:flex; min-width:0; flex-direction:column; align-items:flex-start; gap:4px; color:#2e241d; font-size:1.05rem; line-height:1.1; }
+.rooms-card-footer strong small { display:block; min-height:1em; margin:0; color:#83766a; font-size:.72rem; font-weight:500; line-height:1; }
 .rooms-card .button.small { float:none; min-height:40px; border:1px solid rgba(246,186,97,.58); border-radius:999px; padding:10px 13px; background:linear-gradient(135deg,#e9951c,#bd6505); color:#fffaf2; font-size:.8rem; white-space:nowrap; }
 .rooms-card .button.small span { font-size:1rem; }
 .room-card-availability { margin:0 0 17px; border:1px solid #eadbca; border-radius:13px; background:rgba(255,255,255,.58); }
@@ -246,7 +246,7 @@
     .rooms-card .room-card-body > p { margin:8px 0 10px; font-size:.82rem; line-height:1.42; }
     .rooms-card-footer { align-items:center; gap:10px; padding-top:9px; border-top:1px solid #efe6dc; }
     .rooms-card-footer strong { font-size:1rem; }
-    .rooms-card-footer strong small { display:inline; margin:0 0 0 3px; font-size:.7rem; }
+    .rooms-card-footer strong small { display:block; margin:0; font-size:.7rem; }
     .rooms-card .button.small { min-height:44px; padding:10px 13px; border-radius:11px; }
     .dark-mode .rooms-card-footer { border-top-color:#443329; }
 }
