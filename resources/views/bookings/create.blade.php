@@ -4,6 +4,7 @@
 <style>
 .booking-page{width:min(calc(100% - 40px),1240px);max-width:1240px;grid-template-columns:minmax(0,1.45fr) minmax(300px,.8fr);grid-template-areas:"heading summary" "form summary";column-gap:clamp(28px,5vw,68px);row-gap:12px;align-items:start}
 .booking-page-heading{grid-area:heading;min-width:0;margin:0}
+.booking-page-heading .booking-heading-back{margin-bottom:16px}
 .booking-page-heading .eyebrow{margin-bottom:8px}
 .booking-page-heading h1{max-width:720px;margin:0;color:var(--ink);font-size:clamp(2.6rem,5vw,4.5rem);line-height:.98;letter-spacing:-.045em}
 .booking-page-heading>p{margin:10px 0 0;color:var(--muted);font-size:.95rem}
@@ -135,6 +136,7 @@
 </style>
 <section class="booking-page">
     <header class="booking-page-heading">
+        <x-site-back-link :href="route('booking.start', $bookingSearch)" label="Back to previous page" :history="true" class="booking-heading-back" />
         <span class="eyebrow">RESERVATION DETAILS</span>
         <h1>Complete your booking.</h1>
         <p>Choose your stay details and guest information.</p>
@@ -257,7 +259,6 @@
                 </section>
                 <div id="booking-availability-status" class="booking-availability-status" role="status" aria-live="polite">Choose your stay dates to check availability. Unpaid requests hold their slot for {{ \App\Models\Booking::holdMinutes() }} minutes; paid or confirmed reservations remain reserved.</div>
                 <div class="booking-step-actions">
-                    <x-site-back-link :href="route('booking.start', $bookingSearch)" label="Back to rooms" :history="true" class="booking-back-to-rooms" />
                     <button class="button button-outline" id="booking-previous" type="button" hidden>Previous</button>
                     <button class="button" id="booking-submit" type="submit">Continue to review</button>
                 </div>

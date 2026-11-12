@@ -36,20 +36,22 @@ test('room search choices survive the detail and guest booking journey', functio
         ->and($document->evaluate('string(//input[@name="guests"]/@value)'))->toBe('2');
 });
 
-test('booking form keeps only the bottom return link and preserves search choices', function () {
+test('booking form shows the shared back button above the form and removes the old bottom link', function () {
     $this->travelTo(Carbon::parse('2026-10-03 01:00:00', 'UTC'));
     $room = journeyRoom();
     $choices = ['check_in' => '2026-10-05', 'stay' => '6', 'check_in_time' => '13:00', 'guests' => '2', 'sort' => 'price_asc'];
     $response = $this->get(route('bookings.create', ['room' => $room, 'guest' => 1] + $choices))->assertOk();
     $document = journeyDocument($response->getContent());
-    $topBackButtons = $document->evaluate('count(//a[contains(@class,"booking-context-back")])');
-    $bottomBackUrl = $document->evaluate('string(//div[contains(@class,"booking-step-actions")]//a[contains(@class,"booking-back-to-rooms")]/@href)');
+    $topBackButtons = $document->evaluate('count(//header[contains(@class,"booking-page-heading")]//a[contains(@class,"site-back-button")])');
+    $topBackUrl = $document->evaluate('string(//header[contains(@class,"booking-page-heading")]//a[contains(@class,"site-back-button")]/@href)');
+    $bottomBackButtons = $document->evaluate('count(//div[contains(@class,"booking-step-actions")]//a[contains(@class,"booking-back-to-rooms")])');
 
-    expect($topBackButtons)->toBe(0.0)
-        ->and(parse_url($bottomBackUrl, PHP_URL_PATH))->toBe(parse_url(route('booking.start'), PHP_URL_PATH));
-    parse_str(parse_url($bottomBackUrl, PHP_URL_QUERY) ?? '', $bottomBackQuery);
-    expect($bottomBackQuery)->toBe($choices)
-        ->and(trim(preg_replace('/\\s+/', ' ', $document->evaluate('string(//div[contains(@class,"booking-step-actions")]//a[contains(@class,"booking-back-to-rooms")])'))))->toBe('Back to rooms');
+    expect($topBackButtons)->toBe(1.0)
+        ->and(parse_url($topBackUrl, PHP_URL_PATH))->toBe(parse_url(route('booking.start'), PHP_URL_PATH))
+        ->and($bottomBackButtons)->toBe(0.0)
+        ->and($document->evaluate('string(//header[contains(@class,"booking-page-heading")]//a[contains(@class,"site-back-button")]/@aria-label)'))->toBe('Back to previous page');
+    parse_str(parse_url($topBackUrl, PHP_URL_QUERY) ?? '', $topBackQuery);
+    expect($topBackQuery)->toBe($choices);
 });
 
 test('the hourly field and its first summary use Manila today before UTC midnight', function () {
