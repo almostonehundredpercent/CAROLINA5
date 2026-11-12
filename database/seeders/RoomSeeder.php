@@ -13,7 +13,7 @@ class RoomSeeder extends Seeder
 
         foreach ([
             ['fan-room-solo', 'Fan room', 1, 1, 450, 'per 22-hour stay', 22, 'A simple private fan room for one guest, with a 22-hour stay beginning at noon.', 'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1000&q=80', ['Free breakfast', 'Free Wi-Fi', 'Private CR', 'Towel', 'Hygiene kit']],
-            ['air-conditioned-room-couple', 'Air-conditioned room', 1, 2, 450, 'per 6-hour stay', 6, 'A cool, comfortable air-conditioned room for two guests on a short 6-hour stay.', '/images/rooms/room-2-angle-3.jpg', ['AC/Fan', 'Common CR']],
+            ['air-conditioned-room-couple', 'Air-conditioned room', 1, 2, 450, '', 6, 'A comfortable air-conditioned room with one bed for up to two guests and access to a shared bathroom. Rates start at ₱450.', '/images/rooms/room-2-angle-3.jpg', ['AC/Fan', 'Common CR']],
             ['fan-room-couple', 'Fan room', 1, 2, 699, 'per 12-hour stay', 12, 'A practical fan room for two, offered as a 12-hour daytime stay.', '/images/rooms/room-3-angle-1.jpg', ['AC/Fan', 'With CR', 'Refrigerator', 'TV']],
             ['air-conditioned-day-stay', 'Air-conditioned room', 1, 2, 799, 'per 12-hour stay', 12, 'An air-conditioned room for two with a 12-hour daytime stay from 8 AM to 8 PM.', '/images/rooms/room-4-angle-1.jpg', ['AC/Fan', 'Common CR']],
             ['whole-house-panal-10-guests', 'Whole house', 3, 10, 4500, 'per night', null, 'A three-bedroom whole-house stay at the Panal branch, ideal for families and groups of up to 10.', '/images/rooms/room-5-angle-1.jpg', ['AC/Fan', 'Common CR', 'TV in room']],
