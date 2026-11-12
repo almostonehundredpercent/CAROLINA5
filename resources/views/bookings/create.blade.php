@@ -136,7 +136,7 @@
 </style>
 <section class="booking-page">
     <header class="booking-page-heading">
-        <x-site-back-link :href="route('booking.start', $bookingSearch)" label="Back to previous page" :history="true" class="booking-heading-back" />
+        <x-site-back-link id="booking-heading-back" :href="route('booking.start', $bookingSearch)" label="Back to previous page" class="booking-heading-back" />
         <span class="eyebrow">RESERVATION DETAILS</span>
         <h1>Complete your booking.</h1>
         <p>Choose your stay details and guest information.</p>
@@ -787,5 +787,27 @@ document.addEventListener('DOMContentLoaded', () => {
     }, true);
     previous.addEventListener('click', showEntryFields);
 });
+</script>
+<script id="booking-review-back-navigation">
+(() => {
+    const installBookingBackNavigation = () => {
+        const backLink = document.getElementById('booking-heading-back');
+        const reviewPanel = document.getElementById('booking-review-panel');
+        const previous = document.getElementById('booking-previous');
+        if (!backLink || !reviewPanel || !previous) return;
+
+        backLink.addEventListener('click', event => {
+            if (reviewPanel.hidden) return;
+            event.preventDefault();
+            previous.click();
+        });
+    };
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', installBookingBackNavigation, {once: true});
+    } else {
+        installBookingBackNavigation();
+    }
+})();
 </script>
 @endsection

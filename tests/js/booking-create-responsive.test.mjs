@@ -11,6 +11,7 @@ const [view, baseStyles, paletteStyles] = await Promise.all([
 ]);
 const bookingStyles = [...view.matchAll(/<style>([\s\S]*?)<\/style>/g)].map(match => match[1]).join('\n');
 const estimateScript = view.match(/<script>\s*(document.addEventListener\('DOMContentLoaded', \(\) => \{\s*const total = document.getElementById\('booking-summary-total'[\s\S]*?)<\/script>/)?.[1];
+const bookingBackScript = view.match(/<script id="booking-review-back-navigation">([\s\S]*?)<\/script>/)?.[1] ?? '';
 const datePickerScript = view.match(/const ranges = @json\(\$blockedRanges\);\s*([\s\S]*?)\s*const updatePropertyDate =/)?.[1];
 let browser;
 
@@ -42,6 +43,28 @@ test('date calendar starts closed and guest mode does not repeat the sign-in/gue
     assert.match(calendarTag, /\bhidden\b/, 'availability calendar should not be expanded on first load');
     assert.match(checkInField, /aria-expanded="false"/, 'check-in control should announce that its calendar starts closed');
     assert.match(guestBlock, /@if\(!\$isGuest\)[\s\S]*?<div class="checkout-choice"/, 'account and guest actions should only appear before guest mode is selected');
+});
+
+test('header back button returns from review to reservation details without leaving the booking page', async () => {
+    const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
+    try {
+        await page.setContent(`<body>
+            <a id="booking-heading-back" href="/book">Back to previous page</a>
+            <section id="booking-entry-fields" hidden>Reservation details form</section>
+            <section id="booking-review-panel">Reservation review</section>
+            <button id="booking-previous" type="button">Previous</button>
+            <script>document.getElementById('booking-previous').addEventListener('click', () => { document.getElementById('booking-entry-fields').hidden = false; document.getElementById('booking-review-panel').hidden = true; });</script>
+            <script>${bookingBackScript}</script>
+        </body>`);
+
+        await page.locator('#booking-heading-back').click();
+
+        assert.equal(await page.locator('#booking-entry-fields').isVisible(), true, 'reservation details should return when backing out of review');
+        assert.equal(await page.locator('#booking-review-panel').isHidden(), true, 'the review panel should close');
+        assert.equal(page.url(), 'about:blank', 'the back action should not navigate to the general Book now page');
+    } finally {
+        await page.close();
+    }
 });
 
 test('guest contact section does not render an orphan divider between booking details', () => {
