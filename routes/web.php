@@ -103,6 +103,7 @@ Route::middleware(['auth', RequireStaffMfaEnabled::class])->prefix('staff/mfa')-
 });
 
 Route::get('/rooms/{room:slug}/book', [BookingController::class, 'create'])->name('bookings.create');
+Route::post('/booking/guest-draft', [BookingController::class, 'saveGuestDraft'])->middleware('throttle:30,1')->name('bookings.guest-draft.save');
 Route::post('/rooms/{room:slug}/book', [BookingController::class, 'store'])->middleware('throttle:10,1')->name('bookings.store');
 Route::get('/bookings/{booking}/receipt', [BookingController::class, 'receipt'])->name('bookings.receipt');
 Route::get('/bookings/{booking}/confirmation', [BookingController::class, 'confirmation'])->name('bookings.confirmation');

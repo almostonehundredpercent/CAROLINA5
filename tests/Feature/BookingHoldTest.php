@@ -30,7 +30,9 @@ test('a public request has a finite hold which duplicate submission cannot exten
     Mail::fake();
     $room = holdRoom();
     $payload = ['checkout_type' => 'guest', 'booking_type' => 'hourly', 'hourly_date' => '2026-10-05', 'check_in_time' => '12:00', 'hours' => 6, 'guests' => 1, 'guest_name' => 'Test guest', 'guest_email' => 'guest@example.test', 'guest_phone' => '09171234567', 'terms_accepted' => 1, 'submission_token' => (string) Str::uuid()];
-    $this->post(route('bookings.store', $room), $payload)->assertSessionHasNoErrors();
+    $this->withSession(['guest_booking_draft' => ['guest_name' => 'Test guest', 'guest_email' => 'guest@example.test', 'guest_phone' => '09171234567', 'expires_at' => now()->addMinutes(30)->timestamp]]);
+    $response = $this->post(route('bookings.store', $room), $payload)->assertSessionHasNoErrors();
+    $response->assertSessionMissing('guest_booking_draft');
     $booking = Booking::firstOrFail();
     expect($booking->hold_expires_at?->format('H:i'))->toBe('01:30');
     $this->travel(10)->minutes();

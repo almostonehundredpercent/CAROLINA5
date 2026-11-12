@@ -36,6 +36,14 @@ class BookingController extends Controller
         if (! $room->is_active) {
             abort(404);
         }
+        $guestDraft = $request->session()->get('guest_booking_draft');
+        if (! is_array($guestDraft) || (int) ($guestDraft['expires_at'] ?? 0) <= now()->timestamp) {
+            $request->session()->forget('guest_booking_draft');
+            $guestDraft = null;
+        }
+        if (! $request->boolean('guest')) {
+            $guestDraft = null;
+        }
         $blockedRanges = $this->blockedRanges($room);
 
         $key = 'booking-submission:'.$room->id;
@@ -52,6 +60,7 @@ class BookingController extends Controller
 
         return view('bookings.create', [
             'room' => $room,
+            'guestDraft' => $guestDraft,
             'isGuest' => $request->boolean('guest'),
             'bookingMode' => $room->rental_hours ? 'hourly' : ($bookingSearch['mode'] ?? (isset($bookingSearch['stay']) ? 'hourly' : 'dates')),
             'bookingSearch' => $bookingSearch,
@@ -72,6 +81,24 @@ class BookingController extends Controller
                 ->where(fn ($query) => $query->whereNull('usage_limit')->orWhereColumn('times_used', '<', 'usage_limit'))
                 ->get(),
         ]);
+    }
+
+    public function saveGuestDraft(Request $request)
+    {
+        $data = $request->validate([
+            'guest_name' => 'present|nullable|string|max:255',
+            'guest_email' => 'present|nullable|string|max:255',
+            'guest_phone' => 'present|nullable|string|max:20',
+        ]);
+
+        $request->session()->put('guest_booking_draft', [
+            'guest_name' => trim((string) ($data['guest_name'] ?? '')),
+            'guest_email' => trim((string) ($data['guest_email'] ?? '')),
+            'guest_phone' => trim((string) ($data['guest_phone'] ?? '')),
+            'expires_at' => now()->addMinutes(30)->timestamp,
+        ]);
+
+        return response()->noContent();
     }
 
     public function availability(Request $request, Room $room)
@@ -247,6 +274,7 @@ class BookingController extends Controller
         abort_if(GuestRestriction::where('guest_key', $guestKey)->whereNull('removed_at')->exists(), 422, 'This reservation cannot be accepted online. Please contact Carolina directly.');
         $existing = Booking::where('submission_token', $data['submission_token'])->first();
         if ($existing) {
+            $request->session()->forget('guest_booking_draft');
             return redirect()->route('bookings.receipt', $existing)->with('success', 'Your reservation request was already received.');
         }
         if ($data['checkout_type'] === 'account' && ! $request->user()) {
@@ -327,9 +355,11 @@ class BookingController extends Controller
                 throw $exception;
             }
 
+            $request->session()->forget('guest_booking_draft');
             return redirect()->route('bookings.receipt', $booking)->with('success', 'Your reservation request was already received.');
         }
         $request->session()->forget('booking-submission:'.$room->id);
+        $request->session()->forget('guest_booking_draft');
         try {
             $this->log($booking, $request->user()?->id, 'booking_created', 'Booking created and awaiting staff confirmation.');
         } catch (\Throwable $exception) {

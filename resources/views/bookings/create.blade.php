@@ -159,7 +159,7 @@
 
         @if(auth()->check() || $isGuest)
             @if($selectionNotice)<p class="alert" role="status">{{ $selectionNotice }}</p>@endif
-            <form method="POST" action="{{ route('bookings.store', $room) }}">
+            <form method="POST" action="{{ route('bookings.store', $room) }}" @if($isGuest) data-guest-draft-url="{{ route('bookings.guest-draft.save') }}" @endif>
                 @csrf
                 <section class="booking-validation-summary" id="booking-validation-summary" role="alert" tabindex="-1" aria-labelledby="booking-validation-title" @if(!$errors->any()) hidden @endif>
                     <strong id="booking-validation-title">Please correct these details before continuing.</strong>
@@ -227,9 +227,9 @@
                     <section class="guest-contact-section" aria-labelledby="guest-contact-heading">
                     <h3 id="guest-contact-heading">Guest contact information</h3>
                     <div class="booking-contact-fields">
-                    <label>Full name<input id="guest-name" name="guest_name" value="{{ old('guest_name') }}" placeholder="e.g., Maria Santos" autocomplete="name" maxlength="255" required @error('guest_name') aria-invalid="true" aria-describedby="guest-name-error" @enderror>@error('guest_name')<small class="booking-field-error" id="guest-name-error">{{ $message }}</small>@enderror</label>
-                    <label>Email address<input id="guest-email" type="email" name="guest_email" value="{{ old('guest_email') }}" placeholder="e.g., maria@example.com" autocomplete="email" inputmode="email" autocapitalize="none" spellcheck="false" maxlength="255" required @error('guest_email') aria-invalid="true" aria-describedby="guest-email-error" @enderror>@error('guest_email')<small class="booking-field-error" id="guest-email-error">{{ $message }}</small>@enderror</label>
-                    <label>Phone number<input id="guest-phone" type="tel" name="guest_phone" value="{{ old('guest_phone') }}" placeholder="09XX XXX XXXX" autocomplete="tel" inputmode="tel" maxlength="20" title="Enter a Philippine mobile number, such as 09XX XXX XXXX or +63 9XX XXX XXXX." required @error('guest_phone') aria-invalid="true" aria-describedby="guest-phone-error" @enderror>@error('guest_phone')<small class="booking-field-error" id="guest-phone-error">{{ $message }}</small>@enderror</label>
+                    <label>Full name<input id="guest-name" name="guest_name" value="{{ old('guest_name', $guestDraft['guest_name'] ?? '') }}" placeholder="e.g., Maria Santos" autocomplete="name" maxlength="255" required @error('guest_name') aria-invalid="true" aria-describedby="guest-name-error" @enderror>@error('guest_name')<small class="booking-field-error" id="guest-name-error">{{ $message }}</small>@enderror</label>
+                    <label>Email address<input id="guest-email" type="email" name="guest_email" value="{{ old('guest_email', $guestDraft['guest_email'] ?? '') }}" placeholder="e.g., maria@example.com" autocomplete="email" inputmode="email" autocapitalize="none" spellcheck="false" maxlength="255" required @error('guest_email') aria-invalid="true" aria-describedby="guest-email-error" @enderror>@error('guest_email')<small class="booking-field-error" id="guest-email-error">{{ $message }}</small>@enderror</label>
+                    <label>Phone number<input id="guest-phone" type="tel" name="guest_phone" value="{{ old('guest_phone', $guestDraft['guest_phone'] ?? '') }}" placeholder="09XX XXX XXXX" autocomplete="tel" inputmode="tel" maxlength="20" title="Enter a Philippine mobile number, such as 09XX XXX XXXX or +63 9XX XXX XXXX." required @error('guest_phone') aria-invalid="true" aria-describedby="guest-phone-error" @enderror>@error('guest_phone')<small class="booking-field-error" id="guest-phone-error">{{ $message }}</small>@enderror</label>
                     </div>
                     </section>
                 @endif
@@ -658,6 +658,39 @@ document.addEventListener('DOMContentLoaded', () => {
     const reviewPanel = document.getElementById('booking-review-panel');
     const reviewGrid = document.getElementById('booking-review-grid');
     const previous = document.getElementById('booking-previous');
+    const guestDraftUrl = form.dataset.guestDraftUrl;
+    const guestDraftFields = ['guest_name', 'guest_email', 'guest_phone'];
+    let guestDraftTimer, guestDraftQueue = Promise.resolve();
+    const saveGuestDraft = (keepalive = false) => {
+        if (!guestDraftUrl) return Promise.resolve(false);
+        clearTimeout(guestDraftTimer);
+        const payload = Object.fromEntries(guestDraftFields.map(name => [name, form.elements.namedItem(name)?.value ?? '']));
+        guestDraftQueue = guestDraftQueue.catch(() => false).then(() => fetch(guestDraftUrl, {
+            method: 'POST',
+            credentials: 'same-origin',
+            keepalive,
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': form.querySelector('input[name="_token"]')?.value ?? '',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: JSON.stringify(payload)
+        }).then(response => response.ok).catch(() => false));
+        return guestDraftQueue;
+    };
+    if (guestDraftUrl) {
+        guestDraftFields.forEach(name => {
+            const input = form.elements.namedItem(name);
+            if (!input) return;
+            input.addEventListener('input', () => {
+                clearTimeout(guestDraftTimer);
+                guestDraftTimer = setTimeout(() => { void saveGuestDraft(); }, 650);
+            });
+            input.addEventListener('change', () => { void saveGuestDraft(); });
+        });
+        window.addEventListener('pagehide', () => { clearTimeout(guestDraftTimer); void saveGuestDraft(true); });
+    }
     let sequence = 0, allowed = false, reviewing = false, timer;
     const check = async () => {
         const run = ++sequence;
@@ -747,6 +780,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 submit.disabled = false;
             } else {
                 status.textContent = 'Availability confirmed. Submitting your reservation…';
+                await saveGuestDraft();
                 allowed = true; submit.disabled = false; form.requestSubmit(submit);
             }
         } else { submit.disabled = false; status.scrollIntoView({block:'center',behavior:'smooth'}); }
