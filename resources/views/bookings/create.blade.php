@@ -2,7 +2,7 @@
 
 @section('content')
 <style>
-.booking-page{width:min(calc(100% - 40px),1240px);max-width:1240px;grid-template-columns:minmax(0,1.45fr) minmax(300px,.8fr);grid-template-areas:"heading summary" "form summary";column-gap:clamp(28px,5vw,68px);row-gap:12px;align-items:start}
+.booking-page{width:min(calc(100% - 40px),1240px);max-width:1240px;grid-template-columns:minmax(0,1.45fr) minmax(300px,.8fr);grid-template-areas:"heading heading" "form summary";column-gap:clamp(28px,5vw,68px);row-gap:12px;align-items:start}
 .booking-page-heading{grid-area:heading;min-width:0;margin:0}
 .booking-page-heading .booking-heading-back{margin-bottom:16px}
 .booking-page-heading .eyebrow{margin-bottom:8px}

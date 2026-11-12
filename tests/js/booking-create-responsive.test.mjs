@@ -82,7 +82,7 @@ test('date fields open the hidden availability calendar and its close button dis
     }
 });
 
-test('booking form and room summary align on desktop and stack without horizontal overflow on mobile', async () => {
+test('selected-room summary aligns with stay type on desktop and stacks without horizontal overflow on mobile', async () => {
     for (const width of [1440, 390, 320]) {
         const page = await render({ width, height: 900 });
         try {
@@ -95,6 +95,7 @@ test('booking form and room summary align on desktop and stack without horizonta
                     viewport: document.documentElement.clientWidth,
                     heading: rect('.booking-page-heading'),
                     form: rect('.booking-form'),
+                    stayType: rect('.booking-type-selector'),
                     summary: rect('.booking-summary'),
                     calendar: rect('.availability-calendar'),
                     bodyWidth: document.documentElement.scrollWidth,
@@ -104,7 +105,7 @@ test('booking form and room summary align on desktop and stack without horizonta
             assert.ok(layout.bodyWidth <= layout.viewport, `booking page should not overflow horizontally at ${width}px: ${JSON.stringify(layout)}`);
             assert.ok(layout.heading.width > 0 && layout.form.width > 0 && layout.summary.width > 0);
             if (width > 800) {
-                assert.ok(Math.abs(layout.heading.y - layout.summary.y) < 20, `room summary should align with the booking heading on desktop: ${JSON.stringify(layout)}`);
+                assert.ok(Math.abs(layout.stayType.y - layout.summary.y) < 8, `room summary should align with the stay-type selector on desktop: ${JSON.stringify(layout)}`);
                 assert.ok(layout.summary.x > layout.form.x, 'room summary should sit beside the form on desktop');
             } else {
                 assert.ok(layout.heading.bottom <= layout.summary.y, 'mobile order should start with the booking title');
