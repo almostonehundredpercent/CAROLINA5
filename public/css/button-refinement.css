@@ -84,6 +84,10 @@
     transition: color 160ms ease, background-color 160ms ease;
 }
 
+.auth-card .button {
+    color: #F5F5F0;
+}
+
 .nav .nav-button.nav-book-now:hover,
 .dark-mode .nav .nav-button.nav-book-now:hover {
     background-color: rgba(255, 255, 255, 0.08);
