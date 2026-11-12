@@ -47,7 +47,12 @@ class RoomSeeder extends Seeder
                 ]));
 
                 if ($number === 13) {
+                    $room->room_type = 'Air-conditioned room';
+                    $room->beds = 1;
                     $room->guests = 2;
+                    $room->price_per_night = 450;
+                    $room->rate_label = 'per night';
+                    $room->rental_hours = null;
                     $room->description = 'A comfortable stay for solo travelers, with space for up to two guests. Rates start at ₱450 per night.';
                 }
 
