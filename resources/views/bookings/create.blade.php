@@ -50,10 +50,10 @@
 @media(max-width:1000px){.booking-page{grid-template-columns:minmax(0,1.25fr) minmax(270px,.85fr);column-gap:28px}}
 </style><style>
 .booking-review-panel{margin-top:4px;padding:clamp(14px,2vw,20px);border:1px solid #d5a553;border-radius:14px;background:linear-gradient(145deg,#fffaf1,#fffdf9);box-shadow:0 8px 20px rgba(85,57,22,.07)}
-.booking-review-panel[hidden],#booking-entry-fields[hidden],#booking-previous[hidden]{display:none!important}
+.booking-review-panel[hidden],#booking-entry-fields[hidden]{display:none!important}
 .booking-review-heading{margin-bottom:12px}.booking-review-kicker{display:block;margin:0 0 4px;color:#a05d00;font-size:.68rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase}.booking-review-heading h2{margin:0 0 5px;color:var(--ink);font:700 1.35rem/1.2 'DM Sans',sans-serif}.booking-review-heading p{margin:0;color:var(--muted);font-size:.86rem;line-height:1.45}
 .booking-review-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 22px;margin:0}.booking-review-item{min-width:0;padding:9px 0;border-bottom:1px solid var(--line)}.booking-review-item--wide{grid-column:1/-1}.booking-review-item dt{margin-bottom:3px;color:var(--muted);font-size:.74rem}.booking-review-item dd{margin:0;color:var(--ink);font-size:.92rem;font-weight:700;line-height:1.4;overflow-wrap:anywhere}
-.booking-review-note{margin:12px 0 0;padding:10px 12px;border:1px solid #ead7b5;border-radius:9px;background:#fff4df;color:#644716;font-size:.82rem;line-height:1.45}.booking-step-actions{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:12px}.booking-step-actions .button{min-height:44px}.booking-step-actions #booking-submit{margin-left:auto}.booking-step-actions #booking-previous,.booking-step-actions .booking-back-to-rooms{border:1px solid #d5c2a8;background:#f3eadf;color:#573718;box-shadow:none}.booking-step-actions #booking-previous:hover,.booking-step-actions .booking-back-to-rooms:hover{border-color:#bb8a4c;background:#eadcc9;color:#422c18}.booking-step-actions #booking-previous:focus-visible,.booking-step-actions .booking-back-to-rooms:focus-visible{outline:3px solid rgba(201,121,0,.45);outline-offset:2px}.dark-mode .booking-review-panel{border-color:#805e2f;background:linear-gradient(145deg,#30251a,#241c16);box-shadow:0 12px 26px rgba(0,0,0,.2)}.dark-mode .booking-review-kicker{color:#ffc16b}.dark-mode .booking-review-note{border-color:#805d2d;background:#382b1c;color:#f6dcae}.dark-mode .booking-step-actions #booking-previous,.dark-mode .booking-step-actions .booking-back-to-rooms{border-color:#76552e;background:#30251f;color:#f2dfc7}.dark-mode .booking-step-actions #booking-previous:hover,.dark-mode .booking-step-actions .booking-back-to-rooms:hover{border-color:#a77a40;background:#3c2e23;color:#fff2df}.dark-mode .booking-step-actions #booking-previous:focus-visible,.dark-mode .booking-step-actions .booking-back-to-rooms:focus-visible{outline-color:rgba(255,194,110,.55)}
+.booking-review-note{margin:12px 0 0;padding:10px 12px;border:1px solid #ead7b5;border-radius:9px;background:#fff4df;color:#644716;font-size:.82rem;line-height:1.45}.booking-step-actions{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:12px}.booking-step-actions .button{min-height:44px;width:100%}.dark-mode .booking-review-panel{border-color:#805e2f;background:linear-gradient(145deg,#30251a,#241c16);box-shadow:0 12px 26px rgba(0,0,0,.2)}.dark-mode .booking-review-kicker{color:#ffc16b}.dark-mode .booking-review-note{border-color:#805d2d;background:#382b1c;color:#f6dcae}
 @media(max-width:520px){.booking-review-panel{padding:14px;border-radius:12px}.booking-review-heading{margin-bottom:10px}.booking-review-grid{grid-template-columns:1fr}.booking-review-item{padding:8px 0}.booking-review-item--wide{grid-column:auto}.booking-step-actions{flex-direction:column;align-items:stretch}.booking-step-actions .button{width:100%;justify-content:center}}
 </style>
 <style>
@@ -252,14 +252,13 @@
                     <div class="booking-review-heading">
                         <span class="booking-review-kicker">CHECK BEFORE YOU CONTINUE</span>
                         <h2 id="booking-review-title">Review your reservation</h2>
-                        <p>This is a summary only. Use Previous if you want to change any details.</p>
+                        <p>This is a summary only. Use Back to previous page if you want to change any details.</p>
                     </div>
                     <dl class="booking-review-grid" id="booking-review-grid"></dl>
                     <p class="booking-review-note">This is not a confirmed booking. Your request will be submitted when you choose Proceed to payment. The final amount and payment choices will appear on the next page.</p>
                 </section>
                 <div id="booking-availability-status" class="booking-availability-status" role="status" aria-live="polite">Choose your stay dates to check availability. Unpaid requests hold their slot for {{ \App\Models\Booking::holdMinutes() }} minutes; paid or confirmed reservations remain reserved.</div>
                 <div class="booking-step-actions">
-                    <button class="button button-outline" id="booking-previous" type="button" hidden>Previous</button>
                     <button class="button" id="booking-submit" type="submit">Continue to review</button>
                 </div>
             </form>
@@ -657,7 +656,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const entryFields = document.getElementById('booking-entry-fields');
     const reviewPanel = document.getElementById('booking-review-panel');
     const reviewGrid = document.getElementById('booking-review-grid');
-    const previous = document.getElementById('booking-previous');
     const guestDraftUrl = form.dataset.guestDraftUrl;
     const guestDraftFields = ['guest_name', 'guest_email', 'guest_phone'];
     let guestDraftTimer, guestDraftQueue = Promise.resolve();
@@ -691,7 +689,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         window.addEventListener('pagehide', () => { clearTimeout(guestDraftTimer); void saveGuestDraft(true); });
     }
-    let sequence = 0, allowed = false, reviewing = false, timer;
+    let sequence = 0, allowed = false, timer;
     const check = async () => {
         const run = ++sequence;
         const data = new FormData(form);
@@ -759,21 +757,15 @@ document.addEventListener('DOMContentLoaded', () => {
         const estimate = document.getElementById(hourly ? 'hourly-total' : 'date-deposit-preview')?.textContent?.trim();
         if (estimate) addReviewItem('Current estimate', estimate, true);
     };
-    const showEntryFields = () => {
-        reviewing = false; entryFields.hidden = false; reviewPanel.hidden = true; previous.hidden = true;
-        submit.textContent = 'Continue to review';
-        entryFields.scrollIntoView({behavior:'smooth', block:'start'});
-        entryFields.querySelector('input:not([type="hidden"]), button, a')?.focus({preventScroll:true});
-    };
-    form.addEventListener('click', event => { if (event.target.closest('#booking-submit, #booking-previous, #booking-review-panel')) return; clearTimeout(timer); timer = setTimeout(check, 100); });
+    form.addEventListener('click', event => { if (event.target.closest('#booking-submit, #booking-review-panel')) return; clearTimeout(timer); timer = setTimeout(check, 100); });
     form.addEventListener('change', check);
     check();
     form.addEventListener('submit', async event => {
         if (allowed) return;
         event.preventDefault(); event.stopImmediatePropagation(); clearTimeout(timer); submit.disabled = true;
         if (await check()) {
-            if (!reviewing) {
-                buildReview(); reviewing = true; entryFields.hidden = true; reviewPanel.hidden = false; previous.hidden = false;
+            if (reviewPanel.hidden) {
+                buildReview(); entryFields.hidden = true; reviewPanel.hidden = false;
                 submit.textContent = 'Proceed to payment';
                 status.textContent = 'Availability checked. We will check again before submitting your reservation.';
                 reviewPanel.scrollIntoView({behavior:'smooth', block:'start'});
@@ -785,21 +777,25 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         } else { submit.disabled = false; status.scrollIntoView({block:'center',behavior:'smooth'}); }
     }, true);
-    previous.addEventListener('click', showEntryFields);
 });
 </script>
 <script id="booking-review-back-navigation">
 (() => {
     const installBookingBackNavigation = () => {
         const backLink = document.getElementById('booking-heading-back');
+        const entryFields = document.getElementById('booking-entry-fields');
         const reviewPanel = document.getElementById('booking-review-panel');
-        const previous = document.getElementById('booking-previous');
-        if (!backLink || !reviewPanel || !previous) return;
+        const submit = document.getElementById('booking-submit');
+        if (!backLink || !entryFields || !reviewPanel || !submit) return;
 
         backLink.addEventListener('click', event => {
             if (reviewPanel.hidden) return;
             event.preventDefault();
-            previous.click();
+            reviewPanel.hidden = true;
+            entryFields.hidden = false;
+            submit.textContent = 'Continue to review';
+            entryFields.scrollIntoView({behavior:'smooth', block:'start'});
+            entryFields.querySelector('input:not([type="hidden"]), button, a')?.focus({preventScroll:true});
         });
     };
 

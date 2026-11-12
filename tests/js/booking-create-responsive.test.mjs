@@ -45,15 +45,15 @@ test('date calendar starts closed and guest mode does not repeat the sign-in/gue
     assert.match(guestBlock, /@if\(!\$isGuest\)[\s\S]*?<div class="checkout-choice"/, 'account and guest actions should only appear before guest mode is selected');
 });
 
-test('header back button returns from review to reservation details without leaving the booking page', async () => {
+test('header back button returns from review to reservation details without a duplicate Previous button', async () => {
+    assert.doesNotMatch(view, /id="booking-previous"/, 'the review actions should not render a second back button');
     const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
     try {
         await page.setContent(`<body>
             <a id="booking-heading-back" href="/book">Back to previous page</a>
             <section id="booking-entry-fields" hidden>Reservation details form</section>
             <section id="booking-review-panel">Reservation review</section>
-            <button id="booking-previous" type="button">Previous</button>
-            <script>document.getElementById('booking-previous').addEventListener('click', () => { document.getElementById('booking-entry-fields').hidden = false; document.getElementById('booking-review-panel').hidden = true; });</script>
+            <button id="booking-submit" type="button">Proceed to payment</button>
             <script>${bookingBackScript}</script>
         </body>`);
 
@@ -61,6 +61,7 @@ test('header back button returns from review to reservation details without leav
 
         assert.equal(await page.locator('#booking-entry-fields').isVisible(), true, 'reservation details should return when backing out of review');
         assert.equal(await page.locator('#booking-review-panel').isHidden(), true, 'the review panel should close');
+        assert.equal(await page.locator('#booking-submit').textContent(), 'Continue to review', 'the primary action should return to its first-step label');
         assert.equal(page.url(), 'about:blank', 'the back action should not navigate to the general Book now page');
     } finally {
         await page.close();
@@ -228,14 +229,13 @@ test('reservation review stays compact, readable, and keeps every booking value 
             const page = await browser.newPage({ viewport: { width, height: 900 } });
             try {
                 await page.setContent(`<html class="${mode === 'dark' ? 'dark-mode' : ''}"><head><style>${baseStyles}\n${paletteStyles}\n${bookingStyles}</style></head><body>
-                    <main class="booking-form"><section class="booking-review-panel"><div class="booking-review-heading"><span class="booking-review-kicker">CHECK BEFORE YOU CONTINUE</span><h2>Review your reservation</h2><p>This is a summary only. Use Previous if you want to change any details.</p></div><dl class="booking-review-grid">${markup}</dl><p class="booking-review-note">This is not a confirmed booking. Your request will be submitted when you choose Proceed to payment. The final amount and payment choices will appear on the next page.</p></section><div class="booking-step-actions"><button class="button button-outline" id="booking-previous" type="button">Previous</button><button class="button" id="booking-submit" type="button">Proceed to payment</button></div></main>
+                    <main class="booking-form"><section class="booking-review-panel"><div class="booking-review-heading"><span class="booking-review-kicker">CHECK BEFORE YOU CONTINUE</span><h2>Review your reservation</h2><p>This is a summary only. Use Back to previous page if you want to change any details.</p></div><dl class="booking-review-grid">${markup}</dl><p class="booking-review-note">This is not a confirmed booking. Your request will be submitted when you choose Proceed to payment. The final amount and payment choices will appear on the next page.</p></section><div class="booking-step-actions"><button class="button" id="booking-submit" type="button">Proceed to payment</button></div></main>
                 </body></html>`);
 
                 const result = await page.evaluate(() => {
                     const panel = document.querySelector('.booking-review-panel');
                     const heading = document.querySelector('.booking-review-heading');
                     const item = document.querySelector('.booking-review-item');
-                    const previous = document.querySelector('#booking-previous');
                     const submit = document.querySelector('#booking-submit');
                     return {
                         width: document.documentElement.clientWidth,
@@ -244,11 +244,9 @@ test('reservation review stays compact, readable, and keeps every booking value 
                         headingGap: Number.parseFloat(getComputedStyle(heading).marginBottom),
                         itemPadding: Number.parseFloat(getComputedStyle(item).paddingTop),
                         values: [...document.querySelectorAll('.booking-review-item dd')].map(value => value.textContent),
-                        previousBg: getComputedStyle(previous).backgroundColor,
-                        previousText: getComputedStyle(previous).color,
-                        previousBorder: getComputedStyle(previous).borderTopWidth,
+                        previousCount: document.querySelectorAll('#booking-previous').length,
+                        actionButtonCount: document.querySelectorAll('.booking-step-actions .button').length,
                         submitBg: getComputedStyle(submit).backgroundColor,
-                        previousHeight: previous.getBoundingClientRect().height,
                     };
                 });
 
@@ -258,11 +256,8 @@ test('reservation review stays compact, readable, and keeps every booking value 
                 assert.ok(result.panelPadding <= 20, `review panel should use compact padding at ${width}px in ${mode} mode`);
                 assert.ok(result.headingGap <= 14, `review heading spacing should be compact at ${width}px in ${mode} mode`);
                 assert.ok(result.itemPadding <= 9, `review detail rows should be compact at ${width}px in ${mode} mode`);
-                assert.notEqual(result.previousBg, 'rgba(0, 0, 0, 0)', `Previous needs a visible muted surface at ${width}px in ${mode} mode`);
-                assert.notEqual(result.previousBg, result.submitBg, `Previous should not compete with the primary action at ${width}px in ${mode} mode`);
-                assert.ok(Number.parseFloat(result.previousBorder) >= 1, 'Previous should retain a visible boundary');
-                assert.ok(result.previousHeight >= 44, 'Previous should remain a comfortable touch target');
-                assert.notEqual(result.previousText, 'rgba(0, 0, 0, 0)', 'Previous text should remain visible');
+                assert.equal(result.previousCount, 0, 'the review step should not duplicate the header back action');
+                assert.equal(result.actionButtonCount, 1, 'the review step should show only the primary payment action');
             } finally {
                 await page.close();
             }
@@ -275,7 +270,7 @@ test('booking primary actions use dirty-white labels in light and dark themes', 
         const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
         try {
             await page.setContent(`<html class="${mode === 'dark' ? 'dark-mode' : ''}"><head><style>${baseStyles}\n${paletteStyles}\n${bookingStyles}</style></head><body>
-                <main class="booking-form"><form><button class="button" id="booking-submit" type="button">Continue to review</button><div class="booking-step-actions"><button class="button button-outline" id="booking-previous" type="button">Previous</button></div></form></main>
+                <main class="booking-form"><form><button class="button" id="booking-submit" type="button">Continue to review</button><div class="booking-step-actions"></div></form></main>
             </body></html>`);
 
             const result = await page.evaluate(() => {
@@ -285,13 +280,11 @@ test('booking primary actions use dirty-white labels in light and dark themes', 
                 return {
                     continueColor,
                     paymentColor: getComputedStyle(submit).color,
-                    previousColor: getComputedStyle(document.querySelector('#booking-previous')).color,
                 };
             });
 
             assert.equal(result.continueColor, 'rgb(245, 245, 240)', `Continue to review should use dirty-white text in ${mode} mode`);
             assert.equal(result.paymentColor, 'rgb(245, 245, 240)', `Proceed to payment should use dirty-white text in ${mode} mode`);
-            assert.notEqual(result.previousColor, result.continueColor, 'The muted Previous button should retain its separate text treatment');
         } finally {
             await page.close();
         }
