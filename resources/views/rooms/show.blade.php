@@ -65,9 +65,9 @@
             asset('images/rooms/room-7-angle-3.jpg'),
         ],
         'carolina-room-10' => [
+            asset('images/rooms/room-10-angle-3.jpg'),
             asset('images/rooms/room-10-angle-1.jpg'),
             asset('images/rooms/room-10-angle-2.jpg'),
-            asset('images/rooms/room-10-angle-3.jpg'),
         ],
         'carolina-room-11' => [
             asset('images/rooms/room-11-angle-3.jpg'),
