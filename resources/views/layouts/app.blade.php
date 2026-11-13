@@ -13,9 +13,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     @if(request()->routeIs('home'))
-        <link rel="preconnect" href="https://images.unsplash.com">
-        <link rel="preload" as="image" href="https://images.unsplash.com/photo-1601918774946-25832a4be0d6?auto=format&amp;fit=crop&amp;w=900&amp;q=75" media="(max-width: 800px)" fetchpriority="high">
-        <link rel="preload" as="image" href="https://images.unsplash.com/photo-1601918774946-25832a4be0d6?auto=format&amp;fit=crop&amp;w=1800&amp;q=85" media="(min-width: 801px)" fetchpriority="high">
+        <link rel="preload" as="image" href="{{ asset('images/home-hero/lobby-1-1800.jpg') }}" imagesrcset="{{ asset('images/home-hero/lobby-1-900.jpg') }} 900w, {{ asset('images/home-hero/lobby-1-1800.jpg') }} 1800w, {{ asset('images/home-hero/lobby-1-4k.jpg') }} 3840w" imagesizes="100vw" fetchpriority="high">
     @endif
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
     @if(request()->routeIs('home', 'rooms.index'))
