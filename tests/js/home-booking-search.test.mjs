@@ -70,6 +70,7 @@ test('homepage selectors share a clear, themed control treatment', async () => {
                 height: field.getBoundingClientRect().height,
                 appearance: styles.appearance,
                 backgroundImage: styles.backgroundImage,
+                textOverflow: styles.textOverflow,
                 color: styles.color,
             };
         }));
@@ -77,6 +78,7 @@ test('homepage selectors share a clear, themed control treatment', async () => {
         assert.ok(light.every(field => field.height >= 58), 'each selector should retain a comfortable touch target');
         assert.equal(light.slice(1).every(field => field.appearance === 'none'), true, 'selects should use the shared custom chevron instead of mismatched browser arrows');
         assert.equal(light.slice(1).every(field => field.backgroundImage !== 'none'), true, 'each select should show a visible, consistent chevron');
+        assert.equal(light.slice(1).every(field => field.textOverflow === 'ellipsis'), true, 'long selected values should truncate cleanly on narrow screens');
 
         await page.evaluate(() => document.body.classList.add('dark-mode'));
         const dark = await page.locator('.home-search-field input, .home-search-field select').evaluateAll(controls => controls.map(control => ({
