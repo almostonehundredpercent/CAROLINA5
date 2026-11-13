@@ -12,7 +12,7 @@ class RoomSeeder extends Seeder
         $profiles = [];
 
         foreach ([
-            ['fan-room-solo', 'Fan room', 1, 1, 450, 'per 22-hour stay', 22, 'A simple private fan room for one guest, with a 22-hour stay beginning at noon.', 'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1000&q=80', ['Free breakfast', 'Free Wi-Fi', 'Private CR', 'Towel', 'Hygiene kit']],
+            ['fan-room-solo', 'Fan room', 1, 1, 450, 'per 22-hour stay', 22, 'A simple private fan room for one guest, with a 22-hour stay beginning at noon.', '/images/rooms/room-1-angle-1.png', ['Common CR']],
             ['air-conditioned-room-couple', 'Air-conditioned room', 1, 2, 450, '', 6, 'A comfortable air-conditioned room with one bed for up to two guests and access to a shared bathroom.', '/images/rooms/room-2-angle-3.jpg', ['AC/Fan', 'Common CR']],
             ['fan-room-couple', 'Fan room', 1, 2, 450, 'per 22-hour stay', 22, 'A practical fan room for up to two guests, with rates starting at ₱450 for a 22-hour stay.', '/images/rooms/room-3-angle-1.jpg', ['AC/Fan', 'With CR', 'Refrigerator', 'TV']],
             ['air-conditioned-day-stay', 'Air-conditioned room', 1, 2, 450, '', 22, 'Best suited to solo travelers, this air-conditioned room has one bed for up to two guests. 22-hour stays start at ₱450.', '/images/rooms/room-4-angle-1.jpg', ['AC/Fan', 'Common CR']],

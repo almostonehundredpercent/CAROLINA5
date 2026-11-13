@@ -96,7 +96,7 @@ class Room extends Model
             return $this->versionedImageUrl($roomFiveFallback);
         }
 
-        if (! is_string($path) || ! preg_match('~^/images/rooms/(room-\d+-angle-[1-4]\.jpg|room-\d+-angle-[1-4]-\d+\.webp)$~', $path, $matches)) {
+        if (! is_string($path) || ! preg_match('~^/images/rooms/(room-\d+-angle-[1-4]\.(?:jpg|png)|room-\d+-angle-[1-4]-\d+\.webp)$~', $path, $matches)) {
             return $imageUrl;
         }
 
