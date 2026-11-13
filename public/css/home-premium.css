@@ -130,6 +130,11 @@
 .dark-mode .home-search-trigger svg { stroke:#e9aa52; }
 .dark-mode .home-search-trigger:focus-visible { outline-color:#f0ad3d; }
 .dark-mode .home-date-calendar,.dark-mode .home-select-list { border-color:#594332; background:#211914; color:#fff4e8; box-shadow:0 22px 50px rgba(0,0,0,.48); }
+.dark-mode .home-select-option { color:#fff4e8; }
+.dark-mode .home-select-list { scrollbar-color:#72573e #211914; scrollbar-width:thin; }
+.dark-mode .home-select-list::-webkit-scrollbar { width:10px; }
+.dark-mode .home-select-list::-webkit-scrollbar-track { border-radius:10px; background:#211914; }
+.dark-mode .home-select-list::-webkit-scrollbar-thumb { border:2px solid #211914; border-radius:10px; background:#72573e; }
 .dark-mode .home-calendar-head strong { color:#fff4e8; }
 .dark-mode .home-calendar-head button,.dark-mode .home-calendar-foot button { border-color:#594332; background:#30251f; color:#f3b155; }
 .dark-mode .home-calendar-week span,.dark-mode .home-calendar-foot span,.dark-mode .home-select-option small { color:#d7c4b1; }
