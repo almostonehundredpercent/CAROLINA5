@@ -27,11 +27,11 @@ class RoomSeeder extends Seeder
         }
 
         // Keep any existing units and history intact; only fill missing records.
-        // Each original room profile is assigned twice across rooms 7–18.
+        // Reuse the original room profiles to create the remaining rooms 7–13.
         $assignments = array_merge($profiles, $profiles);
         shuffle($assignments);
 
-        foreach (range(7, 18) as $offset => $number) {
+        foreach (range(7, 13) as $offset => $number) {
             $slug = 'carolina-room-'.$number;
             $room = Room::firstOrNew(['slug' => $slug]);
             $isNew = ! $room->exists;
