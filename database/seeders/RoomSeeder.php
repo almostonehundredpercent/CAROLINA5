@@ -101,8 +101,10 @@ class RoomSeeder extends Seeder
         ];
         $descriptionsByRoom = [
             8 => 'Ideal for a solo traveler, this one-bed room offers a simple and comfortable place to unwind after a busy day. Its practical layout provides a restful base during your stay.',
-            9 => 'A comfortable room for up to two guests, with a simple, welcoming setup and a relaxed place to unwind during your stay.',
+            9 => 'A comfortable guest room with one bed for up to two guests, offering a simple place to rest during your stay.',
         ];
+        $roomTypesByRoom = [9 => 'Guest room'];
+        $bedCountsByRoom = [9 => 1];
         $guestLimitsByRoom = [9 => 2];
         $amenitiesToExcludeByRoom = [9 => ['large refrigerator']];
         $amenitiesByRoom = [
@@ -123,7 +125,7 @@ class RoomSeeder extends Seeder
                 || preg_match('/\b(?:ref|refrigerator|fridge)\b/i', $amenity);
         };
 
-        $roomNumbers = array_unique(array_merge(array_keys($photos), array_keys($descriptionsByRoom), array_keys($guestLimitsByRoom), array_keys($amenitiesToExcludeByRoom), array_keys($amenitiesByRoom)));
+        $roomNumbers = array_unique(array_merge(array_keys($photos), array_keys($descriptionsByRoom), array_keys($roomTypesByRoom), array_keys($bedCountsByRoom), array_keys($guestLimitsByRoom), array_keys($amenitiesToExcludeByRoom), array_keys($amenitiesByRoom)));
 
         foreach ($roomNumbers as $number) {
             $room = Room::where('slug', 'carolina-room-'.$number)->first();
@@ -137,6 +139,14 @@ class RoomSeeder extends Seeder
 
             if (isset($descriptionsByRoom[$number])) {
                 $room->description = $descriptionsByRoom[$number];
+            }
+
+            if (isset($roomTypesByRoom[$number])) {
+                $room->room_type = $roomTypesByRoom[$number];
+            }
+
+            if (isset($bedCountsByRoom[$number])) {
+                $room->beds = $bedCountsByRoom[$number];
             }
 
             if (isset($guestLimitsByRoom[$number])) {
