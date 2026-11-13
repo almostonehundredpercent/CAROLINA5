@@ -259,6 +259,7 @@ footer small { color: var(--paper); }
 .dark-mode .booking-form .hourly-rental #hourly-total { background-color: var(--deep); color: var(--ink); }
 .dark-mode .booking-form .hourly-rental p,
 .dark-mode .booking-form .booking-type-options small { color: var(--muted); }
+.dark-mode .promo-message.success { color: #ffdda0; }
 
 @media (max-width: 800px) {
     .nav nav { background-color: var(--surface); border-color: var(--line); }
