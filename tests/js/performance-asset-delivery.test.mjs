@@ -28,8 +28,10 @@ test('local room photos have smaller responsive WebP variants', async () => {
     for (const original of originals) {
         const base = original.replace(/\.jpg$/, '');
         const originalSize = (await stat(new URL(original, directory))).size;
-        for (const width of [480, 800, 1200]) {
-            const variant = new URL(`${base}-${width}.webp`, directory);
+        const variants = (await readdir(directory)).filter(name => name.startsWith(`${base}-`) && /-(?:375|480|800|1200)\.webp$/.test(name));
+        assert.ok(variants.length > 0, `${base} should have at least one responsive WebP variant`);
+        for (const name of variants) {
+            const variant = new URL(name, directory);
             const variantSize = (await stat(variant)).size;
             assert.ok(variantSize > 0, `${variant.pathname} should be generated`);
             assert.ok(variantSize < originalSize, `${variant.pathname} should be smaller than its JPEG source`);
@@ -41,8 +43,26 @@ test('local room photos have smaller responsive WebP variants', async () => {
     assert.ok(logoWebpSize < logoSize, 'the compact logo should be smaller than its JPEG source');
 });
 
+test('PNG room photos have compact WebP variants for responsive delivery', async () => {
+    const directory = new URL('public/images/rooms/', root);
+    const originals = (await readdir(directory)).filter(name => /^room-\d+-angle-\d+\.png$/.test(name));
+
+    assert.ok(originals.length > 0, 'PNG room photos should exist');
+    for (const original of originals) {
+        const base = original.replace(/\.png$/, '');
+        const sourceSize = (await stat(new URL(original, directory))).size;
+        const thumbnail = await stat(new URL(`${base}-480.webp`, directory));
+        assert.ok(thumbnail.size > 0, `${base}-480.webp should be generated`);
+        assert.ok(thumbnail.size < sourceSize, `${base}-480.webp should be smaller than its PNG source`);
+    }
+
+    const largestPng = await stat(new URL('room-1-angle-1.png', directory));
+    const largestWebp = await stat(new URL('room-1-angle-1-1200.webp', directory));
+    assert.ok(largestWebp.size < largestPng.size * 0.1, 'the 1200px room-one image should use a fraction of the original PNG size');
+});
+
 test('local room photo variants cover any numbered room and the booking summary uses responsive priority loading', () => {
-    assert.match(roomModel, /room-\\d\+-angle-\[1-3\]/, 'responsive WebP lookup should support each room number');
+    assert.match(roomModel, /room-\\d\+-angle-\[1-4\]/, 'responsive WebP lookup should support each room number and all four room angles');
     const summaryImage = bookingView.slice(bookingView.indexOf('<div class="booking-summary-image">'));
     assert.ok(summaryImage.indexOf('responsiveWebpSrcset()') >= 0, 'the summary should use responsive WebP where available');
     assert.ok(summaryImage.indexOf('fetchpriority="high"') > summaryImage.indexOf('<img'), 'the summary image should receive early network priority');

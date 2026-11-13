@@ -8,7 +8,7 @@
 @section('content')
 <section class="room-detail">
     <x-site-back-link :href="route('rooms.index', request()->query())" label="Back to previous page" :history="true" class="room-detail-back" />
-    <img src="{{ $room->versionedImageUrl() }}" alt="{{ $room->name }}">
+    <picture class="room-detail-photo">@if($roomWebpSrcset = $room->responsiveWebpSrcset())<source type="image/webp" srcset="{{ $roomWebpSrcset }}" sizes="(max-width: 800px) 100vw, 50vw">@endif<img src="{{ $room->versionedImageUrl() }}" alt="{{ $room->name }}" fetchpriority="high" decoding="async"></picture>
     <div>
         <span class="eyebrow">{{ $room->room_type }}</span>
         <h1>{{ $room->name }}</h1>

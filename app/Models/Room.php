@@ -137,11 +137,11 @@ class Room extends Model
     public function responsiveWebpSrcset(?string $imageUrl = null): ?string
     {
         $path = parse_url($imageUrl ?? $this->image_url ?? '', PHP_URL_PATH);
-        if (! is_string($path) || ! preg_match('~^/images/rooms/(room-\d+-angle-[1-4])\.jpg$~', $path, $matches)) {
+        if (! is_string($path) || ! preg_match('~^/images/rooms/(room-\d+-angle-[1-4])\.(?:jpg|png)$~', $path, $matches)) {
             return null;
         }
 
-        $variants = collect([480, 800, 1200])
+        $variants = collect([375, 480, 800, 1200])
             ->map(fn (int $width): string => "{$matches[1]}-{$width}")
             ->filter(fn (string $filename): bool => is_file(public_path("images/rooms/{$filename}.webp")))
             ->map(fn (string $filename): string => $this->versionedImageUrl(asset("images/rooms/{$filename}.webp")).' '.substr($filename, strrpos($filename, '-') + 1).'w');

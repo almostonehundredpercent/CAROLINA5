@@ -194,6 +194,40 @@ test('locally hosted room cards offer WebP sources and keep their JPEG fallback'
     }
 });
 
+test('PNG room photos use responsive WebP sources on public listing and detail pages', function () {
+    $room = Room::create([
+        'name' => 'PNG photo room',
+        'slug' => 'png-photo-room',
+        'description' => 'A test stay.',
+        'room_type' => 'Standard',
+        'beds' => 1,
+        'guests' => 2,
+        'price_per_night' => 450,
+        'image_url' => '/images/rooms/room-1-angle-1.png',
+        'is_active' => true,
+    ]);
+
+    $detailUrl = route('rooms.show', $room);
+    foreach ([route('home'), route('rooms.index'), $detailUrl] as $url) {
+        $response = $this->get($url)->assertOk();
+        $document = new DOMDocument;
+        @$document->loadHTML('<?xml encoding="UTF-8"?>'.$response->getContent());
+        $xpath = new DOMXPath($document);
+        $image = $xpath->query('//img[@alt="PNG photo room"]')->item(0);
+        $source = $xpath->query('//picture/source[@type="image/webp" and contains(@srcset, "room-1-angle-1-480.webp")]')->item(0);
+
+        expect($image)->not->toBeNull()
+            ->and($image->getAttribute('src'))->toContain('/images/rooms/room-1-angle-1.png')
+            ->and($source)->not->toBeNull()
+            ->and($source->getAttribute('srcset'))->toContain('room-1-angle-1-480.webp', 'room-1-angle-1-800.webp');
+
+        if ($url === $detailUrl) {
+            expect($image->getAttribute('fetchpriority'))->toBe('high')
+                ->and($image->getAttribute('decoding'))->toBe('async');
+        }
+    }
+});
+
 test('rooms page styles load before body content to prevent late page styling', function () {
     $html = $this->get(route('rooms.index'))->assertOk()->getContent();
     $bodyPosition = strpos($html, '<body>');
