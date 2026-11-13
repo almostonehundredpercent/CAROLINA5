@@ -3,10 +3,15 @@
 <link rel="stylesheet" href="{{ asset('css/customer-profile.css') }}?v={{ filemtime(public_path('css/customer-profile.css')) }}">
 @endpush
 @section('content')
+@php
+    $profileNameParts = preg_split('/\s+/', trim((string) auth()->user()->name), 2) ?: [];
+    $profileFirstName = $profileNameParts[0] ?? '';
+    $profileLastName = $profileNameParts[1] ?? '';
+@endphp
 <section class="page-hero slim customer-profile-hero">
     <div class="customer-profile-head">
         <span class="eyebrow">YOUR ACCOUNT</span>
-        <h1>Welcome back, {{ auth()->user()->name }}!</h1>
+        <h1>Welcome back, {{ $profileFirstName }}!</h1>
         <p>Update your account details and keep your Carolina stays organized.</p>
     </div>
 </section>
@@ -25,9 +30,10 @@
         <form class="customer-profile-form" method="POST" action="{{ route('profile.update') }}">
             @csrf @method('PATCH')
             <div class="customer-profile-form-grid">
-                <label>Full name<input name="name" type="text" value="{{ old('name', auth()->user()->name) }}" autocomplete="name" maxlength="255" required @error('name') aria-invalid="true" aria-describedby="profile-name-error" @enderror>@error('name')<small class="customer-profile-field-error" id="profile-name-error">{{ $message }}</small>@enderror</label>
-                <label>Email address<input name="email" type="email" value="{{ old('email', auth()->user()->email) }}" autocomplete="email" maxlength="255" required @error('email') aria-invalid="true" aria-describedby="profile-email-error" @enderror>@error('email')<small class="customer-profile-field-error" id="profile-email-error">{{ $message }}</small>@enderror</label>
+                <label>First name<input id="profile-first-name" name="first_name" type="text" value="{{ old('first_name', $profileFirstName) }}" autocomplete="given-name" maxlength="120" required @error('first_name') aria-invalid="true" aria-describedby="profile-first-name-error" @enderror>@error('first_name')<small class="customer-profile-field-error" id="profile-first-name-error">{{ $message }}</small>@enderror</label>
+                <label>Last name<input id="profile-last-name" name="last_name" type="text" value="{{ old('last_name', $profileLastName) }}" autocomplete="family-name" maxlength="120" required @error('last_name') aria-invalid="true" aria-describedby="profile-last-name-error" @enderror>@error('last_name')<small class="customer-profile-field-error" id="profile-last-name-error">{{ $message }}</small>@enderror</label>
                 <label>Contact number (optional)<input name="contact_number" type="tel" value="{{ old('contact_number', auth()->user()->contact_number) }}" autocomplete="tel" inputmode="tel" maxlength="20" placeholder="09XX XXX XXXX" @error('contact_number') aria-invalid="true" aria-describedby="profile-contact-number-error" @else aria-describedby="profile-contact-number-hint" @enderror>@error('contact_number')<small class="customer-profile-field-error" id="profile-contact-number-error">{{ $message }}</small>@else<small class="customer-profile-field-hint" id="profile-contact-number-hint">Use a Philippine mobile number, such as 09XX XXX XXXX.</small>@enderror</label>
+                <label>Email address<input id="profile-email" name="email" type="email" value="{{ old('email', auth()->user()->email) }}" autocomplete="email" maxlength="255" required @error('email') aria-invalid="true" aria-describedby="profile-email-error" @enderror>@error('email')<small class="customer-profile-field-error" id="profile-email-error">{{ $message }}</small>@enderror</label>
             </div>
             <div class="customer-profile-form-footer">
                 <p>Email status: <strong>{{ auth()->user()->hasVerifiedEmail() ? 'Verified' : 'Not verified' }}</strong>. Account created {{ auth()->user()->created_at->format('F j, Y') }}.</p>
