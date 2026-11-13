@@ -108,14 +108,14 @@ test('homepage prioritizes its hero image and defers below-the-fold room cards',
     $xpath = new DOMXPath($document);
 
     expect($xpath->evaluate('count(//head/link[@rel="preload"][@as="image"][@imagesrcset])'))->toBe(1.0)
-        ->and($xpath->evaluate('string(//head/link[@rel="preload"][@as="image"]/@imagesrcset)'))->toContain('lobby-1-900.jpg', 'lobby-1-1800.jpg', 'lobby-1-4k.jpg')
+        ->and($xpath->evaluate('string(//head/link[@rel="preload"][@as="image"]/@imagesrcset)'))->toContain('lobby-1-900.jpg', 'lobby-1-1800.jpg')
         ->and($xpath->evaluate('count(//picture[@class="brand-logo-picture"]/source[@type="image/webp"][@srcset])'))->toBe(2.0)
         ->and($xpath->evaluate('count(//head/link[contains(@href, "home-premium.css")])'))->toBe(1.0)
         ->and($xpath->evaluate('string(//div[contains(@class, "home-room-carousel")]//img[1]/@loading)'))->toBe('lazy')
         ->and($xpath->evaluate('string(//div[contains(@class, "home-room-carousel")]//img[1]/@fetchpriority)'))->not->toBe('high');
 });
 
-test('homepage hero rotates the three local Carolina photos and includes true 4K variants', function () {
+test('homepage hero rotates the three local Carolina photos without upscaled fake 4K variants', function () {
     $html = $this->get(route('home'))->assertOk()->getContent();
     $document = new DOMDocument;
     @$document->loadHTML('<?xml encoding="UTF-8"?>'.$html);
@@ -128,10 +128,10 @@ test('homepage hero rotates the three local Carolina photos and includes true 4K
         ->and($xpath->evaluate('count(//section[contains(concat(" ", normalize-space(@class), " "), " home-hero ")]//button[@data-hero-toggle])'))->toBe(1.0);
 
     foreach (['lobby-1', 'lobby-2', 'lobby-3'] as $index => $name) {
-        $image = getimagesize(public_path("images/home-hero/{$name}-4k.jpg"));
-        expect($image[0])->toBe(3840)
-            ->and($image[1])->toBe(2160)
-            ->and($slides->item($index)->getAttribute('srcset'))->toContain("{$name}-900.jpg 900w", "{$name}-1800.jpg 1800w", "{$name}-4k.jpg 3840w");
+        $image = getimagesize(public_path("images/home-hero/{$name}-1800.jpg"));
+        expect($image[0])->toBe(1800)
+            ->and($slides->item($index)->getAttribute('srcset'))->toContain("{$name}-900.jpg 900w", "{$name}-1800.jpg 1800w")
+            ->and($slides->item($index)->getAttribute('srcset'))->not->toContain('-4k.jpg');
     }
 });
 

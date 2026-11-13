@@ -1,6 +1,7 @@
 (() => {
     const carousel = document.querySelector('.home-hero-slideshow');
-    const slides = [...(carousel?.querySelectorAll('.home-hero-slide') || [])];
+    const track = carousel?.querySelector('.home-hero-track');
+    const slides = [...(track?.querySelectorAll('.home-hero-slide') || [])];
     if (!carousel || slides.length < 2) return;
 
     const controls = carousel.parentElement.querySelector('.home-hero-controls');
@@ -21,6 +22,9 @@
 
     const render = index => {
         activeIndex = (index + slides.length) % slides.length;
+        track.style.transform = `translate3d(-${activeIndex * 100}%, 0, 0)`;
+        const nextSlide = slides[(activeIndex + 1) % slides.length];
+        if (nextSlide.loading === 'lazy') nextSlide.loading = 'eager';
         slides.forEach((slide, slideIndex) => {
             const active = slideIndex === activeIndex;
             slide.classList.toggle('is-active', active);
