@@ -11,7 +11,7 @@ const baseStylesheet = await readFile(new URL('public/css/site.css', root), 'utf
 const script = new URL('public/js/home-hero-slideshow.js', root);
 
 const fixture = `<section class="hero home-hero">
-  <div class="home-hero-slideshow" data-interval="4000" aria-label="Carolina property photos">
+  <div class="home-hero-slideshow" data-interval="3000" aria-label="Carolina property photos">
     <img class="home-hero-slide is-active" src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" alt="" aria-hidden="true">
     <img class="home-hero-slide" src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" alt="" aria-hidden="true">
     <img class="home-hero-slide" src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" alt="" aria-hidden="true">
@@ -21,7 +21,7 @@ const fixture = `<section class="hero home-hero">
 
 test('hero photos crossfade automatically without visible overlay controls', async () => {
     assert.match(template, /home-hero-slideshow/);
-    assert.match(template, /data-interval="5000"/);
+    assert.match(template, /data-interval="3000"/);
     assert.doesNotMatch(template, /home-hero-controls|data-hero-(?:prev|next|toggle|slide)/);
     assert.match(stylesheet, /\.home-hero-slide[^\{]*\{[^}]*opacity:0[^}]*transition:opacity/s);
     assert.match(stylesheet, /\.home-hero-slide\.is-active[^\{]*\{[^}]*opacity:1/s);
@@ -42,14 +42,14 @@ test('hero photos crossfade automatically without visible overlay controls', asy
         assert.equal(await page.locator('.home-hero-slide.is-active').evaluate(el => getComputedStyle(el).opacity), '1');
         assert.equal(await page.locator('.home-hero-slide:not(.is-active)').first().evaluate(el => getComputedStyle(el).opacity), '0');
 
-        await page.clock.fastForward(4010);
+        await page.clock.fastForward(3010);
         assert.equal(await page.locator('.home-hero-slide.is-active').evaluate(el => [...el.parentElement.querySelectorAll('.home-hero-slide')].indexOf(el)), 1);
 
         await page.locator('.home-hero').hover();
         await page.clock.fastForward(8000);
         assert.equal(await page.locator('.home-hero-slide.is-active').evaluate(el => [...el.parentElement.querySelectorAll('.home-hero-slide')].indexOf(el)), 1, 'hovering the hero should pause photo rotation');
         await page.mouse.move(0, 320);
-        await page.clock.fastForward(4010);
+        await page.clock.fastForward(3010);
         assert.equal(await page.locator('.home-hero-slide.is-active').evaluate(el => [...el.parentElement.querySelectorAll('.home-hero-slide')].indexOf(el)), 2);
         await page.close();
 

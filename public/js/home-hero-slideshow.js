@@ -5,7 +5,7 @@
 
     const hero = carousel.closest('.home-hero');
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
-    const interval = Math.max(4000, Number.parseInt(carousel.dataset.interval || '6500', 10));
+    const interval = Math.max(3000, Number.parseInt(carousel.dataset.interval || '6500', 10));
 
     let activeIndex = Math.max(0, slides.findIndex(slide => slide.classList.contains('is-active')));
     let timer = null;

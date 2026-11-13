@@ -7,7 +7,7 @@
 
 @section('content')
 <section class="hero home-hero">
-    <div class="home-hero-slideshow" data-interval="5000" role="region" aria-roledescription="carousel" aria-label="Photos of Carolina Transient and Airbnb">
+    <div class="home-hero-slideshow" data-interval="3000" role="region" aria-roledescription="carousel" aria-label="Photos of Carolina Transient and Airbnb">
         <img class="home-hero-slide is-active" src="{{ asset('images/home-hero/lobby-1-1800.jpg') }}" srcset="{{ asset('images/home-hero/lobby-1-900.jpg') }} 900w, {{ asset('images/home-hero/lobby-1-1800.jpg') }} 1800w" sizes="100vw" width="1800" height="1013" alt="" aria-hidden="true" fetchpriority="high" decoding="async">
         <img class="home-hero-slide" src="{{ asset('images/home-hero/lobby-2-1800.jpg') }}" srcset="{{ asset('images/home-hero/lobby-2-900.jpg') }} 900w, {{ asset('images/home-hero/lobby-2-1800.jpg') }} 1800w" sizes="100vw" width="1800" height="1013" alt="" aria-hidden="true" loading="lazy" decoding="async">
         <img class="home-hero-slide" src="{{ asset('images/home-hero/lobby-3-1800.jpg') }}" srcset="{{ asset('images/home-hero/lobby-3-900.jpg') }} 900w, {{ asset('images/home-hero/lobby-3-1800.jpg') }} 1800w" sizes="100vw" width="1800" height="1013" alt="" aria-hidden="true" loading="lazy" decoding="async">
