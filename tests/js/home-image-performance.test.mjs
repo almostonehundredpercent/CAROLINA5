@@ -21,6 +21,7 @@ const fixture = `<section class="hero home-hero">
 
 test('hero photos crossfade automatically without visible overlay controls', async () => {
     assert.match(template, /home-hero-slideshow/);
+    assert.match(template, /data-interval="5000"/);
     assert.doesNotMatch(template, /home-hero-controls|data-hero-(?:prev|next|toggle|slide)/);
     assert.match(stylesheet, /\.home-hero-slide[^\{]*\{[^}]*opacity:0[^}]*transition:opacity/s);
     assert.match(stylesheet, /\.home-hero-slide\.is-active[^\{]*\{[^}]*opacity:1/s);
