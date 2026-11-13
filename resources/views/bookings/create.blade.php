@@ -15,6 +15,7 @@
 .dark-mode .booking-page .booking-form textarea,.dark-mode .booking-availability-status{background:#211a15;border-color:var(--line);color:var(--ink)}
 .booking-page .booking-form{background:transparent;border:0;border-radius:0;box-shadow:none}
 .booking-page .booking-form form{margin-top:4px}
+@media(min-width:801px){.booking-page.is-reviewing .booking-account-note{display:none}.booking-page.is-reviewing .booking-form form,.booking-page.is-reviewing .booking-review-panel{margin-top:0}}
 .booking-page .hourly-booked-summary.is-clear{border-color:#e6d4bd;background:#f7efe4;color:#746558}
 .booking-page .hourly-rental{border-color:#e5d4be;border-radius:14px;background:linear-gradient(145deg,#fffaf2,#f6ecdf);color:#34291f;box-shadow:0 10px 24px rgba(76,53,31,.07)}
 .booking-page .hourly-rental #hourly-total{background:#f0dfc9;color:#773c12}
@@ -157,7 +158,7 @@
         @endguest
 
         @auth
-            <p>Book using your Carolina account.</p>
+            <p class="booking-account-note">Book using your Carolina account.</p>
         @endauth
 
         @if(auth()->check() || $isGuest)
@@ -849,6 +850,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (await check()) {
             if (reviewPanel.hidden) {
                 buildReview(); entryFields.hidden = true; reviewPanel.hidden = false;
+                document.querySelector('.booking-page')?.classList.add('is-reviewing');
                 submit.textContent = 'Proceed to payment';
                 status.textContent = 'Availability checked. We will check again before submitting your reservation.';
                 reviewPanel.scrollIntoView({behavior:'smooth', block:'start'});
@@ -876,6 +878,7 @@ document.addEventListener('DOMContentLoaded', () => {
             event.preventDefault();
             reviewPanel.hidden = true;
             entryFields.hidden = false;
+            document.querySelector('.booking-page')?.classList.remove('is-reviewing');
             submit.textContent = 'Continue to review';
             entryFields.scrollIntoView({behavior:'smooth', block:'start'});
             entryFields.querySelector('input:not([type="hidden"]), button, a')?.focus({preventScroll:true});
