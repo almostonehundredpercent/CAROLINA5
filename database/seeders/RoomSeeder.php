@@ -75,13 +75,13 @@ class RoomSeeder extends Seeder
             }
 
             if ($number === 11) {
-                $room->room_type = 'Fan room';
+                $room->room_type = 'Air-conditioned room';
                 $room->beds = 1;
                 $room->guests = 4;
                 $room->price_per_night = 450;
                 $room->rate_label = '';
                 $room->rental_hours = 22;
-                $room->description = 'A comfortable fan room with one bed and space for up to four guests. Check-in begins at noon for a 22-hour stay.';
+                $room->description = 'A comfortable air-conditioned room with one bed and space for up to four guests. Check-in begins at noon for a 22-hour stay.';
             }
 
             $room->save();
