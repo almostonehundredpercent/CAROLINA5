@@ -31,7 +31,7 @@ test('public header places a Book now button between Contact and the dark mode t
     $bookNowPosition = strpos($navigation, '>Book now</a>');
     $themeTogglePosition = strpos($navigation, '<button class="theme-toggle nav-theme-toggle"');
 
-    expect($navigation)->toContain('class="nav-button nav-book-now" href="'.route('rooms.index').'"')
+    expect($navigation)->toContain('class="nav-button nav-book-now" href="'.route('booking.start').'"')
         ->and($contactPosition)->not->toBeFalse()
         ->and($bookNowPosition)->not->toBeFalse()
         ->and($themeTogglePosition)->not->toBeFalse()
@@ -59,7 +59,7 @@ test('signed-in header keeps Book now directly beside the dark mode toggle', fun
     'administrator' => [['is_admin' => true, 'staff_role' => 'admin'], true],
 ]);
 
-test('homepage renders its room picker and featured cards from one room query', function () {
+test('homepage renders its booking search and featured cards from one room query', function () {
     foreach ([700, 450, 900] as $index => $price) {
         Room::create([
             'name' => 'Test room '.($index + 1),
@@ -83,6 +83,8 @@ test('homepage renders its room picker and featured cards from one room query', 
     $response = $this->get(route('home'))->assertOk();
 
     expect($roomQueries)->toHaveCount(1)
+        ->and($response->getContent())->toContain('class="home-booking-search"', 'name="check_in"', 'name="stay"', 'name="check_in_time"', 'name="guests"', 'name="sort"', 'Check availability')
+        ->and($response->getContent())->not->toContain('home-room-picker')
         ->and($response->viewData('availabilityRooms')->pluck('name')->all())
         ->toBe(['Test room 1', 'Test room 2', 'Test room 3'])
         ->and($response->viewData('featuredRooms')->pluck('name')->all())

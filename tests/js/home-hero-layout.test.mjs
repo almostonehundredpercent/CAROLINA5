@@ -24,7 +24,7 @@ const pageMarkup = `
                 </div>
             </div>
         </section>
-        <section class="search-wrap home-availability-wrap"><div class="home-availability">Find the right room for your dates.</div></section>
+        <section class="home-booking-wrap"><form class="home-booking-search"><label class="home-search-field"><span>Check-in date</span><input type="date"></label></form></section>
     </main>
 `;
 
@@ -43,7 +43,7 @@ test('the home hero fills the viewport without clipping its overlapping availabi
             await page.setContent(`<head><meta name="viewport" content="width=device-width, initial-scale=1">${styles.map(style => `<style>${style}</style>`).join('')}</head><body>${pageMarkup}</body>`);
             const layout = await page.evaluate(() => {
                 const hero = document.querySelector('.home-hero').getBoundingClientRect();
-                const availability = document.querySelector('.home-availability').getBoundingClientRect();
+                const availability = document.querySelector('.home-booking-search').getBoundingClientRect();
                 return {
                     heroLeft: hero.left,
                     heroWidth: hero.width,

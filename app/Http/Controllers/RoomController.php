@@ -34,6 +34,9 @@ class RoomController extends Controller
 
         [$startsAt, $endsAt] = RoomAvailability::window($filters);
         $roomListings = RoomAvailability::annotate($rooms->get(), $startsAt, $endsAt);
+        if ($bookingMode) {
+            $roomListings = $roomListings->reject(fn (Room $room) => $room->availability_reason)->values();
+        }
 
         return response()->view('rooms.index', [
             // Keep the numbered inventory in room-number order (the first six
