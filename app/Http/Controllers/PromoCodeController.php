@@ -34,6 +34,14 @@ class PromoCodeController extends Controller
         return back()->with('success', 'Promo code '.$promo->code.' updated.');
     }
 
+    public function destroy(PromoCode $promo)
+    {
+        $code = $promo->code;
+        $promo->delete();
+
+        return back()->with('success', 'Promo code '.$code.' deleted. Past booking records are unchanged.');
+    }
+
     private function validated(Request $request, ?PromoCode $promo = null): array
     {
         $request->merge([
