@@ -97,15 +97,17 @@ class RoomSeeder extends Seeder
             9 => '/images/rooms/room-9-angle-1.png',
             10 => '/images/rooms/room-10-angle-3.jpg',
             11 => '/images/rooms/room-11-angle-3.jpg',
+            12 => '/images/rooms/room-12-angle-1.png',
             13 => '/images/rooms/room-13-angle-2.jpg',
         ];
         $descriptionsByRoom = [
             8 => 'Ideal for a solo traveler, this one-bed room offers a simple and comfortable place to unwind after a busy day. Its practical layout provides a restful base during your stay.',
             9 => 'A comfortable guest room with one bed for up to two guests, offering a simple place to rest during your stay.',
+            12 => 'A comfortable room with one bed for up to four guests, offering a simple and welcoming place to rest during your stay.',
         ];
         $roomTypesByRoom = [9 => 'Guest room'];
-        $bedCountsByRoom = [9 => 1];
-        $guestLimitsByRoom = [9 => 2];
+        $bedCountsByRoom = [9 => 1, 12 => 1];
+        $guestLimitsByRoom = [9 => 2, 12 => 4];
         $amenitiesToExcludeByRoom = [9 => ['large refrigerator']];
         $amenitiesByRoom = [
             7 => ['Common CR', 'Air conditioning'],
