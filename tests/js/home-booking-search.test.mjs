@@ -57,3 +57,36 @@ test('homepage booking search submits the selected filters and adapts to mobile'
         await browser.close();
     }
 });
+
+test('homepage selectors share a clear, themed control treatment', async () => {
+    const browser = await chromium.launch();
+    try {
+        const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
+        await page.setContent(`<head><meta name="viewport" content="width=device-width, initial-scale=1"><style>${baseStylesheet}</style><style>${stylesheet}</style></head><body>${fixture}</body>`);
+        const light = await page.locator('.home-search-field').evaluateAll(fields => fields.map(field => {
+            const control = field.querySelector('input, select');
+            const styles = getComputedStyle(control);
+            return {
+                height: field.getBoundingClientRect().height,
+                appearance: styles.appearance,
+                backgroundImage: styles.backgroundImage,
+                color: styles.color,
+            };
+        }));
+
+        assert.ok(light.every(field => field.height >= 58), 'each selector should retain a comfortable touch target');
+        assert.equal(light.slice(1).every(field => field.appearance === 'none'), true, 'selects should use the shared custom chevron instead of mismatched browser arrows');
+        assert.equal(light.slice(1).every(field => field.backgroundImage !== 'none'), true, 'each select should show a visible, consistent chevron');
+
+        await page.evaluate(() => document.body.classList.add('dark-mode'));
+        const dark = await page.locator('.home-search-field input, .home-search-field select').evaluateAll(controls => controls.map(control => ({
+            colorScheme: getComputedStyle(control).colorScheme,
+            color: getComputedStyle(control).color,
+        })));
+        assert.ok(dark.every(control => control.colorScheme === 'dark'), 'native picker surfaces should follow dark mode');
+        assert.ok(dark.every(control => control.color !== 'rgb(48, 37, 29)'), 'dark-mode values should not keep the light-mode ink color');
+        await browser.close();
+    } finally {
+        await browser.close();
+    }
+});
