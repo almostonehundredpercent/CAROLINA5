@@ -62,10 +62,12 @@ Route::get('/rooms/{room:slug}', [RoomController::class, 'show'])->name('rooms.s
 Route::get('/rooms/{room:slug}/availability', [BookingController::class, 'availability'])->middleware('throttle:30,1')->name('rooms.availability');
 Route::post('/rooms/{room:slug}/promo-quote', [BookingController::class, 'promoQuote'])->middleware('throttle:20,1')->name('rooms.promos.quote');
 Route::get('/booking-lookup', [BookingController::class, 'lookupForm'])->name('bookings.lookup');
+Route::get('/booking-lookup/{booking}', [BookingController::class, 'lookupResult'])->name('bookings.lookup.show');
 Route::get('/stay/{booking}', [StayController::class, 'show'])->middleware(['signed', 'throttle:60,1'])->name('stay.show');
 Route::post('/stay/{booking}/arrival', [StayController::class, 'arrival'])->middleware(['signed', 'throttle:10,1'])->name('stay.arrival');
 Route::post('/booking-lookup', [BookingController::class, 'lookup'])->middleware('throttle:5,1')->name('bookings.lookup.submit');
 Route::patch('/booking-lookup/{booking}/cancel', [BookingController::class, 'cancelGuest'])->middleware('throttle:5,1')->name('bookings.lookup.cancel');
+Route::post('/booking-lookup/{booking}/extend', [BookingController::class, 'extendCheckedInStay'])->middleware('throttle:6,1')->name('bookings.lookup.extend');
 
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
 Route::get('/login/form', [AuthController::class, 'showLoginForm'])->name('login.form');

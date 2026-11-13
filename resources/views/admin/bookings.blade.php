@@ -263,6 +263,7 @@
                                     <td class="booking-stay-cell" data-label="Room &amp; stay">
                                         <b>{{ $booking->room?->name ?? 'Room removed' }}</b>
                                         <small>{{ $booking->check_in_at?->format('M j, g A') ?? $booking->check_in->format('M j') }} to {{ $booking->check_out_at?->format('M j, g A') ?? $booking->check_out->format('M j, Y') }}</small>
+                                        <small>{{ $booking->booking_type === 'hourly' ? ($booking->hours === 720 ? '1 month' : ($booking->hours > 720 && isset($booking->add_ons['extra_hours']) ? '1 month + '.(int) $booking->add_ons['extra_hours'].' hour'.((int) $booking->add_ons['extra_hours'] === 1 ? '' : 's') : $booking->hours.' hours')) : $booking->nights.' night'.($booking->nights === 1 ? '' : 's') }}{{ $booking->cooling_type ? ' · '.($booking->cooling_type === 'fan' ? 'Fan' : 'Air-conditioned') : '' }} · {{ $booking->guests }} guest{{ $booking->guests === 1 ? '' : 's' }}</small>
                                     </td>
                                     <td class="booking-total-cell" data-label="Total">₱{{ number_format($booking->total_amount, 2) }}</td>
                                     <td data-label="Status">

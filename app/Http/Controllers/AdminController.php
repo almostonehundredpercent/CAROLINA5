@@ -466,7 +466,7 @@ class AdminController extends Controller
             'guest_name' => 'required|string|max:255',
             'guest_email' => 'nullable|email:rfc|max:255',
             'guest_phone' => 'required|string|max:30',
-            'guests' => 'required|integer|min:1',
+            'guests' => 'required|integer|min:1|max:30',
             'check_in' => 'required|date|after_or_equal:today',
             'check_out' => 'required|date|after:check_in',
             'check_in_time' => 'nullable|date_format:H:i',
@@ -481,8 +481,8 @@ class AdminController extends Controller
         $nights = max(1, (int) ceil($checkInAt->diffInHours($checkOutAt) / 24));
         $booking = DB::transaction(function () use ($data, $checkInAt, $checkOutAt, $nights) {
             $room = Room::whereKey($data['room_id'])->lockForUpdate()->firstOrFail();
-            if ($data['guests'] > $room->guests) {
-                throw ValidationException::withMessages(['guests' => "{$room->name} accommodates up to {$room->guests} guests."]);
+            if ($data['guests'] > $room->booking_guest_limit) {
+                throw ValidationException::withMessages(['guests' => "{$room->name} accommodates up to {$room->booking_guest_limit} guests."]);
             }
             $conflict = $room->bookings()->blocking()->overlapping($checkInAt, $checkOutAt)->exists()
                 || $room->blocks()->overlapping($checkInAt, $checkOutAt)->exists();
@@ -1277,8 +1277,8 @@ class AdminController extends Controller
         $slugRule = ['required', 'string', 'max:255', 'alpha_dash', Rule::unique('rooms', 'slug')->ignore($room?->id)];
         $data = $request->validate([
             'name' => 'required|string|max:255', 'slug' => $slugRule, 'room_type' => 'required|string|max:100',
-            'description' => 'required|string|max:3000', 'beds' => 'required|integer|min:1|max:20', 'guests' => 'required|integer|min:1|max:30',
-            'price_per_night' => $room ? 'sometimes|numeric|min:0|max:999999|decimal:0,2' : 'required|numeric|min:0|max:999999|decimal:0,2', 'rental_hours' => 'nullable|integer|in:3,6,12,22,24', 'default_check_in_time' => 'nullable|date_format:H:i',
+            'description' => 'required|string|max:3000', 'beds' => 'required|integer|min:1|max:20', 'guests' => 'required|integer|min:2|max:30',
+            'price_per_night' => $room ? 'sometimes|numeric|min:0|max:999999|decimal:0,2' : 'required|numeric|min:0|max:999999|decimal:0,2', 'rental_hours' => 'nullable|integer|in:3,6,8,12,22,720', 'default_check_in_time' => 'nullable|date_format:H:i',
             'amenities' => 'nullable|string|max:1200', 'image_url' => 'nullable|url|max:2048', 'image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:5120',
             'is_active' => 'nullable|boolean', 'remove_image' => 'nullable|boolean',
         ]);

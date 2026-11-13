@@ -74,7 +74,7 @@
 .calendar-note{margin:5px 0 0;font-size:.73rem;color:var(--deep);line-height:1.4}.booking-form form .availability-calendar{margin-top:-4px}
 @media(max-width:520px){.stay-date-fields{grid-template-columns:1fr}.availability-calendar{width:100%;max-width:330px;padding:11px}.calendar-weekdays,.calendar-days{gap:3px}.calendar-weekdays span{font-size:.66rem}.calendar-day,.calendar-blank{height:34px;font-size:.78rem}}
 </style>
-<style>.hourly-rental{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px;padding:17px;border:1px solid var(--line);border-radius:9px;background:#fff}.hourly-rental>p{grid-column:1/-1;margin:0;line-height:1.55}.hourly-rental #hourly-total{padding:10px 12px;border-radius:6px;background:#fff1db;color:var(--deep);font-weight:700}@media(max-width:520px){.hourly-rental{grid-template-columns:1fr;padding:14px}}</style>
+<style>.hourly-rental{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px;padding:17px;border:1px solid var(--line);border-radius:9px;background:#fff}.hourly-rental>p{grid-column:1/-1;margin:0;line-height:1.55}.hourly-rental #hourly-total{padding:10px 12px;border-radius:6px;background:#fff1db;color:var(--deep);font-weight:700}.hourly-rental [hidden]{display:none!important}@media(max-width:520px){.hourly-rental{grid-template-columns:1fr;padding:14px}}</style>
 <style>.hourly-date-field{position:relative}.hourly-date-trigger{width:100%;min-height:42px;padding:10px 12px;border:1px solid var(--line);border-radius:6px;background:#fff;color:var(--ink);font:600 .86rem 'DM Sans';text-align:left;cursor:pointer}.hourly-date-trigger::after{content:'⌄';float:right;color:var(--deep);font-size:1rem}.hourly-calendar{position:absolute;z-index:5;top:calc(100% + 7px);left:0;width:min(320px,calc(100vw - 52px));padding:14px;border:1px solid var(--line);border-radius:8px;background:#fff;box-shadow:0 14px 30px rgba(41,29,18,.16)}.hourly-calendar[hidden]{display:none}.hourly-calendar-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}.hourly-calendar-head b{font-size:.82rem}.hourly-calendar-head button{width:28px;height:28px;border:1px solid var(--line);border-radius:5px;background:#fff;color:var(--deep);font-size:1.25rem;cursor:pointer}.hourly-calendar-week,.hourly-calendar-days{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}.hourly-calendar-week{margin-bottom:6px}.hourly-calendar-week span{text-align:center;color:var(--muted);font-size:.64rem;font-weight:700}.hourly-calendar-day,.hourly-calendar-blank{min-height:32px;border:0;border-radius:5px;background:transparent;color:var(--ink);font:600 .78rem 'DM Sans';display:grid;place-items:center}.hourly-calendar-day{cursor:pointer}.hourly-calendar-day:hover:not(:disabled){background:#fff0d8}.hourly-calendar-day.selected{background:var(--gold);color:#fff}.hourly-calendar-day:disabled{color:#c9c1b8;cursor:not-allowed}@media(max-width:520px){.hourly-calendar{width:100%;min-width:250px}.hourly-calendar-day,.hourly-calendar-blank{min-height:30px}}</style>
 <style>.hourly-time-field{position:relative}.hourly-time-trigger{width:100%;min-height:42px;padding:10px 12px;border:1px solid var(--line);border-radius:6px;background:#fff;color:var(--ink);font:600 .86rem 'DM Sans';text-align:left;cursor:pointer}.hourly-time-trigger::after{content:'⌄';float:right;color:var(--deep);font-size:1rem}.hourly-time-menu{position:absolute;z-index:5;top:calc(100% + 7px);left:0;width:min(360px,calc(100vw - 52px));padding:12px;border:1px solid var(--line);border-radius:8px;background:#fff;box-shadow:0 14px 30px rgba(41,29,18,.16)}.hourly-time-menu[hidden]{display:none}.hourly-time-menu-head{display:flex;align-items:baseline;justify-content:space-between;margin:0 0 10px}.hourly-time-menu-head b{font-size:.82rem}.hourly-time-menu-head small{color:var(--muted);font-size:.68rem}.hourly-time-periods{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.hourly-time-period{display:grid;gap:4px}.hourly-time-period h4{margin:0 0 2px;color:var(--muted);font:700 .61rem 'DM Sans';letter-spacing:.06em;text-transform:uppercase}.hourly-time-option{display:flex;min-height:38px;flex-direction:column;align-items:center;justify-content:center;gap:1px;border:0;border-radius:5px;background:#fff;color:var(--ink);font:600 .74rem 'DM Sans';cursor:pointer}.hourly-time-option::after{content:attr(data-status-label);font-size:.55rem;font-weight:700;line-height:1.1}.hourly-time-option:disabled{cursor:not-allowed}.hourly-time-option:hover,.hourly-time-option.selected{background:var(--gold);color:#fff}@media(max-width:520px){.hourly-time-menu{width:100%;min-width:250px}.hourly-time-periods{gap:5px}.hourly-time-option{font-size:.7rem}}</style>
 <style>.clean-select{position:relative}.clean-select-trigger,.selector-display{width:100%;min-height:42px;padding:10px 12px;border:1px solid var(--line);border-radius:6px;background:#fff;color:var(--ink);font:600 .86rem 'DM Sans';text-align:left}.clean-select-trigger{cursor:pointer}.clean-select-trigger::after{content:'⌄';float:right;color:var(--deep);font-size:1rem}.clean-select-menu{position:absolute;z-index:6;top:calc(100% + 7px);left:0;width:100%;max-height:min(290px,calc(100dvh - 160px));padding:6px;overflow-y:auto;overscroll-behavior:contain;border:1px solid var(--line);border-radius:8px;background:#fff;box-shadow:0 14px 30px rgba(41,29,18,.16);scrollbar-color:var(--gold) transparent;scrollbar-width:thin}.clean-select-menu[hidden]{display:none}.clean-select-option{display:block;width:100%;padding:10px 11px;border:0;border-radius:5px;background:#fff;color:var(--ink);font:600 .82rem 'DM Sans';text-align:left;cursor:pointer}.clean-select-option:hover,.clean-select-option.selected{background:#fff0d8;color:var(--deep)}</style>
@@ -169,7 +169,7 @@
                 <input type="hidden" name="booking_type" value="{{ $bookingMode === 'hourly' ? 'hourly' : 'dates' }}">
                 <input type="hidden" name="submission_token" value="{{ $submissionToken }}">
                 <div id="booking-entry-fields">
-                @if(!$room->rental_hours)
+                @if(false && !$room->rental_hours)
                 <section class="booking-type-selector" aria-label="Choose booking type">
                     <span class="booking-type-label">Choose your stay type</span>
                     <div class="booking-type-options">
@@ -181,7 +181,35 @@
 
                 @if($bookingMode === 'hourly')
                     <div class="hourly-booked-summary {{ count($hourlyBookedWindows) ? '' : 'is-clear' }}" id="hourly-booked-summary" role="status" aria-live="polite"><strong>Booked times on {{ \Carbon\Carbon::parse($hourlyDate)->format('M j') }}</strong>@if(count($hourlyBookedWindows))<ul>@foreach($hourlyBookedWindows as $window)<li>{{ $window }}</li>@endforeach</ul>@else<p>No existing reservations block this date.</p>@endif</div>
-                    <div class="hourly-rental"><p><strong>{{ $room->slug === 'carolina-room-11' ? 'Stay package' : ($room->rental_hours ? ($room->rate_label ? 'Fixed short-stay package' : 'Starting rate') : 'Short stay rental') }}</strong><br>@if($room->slug === 'carolina-room-11') 22-hour stay beginning at noon for ₱450.@elseif($room->rental_hours) @if($room->rate_label) This room is offered as a {{ $room->rental_hours }}-hour stay for ₱{{ number_format($room->price_per_night) }}.@else The {{ $room->rental_hours }}-hour stay starts at ₱{{ number_format($room->price_per_night) }}.@endif @else Rate: ₱{{ number_format($room->price_per_night / 24, 2) }} per hour.@endif</p><label class="clean-select">Duration<input id="hourly-hours" name="hours" type="hidden" value="{{ old('hours', $selectedHours) }}">@if($room->rental_hours)<span class="selector-display">{{ $room->rental_hours }} hours</span>@else<button type="button" class="clean-select-trigger" data-select-trigger>3 hours</button><section class="clean-select-menu" hidden>@foreach([3,6,12,24,48,72,96,120,168,720] as $hours)<button type="button" class="clean-select-option" data-select-value="{{ $hours }}">{{ $hours }} hours</button>@endforeach</section>@endif</label><label class="hourly-date-field">Check-in date<input id="hourly-date" name="hourly_date" type="hidden" value="{{ $hourlyDate }}" required><button id="hourly-date-trigger" class="hourly-date-trigger" type="button"></button><section class="hourly-calendar" id="hourly-calendar" hidden aria-label="Choose check-in date"><div class="hourly-calendar-head"><button type="button" id="hourly-calendar-prev" aria-label="Previous month">‹</button><b id="hourly-calendar-month"></b><button type="button" id="hourly-calendar-next" aria-label="Next month">›</button></div><div class="hourly-calendar-week"><span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span></div><div class="hourly-calendar-days" id="hourly-calendar-days"></div></section></label><label class="hourly-time-field">Check-in time<input id="hourly-time" name="check_in_time" type="hidden" value="{{ old('check_in_time', $selectedTime) }}" required><button id="hourly-time-trigger" class="hourly-time-trigger" type="button"></button><section class="hourly-time-menu" id="hourly-time-menu" hidden aria-label="Choose check-in time"><div class="hourly-time-menu-head"><b>Choose a time</b><small>One-hour slots</small></div><p class="hourly-time-legend">Red times mean the room is occupied for your selected stay.</p><div class="hourly-time-periods"><div class="hourly-time-period"><h4>Morning</h4>@for($hour = 6; $hour < 12; $hour++)<button class="hourly-time-option" type="button" data-time="{{ str_pad($hour, 2, '0', STR_PAD_LEFT) }}:00">{{ \Carbon\Carbon::createFromTime($hour)->format('g A') }}</button>@endfor</div><div class="hourly-time-period"><h4>Afternoon</h4>@for($hour = 12; $hour < 18; $hour++)<button class="hourly-time-option" type="button" data-time="{{ str_pad($hour, 2, '0', STR_PAD_LEFT) }}:00">{{ \Carbon\Carbon::createFromTime($hour)->format('g A') }}</button>@endfor</div><div class="hourly-time-period"><h4>Evening</h4>@for($hour = 18; $hour < 24; $hour++)<button class="hourly-time-option" type="button" data-time="{{ str_pad($hour, 2, '0', STR_PAD_LEFT) }}:00">{{ \Carbon\Carbon::createFromTime($hour)->format('g A') }}</button>@endfor</div></div></section></label><p id="hourly-total">Estimated total: ₱{{ number_format($room->rental_hours ? $room->price_per_night : ($room->price_per_night / 24) * 3, 2) }}</p></div>
+                    <div class="hourly-rental" data-pricing="{{ json_encode(\App\Support\StayPricing::rates()) }}">
+                        <p><strong>Choose your package</strong><br>Prices include up to 2 guests. Additional guests are ₱300 each. One-month stays are priced by calendar month.</p>
+                        <label class="clean-select">Duration
+                            <input id="hourly-hours" name="hours" type="hidden" value="{{ old('hours', $selectedHours) }}">
+                            <button type="button" class="clean-select-trigger" data-select-trigger>3 hours</button>
+                            <section class="clean-select-menu" hidden>
+                                @foreach(\App\Support\StayPricing::rates() as $hours => $coolingRates)
+                                    <button type="button" class="clean-select-option" data-select-value="{{ $hours }}">{{ \App\Support\StayPricing::durationLabel($hours) }} · from ₱{{ number_format(\App\Support\StayPricing::startingRate($hours)) }}</button>
+                                @endforeach
+                            </section>
+                        </label>
+                        <label id="cooling-field">Cooling
+                            <select id="cooling-type" name="cooling_type">
+                                <option value="aircon" @selected(old('cooling_type', $bookingSearch['cooling_type'] ?? 'aircon') === 'aircon')>Air-conditioned</option>
+                                <option value="fan" @selected(old('cooling_type', $bookingSearch['cooling_type'] ?? 'aircon') === 'fan')>Fan</option>
+                            </select>
+                            <small id="cooling-note">Air-conditioned packages</small>
+                        </label>
+                        <label class="hourly-date-field">Check-in date<input id="hourly-date" name="hourly_date" type="hidden" value="{{ $hourlyDate }}" required><button id="hourly-date-trigger" class="hourly-date-trigger" type="button"></button><section class="hourly-calendar" id="hourly-calendar" hidden aria-label="Choose check-in date"><div class="hourly-calendar-head"><button type="button" id="hourly-calendar-prev" aria-label="Previous month">‹</button><b id="hourly-calendar-month"></b><button type="button" id="hourly-calendar-next" aria-label="Next month">›</button></div><div class="hourly-calendar-week"><span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span></div><div class="hourly-calendar-days" id="hourly-calendar-days"></div></section></label>
+                        <label class="hourly-time-field">Check-in time<input id="hourly-time" name="check_in_time" type="hidden" value="{{ old('check_in_time', $selectedTime) }}" required><button id="hourly-time-trigger" class="hourly-time-trigger" type="button"></button><section class="hourly-time-menu" id="hourly-time-menu" hidden aria-label="Choose check-in time"><div class="hourly-time-menu-head"><b>Choose a time</b><small>One-hour slots</small></div><div class="hourly-time-periods"><div class="hourly-time-period"><h4>Morning</h4>@for($hour = 6; $hour < 12; $hour++)<button class="hourly-time-option" type="button" data-time="{{ str_pad($hour, 2, '0', STR_PAD_LEFT) }}:00">{{ \Carbon\Carbon::createFromTime($hour)->format('g A') }}</button>@endfor</div><div class="hourly-time-period"><h4>Afternoon</h4>@for($hour = 12; $hour < 18; $hour++)<button class="hourly-time-option" type="button" data-time="{{ str_pad($hour, 2, '0', STR_PAD_LEFT) }}:00">{{ \Carbon\Carbon::createFromTime($hour)->format('g A') }}</button>@endfor</div><div class="hourly-time-period"><h4>Evening</h4>@for($hour = 18; $hour < 24; $hour++)<button class="hourly-time-option" type="button" data-time="{{ str_pad($hour, 2, '0', STR_PAD_LEFT) }}:00">{{ \Carbon\Carbon::createFromTime($hour)->format('g A') }}</button>@endfor</div></div></section></label>
+                        @php
+                            $initialHours = (int) old('hours', $selectedHours);
+                            if (! in_array($initialHours, \App\Support\StayPricing::durations(), true)) $initialHours = $selectedHours;
+                            $initialCooling = old('cooling_type', $bookingSearch['cooling_type'] ?? 'aircon');
+                            if (! \App\Support\StayPricing::isOffered($initialHours, $initialCooling)) $initialCooling = 'aircon';
+                            $initialGuests = (int) old('guests', $selectedGuests);
+                        @endphp
+                        <p id="hourly-total">Estimated total: ₱{{ number_format(\App\Support\StayPricing::total($initialHours, $initialCooling, $initialGuests), 2) }}</p>
+                    </div>
                 @else
                 <div class="stay-date-fields">
                     <label>Check in<input id="check-in-display" type="text" placeholder="Select a date" readonly required aria-controls="availability-calendar" aria-expanded="false"><input id="check-in" name="check_in" type="hidden" value="{{ old('check_in', $bookingSearch['check_in'] ?? null) }}" required></label>
@@ -210,15 +238,15 @@
                 </noscript>
                 <section class="stay-party-details" aria-labelledby="guest-details-title">
                     <strong id="guest-details-title">Guest details</strong>
-                    <small>Total guests includes children and must stay within this room's {{ $room->guests }}-guest limit.</small>
+                    <small>Package prices include up to 2 guests. Each additional guest is ₱300, subject to this room's {{ $room->booking_guest_limit }}-guest capacity.</small>
                     <div class="party-detail-fields">
-                        @if($room->guests === 1)
+                        @if($room->booking_guest_limit === 1)
                             <input type="hidden" name="guests" value="1">
                             <div class="party-capacity"><b>1 guest</b><small>Room capacity</small></div>
                         @else
-                            <label class="clean-select">Total guests<input name="guests" type="hidden" value="{{ old('guests', $selectedGuests) }}"><button type="button" class="clean-select-trigger" data-select-trigger>1 guest</button><section class="clean-select-menu" hidden>@for($i = 1; $i <= $room->guests; $i++)<button type="button" class="clean-select-option" data-select-value="{{ $i }}">{{ $i }} guest{{ $i > 1 ? 's' : '' }}</button>@endfor</section></label>
+                            <label class="clean-select">Total guests<input name="guests" type="hidden" value="{{ old('guests', $selectedGuests) }}"><button type="button" class="clean-select-trigger" data-select-trigger>1 guest</button><section class="clean-select-menu" hidden>@for($i = 1; $i <= $room->booking_guest_limit; $i++)<button type="button" class="clean-select-option" data-select-value="{{ $i }}">{{ $i }} guest{{ $i > 1 ? 's' : '' }}</button>@endfor</section></label>
                         @endif
-                        <label class="clean-select">Children<input name="children_count" type="hidden" value="{{ old('children_count', 0) }}"><button type="button" class="clean-select-trigger" data-select-trigger>None</button><section class="clean-select-menu" hidden>@for($i = 0; $i <= min(10, $room->guests); $i++)<button type="button" class="clean-select-option" data-select-value="{{ $i }}">{{ $i ? $i . ' child' . ($i > 1 ? 'ren' : '') : 'None' }}</button>@endfor</section></label>
+                        <label class="clean-select">Children<input name="children_count" type="hidden" value="{{ old('children_count', 0) }}"><button type="button" class="clean-select-trigger" data-select-trigger>None</button><section class="clean-select-menu" hidden>@for($i = 0; $i <= min(10, $room->booking_guest_limit); $i++)<button type="button" class="clean-select-option" data-select-value="{{ $i }}">{{ $i ? $i . ' child' . ($i > 1 ? 'ren' : '') : 'None' }}</button>@endfor</section></label>
                         <label class="clean-select">Pets<input name="pets_count" type="hidden" value="{{ old('pets_count', 0) }}"><button type="button" class="clean-select-trigger" data-select-trigger>None</button><section class="clean-select-menu" hidden>@for($i = 0; $i <= 5; $i++)<button type="button" class="clean-select-option" data-select-value="{{ $i }}">{{ $i ? $i . ' pet' . ($i > 1 ? 's' : '') : 'None' }}</button>@endfor</section></label>
                     </div>
                 </section>
@@ -280,13 +308,13 @@
         </div>
         <div class="booking-summary-content">
             <h3>{{ $room->name }}</h3>
-            <p>{{ $room->room_type }} · Up to {{ $room->guests }} guests</p>
+            <p>{{ $room->room_type }} · Up to {{ $room->booking_guest_limit }} guests</p>
             <div class="booking-summary-rate">
                 <span class="booking-summary-rate-label">Room rate</span>
                 @if($bookingMode === 'hourly')
-                    <strong>@if($room->slug === 'carolina-room-11') ₱{{ number_format($room->price_per_night) }}@elseif($room->rental_hours && !$room->rate_label) ₱{{ number_format($room->price_per_night) }}@else ₱{{ number_format($room->rental_hours ? $room->price_per_night : $room->price_per_night / 24, 2) }}@if(!$room->rental_hours || $room->rate_label) <small>{{ $room->rental_hours ? $room->rate_label : '/ hour' }}</small>@endif @endif</strong>
+                    <strong>₱350 <small>starting price</small></strong>
                 @else
-                    <strong>@if($room->slug === 'carolina-room-11' || !$room->rate_label) ₱{{ number_format($room->price_per_night) }}@else ₱{{ number_format($room->price_per_night) }} <small>{{ $room->rate_label }}</small>@endif</strong>
+                    <strong>₱350 <small>starting price</small></strong>
                 @endif
             </div>
         </div>
@@ -305,10 +333,29 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('.clean-select').forEach(field => { const input = field.querySelector('input[type="hidden"]'), trigger = field.querySelector('[data-select-trigger]'), menu = field.querySelector('.clean-select-menu'); if (!trigger || !menu || !input) return; const select = value => { const option = menu.querySelector(`[data-select-value="${value}"]`); input.value = value; trigger.textContent = option?.textContent ?? value; menu.querySelectorAll('.clean-select-option').forEach(button => button.classList.toggle('selected', button.dataset.selectValue === value)); }; select(input.value); trigger.addEventListener('click', () => { const opening = menu.hidden; closeOpenPickers(menu); menu.hidden = !opening; }); menu.querySelectorAll('.clean-select-option').forEach(button => button.addEventListener('click', () => { select(button.dataset.selectValue); menu.hidden = true; input.dispatchEvent(new Event('change')); })); });
     const hourlyHours = document.getElementById('hourly-hours');
     if (hourlyHours) {
-        const total = document.getElementById('hourly-total'); const packageRate = {{ $room->rental_hours ? $room->price_per_night : 'null' }}; const packageHours = {{ $room->rental_hours ?: 'null' }}; const rate = {{ $room->price_per_night / 24 }};
-        if (packageRate) { const field = hourlyHours.closest('.clean-select'), display = field.querySelector('.selector-display'), options = [[packageHours, `${packageHours} hours`], [48, '2 days'], [72, '3 days'], [96, '4 days'], [120, '5 days'], [168, '1 week'], [720, '1 month']]; if (display) { const trigger = document.createElement('button'), menu = document.createElement('section'); trigger.type = 'button'; trigger.className = 'clean-select-trigger'; menu.className = 'clean-select-menu'; menu.hidden = true; options.forEach(([value, label]) => { const option = document.createElement('button'); option.type = 'button'; option.className = 'clean-select-option'; option.dataset.selectValue = value; option.textContent = label; menu.append(option); }); const select = value => { hourlyHours.value = value; trigger.textContent = options.find(([option]) => Number(option) === Number(value))?.[1] ?? `${value} hours`; menu.querySelectorAll('button').forEach(option => option.classList.toggle('selected', Number(option.dataset.selectValue) === Number(value))); hourlyHours.dispatchEvent(new Event('change')); }; display.replaceWith(trigger); field.append(menu); select(hourlyHours.value); trigger.addEventListener('click', () => { const opening = menu.hidden; closeOpenPickers(menu); menu.hidden = !opening; }); menu.querySelectorAll('button').forEach(option => option.addEventListener('click', () => { select(option.dataset.selectValue); menu.hidden = true; })); } }
-        const refresh = () => { const hours = Number(hourlyHours.value); const multiplier = ({48:2,72:3,96:4,120:5,168:7,720:30})[hours] ?? 1; total.textContent = `Estimated total: ₱${(packageRate ? packageRate * multiplier : rate * hours).toLocaleString('en-PH', { minimumFractionDigits: 2 })}`; };
-        hourlyHours.addEventListener('change', refresh); refresh();
+        const total = document.getElementById('hourly-total');
+        const pricing = JSON.parse(document.querySelector('.hourly-rental').dataset.pricing);
+        const cooling = document.getElementById('cooling-type'), coolingField = document.getElementById('cooling-field'), coolingNote = document.getElementById('cooling-note');
+        const guestCount = document.querySelector('input[name="guests"]');
+        const refresh = () => {
+            const hours = Number(hourlyHours.value);
+            if (hours !== 22) cooling.value = 'aircon';
+            coolingField.hidden = hours !== 22;
+            coolingNote.textContent = hours === 22 ? 'Choose fan or air-conditioned.' : 'This package is air-conditioned.';
+            const fanOption = cooling.querySelector('[value="fan"]');
+            const airconOption = cooling.querySelector('[value="aircon"]');
+            if (airconOption) airconOption.textContent = 'Air-conditioned · ₱' + Number(pricing[hours] && pricing[hours].aircon || 0).toLocaleString('en-PH');
+            if (fanOption) fanOption.textContent = 'Fan · ₱' + Number(pricing[hours] && pricing[hours].fan || 450).toLocaleString('en-PH');
+            const base = Number(pricing[hours] && pricing[hours][cooling.value] || pricing[hours] && pricing[hours].aircon || 0);
+            const guests = Number(guestCount && guestCount.value || 2);
+            const extras = Math.max(0, guests - 2) * 300;
+            const amount = base + extras;
+            total.textContent = 'Estimated total: ₱' + amount.toLocaleString('en-PH', { minimumFractionDigits: 2 }) + (extras ? ' · includes ₱' + extras.toLocaleString('en-PH') + ' for extra guests' : '');
+        };
+        hourlyHours.addEventListener('change', refresh);
+        cooling.addEventListener('change', refresh);
+        if (guestCount) guestCount.addEventListener('change', refresh);
+        refresh();
         const value = document.getElementById('hourly-date'), trigger = document.getElementById('hourly-date-trigger'), picker = document.getElementById('hourly-calendar'), days = document.getElementById('hourly-calendar-days'), month = document.getElementById('hourly-calendar-month');
         const propertyClock = () => { const parts = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Manila', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).formatToParts(new Date()); const part = type => parts.find(item => item.type === type).value; return { date: `${part('year')}-${part('month')}-${part('day')}`, time: `${part('hour')}:${part('minute')}` }; };
         let propertyNow = propertyClock(), todayValue = propertyNow.date;
@@ -353,7 +400,19 @@ document.addEventListener('DOMContentLoaded', () => {
             const [hour, minute] = time.split(':').map(Number);
             return new Date(Date.UTC(year, month - 1, day, hour, minute));
         };
-        const isTimeBooked = (dateValue, time, duration) => { const start = dateAtBookingTime(dateValue, time), end = new Date(start.getTime() + duration * 60 * 60 * 1000); return hourlyBlockedSlots.some(slot => start < new Date(slot.end) && end > new Date(slot.start)); };
+        const durationEnd = (start, duration) => {
+            const end = new Date(start);
+            if (duration === 720) {
+                const day = end.getUTCDate();
+                end.setUTCDate(1);
+                end.setUTCMonth(end.getUTCMonth() + 1);
+                const lastDay = new Date(Date.UTC(end.getUTCFullYear(), end.getUTCMonth() + 1, 0)).getUTCDate();
+                end.setUTCDate(Math.min(day, lastDay));
+            } else {
+                end.setTime(end.getTime() + duration * 3600000);
+            }
+            return end;
+        };        const isTimeBooked = (dateValue, time, duration) => { const start = dateAtBookingTime(dateValue, time), end = durationEnd(start, duration); return hourlyBlockedSlots.some(slot => start < new Date(slot.end) && end > new Date(slot.start)); };
         const hasAvailableStartTime = dateValue => candidateTimes.some(button => {
             const past = dateValue < todayValue || (dateValue === todayValue && button.dataset.time <= propertyNow.time);
             return !past && !isTimeBooked(dateValue, button.dataset.time, Number(hourlyHours.value));
@@ -385,7 +444,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const prettyTime = time => new Date(`2000-01-01T${time}`).toLocaleTimeString('en-PH', { hour: 'numeric', hour12: true });
         const conflictingSlots = (date, time, duration) => {
             const start = dateAtBookingTime(date, time);
-            const end = new Date(start.getTime() + duration * 60 * 60 * 1000);
+            const end = durationEnd(start, duration);
             return hourlyBlockedSlots.filter(slot => start < new Date(slot.end) && end > new Date(slot.start));
         };
         const describeSlot = slot => {
@@ -582,11 +641,14 @@ document.addEventListener('DOMContentLoaded', () => {
         const data = new FormData(form), hourly = data.get('booking_type') === 'hourly';
         let amount = null, detail = 'Choose your stay to see an estimate.';
         if (hourly) {
-            const hours = Number(data.get('hours') || 0), packageHours = Number(total.dataset.packageHours || 0), packageRate = Number(total.dataset.packageRate || 0);
-            const multiplier = ({48:2,72:3,96:4,120:5,168:7,720:30})[hours] || 1;
-            amount = packageRate ? packageRate * multiplier : Number(total.dataset.hourlyRate || 0) * hours;
-            const length = hours === 720 ? '1 month' : hours >= 24 ? `${hours / 24} day${hours === 24 ? '' : 's'}` : `${hours} hours`;
-            detail = `${length}${data.get('hourly_date') ? ` · ${formatDate(data.get('hourly_date'))}` : ''}${packageHours && hours === packageHours ? ' · fixed package' : ''}`;
+            const hours = Number(data.get('hours') || 0);
+            const rates = JSON.parse(document.querySelector('.hourly-rental').dataset.pricing);
+            const cooling = data.get('cooling_type') || 'aircon';
+            const guests = Number(data.get('guests') || 2);
+            const base = Number(rates[hours] && rates[hours][cooling] || 0);
+            amount = base + Math.max(0, guests - 2) * 300;
+            const length = hours === 720 ? '1 month' : hours + ' hours';
+            detail = length + (data.get('hourly_date') ? ' · ' + formatDate(data.get('hourly_date')) : '') + ' · ' + (cooling === 'fan' ? 'fan' : 'air-conditioned');
         } else {
             const start = data.get('check_in'), end = data.get('check_out');
             if (start && end) {
@@ -631,7 +693,7 @@ document.addEventListener('DOMContentLoaded', () => {
         input.value = code;
         if (!code) { message.className = 'promo-message error'; message.textContent = 'Enter a promo code first.'; return; }
         const formData = new FormData(form), payload = new FormData();
-        ['_token', 'booking_type', 'hours', 'check_in', 'check_out'].forEach(key => { const value = formData.get(key); if (value) payload.append(key, value); });
+        ['_token', 'booking_type', 'hours', 'cooling_type', 'guests', 'check_in', 'check_out'].forEach(key => { const value = formData.get(key); if (value) payload.append(key, value); });
         payload.append('promo_code', code);
         button.disabled = true; message.className = 'promo-message'; message.textContent = 'Checking promo…';
         try {
@@ -690,6 +752,19 @@ document.addEventListener('DOMContentLoaded', () => {
         window.addEventListener('pagehide', () => { clearTimeout(guestDraftTimer); void saveGuestDraft(true); });
     }
     let sequence = 0, allowed = false, timer;
+    const durationEndForAvailability = (start, duration) => {
+        const end = new Date(start);
+        if (duration === 720) {
+            const day = end.getUTCDate();
+            end.setUTCDate(1);
+            end.setUTCMonth(end.getUTCMonth() + 1);
+            const lastDay = new Date(Date.UTC(end.getUTCFullYear(), end.getUTCMonth() + 1, 0)).getUTCDate();
+            end.setUTCDate(Math.min(day, lastDay));
+        } else {
+            end.setTime(end.getTime() + duration * 3600000);
+        }
+        return end;
+    };
     const check = async () => {
         const run = ++sequence;
         const data = new FormData(form);
@@ -697,7 +772,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (data.get('booking_type') === 'hourly') {
             if (!data.get('hourly_date') || !data.get('check_in_time')) { status.textContent = 'Choose a check-in date and time before continuing.'; return false; }
             start = `${data.get('hourly_date')}T${data.get('check_in_time')}:00Z`;
-            end = new Date(Date.parse(start) + Number(data.get('hours')) * 3600000).toISOString();
+            end = durationEndForAvailability(new Date(start), Number(data.get('hours'))).toISOString();
         } else {
             if (!data.get('check_in') || !data.get('check_out')) { status.textContent = 'Choose both check-in and check-out dates before continuing.'; return false; }
             start = `${data.get('check_in')}T00:00:00Z`; end = `${data.get('check_out')}T00:00:00Z`;
@@ -735,7 +810,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (hourly) {
             addReviewItem('Check-in', `${dateLabel(data.get('hourly_date'))} · ${timeLabel(data.get('check_in_time'))}`);
             const hours = Number(data.get('hours'));
-            addReviewItem('Duration', hours === 720 ? '1 month' : hours < 24 ? `${hours} hours` : `${hours / 24} day${hours === 24 ? '' : 's'}`);
+            addReviewItem('Duration', hours === 720 ? '1 month' : hours + ' hours');
+            addReviewItem('Cooling', data.get('cooling_type') === 'fan' ? 'Fan' : 'Air-conditioned');
         } else {
             const start = data.get('check_in'), end = data.get('check_out');
             const nights = Math.round((new Date(`${end}T00:00:00`) - new Date(`${start}T00:00:00`)) / 86400000);

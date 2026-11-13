@@ -53,6 +53,10 @@ final class PromoPricing
 
     private static function duration(int $hours): string
     {
+        if ($hours === 720) {
+            return '1 month';
+        }
+
         return $hours % 24 === 0 ? ($hours / 24).' days' : $hours.' hours';
     }
 }

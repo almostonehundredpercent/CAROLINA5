@@ -19,10 +19,10 @@ class RoomController extends Controller
             ->withAvg('approvedReviews', 'rating')->withCount('approvedReviews');
         $filters = BookingSelection::query($request);
         if (isset($filters['check_in'])) {
-            $filters += ['stay' => 'day', 'check_in_time' => '12:00'];
+            $filters += ['stay' => '3', 'check_in_time' => '12:00'];
         }
         if (isset($filters['guests'])) {
-            $rooms->where('guests', '>=', (int) $filters['guests']);
+            $rooms->whereRaw('CASE WHEN guests < 2 THEN 2 ELSE guests END >= ?', [(int) $filters['guests']]);
         }
         if (($filters['sort'] ?? 'recommended') === 'price_asc') {
             $rooms->orderBy('price_per_night')->orderBy('id');
@@ -65,18 +65,16 @@ class RoomController extends Controller
 
         $bookingSearch = BookingSelection::query($request);
         if (isset($bookingSearch['check_in'])) {
-            $bookingSearch += ['stay' => 'day', 'check_in_time' => '12:00'];
+            $bookingSearch += ['stay' => '3', 'check_in_time' => '12:00'];
         }
         [$startsAt, $endsAt] = RoomAvailability::window($bookingSearch);
         RoomAvailability::annotate(collect([$room]), $startsAt, $endsAt);
 
-        $nextBookingMode = $room->rental_hours
-            ? 'hourly'
-            : ($bookingSearch['mode'] ?? (isset($bookingSearch['stay']) ? 'hourly' : 'dates'));
+        $nextBookingMode = 'hourly';
         $stayHours = isset($bookingSearch['check_in'])
             ? BookingSelection::hours($bookingSearch, $room)
-            : ($room->rental_hours ?: 24);
-        $dateOnly = ! $room->rental_hours && $nextBookingMode === 'dates';
+            : 3;
+        $dateOnly = false;
         $nextAvailableAt = $room->availability_reason
             ? RoomAvailability::nextAvailableAt($room, $startsAt, $stayHours, $dateOnly)
             : null;

@@ -17,7 +17,7 @@ class RoomAvailability
                 ? Carbon::parse($selection['check_in'])->startOfDay()
                 : Carbon::parse($selection['check_in'].' '.($selection['check_in_time'] ?? '12:00'));
 
-            return [$startsAt, $startsAt->copy()->addHours(BookingSelection::hours($selection))];
+            return [$startsAt, StayPricing::checkoutAt($startsAt, BookingSelection::hours($selection))];
         }
 
         $startsAt = PropertyTime::now();
@@ -85,7 +85,7 @@ class RoomAvailability
         // Each collision moves past at least one interval; one final pass finds a gap.
         for ($attempt = 0; $attempt <= count($intervals); $attempt++) {
             $candidate = $dateOnly ? $candidate->copy()->ceilDay() : self::nextCheckInHour($candidate);
-            $end = $candidate->copy()->addHours($hours);
+            $end = StayPricing::checkoutAt($candidate, $hours);
             $collision = null;
             foreach ($intervals as [$startsAt, $endsAt]) {
                 if ($startsAt->lt($end) && $endsAt->gt($candidate)

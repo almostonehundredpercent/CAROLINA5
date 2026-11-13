@@ -20,6 +20,7 @@ use App\Support\BookingSelection;
 use App\Support\FinancialSummary;
 use App\Support\PropertyTime;
 use App\Support\PromoPricing;
+use App\Support\StayPricing;
 use Carbon\Carbon;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
@@ -53,22 +54,22 @@ class BookingController extends Controller
         $propertyToday = Carbon::now('Asia/Manila')->toDateString();
         $hourlyDate = old('hourly_date', $bookingSearch['check_in'] ?? $propertyToday);
         $selectedHours = BookingSelection::hours($bookingSearch, $room);
-        $allowedHours = $room->rental_hours ? array_unique([$room->rental_hours, 48, 72, 96, 120, 168, 720]) : [3, 6, 12, 24, 48, 72, 96, 120, 168, 720];
+        $allowedHours = StayPricing::durations();
         $selectionNotice = in_array($selectedHours, $allowedHours, true) ? null : 'The searched duration is not offered for this room. Choose one of its available stay packages below.';
-        $selectedHours = in_array($selectedHours, $allowedHours, true) ? $selectedHours : ($room->rental_hours ?: 3);
+        $selectedHours = in_array($selectedHours, $allowedHours, true) ? $selectedHours : 3;
         $hourlyBlockedSlots = $this->hourlyBlockedSlots($room);
 
         return view('bookings.create', [
             'room' => $room,
             'guestDraft' => $guestDraft,
             'isGuest' => $request->boolean('guest'),
-            'bookingMode' => $room->rental_hours ? 'hourly' : ($bookingSearch['mode'] ?? (isset($bookingSearch['stay']) ? 'hourly' : 'dates')),
+            'bookingMode' => 'hourly',
             'bookingSearch' => $bookingSearch,
             'propertyToday' => $propertyToday,
             'selectedHours' => $selectedHours,
             'allowedHours' => $allowedHours,
             'selectedTime' => $bookingSearch['check_in_time'] ?? ($room->default_check_in_time ? substr($room->default_check_in_time, 0, 5) : '12:00'),
-            'selectedGuests' => isset($bookingSearch['guests']) && (int) $bookingSearch['guests'] <= $room->guests ? (int) $bookingSearch['guests'] : 1,
+            'selectedGuests' => isset($bookingSearch['guests']) && (int) $bookingSearch['guests'] <= $room->booking_guest_limit ? (int) $bookingSearch['guests'] : 2,
             'selectionNotice' => $selectionNotice,
             'blockedRanges' => $blockedRanges,
             'hourlyBlockedSlots' => $hourlyBlockedSlots,
@@ -138,35 +139,20 @@ class BookingController extends Controller
     {
         $data = $request->validate([
             'promo_code' => ['required', 'string', 'max:40'],
-            'booking_type' => ['required', 'in:dates,hourly'],
-            'hours' => ['nullable', 'integer', 'min:1', 'max:8760'],
-            'check_in' => ['nullable', 'date'],
-            'check_out' => ['nullable', 'date', 'after:check_in'],
+            'booking_type' => ['required', 'in:hourly'],
+            'hours' => ['required', 'integer', 'in:3,6,8,12,22,720'],
+            'cooling_type' => ['required', 'in:fan,aircon'],
+            'guests' => ['required', 'integer', 'min:1', 'max:'.$room->booking_guest_limit],
         ]);
-
-        if ($data['booking_type'] === 'hourly') {
-            $hours = (int) ($data['hours'] ?? 0);
-            abort_if($hours < 1, 422, 'Choose a stay duration first.');
-            $original = $room->rental_hours
-                ? round($room->price_per_night * match ($hours) {
-                    48 => 2, 72 => 3, 96 => 4, 120 => 5, 168 => 7, 720 => 30, default => 1
-                }, 2)
-                : round(($room->price_per_night / 24) * $hours, 2);
-        } else {
-            abort_if(empty($data['check_in']) || empty($data['check_out']), 422, 'Choose check-in and check-out dates first.');
-            $nights = Carbon::parse($data['check_in'])->diffInDays(Carbon::parse($data['check_out']));
-            $hours = $nights * 24;
-            $original = $nights * $room->price_per_night;
+        $hours = (int) $data['hours'];
+        if (! StayPricing::isOffered($hours, $data['cooling_type'])) {
+            throw ValidationException::withMessages(['cooling_type' => 'That cooling option is not offered for the selected stay length.']);
         }
-
+        $original = StayPricing::total($hours, $data['cooling_type'], (int) $data['guests']);
         $quote = PromoPricing::quote($data['promo_code'], $room, $hours, $original);
-
         return response()->json([
-            'code' => $quote['promo']->code,
-            'name' => $quote['promo']->name,
-            'original' => $quote['original'],
-            'discount' => $quote['discount'],
-            'total' => $quote['total'],
+            'code' => $quote['promo']->code, 'name' => $quote['promo']->name,
+            'original' => $quote['original'], 'discount' => $quote['discount'], 'total' => $quote['total'],
             'message' => $quote['promo']->name.' applied. You save ₱'.number_format($quote['discount'], 2).'.',
         ])->header('Cache-Control', 'no-store');
     }
@@ -258,12 +244,7 @@ class BookingController extends Controller
         if ($request->filled('promo_code')) {
             $request->merge(['promo_code' => Str::upper(trim((string) $request->input('promo_code')))]);
         }
-        $rules = ['booking_type' => 'required|in:dates,hourly', 'guests' => 'required|integer|min:1|max:'.$room->guests, 'children_count' => 'nullable|integer|min:0|max:10|lte:guests', 'pets_count' => 'nullable|integer|min:0|max:5', 'special_request' => 'nullable|string|max:500', 'promo_code' => 'nullable|string|max:40', 'checkout_type' => 'required|in:guest,account', 'submission_token' => 'required|uuid', 'terms_accepted' => 'accepted'];
-        if ($request->input('booking_type') === 'hourly') {
-            $rules += ['hourly_date' => 'required|date|after_or_equal:'.PropertyTime::today(), 'check_in_time' => ['required', 'date_format:H:i', 'regex:/^(0[6-9]|1[0-9]|2[0-3]):00$/'], 'hours' => 'required|integer|in:'.($room->rental_hours ? implode(',', array_unique([$room->rental_hours, 48, 72, 96, 120, 168, 720])) : '3,6,12,24,48,72,96,120,168,720')];
-        } else {
-            $rules += ['check_in' => 'required|date|after_or_equal:'.PropertyTime::today(), 'check_out' => 'required|date|after:check_in'];
-        }
+        $rules = ['booking_type' => 'required|in:hourly', 'guests' => 'required|integer|min:1|max:'.$room->booking_guest_limit, 'children_count' => 'nullable|integer|min:0|max:10|lte:guests', 'pets_count' => 'nullable|integer|min:0|max:5', 'special_request' => 'nullable|string|max:500', 'promo_code' => 'nullable|string|max:40', 'checkout_type' => 'required|in:guest,account', 'submission_token' => 'required|uuid', 'terms_accepted' => 'accepted', 'hours' => 'required|integer|in:3,6,8,12,22,720', 'cooling_type' => 'required|in:fan,aircon', 'hourly_date' => 'required|date|after_or_equal:'.PropertyTime::today(), 'check_in_time' => ['required', 'date_format:H:i', 'regex:/^(0[6-9]|1[0-9]|2[0-3]):00$/']];
         if ($request->input('checkout_type') === 'guest') {
             $rules += ['guest_name' => 'required|string|max:255', 'guest_email' => 'required|email:rfc|max:255', 'guest_phone' => ['required', 'regex:/^(?:\\+63|63|0)9\\d{9}$/'], 'terms_accepted' => 'accepted'];
         }
@@ -280,31 +261,24 @@ class BookingController extends Controller
         if ($data['checkout_type'] === 'account' && ! $request->user()) {
             return redirect()->route('login')->with('success', 'Please sign in to use account checkout.');
         }
-        if ($data['booking_type'] === 'hourly') {
-            $checkInAt = Carbon::parse($data['hourly_date'].' '.$data['check_in_time'], 'UTC');
-            $checkOutAt = $checkInAt->copy()->addHours((int) $data['hours']);
-            $nights = max(1, (int) ceil($data['hours'] / 24));
-            $data['check_in'] = $checkInAt->toDateString();
-            $data['check_out'] = $checkOutAt->toDateString();
-            $data['check_in_at'] = $checkInAt;
-            $data['check_out_at'] = $checkOutAt;
-        } else {
-            $checkInAt = Carbon::parse($data['check_in'])->startOfDay();
-            $checkOutAt = Carbon::parse($data['check_out'])->startOfDay();
-            $nights = $checkInAt->diffInDays($checkOutAt);
-            $data['check_in_at'] = $checkInAt;
-            $data['check_out_at'] = $checkOutAt;
+        if (! StayPricing::isOffered((int) $data['hours'], $data['cooling_type'])) {
+            throw ValidationException::withMessages(['cooling_type' => 'That cooling option is not offered for the selected stay length.']);
         }
+        $checkInAt = Carbon::parse($data['hourly_date'].' '.$data['check_in_time'], 'UTC');
+        $checkOutAt = StayPricing::checkoutAt($checkInAt, (int) $data['hours']);
+        $nights = max(1, (int) ceil($checkInAt->diffInSeconds($checkOutAt) / 86400));
+        $total = StayPricing::total((int) $data['hours'], $data['cooling_type'], (int) $data['guests']);
+        $data['check_in'] = $checkInAt->toDateString();
+        $data['check_out'] = $checkOutAt->toDateString();
+        $data['check_in_at'] = $checkInAt;
+        $data['check_out_at'] = $checkOutAt;
         $guestData = $data['checkout_type'] === 'guest' ? ['guest_name' => $data['guest_name'], 'guest_email' => $data['guest_email'], 'guest_phone' => $data['guest_phone']] : [];
         try {
-            $booking = DB::transaction(function () use ($room, $data, $guestData, $request, $nights, $checkInAt, $checkOutAt) {
+            $booking = DB::transaction(function () use ($room, $data, $guestData, $request, $nights, $total, $checkInAt, $checkOutAt) {
                 $lockedRoom = Room::whereKey($room->id)->lockForUpdate()->firstOrFail();
                 abort_if(! $lockedRoom->is_active, 422, 'This room is unavailable.');
                 if ($data['booking_type'] === 'hourly' && $checkInAt->lt(PropertyTime::now())) {
                     throw ValidationException::withMessages(['check_in_time' => 'That check-in time has already passed. Choose a future time.']);
-                }
-                if ($data['booking_type'] === 'dates' && $checkInAt->toDateString() < PropertyTime::today()) {
-                    throw ValidationException::withMessages(['check_in' => 'That check-in date has already passed. Choose a future date.']);
                 }
                 $maintenanceConflict = $lockedRoom->blocks()->overlapping($checkInAt, $checkOutAt)
                     ->where('status', 'maintenance')->exists();
@@ -316,19 +290,13 @@ class BookingController extends Controller
                         : 'Those dates or hours are unavailable. Please choose another time.']);
                 }
 
-                $hours = $data['booking_type'] === 'hourly' ? (int) $data['hours'] : $nights * 24;
-                $baseTotal = $data['booking_type'] === 'hourly'
-                    ? ($lockedRoom->rental_hours
-                        ? round($lockedRoom->price_per_night * match ((int) $data['hours']) {
-                            48 => 2, 72 => 3, 96 => 4, 120 => 5, 168 => 7, 720 => 30, default => 1,
-                        }, 2)
-                        : round(($lockedRoom->price_per_night / 24) * $data['hours'], 2))
-                    : round($nights * $lockedRoom->price_per_night, 2);
+                $hours = (int) $data['hours'];
+                $baseTotal = $total;
                 $pricing = ! empty($data['promo_code']) ? PromoPricing::quote($data['promo_code'], $lockedRoom, $hours, $baseTotal, true) : null;
                 $booking = Booking::create($data + $guestData + [
                     'user_id' => $request->user()?->id,
                     'room_id' => $lockedRoom->id,
-                    'room_rate_at_booking' => $lockedRoom->price_per_night,
+                    'room_rate_at_booking' => StayPricing::rate($hours, $data['cooling_type']),
                     'promo_code_id' => $pricing ? $pricing['promo']->id : null,
                     'promo_code' => $pricing ? $pricing['promo']->code : null,
                     'nights' => $nights,
@@ -338,7 +306,7 @@ class BookingController extends Controller
                     'deposit_amount' => min(round((($pricing ? $pricing['original'] : $baseTotal) * 0.30), 2), (float) ($pricing ? $pricing['total'] : $baseTotal)),
                     'deposit_status' => 'awaiting_payment',
                     'deposit_due_at' => now()->addMinutes(Booking::holdMinutes()),
-                    'add_ons' => [],
+                    'add_ons' => ['cooling_type' => $data['cooling_type'], 'package_rate' => StayPricing::rate($hours, $data['cooling_type']), 'extra_guests' => max(0, (int) $data['guests'] - 2)],
                     'hold_expires_at' => now()->addMinutes(Booking::holdMinutes()),
                     'payment_method' => 'cash',
                     'status' => 'pending',
@@ -845,6 +813,17 @@ class BookingController extends Controller
         return view('bookings.lookup');
     }
 
+    public function lookupResult(Request $request, Booking $booking)
+    {
+        $this->authorizeBookingAccess($request, $booking);
+        $booking->loadMissing(['room', 'payments', 'user']);
+
+        return view('bookings.lookup-result', [
+            'booking' => $booking,
+            'lookupEmail' => $request->session()->get('booking_lookup_email', $booking->guest_email ?? $booking->user?->email),
+        ]);
+    }
+
     public function lookup(Request $request)
     {
         if ($request->filled('email')) {
@@ -857,13 +836,56 @@ class BookingController extends Controller
             return back()->withErrors(['reference' => 'No booking matches that email and reference code.']);
         }
         $request->session()->put('booking_lookup_reference', $booking->reference);
+        $request->session()->put('booking_lookup_email', $data['email']);
         if ($booking->user_id === null) {
             $request->session()->put('guest_booking_reference', $booking->reference);
         }
 
-        return view('bookings.lookup-result', ['booking' => $booking, 'lookupEmail' => $data['email']]);
+        return redirect()->route('bookings.lookup.show', $booking);
     }
 
+    public function extendCheckedInStay(Request $request, Booking $booking)
+    {
+        $this->authorizeBookingAccess($request, $booking);
+        DB::transaction(function () use ($booking, $request) {
+            $room = Room::whereKey($booking->room_id)->lockForUpdate()->firstOrFail();
+            $locked = Booking::whereKey($booking->id)->lockForUpdate()->firstOrFail();
+            abort_unless($locked->checked_in_at && ! $locked->checked_out_at && $locked->status !== 'cancelled', 422, 'An extra hour is available only during an active checked-in stay.');
+            $oldCheckout = $locked->check_out_at ?? $locked->check_out->copy()->startOfDay();
+            $extensionStart = $oldCheckout->gt(PropertyTime::now()) ? $oldCheckout->copy() : PropertyTime::now();
+            $newCheckout = $extensionStart->copy()->addHour();
+            $bookingConflict = $room->bookings()->blocking()->overlapping($extensionStart, $newCheckout)->whereKeyNot($locked->id)->exists();
+            $blockConflict = $room->blocks()->overlapping($extensionStart, $newCheckout)->exists();
+            if ($bookingConflict || $blockConflict) {
+                throw ValidationException::withMessages(['extension' => 'The room is reserved or unavailable after your current checkout time, so it cannot be extended by an hour. Please contact Carolina.']);
+            }
+            $oldTotal = (float) $locked->total_amount;
+            $oldOriginal = (float) ($locked->original_amount ?? $oldTotal);
+            $before = ['check_out_at' => $oldCheckout->toIso8601String(), 'total_amount' => $oldTotal, 'hours' => (int) ($locked->hours ?? 0)];
+            $locked->check_out_at = $newCheckout;
+            $locked->check_out = $newCheckout->toDateString();
+            $locked->hours = (int) ($locked->hours ?? 0) + 1;
+            $locked->nights = max(1, (int) ceil(($locked->check_in_at ?? $locked->check_in->copy()->startOfDay())->diffInSeconds($newCheckout) / 86400));
+            $locked->total_amount = round($oldTotal + StayPricing::EXTRA_HOUR_RATE, 2);
+            $locked->original_amount = round($oldOriginal + StayPricing::EXTRA_HOUR_RATE, 2);
+            $addOns = $locked->add_ons ?? [];
+            $addOns['extra_hours'] = (int) ($addOns['extra_hours'] ?? 0) + 1;
+            $addOns['extra_hour_total'] = round((float) ($addOns['extra_hour_total'] ?? 0) + StayPricing::EXTRA_HOUR_RATE, 2);
+            $locked->add_ons = $addOns;
+            $ledger = FinancialSummary::forBooking($locked->load('payments'));
+            $locked->payment_status = $ledger['net_collected'] >= (float) $locked->total_amount ? 'paid' : ($ledger['net_collected'] > 0 ? 'partial' : 'pending');
+            $locked->save();
+            ActivityLog::create([
+                'booking_id' => $locked->id,
+                'user_id' => $request->user()?->id,
+                'event' => 'stay_extended',
+                'description' => 'Guest added one hour to the checked-in stay for ₱100.',
+                'before_values' => $before,
+                'after_values' => ['check_out_at' => $newCheckout->toIso8601String(), 'total_amount' => (float) $locked->total_amount, 'hours' => (int) $locked->hours],
+            ]);
+        });
+        return back()->with('success', 'One extra hour was added for ₱100. Your updated checkout time and balance are shown below.');
+    }
     private function cancelBeforeCheckIn(Booking $booking): bool
     {
         if ($booking->status === 'cancelled') {

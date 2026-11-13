@@ -13,10 +13,11 @@ class BookingSelection
     {
         $rules = [
             'check_in' => ['date_format:Y-m-d', 'after_or_equal:'.Carbon::now('Asia/Manila')->toDateString()],
-            'stay' => ['in:day,month,3,6,12,22,24,48,72,96,120,168,720'],
+            'stay' => ['in:3,6,8,12,22,month,720'],
             'check_in_time' => ['regex:/^(0[6-9]|1[0-9]|2[0-3]):00$/'],
             'guests' => ['integer', 'min:1', 'max:100'],
-            'mode' => ['in:dates,hourly'],
+            'mode' => ['in:hourly'],
+            'cooling_type' => ['in:fan,aircon'],
             'sort' => ['in:recommended,price_asc,price_desc'],
         ];
         $selection = [];
@@ -33,8 +34,7 @@ class BookingSelection
     {
         return match ($selection['stay'] ?? '') {
             'month' => 720,
-            'day' => 24,
-            '' => $room?->rental_hours ?: 3,
+            '' => 3,
             default => (int) $selection['stay'],
         };
     }

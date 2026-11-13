@@ -20,7 +20,7 @@ class RoomSeeder extends Seeder
             ['whole-house-panal-20-guests', 'Whole house', 3, 20, 5500, 'per night', null, 'A three-bedroom whole-house stay at the Panal branch for larger groups of up to 20 guests.', 'https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=1000&q=80', ['Daily cleaning', 'Complete kitchen wares', 'Large refrigerator', 'Free mineral water', 'Towels', 'Parking']],
         ] as $index => [$slug, $type, $beds, $guests, $price, $rateLabel, $rentalHours, $description, $image, $amenities]) {
             $profiles[] = Room::updateOrCreate(['slug' => $slug], [
-                'name' => 'Room '.($index + 1), 'room_type' => $type, 'beds' => $beds, 'guests' => $guests,
+                'name' => 'Room '.($index + 1), 'room_type' => $type, 'beds' => $beds, 'guests' => max(2, $guests),
                 'price_per_night' => $price, 'rate_label' => $rateLabel, 'rental_hours' => $rentalHours,
                 'description' => $description, 'image_url' => $image, 'amenities' => $amenities, 'is_active' => true,
             ]);

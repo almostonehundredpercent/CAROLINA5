@@ -33,6 +33,11 @@
     $temporaryHold = ! $unavailable && $booking->status === 'pending' && ! $booking->hasProtectedInventory();
     $holdDeadline = $temporaryHold ? $booking->holdDeadline() : null;
     $remainingHoldSeconds = $holdDeadline ? max(0, $holdDeadline->timestamp - now()->timestamp) : 0;
+    $extraHours = (int) data_get($booking->add_ons, 'extra_hours', 0);
+    $baseHours = max(0, (int) ($booking->hours ?? 0) - $extraHours);
+    $stayTypeLabel = $baseHours === 720 ? '1 month' : ($baseHours > 0 ? $baseHours . ' hours' : 'Hourly stay');
+    if ($extraHours > 0) $stayTypeLabel .= ' + ' . $extraHours . ' extra hour' . ($extraHours === 1 ? '' : 's');
+    $extraGuests = max(0, (int) $booking->guests - 2);
 @endphp
 <style>
     .receipt-page>.booking-context-box{max-width:1120px;margin:0 auto 18px;text-align:left}
@@ -195,7 +200,9 @@
         @endif
         <div class="receipt-financial-breakdown" aria-label="Payment summary">
             <div class="receipt-financial-item"><small>Booking total</small><b>₱{{ number_format($booking->total_amount, 2) }}</b>@if($booking->discount_amount > 0)<small class="receipt-financial-note"><s>₱{{ number_format($booking->original_amount, 2) }}</s> · {{ $booking->promo_code }} saved ₱{{ number_format($booking->discount_amount, 2) }}</small>@endif</div>
-            <div class="receipt-financial-item"><small>Room rate when booked</small><b>{{ $booking->room_rate_at_booking !== null ? '₱'.number_format((float) $booking->room_rate_at_booking, 2) : 'Not recorded' }}</b><small class="receipt-financial-note">{{ $booking->room_rate_at_booking !== null ? ($booking->room?->rate_label ?? 'Rate') : 'This older booking total remains saved as originally recorded.' }}</small></div>
+            <div class="receipt-financial-item"><small>Package rate when booked</small><b>{{ $booking->room_rate_at_booking !== null ? '₱'.number_format((float) $booking->room_rate_at_booking, 2) : 'Not recorded' }}</b><small class="receipt-financial-note">{{ $booking->booking_type === 'hourly' ? $stayTypeLabel . ' · ' . ($booking->cooling_type === 'fan' ? 'fan' : 'air-conditioned') : ($booking->room?->rate_label ?? 'Rate') }}</small></div>
+            @if($extraGuests > 0)<div class="receipt-financial-item"><small>Additional guests</small><b>₱{{ number_format($extraGuests * \App\Support\StayPricing::EXTRA_GUEST_RATE, 2) }}</b><small class="receipt-financial-note">{{ $extraGuests }} extra guest{{ $extraGuests === 1 ? '' : 's' }} · ₱300 each</small></div>@endif
+            @if($extraHours > 0)<div class="receipt-financial-item"><small>Added stay time</small><b>₱{{ number_format($extraHours * \App\Support\StayPricing::EXTRA_HOUR_RATE, 2) }}</b><small class="receipt-financial-note">{{ $extraHours }} extra hour{{ $extraHours === 1 ? '' : 's' }} · ₱100 each</small></div>@endif
             <div class="receipt-financial-item">
                 @if($booking->payment_status === 'refunded')
                     <small>Refund recorded</small><b>₱{{ number_format((float) $financial['refunds'], 2) }}</b><small class="receipt-financial-note">{{ strtoupper($booking->payment_method ?? 'payment') }} refund</small>
@@ -269,7 +276,8 @@
 
     <section class="receipt-stay-details" aria-labelledby="receipt-stay-title">
         <h2 class="receipt-details-title" id="receipt-stay-title">Stay details</h2>
-        <div><small>Stay type</small><b>{{ $booking->booking_type === 'hourly' ? $booking->hours . ' hours' : $booking->nights . ' night' . ($booking->nights === 1 ? '' : 's') }}</b></div>
+        <div><small>Stay type</small><b>{{ $booking->booking_type === 'hourly' ? $stayTypeLabel : $booking->nights . ' night' . ($booking->nights === 1 ? '' : 's') }}</b></div>
+        @if($booking->booking_type === 'hourly' && $booking->cooling_type)<div><small>Cooling</small><b>{{ $booking->cooling_type === 'fan' ? 'Fan' : 'Air-conditioned' }}</b></div>@endif
         <div><small>Stay</small><b>{{ $booking->check_in_at && $booking->check_out_at ? $booking->check_in_at->format('M j, g A') . ' – ' . $booking->check_out_at->format('M j, g A') : $booking->check_in->format('M j') . ' – ' . $booking->check_out->format('M j, Y') }}</b></div>
         <div><small>Guests</small><b>{{ $booking->guests }} total{{ $booking->children_count ? ' · ' . $booking->children_count . ' child' . ($booking->children_count > 1 ? 'ren' : '') : '' }}</b></div>
         <div><small>Pets</small><b>{{ $booking->pets_count ? $booking->pets_count . ' pet' . ($booking->pets_count > 1 ? 's' : '') : 'None' }}</b></div>

@@ -31,14 +31,14 @@
                     <label>URL slug<input name="slug" required pattern="[a-z0-9-]+" value="{{ old('slug', $room->slug) }}" aria-describedby="slug-help"></label>
                     <small id="slug-help">Lowercase letters, numbers, and hyphens only.</small>
                     <label>Room type<input name="room_type" required value="{{ old('room_type', $room->room_type) }}"></label>
-                    <label>Maximum guests<input type="number" name="guests" min="1" max="30" required value="{{ old('guests', $room->guests ?: 1) }}"></label>
+                    <label>Maximum guests<input type="number" name="guests" min="2" max="30" required value="{{ old('guests', max(2, (int) ($room->guests ?: 2))) }}"></label>
                     <label>Beds<input type="number" name="beds" min="1" max="20" required value="{{ old('beds', $room->beds ?: 1) }}"></label>
                     @if($room->exists)
                         <div class="rate-lock" role="note"><small>LOCKED BASE RATE · OWNER APPROVAL REQUIRED</small><strong>₱{{ number_format((float) $room->price_per_night, 2) }} {{ $room->rate_label }}</strong><small>Rate changes cannot be submitted through this room details form.</small></div>
                     @else
                         <label>Base price (₱)<input type="number" name="price_per_night" min="0" step="0.01" required value="{{ old('price_per_night', $room->price_per_night) }}"></label>
                     @endif
-                    <label>Short-stay duration (optional)<select name="rental_hours"><option value="">Nightly stay</option>@foreach([3,6,12,22,24] as $hours)<option value="{{ $hours }}" @selected((int) old('rental_hours', $room->rental_hours) === $hours)>{{ $hours }} hours</option>@endforeach</select></label>
+                    <label>Default stay length (optional)<select name="rental_hours"><option value="">No default</option>@foreach([3,6,8,12,22,720] as $hours)<option value="{{ $hours }}" @selected((int) old('rental_hours', $room->rental_hours) === $hours)>{{ $hours === 720 ? '1 month' : $hours . ' hours' }}</option>@endforeach</select></label>
                     <label>Default check-in time<input type="time" name="default_check_in_time" value="{{ old('default_check_in_time', $room->default_check_in_time ? substr($room->default_check_in_time, 0, 5) : '') }}"></label>
                     <label>Image URL (optional)<input type="url" name="image_url" value="{{ old('image_url', $room->image_url) }}"></label>
                     <label>Upload image (JPG, PNG, WebP; 5 MB max)<input type="file" name="image" accept="image/jpeg,image/png,image/webp"></label>

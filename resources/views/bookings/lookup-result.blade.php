@@ -7,7 +7,8 @@
     $canResumePayment = ! $expiredHold && $booking->status === 'pending' && ! $booking->hasProtectedInventory();
     $showCancellation = $guestBooking && $booking->status !== 'cancelled' && ! $expiredHold;
     $canCancel = $showCancellation && $booking->canCancelOnline();
-    $hasPortalAside = $expiredHold || $canResumePayment || $showCancellation || $booking->status === 'cancelled' || ! $guestBooking;
+    $showExtension = $booking->checked_in_at && ! $booking->checked_out_at && $booking->status !== 'cancelled';
+    $hasPortalAside = $expiredHold || $canResumePayment || $showCancellation || $showExtension || $booking->status === 'cancelled' || ! $guestBooking;
     $portalStatus = $expiredHold ? 'Payment hold expired' : ucfirst($booking->status);
     $portalStatusClass = $expiredHold ? 'expired' : strtolower($booking->status);
 @endphp
@@ -111,6 +112,20 @@
 
         @if($hasPortalAside)
         <aside class="portal-action-column" aria-label="Booking actions">
+            @if($showExtension)
+                <section class="portal-action-card">
+                    <span class="portal-kicker">ACTIVE STAY</span>
+                    <h2>Add one more hour</h2>
+                    <p>Extend your current checked-in stay by one hour for ₱100. We’ll check that the room is still free after your current checkout time.</p>
+                    @if($errors->has('extension'))<p role="alert">{{ $errors->first('extension') }}</p>@endif
+                    @if(session('success'))<p role="status">{{ session('success') }}</p>@endif
+                    <form class="portal-cancel-form" method="POST" action="{{ route('bookings.lookup.extend', $booking) }}" onsubmit="return confirm('Add one hour to your stay for ₱100?');">
+                        @csrf
+                        <button class="button" type="submit">Add 1 hour · ₱100</button>
+                    </form>
+                </section>
+            @endif
+
             @if($expiredHold)
                 <section class="portal-action-card">
                     <span class="portal-kicker">PAYMENT WINDOW</span>

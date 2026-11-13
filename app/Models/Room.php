@@ -27,6 +27,11 @@ class Room extends Model
         return $this->rental_hours ? "per {$this->rental_hours}-hour stay" : 'per night';
     }
 
+    public function getBookingGuestLimitAttribute(): int
+    {
+        return max(2, (int) ($this->attributes['guests'] ?? 2));
+    }
+
     public function versionedImageUrl(?string $imageUrl = null): ?string
     {
         $imageUrl ??= $this->image_url;
