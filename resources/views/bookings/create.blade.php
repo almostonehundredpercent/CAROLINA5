@@ -103,6 +103,9 @@
 .checkout-choice a.active{border-color:var(--line);background:var(--paper);color:var(--ink);box-shadow:0 2px 6px rgba(45,37,31,.06)}
 .booking-contact-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
 .booking-contact-fields>label:first-child{grid-column:1/-1}
+.booking-page .booking-form form>*{min-width:0;max-width:100%}
+.booking-page .booking-form label{min-width:0}
+.booking-page .booking-form input:not([type="checkbox"]):not([type="radio"]),.booking-page .booking-form select,.booking-page .booking-form textarea{box-sizing:border-box;width:100%;min-width:0;max-width:100%}
 #booking-submit.button{color:#f5f5f0}
 .booking-step-actions #booking-submit{flex:1;min-height:48px;justify-content:center}
 .dark-mode .checkout-choice{border-color:var(--line);background:#211a15}

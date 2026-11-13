@@ -69,11 +69,13 @@
 }
 
 .contact-method-card:hover { transform: translateY(-2px); border-color: var(--gold); box-shadow: 0 13px 28px rgba(45, 37, 31, .1); }
-.contact-method-icon { display: grid; grid-column: 1; grid-row: 1 / 4; place-items: center; width: 42px; height: 42px; border-radius: 12px; background: var(--contact-card-icon-background); color: var(--gold); font-size: 1.2rem; font-weight: 800; }
+.contact-method-icon { display: grid; grid-column: 1; grid-row: 1 / 4; place-items: center; width: 42px; height: 42px; border-radius: 12px; background: var(--contact-card-icon-background); color: var(--gold); }
+.contact-method-icon svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 .contact-method-label { grid-column: 2; color: var(--muted); font-size: .68rem; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
 .contact-method-card strong { grid-column: 2; color: var(--ink); font-size: 1rem; line-height: 1.35; overflow-wrap: anywhere; }
 .contact-method-card small { grid-column: 2; color: var(--muted); font-size: .78rem; line-height: 1.4; }
-.contact-method-card:not(.contact-method-card--hours)::after { content: '↗'; grid-column: 3; grid-row: 1 / 4; justify-self: end; color: var(--gold); font-size: 1.1rem; font-weight: 700; }
+.contact-method-external { display: grid; grid-column: 3; grid-row: 1 / 4; place-items: center; justify-self: end; color: var(--gold); }
+.contact-method-external svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 .contact-method-card--primary { border-color: var(--contact-card-border); background: var(--contact-card-background); }
 .contact-method-card--hours { cursor: default; }
 .contact-method-card--hours:hover { transform: none; border-color: var(--line); box-shadow: 0 8px 22px rgba(45, 37, 31, .045); }
@@ -90,11 +92,13 @@
     box-shadow: 0 14px 32px rgba(76, 53, 31, .1);
 }
 
-.contact-location-icon { display: grid; place-items: center; width: 48px; height: 48px; margin-bottom: 24px; border: 1px solid rgba(153, 91, 13, .25); border-radius: 15px; background: rgba(201, 121, 0, .1); color: #9b5b0a; font-size: 1.65rem; }
+.contact-location-icon { display: grid; place-items: center; width: 48px; height: 48px; margin-bottom: 24px; border: 1px solid rgba(153, 91, 13, .25); border-radius: 15px; background: rgba(201, 121, 0, .1); color: #9b5b0a; }
+.contact-location-icon svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
 .contact-address-card .eyebrow { margin-bottom: 8px; color: #a35e08; }
 .contact-address-card h2 { margin: 0; color: #34291f; font-size: clamp(1.65rem, 2.6vw, 2.1rem); line-height: 1.16; }
 .contact-address-card p { margin: 12px 0 22px; color: #6e6257; font-size: .91rem; line-height: 1.6; }
 .contact-address-card .button { min-height: 46px; margin-top: auto; }
+.contact-address-card .button svg { width: 17px; height: 17px; flex: 0 0 auto; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 .contact-address-card > small { margin-top: 13px; color: #75685c; font-size: .76rem; }
 .dark-mode .contact-address-card { border-color: rgba(201, 121, 0, .35); background: radial-gradient(circle at 100% 0, rgba(201, 121, 0, .17), transparent 15rem), linear-gradient(150deg, #35271e, #211914 75%); color: #fff5e9; box-shadow: 0 16px 34px rgba(0, 0, 0, .2); }
 .dark-mode .contact-location-icon { border-color: rgba(240, 180, 95, .3); background: rgba(201, 121, 0, .13); color: #f0b45f; }
