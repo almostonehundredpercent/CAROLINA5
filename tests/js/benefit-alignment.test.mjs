@@ -22,8 +22,11 @@ test('mobile amenities align at both edges and retain every description', async 
                 assert.equal(cards.length, 5);
                 assert.ok(cards.every(card => card.visible && card.text.length > 10));
                 if (width <= 620) {
-                    assert.equal(new Set(cards.map(card => card.top)).size, 1, 'all five mobile cards share one row');
-                    assert.ok(cards.slice(1).every((card, index) => card.left > cards[index].left && card.left >= cards[index].right - 1), 'cards follow one another without overlapping');
+                    assert.equal(new Set(cards.slice(0, 2).map(card => card.top)).size, 1, 'first pair shares a row');
+                    assert.equal(cards[0].left, cards[2].left, 'second row aligns to first column');
+                    assert.equal(cards[1].right, cards[3].right, 'second row aligns to second column');
+                    assert.ok(cards[4].left > cards[2].left && cards[4].right < cards[3].right, 'last card is centered on final row');
+                    assert.ok(await page.locator('.benefit-grid').evaluate(e => e.scrollWidth === e.clientWidth), 'all cards show without horizontal scrolling');
                 } else {
                     assert.equal(new Set(cards.map(card => card.top)).size, 1);
                 }
