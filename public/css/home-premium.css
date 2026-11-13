@@ -345,15 +345,13 @@
 @media (max-width:620px) {
     .home-benefits { width:100%; min-width:0; padding:46px 20px; }
     .home-benefits .section-heading { margin-bottom:20px; }
-    .home-benefits .benefit-grid { width:100%; min-width:0; grid-template-columns:repeat(2,minmax(0,1fr)); align-items:stretch; gap:10px; overflow:visible; padding:2px 0 0; }
-    .home-benefits .benefit-grid > div { min-width:0; min-height:142px; padding:14px 10px; border:1px solid #e6d6c2; border-radius:13px; background:#fffdfa; box-shadow:0 6px 16px rgba(76,53,31,.08); }
+    .home-benefits .benefit-grid { width:100%; min-width:0; display:flex; align-items:stretch; gap:10px; overflow-x:auto; overflow-y:hidden; padding:2px 0 12px; scroll-snap-type:x mandatory; scrollbar-width:thin; }
+    .home-benefits .benefit-grid > div { flex:0 0 min(76vw,280px); min-width:0; min-height:142px; padding:14px 12px; border:1px solid #e6d6c2; border-radius:13px; background:#fffdfa; box-shadow:0 6px 16px rgba(76,53,31,.08); scroll-snap-align:start; }
     .home-benefits .benefit-grid b { width:40px; height:40px; box-shadow:none; }
     .home-benefits .benefit-grid b svg { width:21px; height:21px; }
     .home-benefits .benefit-grid h3 { margin:9px 0 4px; font-size:.82rem; line-height:1.25; overflow-wrap:anywhere; }
     .home-benefits .benefit-grid p { display:block; margin:0; font-size:.78rem; line-height:1.45; }
-    .home-benefits .benefit-grid > div:last-child { grid-column:1/-1; width:100%; justify-self:stretch; min-height:0; display:grid; grid-template-columns:40px minmax(0,1fr); column-gap:12px; align-items:center; text-align:left; }
-    .home-benefits .benefit-grid > div:last-child b { grid-row:1/3; }
-    .home-benefits .benefit-grid > div:last-child h3 { margin:0 0 4px; }
+    .home-benefits .benefit-grid:focus-visible { outline:2px solid #bd700d; outline-offset:3px; }
     .dark-mode .home-benefits .benefit-grid > div { border-color:#514033; background:linear-gradient(145deg,#30251e,#251d17); box-shadow:0 8px 20px rgba(0,0,0,.24); }
 }
 .home-room-carousel .room-card picture { display:block; }

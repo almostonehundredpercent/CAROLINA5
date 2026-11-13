@@ -22,11 +22,8 @@ test('mobile amenities align at both edges and retain every description', async 
                 assert.equal(cards.length, 5);
                 assert.ok(cards.every(card => card.visible && card.text.length > 10));
                 if (width <= 620) {
-                    assert.equal(cards[0].left, cards[2].left);
-                    assert.equal(cards[0].left, cards[4].left);
-                    assert.equal(cards[1].right, cards[4].right);
-                    assert.equal(cards[0].height, cards[1].height);
-                    assert.equal(cards[2].height, cards[3].height);
+                    assert.equal(new Set(cards.map(card => card.top)).size, 1, 'all five mobile cards share one row');
+                    assert.ok(cards.slice(1).every((card, index) => card.left > cards[index].left && card.left >= cards[index].right - 1), 'cards follow one another without overlapping');
                 } else {
                     assert.equal(new Set(cards.map(card => card.top)).size, 1);
                 }
