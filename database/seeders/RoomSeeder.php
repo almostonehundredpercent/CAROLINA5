@@ -93,9 +93,13 @@ class RoomSeeder extends Seeder
 
         $photos = [
             7 => '/images/rooms/room-7-angle-4.jpg',
+            8 => '/images/rooms/room-8-angle-1.png',
             10 => '/images/rooms/room-10-angle-3.jpg',
             11 => '/images/rooms/room-11-angle-3.jpg',
             13 => '/images/rooms/room-13-angle-2.jpg',
+        ];
+        $descriptionsByRoom = [
+            8 => 'Ideal for a solo traveler, this one-bed room offers a simple and comfortable place to unwind after a busy day. Its practical layout provides a restful base during your stay.',
         ];
         $amenitiesByRoom = [
             7 => ['Common CR', 'Air conditioning'],
@@ -115,7 +119,7 @@ class RoomSeeder extends Seeder
                 || preg_match('/\b(?:ref|refrigerator|fridge)\b/i', $amenity);
         };
 
-        $roomNumbers = array_unique(array_merge(array_keys($photos), array_keys($amenitiesByRoom)));
+        $roomNumbers = array_unique(array_merge(array_keys($photos), array_keys($descriptionsByRoom), array_keys($amenitiesByRoom)));
 
         foreach ($roomNumbers as $number) {
             $room = Room::where('slug', 'carolina-room-'.$number)->first();
@@ -125,6 +129,10 @@ class RoomSeeder extends Seeder
 
             if (isset($photos[$number])) {
                 $room->image_url = $photos[$number];
+            }
+
+            if (isset($descriptionsByRoom[$number])) {
+                $room->description = $descriptionsByRoom[$number];
             }
 
             if (isset($amenitiesByRoom[$number])) {
