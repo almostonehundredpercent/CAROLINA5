@@ -34,7 +34,7 @@
         <article class="about-feature-card">
             <span class="about-feature-number">02</span>
             <h3>Useful comforts</h3>
-            <p>Enjoy room amenities such as Wi-Fi, hygiene kits, and streaming. Complimentary breakfast is included only with the 22-hour air-conditioned package priced at ₱850.</p>
+            <p>Enjoy room amenities such as Wi-Fi, hygiene kits, and streaming. Complimentary breakfast is included with the 22-hour package priced at ₱850 for up to two guests.</p>
         </article>
         <article class="about-feature-card">
             <span class="about-feature-number">03</span>
