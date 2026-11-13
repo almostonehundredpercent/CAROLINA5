@@ -2,6 +2,7 @@
 
 namespace App\Support;
 
+use App\Models\Room;
 use Illuminate\Validation\ValidationException;
 use Carbon\Carbon;
 
@@ -21,37 +22,49 @@ class StayPricing
         720 => ['aircon' => 12000],
     ];
 
-    public static function durations(): array
+    private const ROOM_SIX_SLUG = 'whole-house-panal-20-guests';
+
+    public static function rates(?Room $room = null): array
     {
-        return array_keys(self::RATES);
+        $rates = self::RATES;
+        if ($room?->slug === self::ROOM_SIX_SLUG) {
+            unset($rates[3]);
+        }
+
+        return $rates;
     }
 
-    public static function rates(): array
+    public static function durations(?Room $room = null): array
     {
-        return self::RATES;
+        return array_keys(self::rates($room));
     }
 
-    public static function isOffered(int $hours, string $coolingType): bool
+    public static function hasDuration(int $hours, ?Room $room = null): bool
     {
-        return isset(self::RATES[$hours][$coolingType]);
+        return isset(self::rates($room)[$hours]);
     }
 
-    public static function rate(int $hours, string $coolingType): float
+    public static function isOffered(int $hours, string $coolingType, ?Room $room = null): bool
     {
-        if (! self::isOffered($hours, $coolingType)) {
+        return isset(self::rates($room)[$hours][$coolingType]);
+    }
+
+    public static function rate(int $hours, string $coolingType, ?Room $room = null): float
+    {
+        if (! self::isOffered($hours, $coolingType, $room)) {
             throw ValidationException::withMessages([
                 'cooling_type' => 'That cooling option is not offered for the selected stay length.',
             ]);
         }
 
-        return (float) self::RATES[$hours][$coolingType];
+        return (float) self::rates($room)[$hours][$coolingType];
     }
 
-    public static function total(int $hours, string $coolingType, int $guests): float
+    public static function total(int $hours, string $coolingType, int $guests, ?Room $room = null): float
     {
         $extraGuests = max(0, $guests - 2);
 
-        return round(self::rate($hours, $coolingType) + $extraGuests * self::EXTRA_GUEST_RATE, 2);
+        return round(self::rate($hours, $coolingType, $room) + $extraGuests * self::EXTRA_GUEST_RATE, 2);
     }
 
     public static function durationLabel(int $hours): string
@@ -59,9 +72,35 @@ class StayPricing
         return $hours === 720 ? '1 month' : $hours.' hours';
     }
 
-    public static function startingRate(int $hours): float
+    public static function startingRate(int $hours, ?Room $room = null): float
     {
-        return min(self::RATES[$hours] ?? [self::STARTING_PRICE]);
+        return min(self::rates($room)[$hours] ?? [self::STARTING_PRICE]);
+    }
+
+    public static function startingPrice(?Room $room = null): float
+    {
+        return min(array_map(fn (array $rates): float => (float) min($rates), self::rates($room)));
+    }
+
+    public static function startingPackageLabel(?Room $room = null): string
+    {
+        $rates = self::rates($room);
+        $hours = array_key_first($rates);
+        $cooling = array_key_first($rates[$hours]);
+
+        return self::durationLabel((int) $hours).' '.($cooling === 'fan' ? 'fan' : 'air-conditioned').' stay';
+    }
+
+    public static function packageOptionLabel(int $hours, ?Room $room = null): string
+    {
+        $rates = self::rates($room)[$hours] ?? [];
+        $priceOptions = [];
+        foreach ($rates as $cooling => $amount) {
+            $type = $cooling === 'fan' ? 'Fan' : 'Air-conditioned';
+            $priceOptions[] = $type.' ₱'.number_format((float) $amount);
+        }
+
+        return self::durationLabel($hours).' · '.implode(' / ', $priceOptions);
     }
 
     public static function checkoutAt(Carbon $checkIn, int $hours): Carbon

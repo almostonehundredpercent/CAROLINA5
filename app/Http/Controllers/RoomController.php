@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Room;
 use App\Support\BookingSelection;
 use App\Support\RoomAvailability;
+use App\Support\StayPricing;
 use Illuminate\Http\Request;
 
 class RoomController extends Controller
@@ -74,6 +75,9 @@ class RoomController extends Controller
         $stayHours = isset($bookingSearch['check_in'])
             ? BookingSelection::hours($bookingSearch, $room)
             : 3;
+        if (! StayPricing::hasDuration($stayHours, $room)) {
+            $stayHours = StayPricing::durations($room)[0] ?? 3;
+        }
         $dateOnly = false;
         $nextAvailableAt = $room->availability_reason
             ? RoomAvailability::nextAvailableAt($room, $startsAt, $stayHours, $dateOnly)

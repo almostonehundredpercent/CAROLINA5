@@ -181,14 +181,14 @@
 
                 @if($bookingMode === 'hourly')
                     <div class="hourly-booked-summary {{ count($hourlyBookedWindows) ? '' : 'is-clear' }}" id="hourly-booked-summary" role="status" aria-live="polite"><strong>Booked times on {{ \Carbon\Carbon::parse($hourlyDate)->format('M j') }}</strong>@if(count($hourlyBookedWindows))<ul>@foreach($hourlyBookedWindows as $window)<li>{{ $window }}</li>@endforeach</ul>@else<p>No existing reservations block this date.</p>@endif</div>
-                    <div class="hourly-rental" data-pricing="{{ json_encode(\App\Support\StayPricing::rates()) }}">
+                    <div class="hourly-rental" data-pricing="{{ json_encode(\App\Support\StayPricing::rates($room)) }}">
                         <p><strong>Choose your package</strong><br>Prices include up to 2 guests. Additional guests are ₱300 each. One-month stays are priced by calendar month.</p>
                         <label class="clean-select">Duration
                             <input id="hourly-hours" name="hours" type="hidden" value="{{ old('hours', $selectedHours) }}">
                             <button type="button" class="clean-select-trigger" data-select-trigger>3 hours</button>
                             <section class="clean-select-menu" hidden>
-                                @foreach(\App\Support\StayPricing::rates() as $hours => $coolingRates)
-                                    <button type="button" class="clean-select-option" data-select-value="{{ $hours }}">{{ \App\Support\StayPricing::durationLabel($hours) }} · from ₱{{ number_format(\App\Support\StayPricing::startingRate($hours)) }}</button>
+                                @foreach(\App\Support\StayPricing::rates($room) as $hours => $coolingRates)
+                                    <button type="button" class="clean-select-option" data-select-value="{{ $hours }}">{{ \App\Support\StayPricing::packageOptionLabel((int) $hours, $room) }}</button>
                                 @endforeach
                             </section>
                         </label>
@@ -197,18 +197,18 @@
                                 <option value="aircon" @selected(old('cooling_type', $bookingSearch['cooling_type'] ?? 'aircon') === 'aircon')>Air-conditioned</option>
                                 <option value="fan" @selected(old('cooling_type', $bookingSearch['cooling_type'] ?? 'aircon') === 'fan')>Fan</option>
                             </select>
-                            <small id="cooling-note">Air-conditioned packages</small>
+                            <small id="cooling-note">Air-conditioned package rates include up to 2 guests.</small>
                         </label>
                         <label class="hourly-date-field">Check-in date<input id="hourly-date" name="hourly_date" type="hidden" value="{{ $hourlyDate }}" required><button id="hourly-date-trigger" class="hourly-date-trigger" type="button"></button><section class="hourly-calendar" id="hourly-calendar" hidden aria-label="Choose check-in date"><div class="hourly-calendar-head"><button type="button" id="hourly-calendar-prev" aria-label="Previous month">‹</button><b id="hourly-calendar-month"></b><button type="button" id="hourly-calendar-next" aria-label="Next month">›</button></div><div class="hourly-calendar-week"><span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span></div><div class="hourly-calendar-days" id="hourly-calendar-days"></div></section></label>
                         <label class="hourly-time-field">Check-in time<input id="hourly-time" name="check_in_time" type="hidden" value="{{ old('check_in_time', $selectedTime) }}" required><button id="hourly-time-trigger" class="hourly-time-trigger" type="button"></button><section class="hourly-time-menu" id="hourly-time-menu" hidden aria-label="Choose check-in time"><div class="hourly-time-menu-head"><b>Choose a time</b><small>One-hour slots</small></div><div class="hourly-time-periods"><div class="hourly-time-period"><h4>Morning</h4>@for($hour = 6; $hour < 12; $hour++)<button class="hourly-time-option" type="button" data-time="{{ str_pad($hour, 2, '0', STR_PAD_LEFT) }}:00">{{ \Carbon\Carbon::createFromTime($hour)->format('g A') }}</button>@endfor</div><div class="hourly-time-period"><h4>Afternoon</h4>@for($hour = 12; $hour < 18; $hour++)<button class="hourly-time-option" type="button" data-time="{{ str_pad($hour, 2, '0', STR_PAD_LEFT) }}:00">{{ \Carbon\Carbon::createFromTime($hour)->format('g A') }}</button>@endfor</div><div class="hourly-time-period"><h4>Evening</h4>@for($hour = 18; $hour < 24; $hour++)<button class="hourly-time-option" type="button" data-time="{{ str_pad($hour, 2, '0', STR_PAD_LEFT) }}:00">{{ \Carbon\Carbon::createFromTime($hour)->format('g A') }}</button>@endfor</div></div></section></label>
                         @php
                             $initialHours = (int) old('hours', $selectedHours);
-                            if (! in_array($initialHours, \App\Support\StayPricing::durations(), true)) $initialHours = $selectedHours;
+                            if (! in_array($initialHours, \App\Support\StayPricing::durations($room), true)) $initialHours = $selectedHours;
                             $initialCooling = old('cooling_type', $bookingSearch['cooling_type'] ?? 'aircon');
-                            if (! \App\Support\StayPricing::isOffered($initialHours, $initialCooling)) $initialCooling = 'aircon';
+                            if (! \App\Support\StayPricing::isOffered($initialHours, $initialCooling, $room)) $initialCooling = 'aircon';
                             $initialGuests = (int) old('guests', $selectedGuests);
                         @endphp
-                        <p id="hourly-total">Estimated total: ₱{{ number_format(\App\Support\StayPricing::total($initialHours, $initialCooling, $initialGuests), 2) }}</p>
+                        <p id="hourly-total">Estimated total: ₱{{ number_format(\App\Support\StayPricing::total($initialHours, $initialCooling, $initialGuests, $room), 2) }}</p>
                     </div>
                 @else
                 <div class="stay-date-fields">
@@ -312,9 +312,9 @@
             <div class="booking-summary-rate">
                 <span class="booking-summary-rate-label">Room rate</span>
                 @if($bookingMode === 'hourly')
-                    <strong>₱350 <small>starting price</small></strong>
+                    <strong>₱{{ number_format(\App\Support\StayPricing::startingPrice($room)) }} <small>Starting price · {{ \App\Support\StayPricing::startingPackageLabel($room) }}</small></strong>
                 @else
-                    <strong>₱350 <small>starting price</small></strong>
+                    <strong>₱{{ number_format(\App\Support\StayPricing::startingPrice($room)) }} <small>Starting price · {{ \App\Support\StayPricing::startingPackageLabel($room) }}</small></strong>
                 @endif
             </div>
         </div>
@@ -341,16 +341,16 @@ document.addEventListener('DOMContentLoaded', () => {
             const hours = Number(hourlyHours.value);
             if (hours !== 22) cooling.value = 'aircon';
             coolingField.hidden = hours !== 22;
-            coolingNote.textContent = hours === 22 ? 'Choose fan or air-conditioned.' : 'This package is air-conditioned.';
+            coolingNote.textContent = hours === 22 ? 'For 22 hours: Fan ₱450 or air-conditioned ₱850. Each rate includes up to 2 guests.' : 'This package is air-conditioned and includes up to 2 guests.';
             const fanOption = cooling.querySelector('[value="fan"]');
             const airconOption = cooling.querySelector('[value="aircon"]');
-            if (airconOption) airconOption.textContent = 'Air-conditioned · ₱' + Number(pricing[hours] && pricing[hours].aircon || 0).toLocaleString('en-PH');
-            if (fanOption) fanOption.textContent = 'Fan · ₱' + Number(pricing[hours] && pricing[hours].fan || 450).toLocaleString('en-PH');
+            if (airconOption) airconOption.textContent = 'Air-conditioned · ₱' + Number(pricing[hours] && pricing[hours].aircon || 0).toLocaleString('en-PH') + ' · up to 2 guests';
+            if (fanOption) fanOption.textContent = 'Fan · ₱' + Number(pricing[hours] && pricing[hours].fan || 450).toLocaleString('en-PH') + ' · up to 2 guests';
             const base = Number(pricing[hours] && pricing[hours][cooling.value] || pricing[hours] && pricing[hours].aircon || 0);
             const guests = Number(guestCount && guestCount.value || 2);
             const extras = Math.max(0, guests - 2) * 300;
             const amount = base + extras;
-            total.textContent = 'Estimated total: ₱' + amount.toLocaleString('en-PH', { minimumFractionDigits: 2 }) + (extras ? ' · includes ₱' + extras.toLocaleString('en-PH') + ' for extra guests' : '');
+            total.textContent = 'Estimated total: ₱' + amount.toLocaleString('en-PH', { minimumFractionDigits: 2 }) + ' · ' + (cooling.value === 'fan' ? 'fan' : 'air-conditioned') + (extras ? ' · includes ₱' + extras.toLocaleString('en-PH') + ' for extra guests' : '');
         };
         hourlyHours.addEventListener('change', refresh);
         cooling.addEventListener('change', refresh);
