@@ -123,9 +123,7 @@ test('homepage hero rotates the three local Carolina photos without upscaled fak
     $slides = $xpath->query('//section[contains(concat(" ", normalize-space(@class), " "), " home-hero ")]//img[contains(concat(" ", normalize-space(@class), " "), " home-hero-slide ")]');
 
     expect($slides)->toHaveCount(3)
-        ->and($xpath->evaluate('count(//section[contains(concat(" ", normalize-space(@class), " "), " home-hero ")]//button[@data-hero-prev])'))->toBe(1.0)
-        ->and($xpath->evaluate('count(//section[contains(concat(" ", normalize-space(@class), " "), " home-hero ")]//button[@data-hero-next])'))->toBe(1.0)
-        ->and($xpath->evaluate('count(//section[contains(concat(" ", normalize-space(@class), " "), " home-hero ")]//button[@data-hero-toggle])'))->toBe(1.0);
+        ->and($xpath->evaluate('count(//section[contains(concat(" ", normalize-space(@class), " "), " home-hero ")]//*[contains(concat(" ", normalize-space(@class), " "), " home-hero-controls ")])'))->toBe(0.0);
 
     foreach (['lobby-1', 'lobby-2', 'lobby-3'] as $index => $name) {
         $image = getimagesize(public_path("images/home-hero/{$name}-1800.jpg"));

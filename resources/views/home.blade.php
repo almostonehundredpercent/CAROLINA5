@@ -8,11 +8,9 @@
 @section('content')
 <section class="hero home-hero">
     <div class="home-hero-slideshow" data-interval="6500" role="region" aria-roledescription="carousel" aria-label="Photos of Carolina Transient and Airbnb">
-        <div class="home-hero-track">
-            <img class="home-hero-slide is-active" src="{{ asset('images/home-hero/lobby-1-1800.jpg') }}" srcset="{{ asset('images/home-hero/lobby-1-900.jpg') }} 900w, {{ asset('images/home-hero/lobby-1-1800.jpg') }} 1800w" sizes="100vw" width="1800" height="1013" alt="" aria-hidden="true" fetchpriority="high" decoding="async">
-            <img class="home-hero-slide" src="{{ asset('images/home-hero/lobby-2-1800.jpg') }}" srcset="{{ asset('images/home-hero/lobby-2-900.jpg') }} 900w, {{ asset('images/home-hero/lobby-2-1800.jpg') }} 1800w" sizes="100vw" width="1800" height="1013" alt="" aria-hidden="true" loading="lazy" decoding="async">
-            <img class="home-hero-slide" src="{{ asset('images/home-hero/lobby-3-1800.jpg') }}" srcset="{{ asset('images/home-hero/lobby-3-900.jpg') }} 900w, {{ asset('images/home-hero/lobby-3-1800.jpg') }} 1800w" sizes="100vw" width="1800" height="1013" alt="" aria-hidden="true" loading="lazy" decoding="async">
-        </div>
+        <img class="home-hero-slide is-active" src="{{ asset('images/home-hero/lobby-1-1800.jpg') }}" srcset="{{ asset('images/home-hero/lobby-1-900.jpg') }} 900w, {{ asset('images/home-hero/lobby-1-1800.jpg') }} 1800w" sizes="100vw" width="1800" height="1013" alt="" aria-hidden="true" fetchpriority="high" decoding="async">
+        <img class="home-hero-slide" src="{{ asset('images/home-hero/lobby-2-1800.jpg') }}" srcset="{{ asset('images/home-hero/lobby-2-900.jpg') }} 900w, {{ asset('images/home-hero/lobby-2-1800.jpg') }} 1800w" sizes="100vw" width="1800" height="1013" alt="" aria-hidden="true" loading="lazy" decoding="async">
+        <img class="home-hero-slide" src="{{ asset('images/home-hero/lobby-3-1800.jpg') }}" srcset="{{ asset('images/home-hero/lobby-3-900.jpg') }} 900w, {{ asset('images/home-hero/lobby-3-1800.jpg') }} 1800w" sizes="100vw" width="1800" height="1013" alt="" aria-hidden="true" loading="lazy" decoding="async">
     </div>
     <div class="home-hero-glow" aria-hidden="true"></div>
     <div class="hero-copy">
@@ -24,17 +22,6 @@
             @auth<a class="home-hero-link" href="{{ route('bookings.index') }}">My bookings</a>@else<a class="home-hero-link" href="#find-booking">Already booked?</a>@endauth
         </div>
         <div class="home-hero-details" aria-label="Carolina stay highlights"><span><b>18</b> stay options</span><span><b>4.8</b> guest rating</span><span><b>24/7</b> booking access</span></div>
-    </div>
-    <div class="home-hero-controls" aria-label="Hero image controls">
-        <button type="button" data-hero-prev aria-label="Show previous photo" title="Previous photo"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="m12.5 4.5-5.5 5.5 5.5 5.5"/></svg></button>
-        <button type="button" data-hero-toggle aria-label="Pause automatic image rotation" aria-pressed="false" title="Pause slideshow"><svg class="hero-icon-pause" viewBox="0 0 20 20" aria-hidden="true"><path d="M7 5v10M13 5v10"/></svg><svg class="hero-icon-play" viewBox="0 0 20 20" aria-hidden="true"><path d="m7 4 9 6-9 6z"/></svg></button>
-        <button type="button" data-hero-next aria-label="Show next photo" title="Next photo"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="m7.5 4.5 5.5 5.5-5.5 5.5"/></svg></button>
-        <div class="home-hero-pagination" role="group" aria-label="Choose a hero photo">
-            <button type="button" data-hero-slide="0" aria-label="Show photo 1" aria-current="true"></button>
-            <button type="button" data-hero-slide="1" aria-label="Show photo 2"></button>
-            <button type="button" data-hero-slide="2" aria-label="Show photo 3"></button>
-        </div>
-        <span class="home-hero-slide-status" aria-live="polite" aria-atomic="true">Photo 1 of 3</span>
     </div>
 </section>
 <script src="{{ asset('js/home-hero-slideshow.js') }}?v={{ filemtime(public_path('js/home-hero-slideshow.js')) }}" defer></script>
