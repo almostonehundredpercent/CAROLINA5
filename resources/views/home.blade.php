@@ -30,46 +30,56 @@
 <section class="home-booking-wrap" aria-label="Find available rooms">
     <form class="home-booking-search" method="GET" action="{{ route('booking.start') }}">
         <input type="hidden" name="mode" value="hourly">
-        <label class="home-search-field home-search-date">
-            <span>Check-in date</span>
-            <input type="date" name="check_in" min="{{ now('Asia/Manila')->toDateString() }}" aria-label="Check-in date">
-        </label>
-        <label class="home-search-field">
-            <span>Stay length</span>
-            <select name="stay" data-home-stay aria-label="Stay length">
-                <option value="3" data-mode="hourly" selected>3 hours · air-conditioned</option>
-                <option value="6" data-mode="hourly">6 hours · air-conditioned</option>
-                <option value="8" data-mode="hourly">8 hours · air-conditioned</option>
-                <option value="12" data-mode="hourly">12 hours · air-conditioned</option>
-                <option value="22" data-mode="hourly">22 hours · Fan ₱450 / Air-conditioned ₱850</option>
-                <option value="month" data-mode="hourly">1 month · air-conditioned</option>
+        <div class="home-search-field home-search-date" data-home-date-picker>
+            <label id="home-date-label" for="home-date-trigger">Check-in date</label>
+            <input id="home-date" type="hidden" name="check_in" min="{{ now('Asia/Manila')->toDateString() }}" data-home-date>
+            <button id="home-date-trigger" type="button" class="home-search-trigger home-date-trigger" data-home-date-trigger aria-haspopup="dialog" aria-expanded="false" aria-labelledby="home-date-label home-date-value"><span id="home-date-value" data-home-date-value>Choose date</span><svg viewBox="0 0 20 20" aria-hidden="true"><rect x="3" y="4.5" width="14" height="13" rx="2"/><path d="M6.5 2.5v4M13.5 2.5v4M3 8.5h14"/></svg></button>
+            <div class="home-date-calendar" data-home-date-calendar role="dialog" aria-label="Choose check-in date" hidden></div>
+        </div>
+        <div class="home-search-field home-custom-select" data-home-select>
+            <label id="home-stay-label" for="home-stay-trigger">Stay length</label>
+            <select class="home-native-select" id="home-stay-native" name="stay" data-home-stay aria-hidden="true" tabindex="-1">
+                <option value="3" data-mode="hourly" data-display="3 hours" selected>3 hours · air-conditioned</option>
+                <option value="6" data-mode="hourly" data-display="6 hours">6 hours · air-conditioned</option>
+                <option value="8" data-mode="hourly" data-display="8 hours">8 hours · air-conditioned</option>
+                <option value="12" data-mode="hourly" data-display="12 hours">12 hours · air-conditioned</option>
+                <option value="22" data-mode="hourly" data-display="22 hours" data-detail="Fan ₱450 · Air-conditioned ₱850">22 hours · Fan ₱450 / Air-conditioned ₱850</option>
+                <option value="month" data-mode="hourly" data-display="1 month">1 month · air-conditioned</option>
             </select>
-        </label>
-        <label class="home-search-field">
-            <span>Check-in time</span>
-            <select name="check_in_time" aria-label="Check-in time">
+            <button id="home-stay-trigger" type="button" class="home-search-trigger" data-home-select-trigger aria-haspopup="listbox" aria-expanded="false" aria-labelledby="home-stay-label home-stay-value"><span id="home-stay-value" data-home-select-value></span><svg viewBox="0 0 20 20" aria-hidden="true"><path d="m5.5 7.5 4.5 4.5 4.5-4.5"/></svg></button>
+            <div class="home-select-list" data-home-select-list role="listbox" aria-labelledby="home-stay-label" hidden></div>
+        </div>
+        <div class="home-search-field home-custom-select" data-home-select>
+            <label id="home-time-label" for="home-time-trigger">Check-in time</label>
+            <select class="home-native-select" id="home-time-native" name="check_in_time" aria-hidden="true" tabindex="-1">
                 @for($hour = 6; $hour < 24; $hour++)
-                    <option value="{{ str_pad($hour, 2, '0', STR_PAD_LEFT) }}:00" @selected($hour === 12)>{{ \Carbon\Carbon::createFromTime($hour)->format('g:i A') }}</option>
+                    <option value="{{ str_pad($hour, 2, '0', STR_PAD_LEFT) }}:00" data-display="{{ \Carbon\Carbon::createFromTime($hour)->format('g:i A') }}" @selected($hour === 12)>{{ \Carbon\Carbon::createFromTime($hour)->format('g:i A') }}</option>
                 @endfor
             </select>
-        </label>
-        <label class="home-search-field">
-            <span>Guests</span>
-            <select name="guests" aria-label="Guests">
-                <option value="">Any guests</option>
+            <button id="home-time-trigger" type="button" class="home-search-trigger" data-home-select-trigger aria-haspopup="listbox" aria-expanded="false" aria-labelledby="home-time-label home-time-value"><span id="home-time-value" data-home-select-value></span><svg viewBox="0 0 20 20" aria-hidden="true"><path d="m5.5 7.5 4.5 4.5 4.5-4.5"/></svg></button>
+            <div class="home-select-list" data-home-select-list role="listbox" aria-labelledby="home-time-label" hidden></div>
+        </div>
+        <div class="home-search-field home-custom-select" data-home-select>
+            <label id="home-guests-label" for="home-guests-trigger">Guests</label>
+            <select class="home-native-select" id="home-guests-native" name="guests" aria-hidden="true" tabindex="-1">
+                <option value="" data-display="Any guests">Any guests</option>
                 @foreach(range(1, 6) as $guests)
-                    <option value="{{ $guests }}">{{ $guests }}+ guest{{ $guests > 1 ? 's' : '' }}</option>
+                    <option value="{{ $guests }}" data-display="{{ $guests }}+ guests">{{ $guests }}+ guest{{ $guests > 1 ? 's' : '' }}</option>
                 @endforeach
             </select>
-        </label>
-        <label class="home-search-field">
-            <span>Sort by price</span>
-            <select name="sort" aria-label="Sort by price">
-                <option value="recommended">Recommended</option>
-                <option value="price_asc">Lowest price first</option>
-                <option value="price_desc">Highest price first</option>
+            <button id="home-guests-trigger" type="button" class="home-search-trigger" data-home-select-trigger aria-haspopup="listbox" aria-expanded="false" aria-labelledby="home-guests-label home-guests-value"><span id="home-guests-value" data-home-select-value></span><svg viewBox="0 0 20 20" aria-hidden="true"><path d="m5.5 7.5 4.5 4.5 4.5-4.5"/></svg></button>
+            <div class="home-select-list" data-home-select-list role="listbox" aria-labelledby="home-guests-label" hidden></div>
+        </div>
+        <div class="home-search-field home-custom-select" data-home-select>
+            <label id="home-sort-label" for="home-sort-trigger">Sort by price</label>
+            <select class="home-native-select" id="home-sort-native" name="sort" aria-hidden="true" tabindex="-1">
+                <option value="recommended" data-display="Recommended">Recommended</option>
+                <option value="price_asc" data-display="Lowest price">Lowest price first</option>
+                <option value="price_desc" data-display="Highest price">Highest price first</option>
             </select>
-        </label>
+            <button id="home-sort-trigger" type="button" class="home-search-trigger" data-home-select-trigger aria-haspopup="listbox" aria-expanded="false" aria-labelledby="home-sort-label home-sort-value"><span id="home-sort-value" data-home-select-value></span><svg viewBox="0 0 20 20" aria-hidden="true"><path d="m5.5 7.5 4.5 4.5 4.5-4.5"/></svg></button>
+            <div class="home-select-list" data-home-select-list role="listbox" aria-labelledby="home-sort-label" hidden></div>
+        </div>
         <button type="submit" class="home-search-submit">Check availability <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"></circle><path d="m16 16 4.5 4.5M8 10.5h5M10.5 8v5"></path></svg></button>
     </form>
 </section>
