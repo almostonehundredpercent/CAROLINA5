@@ -16,8 +16,8 @@ class RoomSeeder extends Seeder
             ['air-conditioned-room-couple', 'Air-conditioned room', 1, 2, 450, '', 6, 'A comfortable air-conditioned room with one bed for up to two guests and access to a shared bathroom.', '/images/rooms/room-2-angle-3.jpg', ['AC/Fan', 'Common CR']],
             ['fan-room-couple', 'Fan room', 1, 2, 450, 'per 22-hour stay', 22, 'A practical fan room for up to two guests, with rates starting at ₱450 for a 22-hour stay.', '/images/rooms/room-3-angle-1.jpg', ['AC/Fan', 'With CR', 'Refrigerator', 'TV']],
             ['air-conditioned-day-stay', 'Air-conditioned room', 1, 2, 450, '', 22, 'Best suited to solo travelers, this air-conditioned room has one bed for up to two guests. 22-hour stays start at ₱450.', '/images/rooms/room-4-angle-1.jpg', ['AC/Fan', 'Common CR']],
-            ['whole-house-panal-10-guests', 'Whole house', 3, 2, 4500, 'per night', null, 'A whole-house stay at the Panal branch with room for up to two guests.', '/images/rooms/room-5-angle-1.jpg', ['AC/Fan', 'Common CR', 'TV in room']],
-            ['whole-house-panal-20-guests', 'Double-deck room', 2, 6, 450, 'starting price', 6, 'A double-deck room for up to six guests, with a starting rate of ₱450 for a 6-hour air-conditioned stay.', '/images/rooms/room-6-angle-1.png', ['Daily cleaning', 'Complete kitchen wares', 'Large refrigerator', 'Free mineral water', 'Towels', 'Parking']],
+            ['whole-house-panal-10-guests', 'Guest room', 1, 3, 4500, 'per night', null, 'A comfortable guest room with one bed for up to three guests. It offers a simple, welcoming space to rest during your stay.', '/images/rooms/room-5-angle-1.jpg', ['AC/Fan', 'Common CR', 'TV in room']],
+            ['whole-house-panal-20-guests', 'Double-deck room', 2, 6, 450, 'starting price', 6, 'A double-deck room for up to six guests, with a starting rate of ₱450 for a 6-hour air-conditioned stay.', '/images/rooms/room-6-angle-1.png', ['Daily cleaning', 'Large refrigerator', 'Free mineral water', 'Towels', 'Parking']],
         ] as $index => [$slug, $type, $beds, $guests, $price, $rateLabel, $rentalHours, $description, $image, $amenities]) {
             $profiles[] = Room::updateOrCreate(['slug' => $slug], [
                 'name' => 'Room '.($index + 1), 'room_type' => $type, 'beds' => $beds, 'guests' => max(2, $guests),
@@ -94,13 +94,17 @@ class RoomSeeder extends Seeder
         $photos = [
             7 => '/images/rooms/room-7-angle-4.jpg',
             8 => '/images/rooms/room-8-angle-1.png',
+            9 => '/images/rooms/room-9-angle-1.png',
             10 => '/images/rooms/room-10-angle-3.jpg',
             11 => '/images/rooms/room-11-angle-3.jpg',
             13 => '/images/rooms/room-13-angle-2.jpg',
         ];
         $descriptionsByRoom = [
             8 => 'Ideal for a solo traveler, this one-bed room offers a simple and comfortable place to unwind after a busy day. Its practical layout provides a restful base during your stay.',
+            9 => 'A comfortable room for up to two guests, with a simple, welcoming setup and a relaxed place to unwind during your stay.',
         ];
+        $guestLimitsByRoom = [9 => 2];
+        $amenitiesToExcludeByRoom = [9 => ['large refrigerator']];
         $amenitiesByRoom = [
             7 => ['Common CR', 'Air conditioning'],
             10 => ['Common CR', 'Refrigerator', 'Air conditioning'],
@@ -119,7 +123,7 @@ class RoomSeeder extends Seeder
                 || preg_match('/\b(?:ref|refrigerator|fridge)\b/i', $amenity);
         };
 
-        $roomNumbers = array_unique(array_merge(array_keys($photos), array_keys($descriptionsByRoom), array_keys($amenitiesByRoom)));
+        $roomNumbers = array_unique(array_merge(array_keys($photos), array_keys($descriptionsByRoom), array_keys($guestLimitsByRoom), array_keys($amenitiesToExcludeByRoom), array_keys($amenitiesByRoom)));
 
         foreach ($roomNumbers as $number) {
             $room = Room::where('slug', 'carolina-room-'.$number)->first();
@@ -135,6 +139,18 @@ class RoomSeeder extends Seeder
                 $room->description = $descriptionsByRoom[$number];
             }
 
+            if (isset($guestLimitsByRoom[$number])) {
+                $room->guests = $guestLimitsByRoom[$number];
+            }
+
+            if (isset($amenitiesToExcludeByRoom[$number])) {
+                $excludedAmenities = $amenitiesToExcludeByRoom[$number];
+                $room->amenities = collect($room->amenities ?? [])
+                    ->reject(fn ($amenity) => is_string($amenity) && in_array(strtolower(trim($amenity)), $excludedAmenities, true))
+                    ->values()
+                    ->all();
+            }
+
             if (isset($amenitiesByRoom[$number])) {
                 $room->amenities = collect($room->amenities ?? [])
                     ->reject($replacedAmenity)
@@ -146,5 +162,17 @@ class RoomSeeder extends Seeder
 
             $room->save();
         }
+
+        Room::query()->get()->each(function (Room $room): void {
+            $amenities = collect($room->amenities ?? [])
+                ->reject(fn ($amenity) => is_string($amenity) && preg_match('/\bkitchen\s*wares?\b/i', $amenity))
+                ->values()
+                ->all();
+
+            if ($amenities !== ($room->amenities ?? [])) {
+                $room->amenities = $amenities;
+                $room->save();
+            }
+        });
     }
 }
