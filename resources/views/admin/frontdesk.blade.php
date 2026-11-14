@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Today · Carolina</title>
     <link rel="stylesheet" href="{{ asset('css/admin.css') }}?v={{ filemtime(public_path('css/admin.css')) }}">
+    <link rel="stylesheet" href="{{ asset('css/frontdesk.css') }}?v={{ filemtime(public_path('css/frontdesk.css')) }}">
     <script src="{{ asset('js/cleaning-countdown.js') }}?v={{ filemtime(public_path('js/cleaning-countdown.js')) }}" defer></script>
     <style>
         .today-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;align-items:start}
@@ -22,14 +23,31 @@
         .today-panel-note{margin:0 0 10px;color:var(--muted);font-size:.78rem;line-height:1.45}
         .today-arrival-status{display:inline-flex;width:max-content;padding:4px 7px;border-radius:99px;background:rgba(63,143,91,.14);color:#7bc293;font-size:.66rem;font-weight:800;letter-spacing:.04em;text-transform:uppercase}
         .today-arrival-status.is-overdue{background:rgba(201,75,60,.14);color:#f08d80}
-        .today-maintenance-item{border-left:3px solid #d78419}
+        .today-maintenance-item{background:rgba(215,132,25,.07)}
         .today-maintenance-label{display:inline-flex;width:max-content;padding:4px 7px;border-radius:99px;background:rgba(215,132,25,.14);color:#efaa4c;font-size:.66rem;font-weight:800;letter-spacing:.04em;text-transform:uppercase}
         .today-maintenance-note{margin:0;color:var(--muted);font-size:.82rem;line-height:1.4}
         @media(max-width:1250px){.today-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
         @media(max-width:700px){.today-grid{grid-template-columns:1fr;gap:12px}.today-schedule{gap:6px}.today-schedule>div{padding:8px}}
     </style>
 </head>
-<body>
+<body class="frontdesk-page">
+<header class="frontdesk-mobile-header">
+    <a class="frontdesk-mobile-brand" href="{{ route('admin.frontdesk') }}"><img src="{{ asset('images/carolina-logo.jpg') }}" alt=""><span><b>Carolina</b><small>STAFF WORKSPACE</small></span></a>
+    <details class="frontdesk-mobile-menu">
+        <summary aria-label="Open staff menu"><span></span><span></span><span></span></summary>
+        <div class="frontdesk-mobile-menu-content">
+            <nav aria-label="All staff pages">
+                @foreach(\App\Support\AdminPermissions::navigation(auth()->user()) as $item)
+                    @if(\App\Support\AdminPermissions::allows(auth()->user(), $item['ability']))
+                        <a href="{{ route($item['route']) }}" @if(request()->routeIs($item['route'])) aria-current="page" @endif>{{ $item['label'] }}</a>
+                    @endif
+                @endforeach
+            </nav>
+            <button class="admin-theme-toggle frontdesk-mobile-theme" type="button" data-admin-theme-toggle role="switch" aria-label="Dark mode" aria-checked="false"><span data-admin-theme-label>Dark mode</span><span class="theme-switch-track" aria-hidden="true"><span class="theme-switch-thumb"><svg viewBox="0 0 24 24"></svg></span></span></button>
+            <form method="POST" action="{{ route('logout') }}">@csrf<button type="submit">Log out</button></form>
+        </div>
+    </details>
+</header>
 <div class="admin-shell">
     @include('admin.partials.sidebar')
     <main class="admin-main">
@@ -37,11 +55,64 @@
             <div>
                 <p class="admin-kicker">FRONT DESK</p>
                 <h1>Today</h1>
-                <p class="admin-subtitle">Arrivals, stays, departures, cleaning, and maintenance for today.</p>
+                <p class="admin-subtitle">Front desk overview · {{ $propertyNow->format('l, F j, Y') }}</p>
             </div>
             <a class="frontdesk-walkin" href="{{ route('admin.walk-ins.create') }}">+ New walk-in</a>
         </header>
         @include('admin.partials.flash')
+
+        <section class="frontdesk-summary" aria-label="Today's overview">
+            <div class="frontdesk-metrics">
+                <article class="frontdesk-metric"><span class="frontdesk-metric-icon" aria-hidden="true">↗</span><p>Arrivals</p><strong>{{ $arrivals->count() }}</strong><small>Awaiting check-in</small></article>
+                <article class="frontdesk-metric"><span class="frontdesk-metric-icon" aria-hidden="true">⌂</span><p>In house</p><strong>{{ $activeStays->count() }}</strong><small>Active stays</small></article>
+                <article class="frontdesk-metric"><span class="frontdesk-metric-icon" aria-hidden="true">↗</span><p>Departures</p><strong>{{ $departures->count() }}</strong><small>Due today</small></article>
+                <article class="frontdesk-metric"><span class="frontdesk-metric-icon" aria-hidden="true">✓</span><p>Rooms ready</p><strong>{{ $roomStatusCounts['available'] }}</strong><small>Available right now</small></article>
+            </div>
+
+            <div class="frontdesk-feature-grid">
+                <section class="frontdesk-feature frontdesk-attention">
+                    <div class="frontdesk-feature-title"><span class="frontdesk-feature-icon" aria-hidden="true">!</span><div><p class="admin-kicker">SHIFT PRIORITIES</p><h2>Needs attention</h2></div></div>
+                    <p><strong>{{ $pendingRequests }}</strong> booking request{{ $pendingRequests === 1 ? '' : 's' }} waiting for review</p>
+                    <a class="frontdesk-primary-link" href="{{ route('admin.bookings') }}">Review bookings <span aria-hidden="true">→</span></a>
+                </section>
+                <section class="frontdesk-feature frontdesk-status">
+                    <div class="frontdesk-feature-title"><span class="frontdesk-feature-icon" aria-hidden="true">⌂</span><div><p class="admin-kicker">LIVE INVENTORY</p><h2>Room status</h2></div></div>
+                    <div class="frontdesk-status-list">
+                        <div><span><i class="is-available"></i>Available</span><strong>{{ $roomStatusCounts['available'] }}</strong></div>
+                        <div><span><i class="is-occupied"></i>Occupied or held now</span><strong>{{ $roomStatusCounts['occupied'] }}</strong></div>
+                        <div><span><i class="is-reserved"></i>Reserved later</span><strong>{{ $roomStatusCounts['reserved'] }}</strong></div>
+                        <div><span><i class="is-cleaning"></i>Cleaning / maintenance</span><strong>{{ $roomStatusCounts['cleaning'] + $roomStatusCounts['maintenance'] }}</strong></div>
+                    </div>
+                    <a class="frontdesk-text-link" href="{{ route('admin.rooms') }}">View all rooms <span aria-hidden="true">→</span></a>
+                </section>
+            </div>
+
+            @if($canSeeDecisionSupport)
+            <div class="frontdesk-secondary-grid">
+                <section class="frontdesk-feature frontdesk-activity">
+                    <div class="frontdesk-feature-title"><span class="frontdesk-feature-icon" aria-hidden="true">◷</span><div><p class="admin-kicker">LATEST UPDATES</p><h2>Recent activity</h2></div></div>
+                    @forelse($recentActivity as $activity)
+                        <div class="frontdesk-activity-row"><span class="frontdesk-activity-dot" aria-hidden="true"></span><div><strong>{{ $activity->description ?: str_replace('_', ' ', ucfirst($activity->event)) }}</strong><small>{{ $activity->created_at?->diffForHumans() }}</small></div></div>
+                    @empty
+                        <p class="frontdesk-empty">No recent activity recorded.</p>
+                    @endforelse
+                </section>
+                <section class="frontdesk-feature frontdesk-carol">
+                    <div class="frontdesk-feature-title"><span class="frontdesk-feature-icon" aria-hidden="true">✦</span><div><p class="admin-kicker">CAROL · DECISION SUPPORT</p><h2>Recommendation</h2></div></div>
+                    @if($carolSignal)
+                        <h3>{{ $carolSignal['title'] }}</h3>
+                        <p>{{ $carolSignal['evidence'] }}</p>
+                        <a class="frontdesk-text-link" href="{{ $carolSignal['action_url'] }}">{{ $carolSignal['action_label'] }} <span aria-hidden="true">→</span></a>
+                    @else
+                        <p class="frontdesk-empty">No operational rules need attention right now.</p>
+                        <a class="frontdesk-text-link" href="{{ route('admin.decision-support') }}">Open CAROL <span aria-hidden="true">→</span></a>
+                    @endif
+                </section>
+            </div>
+            @endif
+        </section>
+
+        <div class="frontdesk-details-heading"><div><p class="admin-kicker">FRONT DESK</p><h2>Shift details</h2><p>Arrivals, active stays, departures, and room operations.</p></div></div>
 
         <section class="today-grid">
             <section class="panel">
@@ -138,6 +209,13 @@
         </section>
     </main>
 </div>
+<nav class="frontdesk-mobile-tabs" aria-label="Quick staff navigation">
+    @foreach(\App\Support\AdminPermissions::navigation(auth()->user()) as $item)
+        @if($item['group'] === 'primary' && \App\Support\AdminPermissions::allows(auth()->user(), $item['ability']))
+            <a href="{{ route($item['route']) }}" @if(request()->routeIs($item['route'])) aria-current="page" @endif>@include('admin.partials.sidebar-icon', ['route' => $item['route']])<span>{{ $item['label'] }}</span></a>
+        @endif
+    @endforeach
+</nav>
 @include('admin.partials.confirmation-dialog')
 </body>
 </html>

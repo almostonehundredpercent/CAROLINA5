@@ -211,6 +211,47 @@ test('dashboard shift alerts and live inventory count the same current operation
     }
 });
 
+test('front desk overview uses live room and booking counts in the redesigned summary', function () {
+    Carbon::setTestNow('2026-10-23 12:00:00');
+
+    try {
+        $admin = User::factory()->create(['is_admin' => true]);
+        $guest = User::factory()->create(['name' => 'Today guest']);
+        adminDayRoom('today-ready-room');
+        $occupiedRoom = adminDayRoom('today-occupied-room');
+        adminDayBooking($occupiedRoom, $guest, [
+            'status' => 'confirmed',
+            'checked_in_at' => now()->subMinutes(30),
+        ]);
+        $pendingRoom = adminDayRoom('today-request-room');
+        adminDayBooking($pendingRoom, $guest, [
+            'status' => 'pending',
+            'hold_expires_at' => now()->addMinutes(20),
+        ]);
+
+        $response = $this->actingAsStaff($admin)->get(route('admin.frontdesk'))->assertOk();
+        $response->assertViewHas('pendingRequests', 1)
+            ->assertViewHas('roomStatusCounts', fn ($counts) => $counts['available'] === 1 && $counts['occupied'] === 2)
+            ->assertSee('Needs attention')
+            ->assertSee('Review bookings')
+            ->assertSee('Room status')
+            ->assertSee('Shift details');
+    } finally {
+        Carbon::setTestNow();
+    }
+});
+
+test('front desk role keeps quick navigation without admin-only activity or CAROL', function () {
+    $staff = User::factory()->create(['is_admin' => false, 'staff_role' => 'front_desk']);
+
+    $this->actingAsStaff($staff)->get(route('admin.frontdesk'))
+        ->assertOk()
+        ->assertSee('aria-label="Quick staff navigation"', false)
+        ->assertSee('Review bookings')
+        ->assertDontSee('<h2>Recent activity</h2>', false)
+        ->assertDontSee('CAROL · DECISION SUPPORT');
+});
+
 test('Manila check-in time enables and accepts check-in even while UTC is earlier', function () {
     Carbon::setTestNow(Carbon::parse('2026-10-30 13:00:00', 'UTC'));
 

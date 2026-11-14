@@ -442,11 +442,20 @@ class AdminController extends Controller
         return view('admin.walk_in', compact('rooms'));
     }
 
-    public function frontdesk()
+    public function frontdesk(OperationalDecisionSupport $decisionSupport)
     {
         $today = PropertyTime::today();
         $tomorrow = Carbon::parse($today, 'UTC')->addDay();
         $propertyNow = PropertyTime::now();
+        $rooms = $this->roomsWithDisplayStatus();
+        $roomStatusCounts = [
+            'available' => $rooms->where('display_status', 'available')->count(),
+            'occupied' => $rooms->where('display_status', 'occupied')->count(),
+            'reserved' => $rooms->where('display_status', 'reserved')->count(),
+            'cleaning' => $rooms->where('display_status', 'cleaning')->count(),
+            'maintenance' => $rooms->where('display_status', 'maintenance')->count(),
+        ];
+        $canSeeDecisionSupport = AdminPermissions::allows(request()->user(), 'decision_support');
 
         return view('admin.frontdesk', [
             'arrivals' => Booking::with(['user', 'room'])->where('status', 'confirmed')->whereDate('check_in', $today)->whereNull('checked_in_at')->get(),
@@ -454,6 +463,11 @@ class AdminController extends Controller
             'departures' => Booking::with(['user', 'room'])->whereNotNull('checked_in_at')->whereNull('checked_out_at')->whereDate('check_out', '<=', $today)->get(),
             'roomOperationBlocks' => RoomBlock::with('room')->whereIn('status', ['cleaning', 'maintenance'])->overlapping($today, $tomorrow)->orderBy('starts_at')->get(),
             'propertyNow' => $propertyNow,
+            'roomStatusCounts' => $roomStatusCounts,
+            'pendingRequests' => Booking::query()->blocking()->where('status', 'pending')->count(),
+            'recentActivity' => $canSeeDecisionSupport ? ActivityLog::latest()->take(3)->get() : collect(),
+            'carolSignal' => $canSeeDecisionSupport ? $decisionSupport->dashboardSignals($rooms)->first() : null,
+            'canSeeDecisionSupport' => $canSeeDecisionSupport,
         ]);
     }
 
