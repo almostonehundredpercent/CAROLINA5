@@ -809,8 +809,19 @@ class AdminController extends Controller
             'departuresToday' => Booking::with('room')->whereNotNull('checked_in_at')->whereNull('checked_out_at')->whereDate('check_out', '<=', PropertyTime::today())->get(),
             'propertyNow' => PropertyTime::now(),
             'recentActivity' => ActivityLog::with(['booking.room', 'user'])->latest()->take(8)->get(),
-            'pendingReviews' => Review::with(['booking.room', 'user'])->where('status', '!=', 'approved')->latest()->take(10)->get(),
-            'recentReviews' => Review::with(['booking.room'])->whereIn('status', ['approved', 'hidden'])->latest()->take(8)->get(),
+        ]);
+    }
+
+    public function reviews()
+    {
+        return view('admin.reviews', [
+            'reviews' => Review::with(['booking.room', 'user'])
+                ->where('status', '!=', 'approved')
+                ->latest('created_at')
+                ->latest('id')
+                ->paginate(15)
+                ->withQueryString(),
+            'pendingReviewCount' => Review::where('status', 'pending')->count(),
         ]);
     }
 

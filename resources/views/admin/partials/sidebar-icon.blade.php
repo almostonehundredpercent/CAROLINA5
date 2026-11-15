@@ -9,6 +9,9 @@
         @case('admin.bookings')
             <svg viewBox="0 0 24 24"><path d="M8 2a2 2 0 0 0-2 2H5a3 3 0 0 0-3 3v12a3 3 0 0 0 3 3h14a3 3 0 0 0 3-3V7a3 3 0 0 0-3-3h-1a2 2 0 0 0-2-2H8Zm0 2h8v2H8V4Zm-2 6h2v2H6v-2Zm4 0h8v2h-8v-2Zm-4 4h2v2H6v-2Zm4 0h8v2h-8v-2Zm-4 4h2v2H6v-2Zm4 0h8v2h-8v-2Z"/></svg>
             @break
+        @case('admin.reviews')
+            <svg viewBox="0 0 24 24"><path d="m12 2.5 2.86 5.79 6.39.93-4.62 4.5 1.09 6.36L12 17.08l-5.72 3 1.09-6.36-4.62-4.5 6.39-.93L12 2.5Zm0 3.4-1.74 3.52-3.89.57 2.81 2.74-.66 3.87L12 14.77l3.48 1.83-.66-3.87 2.81-2.74-3.89-.57L12 5.9Z"/></svg>
+            @break
         @case('admin.rooms')
             <svg viewBox="0 0 24 24"><path d="M12.67 2.5a1 1 0 0 0-1.34 0l-9 8A1 1 0 0 0 3 12.25h1V20a2 2 0 0 0 2 2h4v-6h4v6h4a2 2 0 0 0 2-2v-7.75h1a1 1 0 0 0 .67-1.75l-9-8Z"/></svg>
             @break

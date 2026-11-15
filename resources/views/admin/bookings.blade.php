@@ -455,42 +455,6 @@
                 @include('admin.partials.booking-pagination')
             </section>
 
-            <section class="panel" style="margin-top:20px">
-                <div class="panel-heading">
-                    <div><p class="admin-kicker">GUEST REVIEWS</p><h2>Review moderation</h2></div>
-                    <span class="pill">{{ $pendingReviews->count() }} to publish</span>
-                </div>
-                <div class="review-moderation-list">
-                    @forelse($pendingReviews as $review)
-                        <article class="review-moderation-card">
-                            <div class="review-moderation-heading">
-                                <div>
-                                    <h3>{{ $review->guest_name }} <span>· {{ $review->room?->name }}</span></h3>
-                                    <p class="review-moderation-rating" aria-label="Rated {{ $review->rating }} out of 5">
-                                        <span aria-hidden="true">{{ str_repeat('★', $review->rating) }}{{ str_repeat('☆', 5 - $review->rating) }}</span>
-                                        <b>{{ $review->rating }} / 5</b>
-                                    </p>
-                                </div>
-                                <span class="review-moderation-pending">Ready to publish</span>
-                            </div>
-                            <p class="review-moderation-guidance">The guest’s name and review are shown as submitted and cannot be edited. Publish the review unchanged or hide it.</p>
-                            <div class="review-moderation-submission">
-                                <div><b>Name submitted</b><p>{{ $review->guest_name }}</p></div>
-                                <div><b>Comment submitted</b><blockquote>{{ $review->comment ?: 'No written comment.' }}</blockquote></div>
-                            </div>
-                            <form method="POST" action="{{ route('admin.reviews.update', $review) }}" class="review-moderation-form">
-                                @csrf @method('PATCH')
-                                <div class="review-moderation-actions">
-                                    <button class="review-moderation-button review-moderation-approve" type="submit" name="status" value="approved">Approve &amp; publish unchanged</button>
-                                    <button class="review-moderation-button review-moderation-hide" type="submit" name="status" value="hidden">Hide review</button>
-                                </div>
-                            </form>
-                        </article>
-                    @empty
-                        <p class="empty-copy">No reviews waiting for moderation.</p>
-                    @endforelse
-                </div>
-            </section>
         </main>
     </div>
     <script>
