@@ -125,6 +125,29 @@
             fill: #fff !important;
         }
 
+        @media (min-width: 701px) and (max-width: 980px) {
+            .metric-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .dashboard-summary-grid {
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+            }
+
+            .dashboard-summary-grid > .dashboard-summary-panel:first-child {
+                grid-column: auto;
+            }
+
+            .decision-support-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 14px;
+            }
+
+            .decision-support-grid > .panel:last-child {
+                grid-column: 1 / -1;
+            }
+        }
+
         @media (max-width: 700px) {
             .decision-support-grid {
                 grid-template-columns: 1fr;
