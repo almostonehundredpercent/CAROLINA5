@@ -311,7 +311,7 @@ class BookingController extends Controller
                     'deposit_due_at' => now()->addMinutes(Booking::holdMinutes()),
                     'add_ons' => ['cooling_type' => $data['cooling_type'], 'package_rate' => StayPricing::rate($hours, $data['cooling_type'], $lockedRoom), 'extra_guests' => max(0, (int) $data['guests'] - 2)],
                     'hold_expires_at' => now()->addMinutes(Booking::holdMinutes()),
-                    'payment_method' => 'cash',
+                    'payment_method' => null,
                     'status' => 'pending',
                 ]);
                 if ($pricing) {

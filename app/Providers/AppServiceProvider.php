@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Models\Booking;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\Paginator;
@@ -35,6 +36,27 @@ class AppServiceProvider extends ServiceProvider
                 Limit::perMinute(5)->by('login-account:'.$account.'|'.$request->ip()),
                 Limit::perMinute(10)->by('login-identifier:'.$account),
                 Limit::perMinute(20)->by('login-ip:'.$request->ip()),
+            ];
+        });
+
+        RateLimiter::for('paymongo-checkout', function (Request $request) {
+            $routeBooking = $request->route('booking');
+            $bookingId = $routeBooking instanceof Booking
+                ? (string) $routeBooking->getKey()
+                : (string) $routeBooking;
+            $userId = $request->user()?->getAuthIdentifier();
+            $actor = $userId !== null ? 'user:'.$userId : 'ip:'.$request->ip();
+            $tooManyAttempts = static function (Request $request) use ($bookingId) {
+                $message = 'Too many payment attempts. Please wait a minute before trying again. Your booking is still recorded; no new payment was recorded by this request.';
+
+                return $request->expectsJson()
+                    ? response()->json(['message' => $message], 429)
+                    : redirect()->route('bookings.receipt', $bookingId)->withErrors(['payment' => $message]);
+            };
+
+            return [
+                Limit::perMinute(12)->by('paymongo-booking:'.$bookingId.'|'.$actor)->response($tooManyAttempts),
+                Limit::perMinute(30)->by('paymongo-ip:'.$request->ip())->response($tooManyAttempts),
             ];
         });
 

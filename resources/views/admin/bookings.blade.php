@@ -323,11 +323,12 @@
                                         @php($timeAdjustment = $booking->timeAdjustments->sortByDesc('id')->first())
                                         @php($paymentStatus = $booking->payment_status ?? 'pending')
                                         @php($paymentStatusClass = match ($paymentStatus) { 'paid' => 'confirmed', 'refunded', 'failed' => 'cancelled', default => '' })
+                                        @php($paymentMethodLabel = $hasPayMongoPayment ? 'PayMongo · GCash' : match ($paymentStatus) { 'failed' => 'GCash checkout failed', 'paid', 'partial', 'refunded' => strtoupper($booking->payment_method ?? 'Payment recorded'), default => $booking->payment_method ? strtoupper($booking->payment_method) : 'Not paid yet' })
                                         <div class="booking-status-stack">
                                             <span class="mini-status {{ $expiredCashHold ? 'hold-expired' : $booking->status }}" aria-label="Booking status: {{ $expiredCashHold ? 'Hold expired' : ($booking->status === 'pending' ? 'Pending staff confirmation' : ucfirst($booking->status)) }}">{{ $expiredCashHold ? 'Hold expired' : ($booking->status === 'pending' ? 'Pending staff confirmation' : ucfirst($booking->status)) }}</span>
                                             <span class="mini-status booking-payment-status {{ $paymentStatus }} {{ $paymentStatusClass }}" aria-label="Payment status: {{ ucfirst($paymentStatus) }}">Payment {{ ucfirst($paymentStatus) }}</span>
                                         </div>
-                                        <small class="booking-payment-method">{{ $hasPayMongoPayment ? 'PayMongo · GCash' : strtoupper($booking->payment_method ?? 'cash') }}</small>
+                                        <small class="booking-payment-method">{{ $paymentMethodLabel }}</small>
                                         @if((float) $booking->deposit_amount > 0)
                                             <small class="booking-payment-method">Downpayment ₱{{ number_format((float) $booking->deposit_amount, 2) }} · {{ $booking->deposit_status === 'verified' || $booking->deposit_verified_at ? 'Verified' : 'Awaiting payment' }}</small>
                                         @endif

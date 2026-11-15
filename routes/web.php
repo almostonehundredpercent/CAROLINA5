@@ -110,7 +110,7 @@ Route::post('/booking/guest-draft', [BookingController::class, 'saveGuestDraft']
 Route::post('/rooms/{room:slug}/book', [BookingController::class, 'store'])->middleware('throttle:10,1')->name('bookings.store');
 Route::get('/bookings/{booking}/receipt', [BookingController::class, 'receipt'])->name('bookings.receipt');
 Route::get('/bookings/{booking}/confirmation', [BookingController::class, 'confirmation'])->name('bookings.confirmation');
-Route::post('/bookings/{booking}/paymongo', [BookingController::class, 'startPayMongoCheckout'])->middleware('throttle:5,1')->name('bookings.paymongo.start');
+Route::post('/bookings/{booking}/paymongo', [BookingController::class, 'startPayMongoCheckout'])->middleware('throttle:paymongo-checkout')->name('bookings.paymongo.start');
 Route::get('/bookings/{booking}/paymongo/return', [BookingController::class, 'returnFromPayMongo'])->middleware('throttle:15,1')->name('bookings.paymongo.return');
 Route::post('/webhooks/paymongo', PayMongoWebhookController::class)->name('bookings.paymongo.webhook');
 Route::get('/owner/rate-approvals/{change}/{token}', [RoomPriceApprovalController::class, 'show'])->middleware(['signed', 'throttle:30,1'])->name('room-price-approval.show');
