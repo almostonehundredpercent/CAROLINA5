@@ -107,6 +107,10 @@
             text-align: center;
         }
         .booking-note { color: var(--muted); font-size: 12px; margin: 5px 0; }
+        .bookings-page .booking-stat-grid article { position: relative; }
+        .bookings-page .booking-stat-grid .room-stat-trigger { position: absolute; inset: 0; box-sizing: border-box; display: block; width: 100%; height: 100%; padding: inherit; border: 0; border-radius: inherit; background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+        .bookings-page .booking-stat-grid .room-stat-trigger:hover { filter: brightness(1.08); }
+        .bookings-page .booking-stat-grid .room-stat-trigger:focus-visible { outline: 3px solid var(--orange); outline-offset: 3px; z-index: 1; }
         .booking-payment-proof {
             display: inline-flex;
             align-items: center;
@@ -190,11 +194,55 @@
             @endif
 
             <section class="booking-stat-grid">
-                <article class="occupied"><small>Rooms occupied</small><strong>{{ $occupiedRooms }}</strong></article>
-                <article class="reserved"><small>Upcoming</small><strong>{{ $reservedRooms }}</strong></article>
-                <article class="available"><small>Ready to book</small><strong>{{ $availableRooms }}</strong></article>
-                <article class="maintenance"><small>Unavailable</small><strong>{{ $maintenanceRooms }}</strong></article>
+                <article class="occupied"><button class="room-stat-trigger" type="button" data-room-stat-dialog-open="room-stat-occupied" aria-haspopup="dialog" aria-controls="room-stat-occupied"><small>Rooms occupied</small><strong>{{ $occupiedRooms }}</strong><em>View room details</em></button></article>
+                <article class="reserved"><button class="room-stat-trigger" type="button" data-room-stat-dialog-open="room-stat-upcoming" aria-haspopup="dialog" aria-controls="room-stat-upcoming"><small>Upcoming</small><strong>{{ $reservedRooms }}</strong><em>View room details</em></button></article>
+                <article class="available"><button class="room-stat-trigger" type="button" data-room-stat-dialog-open="room-stat-available" aria-haspopup="dialog" aria-controls="room-stat-available"><small>Ready to book</small><strong>{{ $availableRooms }}</strong><em>View room details</em></button></article>
+                <article class="maintenance"><button class="room-stat-trigger" type="button" data-room-stat-dialog-open="room-stat-unavailable" aria-haspopup="dialog" aria-controls="room-stat-unavailable"><small>Unavailable</small><strong>{{ $unavailableRooms }}</strong><em>View room details</em></button></article>
             </section>
+
+            <dialog class="dashboard-detail-dialog" id="room-stat-occupied" aria-labelledby="room-stat-occupied-title">
+                <div class="dashboard-detail-shell">
+                    <header class="dashboard-detail-header"><div><p class="admin-kicker">ROOM STATUS</p><h2 id="room-stat-occupied-title">Rooms occupied · {{ $occupiedRoomDetails->count() }}</h2><p>Current stays occupying rooms.</p></div><button class="dashboard-detail-close" type="button" data-room-stat-dialog-close aria-label="Close occupied rooms">×</button></header>
+                    <div class="dashboard-detail-body"><section class="dashboard-detail-section">
+                        @if($occupiedRoomDetails->isNotEmpty())<div class="dashboard-detail-table-wrap" role="region" aria-label="Occupied rooms" tabindex="0"><table class="dashboard-detail-table"><thead><tr><th>Room</th><th>Guest</th><th>Check-in</th><th>Check-out</th></tr></thead><tbody>
+                            @foreach($occupiedRoomDetails as $room)@php($stay = $room->display_booking)<tr><td>{{ $room->name }}</td><td>{{ $stay?->guest_name ?? $stay?->user?->name ?? 'Guest' }}</td><td>{{ $stay?->check_in_at?->format('M j, Y g:i A') ?? $stay?->check_in?->format('M j, Y') ?? '—' }}</td><td>{{ $stay?->check_out_at?->format('M j, Y g:i A') ?? $stay?->check_out?->format('M j, Y') ?? '—' }}</td></tr>@endforeach
+                        </tbody></table></div>@else<p class="dashboard-detail-empty">No rooms are occupied right now.</p>@endif
+                    </section></div>
+                </div>
+            </dialog>
+
+            <dialog class="dashboard-detail-dialog" id="room-stat-upcoming" aria-labelledby="room-stat-upcoming-title">
+                <div class="dashboard-detail-shell">
+                    <header class="dashboard-detail-header"><div><p class="admin-kicker">ROOM STATUS</p><h2 id="room-stat-upcoming-title">Upcoming reservations · {{ $reservedRoomDetails->count() }}</h2><p>Rooms with a future reservation and the next guest arrival.</p></div><button class="dashboard-detail-close" type="button" data-room-stat-dialog-close aria-label="Close upcoming rooms">×</button></header>
+                    <div class="dashboard-detail-body"><section class="dashboard-detail-section">
+                        @if($reservedRoomDetails->isNotEmpty())<div class="dashboard-detail-table-wrap" role="region" aria-label="Upcoming room reservations" tabindex="0"><table class="dashboard-detail-table"><thead><tr><th>Room</th><th>Guest</th><th>Check-in</th><th>Check-out</th></tr></thead><tbody>
+                            @foreach($reservedRoomDetails as $room)@php($stay = $room->display_booking)<tr><td>{{ $room->name }}</td><td>{{ $stay?->guest_name ?? $stay?->user?->name ?? 'Guest' }}</td><td>{{ $stay?->check_in_at?->format('M j, Y g:i A') ?? $stay?->check_in?->format('M j, Y') ?? '—' }}</td><td>{{ $stay?->check_out_at?->format('M j, Y g:i A') ?? $stay?->check_out?->format('M j, Y') ?? '—' }}</td></tr>@endforeach
+                        </tbody></table></div>@else<p class="dashboard-detail-empty">No upcoming room reservations.</p>@endif
+                    </section></div>
+                </div>
+            </dialog>
+
+            <dialog class="dashboard-detail-dialog" id="room-stat-available" aria-labelledby="room-stat-available-title">
+                <div class="dashboard-detail-shell">
+                    <header class="dashboard-detail-header"><div><p class="admin-kicker">ROOM STATUS</p><h2 id="room-stat-available-title">Ready to book · {{ $availableRoomDetails->count() }}</h2><p>Rooms without a current or upcoming reservation or active work block.</p></div><button class="dashboard-detail-close" type="button" data-room-stat-dialog-close aria-label="Close available rooms">×</button></header>
+                    <div class="dashboard-detail-body"><section class="dashboard-detail-section">
+                        @if($availableRoomDetails->isNotEmpty())<div class="dashboard-detail-table-wrap" role="region" aria-label="Rooms ready to book" tabindex="0"><table class="dashboard-detail-table"><thead><tr><th>Room</th><th>Type</th><th>Capacity</th><th>Beds</th><th>Rate</th></tr></thead><tbody>
+                            @foreach($availableRoomDetails as $room)<tr><td>{{ $room->name }}</td><td>{{ $room->room_type ? ucfirst($room->room_type) : 'Room' }}</td><td>{{ $room->guests }} guests</td><td>{{ $room->beds ?: '—' }}</td><td>₱{{ number_format((float) $room->price_per_night, 2) }} {{ $room->rate_label }}</td></tr>@endforeach
+                        </tbody></table></div>@else<p class="dashboard-detail-empty">No rooms are ready to book.</p>@endif
+                    </section></div>
+                </div>
+            </dialog>
+
+            <dialog class="dashboard-detail-dialog" id="room-stat-unavailable" aria-labelledby="room-stat-unavailable-title">
+                <div class="dashboard-detail-shell">
+                    <header class="dashboard-detail-header"><div><p class="admin-kicker">ROOM STATUS</p><h2 id="room-stat-unavailable-title">Unavailable · {{ $unavailableRoomDetails->count() }}</h2><p>Rooms currently under cleaning or maintenance.</p></div><button class="dashboard-detail-close" type="button" data-room-stat-dialog-close aria-label="Close unavailable rooms">×</button></header>
+                    <div class="dashboard-detail-body"><section class="dashboard-detail-section">
+                        @if($unavailableRoomDetails->isNotEmpty())<div class="dashboard-detail-table-wrap" role="region" aria-label="Unavailable rooms" tabindex="0"><table class="dashboard-detail-table"><thead><tr><th>Room</th><th>Status</th><th>Unavailable until</th><th>Notes</th></tr></thead><tbody>
+                            @foreach($unavailableRoomDetails as $room)@php($block = $room->display_block)<tr><td>{{ $room->name }}</td><td>{{ ucfirst($room->display_status) }}</td><td>{{ $block?->ends_at?->format('M j, Y g:i A') ?? $room->operational_until?->format('M j, Y g:i A') ?? 'Until cleared by staff' }}</td><td>{{ $block?->notes ?: '—' }}</td></tr>@endforeach
+                        </tbody></table></div>@else<p class="dashboard-detail-empty">No rooms are currently unavailable.</p>@endif
+                    </section></div>
+                </div>
+            </dialog>
 
             <section class="panel bookings-reservations" style="margin-top:20px">
                 <div class="panel-heading">
@@ -445,6 +493,21 @@
             </section>
         </main>
     </div>
+    <script>
+        (() => {
+            document.querySelectorAll('[data-room-stat-dialog-open]').forEach((trigger) => {
+                const dialog = document.getElementById(trigger.dataset.roomStatDialogOpen);
+                if (!dialog || typeof dialog.showModal !== 'function') return;
+
+                trigger.addEventListener('click', () => dialog.showModal());
+                dialog.querySelector('[data-room-stat-dialog-close]')?.addEventListener('click', () => dialog.close());
+                dialog.addEventListener('click', (event) => {
+                    if (event.target === dialog) dialog.close();
+                });
+                dialog.addEventListener('close', () => trigger.focus());
+            });
+        })();
+    </script>
     @include('admin.partials.confirmation-dialog')
 </body>
 </html>

@@ -766,6 +766,10 @@ class AdminController extends Controller
 
         [$chartLabels, $chartValues] = $this->bookingChartData($period);
         $rooms = $this->roomsWithDisplayStatus();
+        $occupiedRoomDetails = $rooms->where('display_status', 'occupied')->values();
+        $reservedRoomDetails = $rooms->where('display_status', 'reserved')->values();
+        $availableRoomDetails = $rooms->where('display_status', 'available')->values();
+        $unavailableRoomDetails = $rooms->whereIn('display_status', ['cleaning', 'maintenance'])->values();
 
         $bookingQuery = Booking::with(['user', 'room', 'payments', 'timeAdjustments'])->latest();
         if ($request->filled('status')) {
@@ -791,10 +795,14 @@ class AdminController extends Controller
             'period' => $period,
             'chartLabels' => $chartLabels,
             'chartValues' => $chartValues,
-            'occupiedRooms' => $rooms->where('display_status', 'occupied')->count(),
-            'reservedRooms' => $rooms->where('display_status', 'reserved')->count(),
-            'availableRooms' => $rooms->where('display_status', 'available')->count(),
-            'maintenanceRooms' => $rooms->where('display_status', 'maintenance')->count(),
+            'occupiedRooms' => $occupiedRoomDetails->count(),
+            'reservedRooms' => $reservedRoomDetails->count(),
+            'availableRooms' => $availableRoomDetails->count(),
+            'unavailableRooms' => $unavailableRoomDetails->count(),
+            'occupiedRoomDetails' => $occupiedRoomDetails,
+            'reservedRoomDetails' => $reservedRoomDetails,
+            'availableRoomDetails' => $availableRoomDetails,
+            'unavailableRoomDetails' => $unavailableRoomDetails,
             'newCustomers' => Booking::with(['user', 'room'])->latest()->take(5)->get(),
             'individualBookings' => $bookingQuery->paginate($perPage, ['*'], 'booking_page')->withQueryString(),
             'arrivalsToday' => Booking::with('room')->where('status', 'confirmed')->whereDate('check_in', PropertyTime::today())->whereNull('checked_in_at')->where('check_in_at', '<=', PropertyTime::now())->get(),
