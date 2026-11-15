@@ -173,7 +173,7 @@
                     @endif
                     @if($canCancel)
                         <p>You can cancel online before check-in. Cancel at least 3 days ahead for a full refund; cancellations less than 3 days ahead are non-refundable. The room will reopen for these dates after cancellation.</p>
-                        <form class="portal-cancel-form" method="POST" action="{{ route('bookings.lookup.cancel', $booking) }}" onsubmit="return confirm('Cancel this booking? Cancellations at least 3 days before check-in are eligible for a full refund. Cancellations less than 3 days ahead are non-refundable. The room will become available again.');">
+                        <form class="portal-cancel-form" method="POST" action="{{ route('bookings.lookup.cancel', $booking) }}" data-booking-cancel-confirm>
                             @csrf @method('PATCH')
                             <input type="hidden" name="email" value="{{ $lookupEmail }}">
                             <input type="hidden" name="reference" value="{{ $booking->reference }}">
@@ -202,4 +202,5 @@
         @endif
     </div>
 </section>
+@include('bookings.cancel-dialog')
 @endsection

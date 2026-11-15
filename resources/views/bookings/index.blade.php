@@ -72,7 +72,7 @@
                 @endif
                 @if($booking->canCancelOnline())
                     <small>Cancel at least 3 days before check-in for a full refund. Cancellations less than 3 days ahead are allowed before check-in but are non-refundable.</small>
-                    <form method="POST" action="{{ route('bookings.cancel', $booking) }}" onsubmit="return confirm('Cancel this booking? Cancellations at least 3 days before check-in are eligible for a full refund. Cancellations less than 3 days ahead are non-refundable. The room will become available again.');">@csrf @method('PATCH')<button class="link-danger" type="submit">Cancel booking</button></form>
+                    <form method="POST" action="{{ route('bookings.cancel', $booking) }}" data-booking-cancel-confirm>@csrf @method('PATCH')<button class="link-danger" type="submit">Cancel booking</button></form>
                 @else
                     <small>Online cancellation closes at the scheduled check-in time. Contact Carolina if you need help.</small>
                 @endif
@@ -130,4 +130,5 @@
         @if($bookings->hasMorePages())<a href="{{ $bookings->nextPageUrl() }}">Next</a>@else<span class="booking-pagination-disabled" aria-disabled="true">Next</span>@endif
     </nav>
 @endif
+@include('bookings.cancel-dialog')
 @endsection
