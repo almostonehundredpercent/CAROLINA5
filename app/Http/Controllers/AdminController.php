@@ -79,7 +79,7 @@ class AdminController extends Controller
             $recentBookings = Booking::with(['user', 'room'])->latest()->take(8)->get();
             $rooms = $this->roomsWithDisplayStatus();
             $operationalMetrics = $this->dashboardOperationalMetrics($rooms);
-            $availableRoomDetails = $rooms->where('display_status', 'available')->values();
+            $availableRoomDetails = $rooms->whereIn('display_status', ['available', 'reserved'])->values();
             $confirmedBookings = Booking::with(['user', 'room'])
                 ->where('status', 'confirmed')
                 ->orderBy('check_in_at')
@@ -173,7 +173,7 @@ class AdminController extends Controller
                     'net_collected' => $fallbackRevenue,
                 ],
                 'paymentDetails' => collect(),
-                'availableRoomDetails' => $fallbackRooms->where('display_status', 'available')->values(),
+                'availableRoomDetails' => $fallbackRooms->whereIn('display_status', ['available', 'reserved'])->values(),
                 'confirmedBookings' => Booking::with(['user', 'room'])->where('status', 'confirmed')->orderBy('check_in_at')->orderBy('check_in')->get(),
                 'checkedInCount' => $operationalMetrics['checkedInCount'],
                 'checkedOutCount' => $operationalMetrics['checkedOutCount'],
@@ -1374,7 +1374,7 @@ class AdminController extends Controller
             'checkedInCount' => Booking::whereNotNull('checked_in_at')->whereNull('checked_out_at')->count(),
             'checkedOutCount' => Booking::whereDate('checked_out_at', $today)->count(),
             'roomsByStatus' => [
-                'available' => $rooms->where('display_status', 'available')->count(),
+                'available' => $rooms->whereIn('display_status', ['available', 'reserved'])->count(),
                 'occupied' => $rooms->where('display_status', 'occupied')->count(),
                 'maintenance' => $rooms->whereIn('display_status', ['maintenance', 'cleaning'])->count(),
             ],
