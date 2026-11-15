@@ -1,0 +1,224 @@
+.frontdesk-page {
+    --frontdesk-surface: #fffdfa;
+    --frontdesk-ink: #2d211b;
+    --frontdesk-muted: #74665c;
+    --frontdesk-border: #e8dbcf;
+    --frontdesk-soft: #f6eee5;
+    --frontdesk-accent: #b85e00;
+}
+
+.frontdesk-page .admin-main {
+    padding: 38px clamp(24px, 3vw, 52px) 72px;
+}
+
+.frontdesk-page .admin-sidebar {
+    background: #281c16 !important;
+    border-right: 1px solid #4b3529 !important;
+}
+
+html:not(.dark-mode) .frontdesk-page .admin-sidebar {
+    background: #281c16 !important;
+    border-right-color: #4b3529 !important;
+    color: #fff7eb !important;
+}
+
+html:not(.dark-mode) .frontdesk-page .admin-sidebar .admin-brand {
+    color: #fff7eb !important;
+}
+
+html:not(.dark-mode) .frontdesk-page .admin-sidebar .admin-brand small,
+html:not(.dark-mode) .frontdesk-page .admin-sidebar .admin-nav::before {
+    color: #eeb470 !important;
+}
+
+html:not(.dark-mode) .frontdesk-page .admin-sidebar .admin-nav a,
+html:not(.dark-mode) .frontdesk-page .admin-sidebar .admin-nav a:focus,
+html:not(.dark-mode) .frontdesk-page .admin-sidebar .admin-nav a:active {
+    color: #e8d9cc !important;
+}
+
+html:not(.dark-mode) .frontdesk-page .admin-sidebar .admin-nav a:hover,
+html:not(.dark-mode) .frontdesk-page .admin-sidebar .admin-nav a.active {
+    background: #493023 !important;
+    border-color: #785038 !important;
+    color: #fff7ed !important;
+}
+
+html:not(.dark-mode) .frontdesk-page .admin-sidebar .admin-nav a i {
+    color: #edaa62 !important;
+}
+
+html:not(.dark-mode) .frontdesk-page .admin-sidebar .admin-theme-toggle,
+html:not(.dark-mode) .frontdesk-page .admin-sidebar .admin-logout .logout-button {
+    background: #39281f !important;
+    border-color: #71503c !important;
+    color: #fff7ed !important;
+}
+
+.frontdesk-page .admin-sidebar .admin-nav a {
+    color: #e8d9cc !important;
+}
+
+.frontdesk-page .admin-sidebar .admin-nav a:hover,
+.frontdesk-page .admin-sidebar .admin-nav a.active {
+    background: #493023 !important;
+    color: #fff7ed !important;
+}
+
+.frontdesk-page .admin-topbar {
+    margin-bottom: 28px;
+    gap: 18px;
+}
+
+.frontdesk-page .admin-topbar h1 {
+    font-family: "DM Sans", sans-serif;
+    font-size: clamp(2.25rem, 3vw, 3.15rem);
+    line-height: 1.05;
+    letter-spacing: -.05em;
+    font-weight: 800;
+}
+
+.frontdesk-page .admin-subtitle {
+    margin-top: 9px;
+    font-size: .93rem;
+}
+
+.frontdesk-page .frontdesk-walkin,
+.frontdesk-primary-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    min-height: 44px;
+    border: 1px solid #9f4f00;
+    border-radius: 9px;
+    background: #b85e00 !important;
+    color: #fff9f1 !important;
+    padding: 11px 17px;
+    text-decoration: none;
+    font-weight: 800;
+    box-shadow: 0 5px 12px rgba(110, 51, 0, .12);
+}
+
+.frontdesk-page .frontdesk-walkin:hover,
+.frontdesk-primary-link:hover { background: #974e06 !important; }
+
+.frontdesk-summary { display: grid; gap: 16px; }
+.frontdesk-metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+
+.frontdesk-metric,
+.frontdesk-feature {
+    min-width: 0;
+    border: 1px solid var(--frontdesk-border);
+    border-radius: 14px;
+    background: var(--frontdesk-surface);
+    box-shadow: 0 7px 24px rgba(45, 29, 18, .04);
+}
+
+.frontdesk-metric { position: relative; padding: 19px 21px 17px; }
+.frontdesk-metric p { margin: 0 0 8px; color: var(--frontdesk-muted); font-size: .9rem; font-weight: 650; }
+.frontdesk-metric strong { display: block; color: var(--frontdesk-ink); font-size: clamp(1.85rem, 3vw, 2.5rem); line-height: 1; letter-spacing: -.04em; }
+.frontdesk-metric small { display: block; margin-top: 9px; color: var(--frontdesk-muted); font-size: .78rem; }
+.frontdesk-metric-icon { position: absolute; top: 18px; right: 18px; display: grid; place-items: center; width: 32px; height: 32px; border-radius: 9px; background: #f8e9d9; color: #9f5006; font-size: 1.15rem; font-weight: 800; }
+
+.frontdesk-feature-grid,
+.frontdesk-secondary-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.frontdesk-feature { padding: 22px 24px; }
+.frontdesk-feature-title { display: flex; align-items: center; gap: 13px; margin-bottom: 20px; }
+.frontdesk-feature-title .admin-kicker { margin-bottom: 4px; color: #a1500a; }
+.frontdesk-feature-title h2 { margin: 0; color: var(--frontdesk-ink); font-family: "DM Sans", sans-serif; font-size: 1.2rem; letter-spacing: -.02em; }
+.frontdesk-feature-icon { display: grid; place-items: center; width: 39px; height: 39px; flex: 0 0 39px; border-radius: 11px; background: #fff0df; color: #a1500a; font-size: 1.3rem; font-weight: 800; }
+.frontdesk-attention { background: #fff8ef; border-color: #e8c9a6; }
+.frontdesk-attention > p { margin: 0 0 17px; color: var(--frontdesk-ink); font-size: 1rem; }
+.frontdesk-attention > p strong { font-size: 1.28rem; }
+.frontdesk-status-list { display: grid; gap: 0; margin-top: -4px; }
+.frontdesk-status-list > div { display: flex; justify-content: space-between; gap: 12px; align-items: center; min-height: 37px; border-bottom: 1px solid var(--frontdesk-border); color: var(--frontdesk-ink); font-size: .91rem; }
+.frontdesk-status-list > div:last-child { border-bottom: 0; }
+.frontdesk-status-list span { display: flex; align-items: center; gap: 9px; }
+.frontdesk-status-list i { display: inline-block; width: 9px; height: 9px; border-radius: 50%; }
+.frontdesk-status-list .is-available { background: #41875d; }
+.frontdesk-status-list .is-occupied { background: #d07b19; }
+.frontdesk-status-list .is-reserved { background: #5e7fa4; }
+.frontdesk-status-list .is-cleaning { background: #9a6a4e; }
+.frontdesk-text-link { display: inline-flex; align-items: center; gap: 7px; margin-top: 14px; color: #995006 !important; text-decoration: none; font-size: .86rem; font-weight: 800; }
+.frontdesk-text-link:hover { text-decoration: underline; }
+.frontdesk-feature-title + .frontdesk-activity-row { border-top: 0; }
+.frontdesk-activity-row { display: flex; gap: 11px; align-items: start; padding: 10px 0; border-top: 1px solid var(--frontdesk-border); }
+.frontdesk-activity-row strong { display: block; color: var(--frontdesk-ink); font-size: .88rem; line-height: 1.35; }
+.frontdesk-activity-row small { display: block; margin-top: 4px; color: var(--frontdesk-muted); font-size: .74rem; }
+.frontdesk-activity-dot { flex: 0 0 9px; width: 9px; height: 9px; margin-top: 5px; border-radius: 50%; background: #c0741b; }
+.frontdesk-carol { background: #f6eee4; }
+.frontdesk-carol h3 { margin: 0 0 8px; color: var(--frontdesk-ink); font-size: 1.02rem; }
+.frontdesk-carol > p, .frontdesk-empty { margin: 0; color: var(--frontdesk-muted); font-size: .89rem; line-height: 1.5; }
+.frontdesk-details-heading { margin: 38px 0 18px; }
+.frontdesk-details-heading h2 { margin: 0; color: var(--frontdesk-ink); font-size: 1.4rem; letter-spacing: -.02em; }
+.frontdesk-details-heading p:last-child { margin: 5px 0 0; color: var(--frontdesk-muted); }
+.frontdesk-page .today-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.frontdesk-page .today-grid > .panel { height: auto; padding: 19px; background: var(--frontdesk-surface); border: 1px solid var(--frontdesk-border); border-radius: 14px; }
+.frontdesk-page .today-grid .panel h2 { font-family: "DM Sans", sans-serif; font-size: 1.1rem; }
+.frontdesk-page .today-item { background: var(--frontdesk-soft); border-color: var(--frontdesk-border); }
+.frontdesk-mobile-header, .frontdesk-mobile-tabs { display: none; }
+
+html.dark-mode .frontdesk-page {
+    --frontdesk-surface: #251a14;
+    --frontdesk-ink: #fff8f1;
+    --frontdesk-muted: #d0bfb1;
+    --frontdesk-border: #574034;
+    --frontdesk-soft: #30221b;
+    --frontdesk-accent: #f1a044;
+}
+html.dark-mode .frontdesk-page .frontdesk-attention { background: #342416; border-color: #8b5a2a; }
+html.dark-mode .frontdesk-page .frontdesk-carol { background: #30231b; }
+html.dark-mode .frontdesk-page .frontdesk-metric-icon,
+html.dark-mode .frontdesk-page .frontdesk-feature-icon { background: #51341e; color: #ffbb6b; }
+html.dark-mode .frontdesk-page .frontdesk-text-link { color: #ffc17d !important; }
+html.dark-mode .frontdesk-page .frontdesk-feature-title .admin-kicker { color: #ffc17d; }
+
+@media (max-width: 1100px) {
+    .frontdesk-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 700px) {
+    .frontdesk-page .admin-sidebar { display: none !important; }
+    .frontdesk-page .admin-main { padding: 24px 16px 100px; }
+    .frontdesk-mobile-header { position: relative; z-index: 30; display: flex; align-items: center; justify-content: space-between; min-height: 62px; padding: 8px 16px; background: #281c16; border-bottom: 1px solid #66442c; }
+    .frontdesk-mobile-brand { display: flex; align-items: center; gap: 9px; color: #fff7eb; text-decoration: none; }
+    .frontdesk-mobile-brand img { width: 38px; height: 38px; border-radius: 50%; object-fit: cover; }
+    .frontdesk-mobile-brand b, .frontdesk-mobile-brand small { display: block; }
+    .frontdesk-mobile-brand b { font-family: Georgia, serif; font-size: 1.16rem; }
+    .frontdesk-mobile-brand small { margin-top: 1px; font-size: .53rem; font-weight: 800; letter-spacing: .12em; }
+    .frontdesk-mobile-menu > summary { display: grid; place-content: center; gap: 4px; width: 42px; height: 42px; border: 1px solid #785643; border-radius: 9px; cursor: pointer; list-style: none; }
+    .frontdesk-mobile-menu > summary::-webkit-details-marker { display: none; }
+    .frontdesk-mobile-menu > summary span { width: 18px; height: 2px; background: #fff7eb; border-radius: 1px; }
+    .frontdesk-mobile-menu-content { position: absolute; top: 62px; right: 10px; width: min(320px, calc(100vw - 20px)); max-height: calc(100dvh - 80px); overflow-y: auto; padding: 12px; border: 1px solid #694632; border-radius: 0 0 14px 14px; background: #2b1d16; box-shadow: 0 20px 30px rgba(0,0,0,.22); }
+    .frontdesk-mobile-menu-content nav { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+    .frontdesk-mobile-menu-content nav a, .frontdesk-mobile-menu-content form button { display: flex; align-items: center; min-height: 40px; padding: 8px 10px; border: 1px solid #5d4233; border-radius: 8px; background: #3a281d; color: #fff5e9; text-decoration: none; font-size: .83rem; font-weight: 700; }
+    .frontdesk-mobile-menu-content nav a[aria-current="page"] { background: #80501f; }
+    .frontdesk-mobile-menu-content .frontdesk-mobile-theme { display: flex; align-items: center; justify-content: space-between; width: 100%; margin: 9px 0 0; padding: 8px 10px; border: 1px solid #5d4233; border-radius: 8px; background: #3a281d; color: #fff5e9; font-weight: 700; }
+    .frontdesk-mobile-menu-content form button { width: 100%; margin-top: 7px; }
+    .frontdesk-page .admin-topbar { align-items: end; margin-bottom: 18px; }
+    .frontdesk-page .admin-topbar h1 { font-size: 2.1rem; }
+    .frontdesk-page .admin-subtitle { max-width: 190px; font-size: .78rem; line-height: 1.35; }
+    .frontdesk-page .frontdesk-walkin { min-height: 40px; padding: 8px 10px; font-size: .76rem; white-space: nowrap; }
+    .frontdesk-metrics { gap: 9px; }
+    .frontdesk-metric { padding: 14px; border-radius: 11px; }
+    .frontdesk-metric p { max-width: calc(100% - 33px); font-size: .79rem; }
+    .frontdesk-metric strong { font-size: 1.9rem; }
+    .frontdesk-metric small { font-size: .7rem; }
+    .frontdesk-metric-icon { top: 12px; right: 11px; width: 25px; height: 25px; font-size: .9rem; }
+    .frontdesk-feature-grid, .frontdesk-secondary-grid, .frontdesk-page .today-grid { grid-template-columns: 1fr; gap: 11px; }
+    .frontdesk-feature { padding: 17px; border-radius: 11px; }
+    .frontdesk-feature-title { margin-bottom: 14px; }
+    .frontdesk-feature-title h2 { font-size: 1.08rem; }
+    .frontdesk-details-heading { margin-top: 30px; }
+    .frontdesk-mobile-tabs { position: fixed; z-index: 25; right: 0; bottom: 0; left: 0; display: flex; justify-content: space-around; gap: 2px; padding: 6px 7px calc(6px + env(safe-area-inset-bottom)); border-top: 1px solid #5a3e2d; background: #281c16; box-shadow: 0 -5px 16px rgba(0,0,0,.15); }
+    .frontdesk-mobile-tabs a { display: grid; justify-items: center; align-content: center; gap: 3px; flex: 1 1 0; min-height: 48px; border-radius: 8px; color: #d7c4b3; text-decoration: none; font-size: .66rem; font-weight: 700; }
+    .frontdesk-mobile-tabs a[aria-current="page"] { background: #674023; color: #fff7ed; }
+    .frontdesk-mobile-tabs .admin-nav-icon { display: grid; place-items: center; width: 18px; height: 18px; }
+    .frontdesk-mobile-tabs svg { display: block; width: 18px; height: 18px; fill: currentColor; }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    .frontdesk-primary-link, .frontdesk-page .frontdesk-walkin { transition: background-color .18s ease, transform .18s ease; }
+    .frontdesk-primary-link:hover, .frontdesk-page .frontdesk-walkin:hover { transform: translateY(-2px); }
+}
