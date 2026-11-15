@@ -77,7 +77,7 @@ class BookingController extends Controller
             'hourlyDate' => $hourlyDate,
             'hourlyBookedWindows' => $this->bookedWindowsForDate($hourlyBlockedSlots, $hourlyDate),
             'submissionToken' => $submissionToken,
-            'roomPromos' => $room->promoCodes()->where('promo_codes.is_active', true)
+            'roomPromos' => $room->promoCodes()->where('promo_codes.is_active', true)->where('promo_codes.review_status', 'approved')
                 ->where(fn ($query) => $query->whereNull('starts_at')->orWhere('starts_at', '<=', now()))
                 ->where(fn ($query) => $query->whereNull('ends_at')->orWhere('ends_at', '>=', now()))
                 ->where(fn ($query) => $query->whereNull('usage_limit')->orWhereColumn('times_used', '<', 'usage_limit'))
@@ -144,13 +144,15 @@ class BookingController extends Controller
             'hours' => ['required', 'integer', 'in:'.implode(',', StayPricing::durations($room))],
             'cooling_type' => ['required', 'in:fan,aircon'],
             'guests' => ['required', 'integer', 'min:1', 'max:'.$room->booking_guest_limit],
+            'check_in' => ['nullable', 'date'],
         ]);
         $hours = (int) $data['hours'];
         if (! StayPricing::isOffered($hours, $data['cooling_type'], $room)) {
             throw ValidationException::withMessages(['cooling_type' => 'That cooling option is not offered for the selected stay length.']);
         }
         $original = StayPricing::total($hours, $data['cooling_type'], (int) $data['guests'], $room);
-        $quote = PromoPricing::quote($data['promo_code'], $room, $hours, $original);
+        $checkIn = ! empty($data['check_in']) ? Carbon::parse($data['check_in']) : null;
+        $quote = PromoPricing::quote($data['promo_code'], $room, $hours, $original, $checkIn);
         return response()->json([
             'code' => $quote['promo']->code, 'name' => $quote['promo']->name,
             'original' => $quote['original'], 'discount' => $quote['discount'], 'total' => $quote['total'],
@@ -293,7 +295,7 @@ class BookingController extends Controller
 
                 $hours = (int) $data['hours'];
                 $baseTotal = $total;
-                $pricing = ! empty($data['promo_code']) ? PromoPricing::quote($data['promo_code'], $lockedRoom, $hours, $baseTotal, true) : null;
+                $pricing = ! empty($data['promo_code']) ? PromoPricing::quote($data['promo_code'], $lockedRoom, $hours, $baseTotal, $checkInAt, true) : null;
                 $booking = Booking::create($data + $guestData + [
                     'user_id' => $request->user()?->id,
                     'room_id' => $lockedRoom->id,

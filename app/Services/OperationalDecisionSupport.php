@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Booking;
 use App\Models\DecisionSupportSeason;
+use App\Models\PromoCode;
 use App\Models\RoomBlock;
 use Illuminate\Support\Collection;
 
@@ -277,6 +278,119 @@ class OperationalDecisionSupport
 
             return $right['available_hours'] <=> $left['available_hours'];
         })->unique(fn (array $opportunity) => $opportunity['room']->id)->take(12)->values();
+    }
+
+    /** Create inactive, idempotent promo drafts from CAROL's low-occupancy windows. */
+    public function generatePromoDrafts(Collection $opportunities, Collection $seasons, int $threshold): int
+    {
+        PromoCode::where('review_status', 'pending')->whereNotNull('ends_at')->where('ends_at', '<=', now())
+            ->update(['review_status' => 'expired', 'is_active' => false]);
+
+        $created = 0;
+
+        foreach ($opportunities as $opportunity) {
+            $windowStart = $opportunity['starts_at']->copy()->startOfDay();
+            $windowEnd = $opportunity['ends_at']->copy()->startOfDay();
+            $segments = [];
+            $date = $windowStart->copy();
+
+            while ($date->lte($windowEnd)) {
+                $dateString = $date->toDateString();
+                $event = $seasons->filter(fn (DecisionSupportSeason $season) =>
+                    $season->starts_on->toDateString() <= $dateString
+                    && $season->ends_on->toDateString() >= $dateString
+                )->sortBy(fn (DecisionSupportSeason $season) => $season->kind === 'holiday' ? 0 : 1)->first();
+                $category = $event
+                    ? ($event->kind === 'holiday' ? 'holiday' : 'seasonal')
+                    : ($date->isWeekend() ? 'weekend' : 'weekday');
+                $eventName = $event?->name;
+                $segmentKey = $category.':'.($eventName ?? '');
+                $lastIndex = array_key_last($segments);
+
+                if ($lastIndex !== null && $segments[$lastIndex]['key'] === $segmentKey) {
+                    $segments[$lastIndex]['ends_on'] = $date->copy();
+                } else {
+                    $segments[] = [
+                        'key' => $segmentKey,
+                        'category' => $category,
+                        'event_name' => $eventName,
+                        'starts_on' => $date->copy(),
+                        'ends_on' => $date->copy(),
+                    ];
+                }
+
+                $date->addDay();
+            }
+
+            foreach ($segments as $segment) {
+                $created += $this->createPromoDraft(
+                    $opportunity,
+                    $segment['category'],
+                    $segment['starts_on'],
+                    $segment['ends_on'],
+                    $threshold,
+                    $segment['event_name'],
+                ) ? 1 : 0;
+            }
+        }
+
+        return $created;
+    }
+
+    private function createPromoDraft(array $opportunity, string $category, $startsOn, $endsOn, int $threshold, ?string $eventName = null): bool
+    {
+        $room = $opportunity['room'];
+        $startDate = $startsOn->toDateString();
+        $endDate = $endsOn->toDateString();
+        $categoryCode = match ($category) {
+            'weekday' => 'WD',
+            'weekend' => 'WE',
+            'holiday' => 'HO',
+            default => 'SE',
+        };
+        $generationKey = implode(':', ['room', $room->id, $category, $startDate, $endDate]);
+        $code = 'CAROL-'.$categoryCode.'-R'.$room->id.'-'.$startsOn->format('ymd').'-'.$endsOn->format('ymd');
+        $categoryLabel = match ($category) {
+            'weekday' => 'weekday',
+            'weekend' => 'weekend',
+            'holiday' => 'holiday',
+            default => 'seasonal',
+        };
+        $dateLabel = $startsOn->format('M j').'–'.$endsOn->format('M j, Y');
+        $stayDayType = in_array($category, ['weekday', 'weekend'], true) ? $category : null;
+        $name = 'CAROL '.ucfirst($categoryLabel).' offer — '.$room->name;
+        $description = match ($category) {
+            'weekday' => '10% off stays checking in Monday through Friday, '.$dateLabel.'.',
+            'weekend' => '10% off stays checking in Saturday or Sunday, '.$dateLabel.'.',
+            default => '10% off stays during '.($eventName ?: $categoryLabel).' dates, '.$dateLabel.'.',
+        };
+        $notes = 'CAROL found '.$opportunity['utilization'].'% weekly confirmed occupancy, below the '.$threshold.'% rule, with '.number_format((float) $opportunity['available_hours'], 1).' hours still open. Suggested discount: 10%. Review this inactive draft before activation.';
+
+        $promo = PromoCode::firstOrCreate(
+            ['carol_generation_key' => $generationKey],
+            [
+                'code' => $code,
+                'name' => $name,
+                'description' => $description,
+                'discount_type' => 'percentage',
+                'discount_value' => 10,
+                'starts_at' => now(),
+                'ends_at' => $endsOn->copy()->endOfDay(),
+                'is_active' => false,
+                'review_status' => 'pending',
+                'carol_category' => $category,
+                'carol_notes' => $notes,
+                'stay_start_date' => $startDate,
+                'stay_end_date' => $endDate,
+                'stay_day_type' => $stayDayType,
+            ]
+        );
+
+        if ($promo->wasRecentlyCreated) {
+            $promo->rooms()->sync([$room->id]);
+        }
+
+        return $promo->wasRecentlyCreated;
     }
 
     /**

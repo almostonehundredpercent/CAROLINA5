@@ -4,13 +4,14 @@ namespace App\Support;
 
 use App\Models\PromoCode;
 use App\Models\Room;
+use Carbon\CarbonInterface;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 final class PromoPricing
 {
     /** @return array{promo: PromoCode, original: float, discount: float, total: float} */
-    public static function quote(string $code, Room $room, int $hours, float $original, bool $lock = false): array
+    public static function quote(string $code, Room $room, int $hours, float $original, ?CarbonInterface $checkIn = null, bool $lock = false): array
     {
         $normalized = Str::upper(trim($code));
         $query = PromoCode::query()->where('code', $normalized);
@@ -19,11 +20,25 @@ final class PromoPricing
         }
         $promo = $query->first();
 
-        if (! $promo || ! $promo->is_active) {
+        if (! $promo || ! $promo->is_active || $promo->review_status !== 'approved') {
             throw ValidationException::withMessages(['promo_code' => 'This promo code is not valid.']);
         }
         if (($promo->starts_at && now()->lt($promo->starts_at)) || ($promo->ends_at && now()->gt($promo->ends_at))) {
             throw ValidationException::withMessages(['promo_code' => 'This promo code is not currently available.']);
+        }
+        if ($promo->stay_start_date || $promo->stay_end_date || $promo->stay_day_type) {
+            if (! $checkIn) {
+                throw ValidationException::withMessages(['promo_code' => 'Choose the stay check-in date before applying this promo.']);
+            }
+            $stayDate = $checkIn->toDateString();
+            if (($promo->stay_start_date && $stayDate < $promo->stay_start_date->toDateString())
+                || ($promo->stay_end_date && $stayDate > $promo->stay_end_date->toDateString())) {
+                throw ValidationException::withMessages(['promo_code' => 'This promo is not available for the selected stay date.']);
+            }
+            if (($promo->stay_day_type === 'weekday' && $checkIn->isWeekend())
+                || ($promo->stay_day_type === 'weekend' && ! $checkIn->isWeekend())) {
+                throw ValidationException::withMessages(['promo_code' => 'This promo is not available for the selected check-in day.']);
+            }
         }
         if ($promo->usage_limit !== null && $promo->times_used >= $promo->usage_limit) {
             throw ValidationException::withMessages(['promo_code' => 'This promo has reached its redemption limit.']);

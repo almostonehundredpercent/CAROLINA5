@@ -13,7 +13,7 @@ class RoomController extends Controller
     public function index(Request $request, bool $bookingMode = false)
     {
         $rooms = Room::where('is_active', true)
-            ->with(['promoCodes' => fn ($query) => $query->where('promo_codes.is_active', true)
+            ->with(['promoCodes' => fn ($query) => $query->where('promo_codes.is_active', true)->where('promo_codes.review_status', 'approved')
                 ->where(fn ($active) => $active->whereNull('starts_at')->orWhere('starts_at', '<=', now()))
                 ->where(fn ($active) => $active->whereNull('ends_at')->orWhere('ends_at', '>=', now()))
                 ->where(fn ($active) => $active->whereNull('usage_limit')->orWhereColumn('times_used', '<', 'usage_limit'))])
@@ -55,7 +55,7 @@ class RoomController extends Controller
         abort_unless($room->is_active, 404);
         $room->loadAvg('approvedReviews', 'rating')->loadCount('approvedReviews')->load([
             'approvedReviews' => fn ($query) => $query->latest()->take(8),
-            'promoCodes' => fn ($query) => $query->where('promo_codes.is_active', true)
+            'promoCodes' => fn ($query) => $query->where('promo_codes.is_active', true)->where('promo_codes.review_status', 'approved')
                 ->where(fn ($active) => $active->whereNull('starts_at')->orWhere('starts_at', '<=', now()))
                 ->where(fn ($active) => $active->whereNull('ends_at')->orWhere('ends_at', '>=', now()))
                 ->where(fn ($active) => $active->whereNull('usage_limit')->orWhereColumn('times_used', '<', 'usage_limit')),

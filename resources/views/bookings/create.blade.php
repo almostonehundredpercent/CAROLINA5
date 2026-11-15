@@ -700,7 +700,9 @@ document.addEventListener('DOMContentLoaded', () => {
         input.value = code;
         if (!code) { message.className = 'promo-message error'; message.textContent = 'Enter a promo code first.'; return; }
         const formData = new FormData(form), payload = new FormData();
-        ['_token', 'booking_type', 'hours', 'cooling_type', 'guests', 'check_in', 'check_out'].forEach(key => { const value = formData.get(key); if (value) payload.append(key, value); });
+        ['_token', 'booking_type', 'hours', 'cooling_type', 'guests', 'check_out'].forEach(key => { const value = formData.get(key); if (value) payload.append(key, value); });
+        const checkInDate = formData.get('check_in') || formData.get('hourly_date');
+        if (checkInDate) payload.append('check_in', checkInDate);
         payload.append('promo_code', code);
         button.disabled = true; message.className = 'promo-message'; message.textContent = 'Checking promo…';
         try {

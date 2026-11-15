@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class PromoCode extends Model
 {
-    protected $fillable = ['code', 'name', 'description', 'discount_type', 'discount_value', 'minimum_hours', 'maximum_hours', 'starts_at', 'ends_at', 'usage_limit', 'times_used', 'is_active'];
+    protected $fillable = ['code', 'name', 'description', 'discount_type', 'discount_value', 'minimum_hours', 'maximum_hours', 'starts_at', 'ends_at', 'usage_limit', 'times_used', 'is_active', 'review_status', 'carol_generation_key', 'carol_category', 'carol_notes', 'stay_start_date', 'stay_end_date', 'stay_day_type'];
 
     protected function casts(): array
     {
@@ -19,6 +19,8 @@ class PromoCode extends Model
             'usage_limit' => 'integer',
             'times_used' => 'integer',
             'is_active' => 'boolean',
+            'stay_start_date' => 'date',
+            'stay_end_date' => 'date',
         ];
     }
 

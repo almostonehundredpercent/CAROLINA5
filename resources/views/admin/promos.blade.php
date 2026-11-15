@@ -45,6 +45,11 @@
         .promo-status { display: inline-flex; min-height: 30px; flex: 0 0 auto; align-items: center; padding: 5px 10px; border: 1px solid rgba(97,206,144,.35); border-radius: 999px; background: rgba(31,125,67,.18); color: #9de2b9; font-size: 12px; font-weight: 800; }
         .promo-status.off { border-color: rgba(255,139,122,.3); background: rgba(155,54,38,.16); color: #ffab9c; }
         .promo-card-actions { display: flex; flex: 0 0 auto; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px; }
+        .promo-review-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+        .promo-approve, .promo-dismiss { min-height: 36px; padding: 7px 12px; border: 1px solid transparent; border-radius: 9px; font: inherit; font-size: 12px; font-weight: 800; cursor: pointer; }
+        .promo-approve { border-color: rgba(255,205,128,.44); background: linear-gradient(135deg,#e89413,#c66700); color: #fff; }
+        .promo-dismiss { border-color: rgba(255,139,122,.32); background: rgba(155,54,38,.14); color: #ffb6a9; }
+        .promo-status.pending { border-color: rgba(255,180,77,.38); background: rgba(227,138,0,.14); color: #ffd18e; }
         .promo-delete-form { margin: 0; }
         .promo-delete { min-height: 30px; padding: 5px 10px; border: 1px solid rgba(255,139,122,.32); border-radius: 999px; background: rgba(155,54,38,.14); color: #ffb6a9; font: inherit; font-size: 12px; font-weight: 750; cursor: pointer; }
         .promo-delete:hover { border-color: rgba(255,139,122,.62); background: rgba(155,54,38,.26); }
@@ -76,6 +81,7 @@
         html:not(.dark-mode) .promo-meta span { border-color: #e5ddd4; background: #f5eee6; color: #4a3b31; }
         html:not(.dark-mode) .promo-status { border-color: #b7dfc5; background: #edf8f0; color: #17663b; }
         html:not(.dark-mode) .promo-status.off { border-color: #efc8c2; background: #fff1ef; color: #9f3027; }
+        html:not(.dark-mode) .promo-status.pending { border-color: #efcf9f; background: #fff6e8; color: #8d4b0b; }
         html:not(.dark-mode) .promo-delete { border-color: #efc8c2; background: #fff1ef; color: #9f3027; }
         html:not(.dark-mode) .promo-delete:hover { border-color: #d88980; background: #ffe6e2; }
         html:not(.dark-mode) .promo-room-scope, html:not(.dark-mode) .promo-edit { border-color: #e8ded3; }
@@ -83,7 +89,7 @@
         html:not(.dark-mode) .promo-room-scope summary::before, html:not(.dark-mode) .promo-edit summary::before { border-color: #e5c394; }
         html:not(.dark-mode) .promo-room-count, html:not(.dark-mode) .promo-room-names { color: #5f5146; }
         @media (max-width: 1050px) { .promo-layout { grid-template-columns: minmax(0,1fr); } }
-        @media (max-width: 620px) { .promo-layout > .panel { padding: 16px; }.promo-grid { grid-template-columns: minmax(0,1fr); }.promo-form-section { padding: 13px; }.promo-card { padding: 15px; }.promo-card-head { gap: 9px; }.room-checks { max-height: 235px; } }
+        @media (max-width: 620px) { .promo-layout > .panel { padding: 16px; }.promo-grid { grid-template-columns: minmax(0,1fr); }.promo-form-section { padding: 13px; }.promo-card { padding: 15px; }.promo-card-head { gap: 9px; }.room-checks { max-height: 235px; }.promo-review-actions { flex-direction: column; }.promo-review-actions form, .promo-review-actions button { width: 100%; } }
         @media (max-width: 390px) { .room-checks { grid-template-columns: minmax(0,1fr); } }
         @media (prefers-reduced-motion: reduce) { .promo-submit, .room-checks label { transition: none; }.promo-submit:hover { transform: none; } }
     </style>
@@ -91,6 +97,20 @@
 <body><div class="admin-shell">@include('admin.partials.sidebar')<main class="admin-main">
     <header class="admin-topbar"><div><p class="admin-kicker">PRICING</p><h1>Promo codes</h1><p class="admin-subtitle">Create discounts and restrict them to selected rooms, stay lengths, dates, or redemption counts.</p></div></header>
     @include('admin.partials.flash')
+    <section class="panel promo-offers-panel"><div class="panel-heading"><div><p class="admin-kicker">CAROL · NEEDS REVIEW</p><h2>Suggested promo drafts</h2><p class="promo-panel-note">CAROL prepares inactive offers from quiet dates. Review the rule and discount before activating any code.</p></div><span class="booking-count">{{ $promoDrafts->count() }} pending</span></div>
+        <div class="promo-list">@forelse($promoDrafts as $promo)
+            <article class="promo-card"><div class="promo-card-head"><div><span class="promo-code">{{ $promo->code }}</span><h3>{{ $promo->name }}</h3></div><span class="promo-status pending">Awaiting review · inactive</span></div>
+                <p>{{ $promo->description }}</p><p>{{ $promo->carol_notes }}</p>
+                <div class="promo-meta"><span>{{ $promo->discount_type === 'percentage' ? rtrim(rtrim(number_format($promo->discount_value, 2), '0'), '.') . '% off' : ($promo->discount_type === 'fixed_amount' ? '₱'.number_format($promo->discount_value).' off' : '₱'.number_format($promo->discount_value).' total') }}</span><span>{{ ucfirst($promo->carol_category) }}</span><span>Stay {{ $promo->stay_start_date?->format('M j') }}–{{ $promo->stay_end_date?->format('M j, Y') }}</span>@if($promo->stay_day_type)<span>{{ $promo->stay_day_type === 'weekday' ? 'Mon–Fri check-in' : 'Sat–Sun check-in' }}</span>@endif</div>
+                <details class="promo-room-scope"><summary>Eligible room <span class="promo-room-count">{{ $promo->rooms->count() }}</span></summary><p class="promo-room-names">{{ $promo->rooms->pluck('name')->join(', ') }}</p></details>
+                <details class="promo-edit"><summary>Edit draft before review</summary><form class="promo-form" method="POST" action="{{ route('admin.promos.update', $promo) }}">@csrf @method('PATCH')
+                    @include('admin.partials.promo-fields', ['promo' => $promo, 'rooms' => $rooms])
+                    <button class="promo-submit" type="submit">Save draft changes</button>
+                </form></details>
+                <div class="promo-review-actions"><form method="POST" action="{{ route('admin.promos.approve', $promo) }}">@csrf<button class="promo-approve" type="submit">Approve &amp; activate</button></form><form method="POST" action="{{ route('admin.promos.dismiss', $promo) }}">@csrf<button class="promo-dismiss" type="submit">Dismiss draft</button></form></div>
+            </article>
+        @empty<p class="empty-copy">No CAROL drafts are waiting for review. Open CAROL to generate drafts from current low-occupancy dates.</p>@endforelse</div>
+    </section>
     <div class="promo-layout">
         <section class="panel promo-create-panel"><div class="panel-heading"><div><p class="admin-kicker">NEW OFFER</p><h2>Create promo</h2><p class="promo-panel-note">Set the discount, choose who can use it, and decide when it is available.</p></div></div>
             <form class="promo-form" method="POST" action="{{ route('admin.promos.store') }}">@csrf
@@ -102,7 +122,7 @@
             <div class="promo-list">@forelse($promos as $promo)
                 <article class="promo-card"><div class="promo-card-head"><div><span class="promo-code">{{ $promo->code }}</span><h3>{{ $promo->name }}</h3></div><div class="promo-card-actions"><span class="promo-status {{ $promo->is_active ? '' : 'off' }}">{{ $promo->is_active ? 'Active' : 'Paused' }}</span><form class="promo-delete-form" method="POST" action="{{ route('admin.promos.destroy', $promo) }}" onsubmit="return confirm('Delete promo code {{ $promo->code }}? This cannot be undone.');">@csrf @method('DELETE')<button class="promo-delete" type="submit">Delete</button></form></div></div>
                     <p>{{ $promo->description ?: 'No description added.' }}</p>
-                    <div class="promo-meta"><span>{{ $promo->discount_type === 'percentage' ? rtrim(rtrim(number_format($promo->discount_value, 2), '0'), '.') . '% off' : ($promo->discount_type === 'fixed_amount' ? '₱'.number_format($promo->discount_value).' off' : '₱'.number_format($promo->discount_value).' total') }}</span><span>{{ $promo->minimum_hours ? $promo->minimum_hours.'h minimum' : 'No minimum stay' }}</span><span>{{ $promo->usage_limit ? $promo->times_used.'/'.$promo->usage_limit.' redeemed' : $promo->times_used.' redeemed' }}</span></div>
+                    <div class="promo-meta"><span>{{ $promo->discount_type === 'percentage' ? rtrim(rtrim(number_format($promo->discount_value, 2), '0'), '.') . '% off' : ($promo->discount_type === 'fixed_amount' ? '₱'.number_format($promo->discount_value).' off' : '₱'.number_format($promo->discount_value).' total') }}</span><span>{{ $promo->minimum_hours ? $promo->minimum_hours.'h minimum' : 'No minimum stay' }}</span><span>{{ $promo->usage_limit ? $promo->times_used.'/'.$promo->usage_limit.' redeemed' : $promo->times_used.' redeemed' }}</span>@if($promo->stay_start_date || $promo->stay_end_date)<span>Stay dates {{ $promo->stay_start_date?->format('M j') ?? 'Any' }}–{{ $promo->stay_end_date?->format('M j, Y') ?? 'Any' }}</span>@endif @if($promo->stay_day_type)<span>{{ $promo->stay_day_type === 'weekday' ? 'Mon–Fri check-in' : 'Sat–Sun check-in' }}</span>@endif</div>
                     <details class="promo-room-scope"><summary>View eligible rooms <span class="promo-room-count">{{ $promo->rooms->count() }} {{ $promo->rooms->count() === 1 ? 'room' : 'rooms' }}</span></summary><p class="promo-room-names">{{ $promo->rooms->pluck('name')->join(', ') ?: 'No rooms selected' }}</p></details>
                     <details class="promo-edit"><summary>Edit offer</summary><form class="promo-form" method="POST" action="{{ route('admin.promos.update', $promo) }}">@csrf @method('PATCH')
                         @include('admin.partials.promo-fields', ['promo' => $promo, 'rooms' => $rooms])

@@ -161,6 +161,8 @@ Route::middleware(['auth', 'admin', 'staff.mfa'])->prefix('admin')->name('admin.
     Route::get('/promos', [PromoCodeController::class, 'index'])->middleware('admin.permission:promos')->name('promos');
     Route::post('/promos', [PromoCodeController::class, 'store'])->middleware('admin.permission:promos')->name('promos.store');
     Route::patch('/promos/{promo}', [PromoCodeController::class, 'update'])->middleware('admin.permission:promos')->name('promos.update');
+    Route::post('/promos/{promo}/approve', [PromoCodeController::class, 'approveDraft'])->middleware('admin.permission:promos')->name('promos.approve');
+    Route::post('/promos/{promo}/dismiss', [PromoCodeController::class, 'dismissDraft'])->middleware('admin.permission:promos')->name('promos.dismiss');
     Route::delete('/promos/{promo}', [PromoCodeController::class, 'destroy'])->middleware('admin.permission:promos')->name('promos.destroy');
     Route::get('/activity', [AdminController::class, 'activity'])->middleware('admin.permission:activity')->name('activity');
     Route::get('/staff', [AdminController::class, 'staff'])->middleware('admin.permission:staff')->name('staff');

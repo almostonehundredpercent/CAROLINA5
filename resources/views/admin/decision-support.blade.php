@@ -20,10 +20,14 @@
         .dss-page .panel-heading { flex-wrap: wrap; gap: 12px; }
         .dss-form { display: grid; gap: 11px; }
         .dss-form label { display: grid; gap: 5px; color: var(--muted); font-size: 12px; font-weight: 700; }
-        .dss-form input { width: 100%; min-height: 42px; padding: 9px 11px; border: 1px solid var(--line); border-radius: 8px; background: var(--paper); color: var(--ink); font: inherit; }
+        .dss-form input, .dss-form select { width: 100%; min-height: 42px; padding: 9px 11px; border: 1px solid var(--line); border-radius: 8px; background: var(--paper); color: var(--ink); font: inherit; }
         .dss-form input[type="number"] { max-width: 170px; }
         .dss-primary, .dss-secondary { width: fit-content; padding: 10px 14px; border: 0; border-radius: 8px; background: var(--orange); color: #fff; font: inherit; font-weight: 700; text-decoration: none; cursor: pointer; }
         .dss-secondary { padding: 7px 10px; background: transparent; color: var(--orange-dark); }
+        .dss-review-banner { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin: 14px 0; padding: 13px 15px; border: 1px solid #e8c995; border-radius: 11px; background: #fff6e8; color: #533a1e; font-size: 13px; line-height: 1.45; }
+        .dss-review-banner a { flex: 0 0 auto; color: #8d4b0b; font-weight: 800; text-decoration: none; }
+        html.dark-mode .dss-review-banner { border-color: rgba(255,193,107,.28); background: rgba(227,138,0,.1); color: #f5dfc2; }
+        html.dark-mode .dss-review-banner a { color: #ffc16b; }
         .dss-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
         .dss-card { min-width: 0; padding: 18px; border: 1px solid #eadbca; border-radius: 14px; background: #fffdf9; color: #30251d; box-shadow: 0 7px 20px rgba(48,31,14,.06); transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease; }
         .dss-card:hover { transform: translateY(-2px); border-color: #d9b78f; box-shadow: 0 12px 26px rgba(48,31,14,.1); }
@@ -112,7 +116,8 @@
         @include('admin.partials.flash')
         <section class="panel">
             <div class="panel-heading"><div><p class="admin-kicker">NEXT 90 DAYS</p><h2>Rooms to review for promos</h2></div><a class="dss-primary" href="{{ route('admin.promos') }}">Review promo codes</a></div>
-            <p class="dss-lead">Showing rooms with less than {{ $threshold }}% of their weekly bookable time confirmed and at least 6 hours still open. Figures use confirmed bookings and planned cleaning or maintenance; they are not forecasts. You decide whether to create a promo.</p>
+            <p class="dss-lead">Showing rooms with less than {{ $threshold }}% of their weekly bookable time confirmed and at least 6 hours still open. CAROL uses confirmed bookings and planned cleaning or maintenance, then creates an inactive 10% promo draft for review. These are rules-based suggestions, not demand forecasts.</p>
+            <div class="dss-review-banner" role="status"><span>{{ $pendingPromoCount }} CAROL promo draft{{ $pendingPromoCount === 1 ? '' : 's' }} waiting for review. Drafts stay inactive until an admin approves them.</span><a href="{{ route('admin.promos') }}">Review promo drafts →</a></div>
             <p class="dss-results-count"><strong>{{ $opportunities->count() }}</strong> room{{ $opportunities->count() === 1 ? '' : 's' }} meet this rule.</p>
             @if($opportunities->isNotEmpty())
                 <div class="dss-grid">
@@ -159,9 +164,11 @@
                     </article>
                     <article class="dss-settings-card">
                         <div class="panel-heading"><div><p class="admin-kicker">OPTIONAL</p><h2>Add event dates</h2></div></div>
-                        <p class="dss-note">For example, add Christmas dates. An event only labels a matching room suggestion; it does not create one on its own.</p>
+                        <p class="dss-note">Add a holiday or seasonal date range. CAROL uses matching low-occupancy windows to create an inactive promo draft for admin review.</p>
                         <form class="dss-form" method="POST" action="{{ route('admin.decision-support.seasons.store') }}">
                             @csrf
+                            <label>Window type<select name="kind" required><option value="season" @selected(old('kind', 'season') === 'season')>Seasonal period</option><option value="holiday" @selected(old('kind') === 'holiday')>Holiday</option></select></label>
+                            @error('kind')<small class="dss-error">{{ $message }}</small>@enderror
                             <label>Event name<input type="text" name="name" maxlength="100" placeholder="Christmas" value="{{ old('name') }}" required></label>
                             @error('name')<small class="dss-error">{{ $message }}</small>@enderror
                             <div class="dss-settings-grid">
@@ -174,14 +181,14 @@
                         </form>
                         <div class="dss-season-list">
                             @forelse($seasons as $season)
-                                <div class="dss-season-row"><span><b>{{ $season->name }}</b><small> · {{ $season->starts_on->format('M j, Y') }}–{{ $season->ends_on->format('M j, Y') }}</small></span><form method="POST" action="{{ route('admin.decision-support.seasons.destroy', $season) }}">@csrf @method('DELETE')<button class="dss-secondary" type="submit" aria-label="Remove {{ $season->name }} dates">Remove</button></form></div>
+                                <div class="dss-season-row"><span><b>{{ ucfirst($season->kind) }} · {{ $season->name }}</b><small> · {{ $season->starts_on->format('M j, Y') }}–{{ $season->ends_on->format('M j, Y') }}</small></span><form method="POST" action="{{ route('admin.decision-support.seasons.destroy', $season) }}">@csrf @method('DELETE')<button class="dss-secondary" type="submit" aria-label="Remove {{ $season->name }} dates">Remove</button></form></div>
                             @empty
                                 <small class="dss-note">No event dates added.</small>
                             @endforelse
                         </div>
                     </article>
                 </section>
-                <details class="dss-how-it-works"><summary>How are suggestions chosen?</summary><p>Each room is checked week by week for the next 90 days. The system compares confirmed booking time with the room time available after scheduled cleaning and maintenance. It also sets aside pending bookings and other blocked time before showing how much remains open. A suggestion appears only when the booked share is below the rule above and at least 6 hours remain open. Event dates add a label when they overlap. The system does not predict demand, pick a discount, or activate a promo.</p></details>
+                <details class="dss-how-it-works"><summary>How are suggestions chosen?</summary><p>Each room is checked week by week for the next 90 days. The system compares confirmed booking time with the room time available after scheduled cleaning and maintenance. It also sets aside pending bookings and other blocked time before showing how much remains open. A suggestion appears only when the booked share is below the rule above and at least 6 hours remain open. Weekday and weekend dates get separate draft codes. Saved holiday or seasonal dates receive a matching date-limited draft. CAROL suggests 10% off, which you can edit; no draft becomes redeemable until an admin approves it.</p></details>
             </div>
         </details>
 
