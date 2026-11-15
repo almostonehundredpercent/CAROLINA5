@@ -13,8 +13,25 @@
         .dss-page { display: grid; gap: 18px; min-width: 0; }
         .dss-page > *, .dss-settings-grid > *, .dss-grid > * { min-width: 0; }
         .dss-lead { max-width: 850px; color: var(--muted); line-height: 1.6; }
-        .dss-results-count { margin: -3px 0 14px; color: #71645a; font-size: 12px; }
-        .dss-results-count strong { color: #30251d; font-size: 14px; }
+        .dss-overview-strip { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin: 16px 0; }
+        .dss-overview-item { display: flex; min-width: 0; align-items: center; gap: 10px; padding: 11px 13px; border: 1px solid #eadbca; border-radius: 11px; background: #faf5ef; }
+        .dss-overview-item strong { color: #30251d; font-size: 16px; line-height: 1.1; }
+        .dss-overview-item small { color: #71645a; font-size: 11px; line-height: 1.35; }
+        .dss-review-banner { display: flex; align-items: center; gap: 12px; margin: 0 0 17px; padding: 13px 14px; border: 1px solid #e8c995; border-radius: 12px; background: #fff6e8; color: #533a1e; font-size: 13px; line-height: 1.45; }
+        .dss-review-count { display: grid; width: 38px; height: 38px; flex: 0 0 38px; place-items: center; border-radius: 11px; background: #f0dfc6; color: #8d4b0b; font-size: 15px; font-weight: 800; }
+        .dss-review-copy { display: grid; flex: 1; gap: 2px; min-width: 0; }
+        .dss-review-copy strong { color: #533a1e; font-size: 13px; }
+        .dss-review-copy small { color: #71645a; font-size: 11px; }
+        .dss-review-banner a { flex: 0 0 auto; color: #8d4b0b; font-weight: 800; text-decoration: none; }
+        .dss-review-banner a:hover { text-decoration: underline; }
+        html.dark-mode .dss-overview-item { border-color: rgba(255,220,182,.14); background: rgba(255,255,255,.035); }
+        html.dark-mode .dss-overview-item strong { color: #fff4e8; }
+        html.dark-mode .dss-overview-item small { color: #cdbbae; }
+        html.dark-mode .dss-review-banner { border-color: rgba(255,193,107,.28); background: rgba(227,138,0,.1); color: #f5dfc2; }
+        html.dark-mode .dss-review-count { background: rgba(227,138,0,.18); color: #ffc16b; }
+        html.dark-mode .dss-review-copy strong { color: #fff0dc; }
+        html.dark-mode .dss-review-copy small { color: #cdbbae; }
+        html.dark-mode .dss-review-banner a { color: #ffc16b; }
         .dss-settings-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
         .dss-settings-card { min-width: 0; padding: 16px; border: 1px solid var(--line); border-radius: 10px; background: var(--paper); }
         .dss-page .panel-heading { flex-wrap: wrap; gap: 12px; }
@@ -24,18 +41,14 @@
         .dss-form input[type="number"] { max-width: 170px; }
         .dss-primary, .dss-secondary { width: fit-content; padding: 10px 14px; border: 0; border-radius: 8px; background: var(--orange); color: #fff; font: inherit; font-weight: 700; text-decoration: none; cursor: pointer; }
         .dss-secondary { padding: 7px 10px; background: transparent; color: var(--orange-dark); }
-        .dss-review-banner { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin: 14px 0; padding: 13px 15px; border: 1px solid #e8c995; border-radius: 11px; background: #fff6e8; color: #533a1e; font-size: 13px; line-height: 1.45; }
-        .dss-review-banner a { flex: 0 0 auto; color: #8d4b0b; font-weight: 800; text-decoration: none; }
-        html.dark-mode .dss-review-banner { border-color: rgba(255,193,107,.28); background: rgba(227,138,0,.1); color: #f5dfc2; }
-        html.dark-mode .dss-review-banner a { color: #ffc16b; }
-        .dss-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
-        .dss-card { min-width: 0; padding: 18px; border: 1px solid #eadbca; border-radius: 14px; background: #fffdf9; color: #30251d; box-shadow: 0 7px 20px rgba(48,31,14,.06); transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease; }
-        .dss-card:hover { transform: translateY(-2px); border-color: #d9b78f; box-shadow: 0 12px 26px rgba(48,31,14,.1); }
+        .dss-primary:focus-visible, .dss-secondary:focus-visible, .dss-review-banner a:focus-visible, .dss-card .dss-action:focus-visible { outline: 3px solid #ffc16b; outline-offset: 3px; }
+        .dss-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); gap: 13px; }
+        .dss-card { display: flex; min-width: 0; flex-direction: column; padding: 16px; border: 1px solid #eadbca; border-radius: 14px; background: #fffdf9; color: #30251d; box-shadow: 0 5px 16px rgba(48,31,14,.05); }
         .dss-card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
         .dss-card h3 { margin: 0; color: #30251d; font-size: 17px; line-height: 1.3; }
         .dss-card-date { margin: 5px 0 0; color: #71645a; font-size: 13px; }
         .dss-tag { display: inline-flex; flex: 0 0 auto; padding: 6px 9px; border-radius: 999px; background: #fff0d8; color: #8d4b0b; font-size: 11px; font-weight: 800; }
-        .dss-utilization { display: grid; gap: 7px; margin-top: 14px; }
+        .dss-utilization { display: grid; gap: 7px; margin-top: 12px; }
         .dss-utilization-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
         .dss-utilization-head span { color: #71645a; font-size: 12px; font-weight: 650; }
         .dss-utilization-head strong { color: #30251d; font-size: 15px; }
@@ -43,8 +56,8 @@
         .dss-utilization-track::after { position: absolute; top: -3px; left: var(--dss-threshold); width: 2px; height: 15px; border-radius: 2px; background: #8d4b0b; content: ''; }
         .dss-utilization-track > span { display: block; width: 0; height: 100%; border-radius: inherit; background: linear-gradient(90deg,#d98914,#b85b00); }
         .dss-utilization-note { color: #71645a; font-size: 11px; }
-        .dss-metrics { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin: 14px 0 0; }
-        .dss-metrics > div { display: grid; gap: 5px; padding: 12px; border: 1px solid #eee3d7; border-radius: 10px; background: #f8f4ee; }
+        .dss-metrics { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 12px 0 0; }
+        .dss-metrics > div { display: grid; gap: 5px; padding: 10px; border: 1px solid #eee3d7; border-radius: 10px; background: #f8f4ee; }
         .dss-metrics small { color: #71645a; font-size: 11px; line-height: 1.4; }
         .dss-metrics strong { color: #30251d; font-size: 19px; line-height: 1.2; }
         .dss-card p { margin: 10px 0 0; line-height: 1.5; }
@@ -52,19 +65,23 @@
         .dss-season-context { display: inline-flex; width: fit-content; padding: 6px 10px; border-radius: 999px; background: #fff4e1; color: #8d4b0b; font-size: 12px; font-weight: 700; }
         .dss-card small, .dss-note { color: #71645a; font-size: 12px; line-height: 1.5; }
         .dss-card > small { display: block; margin-top: 11px; }
-        html.dark-mode .dss-card { border-color: rgba(255,220,182,.16); background: linear-gradient(145deg,#30231b,#241a15); color: #fff4e8; box-shadow: 0 10px 26px rgba(0,0,0,.2); }
-        html.dark-mode .dss-card:hover { border-color: rgba(255,193,107,.4); box-shadow: 0 14px 30px rgba(0,0,0,.3); }
+        .dss-card-footer { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: auto; padding-top: 13px; }
+        .dss-draft-label { color: #71645a; font-size: 11px; font-weight: 700; }
+        .dss-card .dss-action { margin: 0; padding: 7px 9px; border: 1px solid #ead2b2; border-radius: 8px; color: #8d4b0b; }
+        .dss-card .dss-action:hover { background: #fff4e1; text-decoration: none; }
+        html.dark-mode .dss-card { border-color: rgba(255,220,182,.16); background: linear-gradient(145deg,#30231b,#241a15); color: #fff4e8; box-shadow: 0 8px 22px rgba(0,0,0,.18); }
         html.dark-mode .dss-card h3, html.dark-mode .dss-metrics strong { color: #fff4e8; }
         html.dark-mode .dss-card-date, html.dark-mode .dss-metrics small, html.dark-mode .dss-card > small { color: #cdbbae; }
         html.dark-mode .dss-note { color: #cdbbae; }
         html.dark-mode .dss-tag, html.dark-mode .dss-season-context { background: rgba(215,132,25,.16); color: #ffc16b; }
         html.dark-mode .dss-utilization-head span, html.dark-mode .dss-utilization-note { color: #cdbbae; }
         html.dark-mode .dss-utilization-head strong { color: #fff4e8; }
-        html.dark-mode .dss-results-count { color: #cdbbae; }
-        html.dark-mode .dss-results-count strong { color: #fff4e8; }
         html.dark-mode .dss-utilization-track { background: rgba(255,220,182,.14); }
         html.dark-mode .dss-utilization-track::after { background: #ffc16b; }
         html.dark-mode .dss-metrics > div { border-color: rgba(255,220,182,.12); background: rgba(17,13,10,.38); }
+        html.dark-mode .dss-draft-label { color: #cdbbae; }
+        html.dark-mode .dss-card .dss-action { border-color: rgba(255,193,107,.28); color: #ffc16b; }
+        html.dark-mode .dss-card .dss-action:hover { background: rgba(227,138,0,.12); }
         .dss-action { display: inline-flex; margin-top: 10px; color: var(--orange-dark); font-size: 12px; font-weight: 700; text-decoration: none; }
         .dss-action:hover { text-decoration: underline; }
         .dss-season-list { display: grid; gap: 8px; margin-top: 14px; }
@@ -94,6 +111,11 @@
             .dss-page { gap: 14px; }
             .dss-page .panel { padding: 14px; }
             .dss-lead { font-size: 13px; }
+            .dss-overview-strip { grid-template-columns: minmax(0, 1fr); gap: 7px; margin: 13px 0; }
+            .dss-overview-item { padding: 9px 11px; }
+            .dss-review-banner { align-items: flex-start; flex-wrap: wrap; }
+            .dss-review-copy { min-width: calc(100% - 54px); }
+            .dss-review-banner a { margin-left: 50px; }
             .dss-settings-grid { gap: 12px; }
             .dss-card { padding: 13px; }
             .dss-card-top { flex-wrap: wrap; align-items: center; }
@@ -115,10 +137,14 @@
         </header>
         @include('admin.partials.flash')
         <section class="panel">
-            <div class="panel-heading"><div><p class="admin-kicker">NEXT 90 DAYS</p><h2>Rooms to review for promos</h2></div><a class="dss-primary" href="{{ route('admin.promos') }}">Review promo codes</a></div>
+            <div class="panel-heading"><div><p class="admin-kicker">RECOMMENDED ROOMS</p><h2>Quiet room opportunities</h2></div><a class="dss-primary" href="{{ route('admin.promos') }}">Review promo drafts</a></div>
             <p class="dss-lead">Showing rooms with less than {{ $threshold }}% of their weekly bookable time confirmed and at least 6 hours still open. CAROL uses confirmed bookings and planned cleaning or maintenance, then creates an inactive 10% promo draft for review. These are rules-based suggestions, not demand forecasts.</p>
-            <div class="dss-review-banner" role="status"><span>{{ $pendingPromoCount }} CAROL promo draft{{ $pendingPromoCount === 1 ? '' : 's' }} waiting for review. Drafts stay inactive until an admin approves them.</span><a href="{{ route('admin.promos') }}">Review promo drafts →</a></div>
-            <p class="dss-results-count"><strong>{{ $opportunities->count() }}</strong> room{{ $opportunities->count() === 1 ? '' : 's' }} meet this rule.</p>
+            <div class="dss-overview-strip" aria-label="Suggestion overview">
+                <div class="dss-overview-item"><strong>{{ $opportunities->count() }}</strong><small>room{{ $opportunities->count() === 1 ? '' : 's' }} meet the rule</small></div>
+                <div class="dss-overview-item"><strong>&lt; {{ $threshold }}%</strong><small>weekly occupancy threshold</small></div>
+                <div class="dss-overview-item"><strong>90 days</strong><small>look-ahead period</small></div>
+            </div>
+            <div class="dss-review-banner" role="status"><span class="dss-review-count">{{ $pendingPromoCount }}</span><span class="dss-review-copy"><strong>{{ $pendingPromoCount ? 'Promo drafts need your review' : 'You are all caught up' }}</strong><small>{{ $pendingPromoCount ? 'Drafts remain inactive until an admin approves them.' : 'No CAROL promo drafts are waiting for review.' }}</small></span><a href="{{ route('admin.promos') }}">{{ $pendingPromoCount ? 'Open promo drafts →' : 'Manage promo codes →' }}</a></div>
             @if($opportunities->isNotEmpty())
                 <div class="dss-grid">
                     @foreach($opportunities as $opportunity)
@@ -139,6 +165,7 @@
                                 <div><small>Still available to book</small><strong>{{ number_format($opportunity['available_hours'], 1) }} h</strong></div>
                             </div>
                             <small>{{ number_format($opportunity['sellable_hours'], 1) }} h bookable this week after cleaning and maintenance.</small>
+                            <div class="dss-card-footer"><span class="dss-draft-label">Suggested discount · 10%</span><a class="dss-action" href="{{ route('admin.promos') }}">Manage promo codes →</a></div>
                         </article>
                     @endforeach
                 </div>
