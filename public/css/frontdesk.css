@@ -222,3 +222,68 @@ html.dark-mode .frontdesk-page .frontdesk-feature-title .admin-kicker { color: #
     .frontdesk-primary-link, .frontdesk-page .frontdesk-walkin { transition: background-color .18s ease, transform .18s ease; }
     .frontdesk-primary-link:hover, .frontdesk-page .frontdesk-walkin:hover { transform: translateY(-2px); }
 }
+
+/* Keep the Today navigation in the same theme as its main content. */
+html:not(.dark-mode) .frontdesk-page .admin-sidebar {
+    background: linear-gradient(180deg, #fffdf9, #f4eee7) !important;
+    border-right-color: #e5ddd4 !important;
+    box-shadow: 4px 0 14px rgba(63, 38, 20, .06) !important;
+    color: #2b211b !important;
+    backdrop-filter: none;
+}
+html:not(.dark-mode) .frontdesk-page .admin-sidebar .admin-brand { color: #2b211b !important; }
+html:not(.dark-mode) .frontdesk-page .admin-sidebar .admin-brand small,
+html:not(.dark-mode) .frontdesk-page .admin-sidebar .admin-nav::before { color: #a85b08 !important; }
+html:not(.dark-mode) .frontdesk-page .admin-sidebar .admin-nav a,
+html:not(.dark-mode) .frontdesk-page .admin-sidebar .admin-nav a:focus,
+html:not(.dark-mode) .frontdesk-page .admin-sidebar .admin-nav a:active { color: #4a3b31 !important; background: transparent !important; }
+html:not(.dark-mode) .frontdesk-page .admin-sidebar .admin-nav a i { color: #a85b08 !important; }
+html:not(.dark-mode) .frontdesk-page .admin-sidebar .admin-nav a:hover { background: #f1e7dc !important; color: #2b211b !important; }
+html:not(.dark-mode) .frontdesk-page .admin-sidebar .admin-nav a.active,
+html:not(.dark-mode) .frontdesk-page .admin-sidebar .admin-nav a.active:hover {
+    border-color: #efd2ad !important;
+    background: linear-gradient(135deg, #fff0dd, #f8dfbf) !important;
+    color: #8d4b0b !important;
+}
+html:not(.dark-mode) .frontdesk-page .admin-sidebar .admin-theme-toggle,
+html:not(.dark-mode) .frontdesk-page .admin-sidebar .admin-logout .logout-button {
+    border-color: #e0d3c5 !important;
+    background: #fffaf4 !important;
+    color: #4a3b31 !important;
+}
+
+@media (max-width: 700px) {
+    html:not(.dark-mode) .frontdesk-page .frontdesk-mobile-header {
+        border-bottom-color: #e5ddd4;
+        background: #fffdf9;
+    }
+    html:not(.dark-mode) .frontdesk-page .frontdesk-mobile-brand { color: #2b211b; }
+    html:not(.dark-mode) .frontdesk-page .frontdesk-mobile-menu > summary { border-color: #e0d3c5; background: #fffaf4; }
+    html:not(.dark-mode) .frontdesk-page .frontdesk-mobile-menu > summary span { background: #4a3b31; }
+    html:not(.dark-mode) .frontdesk-page .frontdesk-mobile-menu-content {
+        border-color: #e0d3c5;
+        background: #fffdf9;
+        box-shadow: 0 20px 30px rgba(63, 38, 20, .14);
+    }
+    html:not(.dark-mode) .frontdesk-page .frontdesk-mobile-menu-content nav a,
+    html:not(.dark-mode) .frontdesk-page .frontdesk-mobile-menu-content form button,
+    html:not(.dark-mode) .frontdesk-page .frontdesk-mobile-menu-content .frontdesk-mobile-theme {
+        border-color: #e0d3c5;
+        background: #fffaf4;
+        color: #4a3b31;
+    }
+    html:not(.dark-mode) .frontdesk-page .frontdesk-mobile-menu-content nav a[aria-current="page"] {
+        background: linear-gradient(135deg, #fff0dd, #f8dfbf);
+        color: #8d4b0b;
+    }
+    html:not(.dark-mode) .frontdesk-page .frontdesk-mobile-tabs {
+        border-top-color: #e5ddd4;
+        background: #fffdf9;
+        box-shadow: 0 -5px 16px rgba(63, 38, 20, .08);
+    }
+    html:not(.dark-mode) .frontdesk-page .frontdesk-mobile-tabs a { color: #4a3b31; }
+    html:not(.dark-mode) .frontdesk-page .frontdesk-mobile-tabs a[aria-current="page"] {
+        background: #fff0dd;
+        color: #8d4b0b;
+    }
+}
