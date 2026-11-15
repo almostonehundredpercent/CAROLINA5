@@ -50,7 +50,7 @@ class OperationalDecisionSupport
             ->where('created_at', '>=', now()->subDays(30))
             ->selectRaw('room_id, count(*) as total')
             ->groupBy('room_id')
-            ->having('total', '>=', 3)
+            ->havingRaw('COUNT(*) >= ?', [3])
             ->with('room')
             ->get();
 
