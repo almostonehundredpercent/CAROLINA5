@@ -425,19 +425,16 @@
                                 </div>
                                 <span class="review-moderation-pending">Ready to publish</span>
                             </div>
-                            <p class="review-moderation-guidance">Check for private details before publishing. You can shorten the guest name, remove sensitive text, or publish the rating only.</p>
+                            <p class="review-moderation-guidance">The guest’s name and review are shown as submitted and cannot be edited. Publish the review unchanged or hide it.</p>
+                            <div class="review-moderation-submission">
+                                <div><b>Name submitted</b><p>{{ $review->guest_name }}</p></div>
+                                <div><b>Comment submitted</b><blockquote>{{ $review->comment ?: 'No written comment.' }}</blockquote></div>
+                            </div>
                             <form method="POST" action="{{ route('admin.reviews.update', $review) }}" class="review-moderation-form">
                                 @csrf @method('PATCH')
-                                <label for="review-name-{{ $review->id }}">Name guests will see <small>Use a first name or “Verified guest” to protect identity.</small></label>
-                                <input id="review-name-{{ $review->id }}" name="guest_name" value="{{ $review->guest_name }}" maxlength="255" required>
-                                <label for="review-comment-{{ $review->id }}">Public comment guests will see <small>Remove phone numbers, emails, addresses, or other private details. Clear this field to publish the rating only.</small></label>
-                                <textarea id="review-comment-{{ $review->id }}" name="comment" rows="4" maxlength="750">{{ $review->comment }}</textarea>
-                                <label class="review-moderation-attestation" for="review-privacy-{{ $review->id }}">
-                                    <input id="review-privacy-{{ $review->id }}" class="review-moderation-checkbox" type="checkbox" name="privacy_checked" value="1" required>
-                                    <span>I checked that the name and comment are safe to publish.</span>
-                                </label>
                                 <div class="review-moderation-actions">
-                                    <button class="review-moderation-button review-moderation-approve" type="submit" name="status" value="approved">Approve &amp; publish</button>
+                                    <button class="review-moderation-button review-moderation-approve" type="submit" name="status" value="approved">Approve &amp; publish unchanged</button>
+                                    <button class="review-moderation-button review-moderation-hide" type="submit" name="status" value="hidden">Hide review</button>
                                 </div>
                             </form>
                         </article>

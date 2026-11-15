@@ -21,18 +21,28 @@
             text-decoration: none;
         }
 
-        .metric-grid a.metric-card { display: block; color: inherit; text-decoration: none; transition: border-color .15s ease, transform .15s ease, box-shadow .15s ease; }
-        .metric-grid a.metric-card:hover { border-color: var(--orange); transform: translateY(-2px); box-shadow: 0 12px 26px rgba(0, 0, 0, .16); }
-        .metric-grid a.metric-card:focus-visible { outline: 3px solid var(--orange); outline-offset: 3px; }
+        .metric-grid .metric-card--interactive {
+            display: block;
+            width: 100%;
+            appearance: none;
+            color: inherit;
+            font: inherit;
+            text-align: left;
+            cursor: pointer;
+            transition: border-color .15s ease, transform .15s ease, box-shadow .15s ease;
+        }
+        .metric-grid .metric-card--interactive:hover { border-color: var(--orange); transform: translateY(-2px); box-shadow: 0 12px 26px rgba(0, 0, 0, .16); }
+        .metric-grid .metric-card--interactive:focus-visible { outline: 3px solid var(--orange); outline-offset: 3px; }
+        .metric-card-detail-cue { display: block; margin-top: 12px; color: var(--muted); font-size: 11px; font-style: normal; font-weight: 700; }
 
-        html:not(.dark-mode) .metric-grid a.metric-card {
+        html:not(.dark-mode) .metric-grid .metric-card--interactive {
             border-color: #e5ddd4;
             background: #fffdf9;
             color: #2b211b;
         }
 
-        html:not(.dark-mode) .metric-grid a.metric-card small { color: #74685e; }
-        html:not(.dark-mode) .metric-grid a.metric-card em { color: #8d4b0b; }
+        html:not(.dark-mode) .metric-grid .metric-card--interactive small { color: #74685e; }
+        html:not(.dark-mode) .metric-grid .metric-card--interactive em { color: #8d4b0b; }
 
         .metric-grid .metric-card .metric-icon {
             position: absolute;
@@ -161,11 +171,61 @@
         <header class="admin-topbar"><div><p class="admin-kicker">OVERVIEW</p><h1>Dashboard</h1></div><div class="admin-user"><span class="avatar">{{ strtoupper(substr(auth()->user()->name, 0, 1)) }}</span><div><b>{{ auth()->user()->name }}</b><small>Organization Admin</small></div></div></header>
         @if(session('success'))<div class="admin-flash">{{ session('success') }}</div>@endif
         <section class="metric-grid" id="rooms">
-            <a class="metric-card metric-card--payments" href="{{ route('admin.reports', ['metric' => 'payments']) }}"><span class="metric-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 6.5A3.5 3.5 0 0 1 6.5 3h10A2.5 2.5 0 0 1 19 5.5V7h1a2 2 0 0 1 2 2v8.5a3.5 3.5 0 0 1-3.5 3.5h-12A3.5 3.5 0 0 1 3 17.5v-11Zm16 3.5h-4a2 2 0 1 0 0 4h4v-4Zm-4 1.25a.75.75 0 1 1 0 1.5.75.75 0 0 1 0-1.5Z"/></svg></span><small>Net payments recorded</small><strong>₱{{ number_format($revenue) }}</strong><em>{{ $paymentSourceLabel }}</em></a>
-            <a class="metric-card metric-card--bookings" href="{{ route('admin.bookings') }}"><span class="metric-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8 2a2 2 0 0 0-2 2H5a3 3 0 0 0-3 3v12a3 3 0 0 0 3 3h14a3 3 0 0 0 3-3V7a3 3 0 0 0-3-3h-1a2 2 0 0 0-2-2H8Zm0 2h8v2H8V4Zm-2 6h2v2H6v-2Zm4 0h8v2h-8v-2Zm-4 4h2v2H6v-2Zm4 0h8v2h-8v-2Zm-4 4h2v2H6v-2Zm4 0h8v2h-8v-2Z"/></svg></span><small>Total bookings</small><strong>{{ $bookingCount }}</strong><em>All reservations</em></a>
-            <a class="metric-card metric-card--confirmed" href="{{ route('admin.bookings', ['status' => 'confirmed']) }}"><span class="metric-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path fill-rule="evenodd" d="M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20Zm4.78-12.88a1 1 0 0 0-1.56-1.24l-4.18 5.22-2.33-2.33a1 1 0 0 0-1.42 1.42l3.12 3.12a1 1 0 0 0 1.49-.08l4.88-6.11Z" clip-rule="evenodd"/></svg></span><small>Confirmed</small><strong>{{ $confirmedCount }}</strong><em>Ready for arrival</em></a>
-            <a class="metric-card metric-card--available" href="{{ route('admin.rooms') }}"><span class="metric-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12.67 2.5a1 1 0 0 0-1.34 0l-9 8A1 1 0 0 0 3 12.25h1V20a2 2 0 0 0 2 2h4v-6h4v6h4a2 2 0 0 0 2-2v-7.75h1a1 1 0 0 0 .67-1.75l-9-8Z"/></svg></span><small>Available rooms</small><strong>{{ $roomsByStatus['available'] }}</strong><em>{{ $roomCount }} active room{{ $roomCount === 1 ? '' : 's' }}</em></a>
+            <button class="metric-card metric-card--payments metric-card--interactive" type="button" data-dashboard-dialog-open="dashboard-payments-dialog" aria-haspopup="dialog" aria-controls="dashboard-payments-dialog"><span class="metric-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 6.5A3.5 3.5 0 0 1 6.5 3h10A2.5 2.5 0 0 1 19 5.5V7h1a2 2 0 0 1 2 2v8.5a3.5 3.5 0 0 1-3.5 3.5h-12A3.5 3.5 0 0 1 3 17.5v-11Zm16 3.5h-4a2 2 0 1 0 0 4h4v-4Zm-4 1.25a.75.75 0 1 1 0 1.5.75.75 0 0 1 0-1.5Z"/></svg></span><small>Net payments recorded</small><strong>₱{{ number_format($revenue) }}</strong><em>{{ $paymentSourceLabel }}</em><span class="metric-card-detail-cue">View payment details</span></button>
+            <button class="metric-card metric-card--bookings metric-card--interactive" type="button" data-dashboard-dialog-open="dashboard-bookings-dialog" aria-haspopup="dialog" aria-controls="dashboard-bookings-dialog"><span class="metric-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8 2a2 2 0 0 0-2 2H5a3 3 0 0 0-3 3v12a3 3 0 0 0 3 3h14a3 3 0 0 0 3-3V7a3 3 0 0 0-3-3h-1a2 2 0 0 0-2-2H8Zm0 2h8v2H8V4Zm-2 6h2v2H6v-2Zm4 0h8v2h-8v-2Zm-4 4h2v2H6v-2Zm4 0h8v2h-8v-2Zm-4 4h2v2H6v-2Zm4 0h8v2h-8v-2Z"/></svg></span><small>Total bookings</small><strong>{{ $bookingCount }}</strong><em>All reservations</em><span class="metric-card-detail-cue">View booking breakdown</span></button>
+            <button class="metric-card metric-card--confirmed metric-card--interactive" type="button" data-dashboard-dialog-open="dashboard-confirmed-dialog" aria-haspopup="dialog" aria-controls="dashboard-confirmed-dialog"><span class="metric-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path fill-rule="evenodd" d="M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20Zm4.78-12.88a1 1 0 0 0-1.56-1.24l-4.18 5.22-2.33-2.33a1 1 0 0 0-1.42 1.42l3.12 3.12a1 1 0 0 0 1.49-.08l4.88-6.11Z" clip-rule="evenodd"/></svg></span><small>Confirmed</small><strong>{{ $confirmedCount }}</strong><em>Ready for arrival</em><span class="metric-card-detail-cue">View confirmed stays</span></button>
+            <button class="metric-card metric-card--available metric-card--interactive" type="button" data-dashboard-dialog-open="dashboard-available-dialog" aria-haspopup="dialog" aria-controls="dashboard-available-dialog"><span class="metric-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12.67 2.5a1 1 0 0 0-1.34 0l-9 8A1 1 0 0 0 3 12.25h1V20a2 2 0 0 0 2 2h4v-6h4v6h4a2 2 0 0 0 2-2v-7.75h1a1 1 0 0 0 .67-1.75l-9-8Z"/></svg></span><small>Available rooms</small><strong>{{ $roomsByStatus['available'] }}</strong><em>{{ $roomCount }} active room{{ $roomCount === 1 ? '' : 's' }}</em><span class="metric-card-detail-cue">View available rooms</span></button>
         </section>
+        <dialog class="dashboard-detail-dialog" id="dashboard-payments-dialog" aria-labelledby="dashboard-payments-title">
+            <div class="dashboard-detail-shell">
+                <header class="dashboard-detail-header"><div><p class="admin-kicker">PAYMENT LEDGER</p><h2 id="dashboard-payments-title">Net payments recorded</h2><p>{{ $paymentSourceLabel }}</p></div><button class="dashboard-detail-close" type="button" data-dashboard-dialog-close aria-label="Close payment details">×</button></header>
+                <div class="dashboard-detail-body">
+                    <div class="dashboard-detail-metrics">
+                        <div><small>Total paid</small><strong>₱{{ number_format($paymentModalTotals['paid'], 2) }}</strong></div>
+                        <div><small>Refunds recorded</small><strong>₱{{ number_format($paymentModalTotals['refunds'], 2) }}</strong></div>
+                        <div><small>Net collected</small><strong>₱{{ number_format($paymentModalTotals['net_collected'], 2) }}</strong></div>
+                    </div>
+                    <section class="dashboard-detail-section"><h3>Latest payment and refund entries</h3>
+                        @if($paymentDetails->isNotEmpty())<div class="dashboard-detail-table-wrap" role="region" aria-label="Latest payment and refund records" tabindex="0"><table class="dashboard-detail-table"><thead><tr><th>Recorded</th><th>Reference</th><th>Guest</th><th>Method</th><th>Status</th><th>Amount</th></tr></thead><tbody>
+                            @foreach($paymentDetails as $paymentEntry)<tr><td>{{ $paymentEntry->created_at?->format('M j, Y') ?? '—' }}</td><td>{{ $paymentEntry->booking?->reference ?? '—' }}</td><td>{{ $paymentEntry->booking?->guest_name ?? $paymentEntry->booking?->user?->name ?? 'Guest' }}</td><td>{{ ucfirst($paymentEntry->method ?? '—') }}</td><td><span class="dashboard-detail-status">{{ ucfirst($paymentEntry->status) }}</span></td><td>{{ $paymentEntry->status === 'refunded' ? '−' : '' }}₱{{ number_format((float) $paymentEntry->amount, 2) }}</td></tr>@endforeach
+                        </tbody></table></div>@else<p class="dashboard-detail-empty">No payment ledger entries are available. The summary above uses the available booking payment records.</p>@endif
+                    </section>
+                </div>
+            </div>
+        </dialog>
+        <dialog class="dashboard-detail-dialog" id="dashboard-bookings-dialog" aria-labelledby="dashboard-bookings-title">
+            <div class="dashboard-detail-shell">
+                <header class="dashboard-detail-header"><div><p class="admin-kicker">ALL RESERVATIONS</p><h2 id="dashboard-bookings-title">Total bookings · {{ $bookingCount }}</h2><p>Breakdown by current reservation status, plus the latest bookings.</p></div><button class="dashboard-detail-close" type="button" data-dashboard-dialog-close aria-label="Close booking details">×</button></header>
+                <div class="dashboard-detail-body">
+                    <div class="dashboard-detail-metrics"><div><small>Pending review</small><strong>{{ $pendingCount }}</strong></div><div><small>Confirmed</small><strong>{{ $confirmedCount }}</strong></div><div><small>Cancelled</small><strong>{{ $cancelledCount }}</strong></div></div>
+                    <section class="dashboard-detail-section"><h3>Latest bookings · showing {{ $bookings->count() }} of {{ $bookingCount }}</h3>
+                        @if($bookings->isNotEmpty())<div class="dashboard-detail-table-wrap" role="region" aria-label="Latest booking records" tabindex="0"><table class="dashboard-detail-table"><thead><tr><th>Reference</th><th>Guest</th><th>Room</th><th>Stay</th><th>Status</th><th>Total</th></tr></thead><tbody>
+                            @foreach($bookings as $modalBooking)<tr><td>{{ $modalBooking->reference }}</td><td>{{ $modalBooking->guest_name ?? $modalBooking->user?->name ?? 'Guest' }}</td><td>{{ $modalBooking->room?->name ?? 'Room removed' }}</td><td>{{ $modalBooking->check_in?->format('M j') }}–{{ $modalBooking->check_out?->format('M j, Y') }}</td><td><span class="dashboard-detail-status">{{ ucfirst($modalBooking->status) }}</span></td><td>₱{{ number_format((float) $modalBooking->total_amount, 2) }}</td></tr>@endforeach
+                        </tbody></table></div>@else<p class="dashboard-detail-empty">No reservations have been created yet.</p>@endif
+                    </section>
+                </div>
+            </div>
+        </dialog>
+        <dialog class="dashboard-detail-dialog" id="dashboard-confirmed-dialog" aria-labelledby="dashboard-confirmed-title">
+            <div class="dashboard-detail-shell">
+                <header class="dashboard-detail-header"><div><p class="admin-kicker">CONFIRMED RESERVATIONS</p><h2 id="dashboard-confirmed-title">Confirmed · {{ $confirmedCount }}</h2><p>Guest, room, and stay dates for every confirmed reservation.</p></div><button class="dashboard-detail-close" type="button" data-dashboard-dialog-close aria-label="Close confirmed reservation details">×</button></header>
+                <div class="dashboard-detail-body"><section class="dashboard-detail-section">
+                    @if($confirmedBookings->isNotEmpty())<div class="dashboard-detail-table-wrap" role="region" aria-label="Confirmed reservations" tabindex="0"><table class="dashboard-detail-table"><thead><tr><th>Reference</th><th>Guest</th><th>Room</th><th>Check-in</th><th>Check-out</th><th>Stay status</th></tr></thead><tbody>
+                        @foreach($confirmedBookings as $confirmedBooking)<tr><td>{{ $confirmedBooking->reference }}</td><td>{{ $confirmedBooking->guest_name ?? $confirmedBooking->user?->name ?? 'Guest' }}</td><td>{{ $confirmedBooking->room?->name ?? 'Room removed' }}</td><td>{{ $confirmedBooking->check_in_at?->format('M j, Y g:i A') ?? $confirmedBooking->check_in?->format('M j, Y') ?? '—' }}</td><td>{{ $confirmedBooking->check_out_at?->format('M j, Y g:i A') ?? $confirmedBooking->check_out?->format('M j, Y') ?? '—' }}</td><td><span class="dashboard-detail-status">{{ $confirmedBooking->checked_out_at ? 'Checked out' : ($confirmedBooking->checked_in_at ? 'Checked in' : 'Upcoming') }}</span></td></tr>@endforeach
+                    </tbody></table></div>@else<p class="dashboard-detail-empty">There are no confirmed reservations.</p>@endif
+                </section></div>
+            </div>
+        </dialog>
+        <dialog class="dashboard-detail-dialog" id="dashboard-available-dialog" aria-labelledby="dashboard-available-title">
+            <div class="dashboard-detail-shell">
+                <header class="dashboard-detail-header"><div><p class="admin-kicker">CURRENT ROOM STATUS</p><h2 id="dashboard-available-title">Available rooms · {{ $availableRoomDetails->count() }}</h2><p>Rooms currently marked available, with their capacity and nightly rate.</p></div><button class="dashboard-detail-close" type="button" data-dashboard-dialog-close aria-label="Close available room details">×</button></header>
+                <div class="dashboard-detail-body"><section class="dashboard-detail-section">
+                    @if($availableRoomDetails->isNotEmpty())<div class="dashboard-detail-table-wrap" role="region" aria-label="Available rooms" tabindex="0"><table class="dashboard-detail-table"><thead><tr><th>Room</th><th>Type</th><th>Capacity</th><th>Beds</th><th>Nightly rate</th></tr></thead><tbody>
+                        @foreach($availableRoomDetails as $availableRoom)<tr><td>{{ $availableRoom->name }}</td><td>{{ $availableRoom->room_type ? ucfirst($availableRoom->room_type) : 'Room' }}</td><td>{{ $availableRoom->guests }} guests</td><td>{{ $availableRoom->beds ?: '—' }}</td><td>₱{{ number_format((float) $availableRoom->price_per_night, 2) }}</td></tr>@endforeach
+                    </tbody></table></div>@else<p class="dashboard-detail-empty">No rooms are currently marked available.</p>@endif
+                </section></div>
+            </div>
+        </dialog>
         <section class="dashboard-summary-grid" aria-label="Today's operations">
             <article class="panel dashboard-summary-panel">
                 <div class="panel-heading"><div><p class="admin-kicker">SHIFT ALERTS</p><h2>Needs attention</h2></div></div>
@@ -244,5 +304,20 @@
         <section class="panel bookings-panel" id="bookings"><div class="panel-heading"><div><p class="admin-kicker">LATEST ACTIVITY</p><h2>Recent bookings</h2></div><span class="booking-count">{{ $bookingCount }} total</span></div><div class="admin-table-wrap"><table><thead><tr><th>Guest</th><th>Room</th><th>Stay dates</th><th>Total</th><th>Status</th></tr></thead><tbody>@forelse($bookings as $booking)<tr><td><b>{{ $booking->guest_name ?? $booking->user?->name ?? 'Guest' }}</b><small>{{ $booking->guest_email ?? $booking->user?->email }} · {{ $booking->reference }}</small></td><td>{{ $booking->room?->name ?? 'Room removed' }}</td><td>{{ $booking->check_in->format('M j') }} - {{ $booking->check_out->format('M j, Y') }}</td><td>₱{{ number_format($booking->total_amount) }}@if((float) $booking->deposit_amount > 0)<small>Deposit ₱{{ number_format((float) $booking->deposit_amount, 2) }} · {{ $booking->deposit_status === 'verified' || $booking->deposit_verified_at ? 'verified' : 'awaiting' }}</small>@endif</td><td>@if($booking->status === 'pending' && (float) $booking->deposit_amount > 0 && $booking->deposit_status !== 'verified' && ! $booking->deposit_verified_at)<a class="status-select" href="{{ route('admin.bookings.show', $booking) }}">Verify downpayment</a>@else<form method="POST" action="{{ route('admin.bookings.update', $booking) }}">@csrf @method('PATCH')<select class="status-select {{ $booking->status }}" name="status" onchange="this.form.submit()">@foreach(['pending','confirmed','cancelled'] as $status)@if($status !== 'confirmed' || (float) $booking->deposit_amount <= 0 || $booking->deposit_status === 'verified' || $booking->deposit_verified_at)<option value="{{ $status }}" @selected($booking->status === $status)>{{ ucfirst($status) }}</option>@endif @endforeach</select></form>@endif</td></tr>@empty<tr><td colspan="5" class="no-bookings">No bookings have been placed yet.</td></tr>@endforelse</tbody></table></div></section>
     </main>
 </div>
+<script>
+    (() => {
+        document.querySelectorAll('[data-dashboard-dialog-open]').forEach((trigger) => {
+            const dialog = document.getElementById(trigger.dataset.dashboardDialogOpen);
+            if (!dialog || typeof dialog.showModal !== 'function') return;
+
+            trigger.addEventListener('click', () => dialog.showModal());
+            dialog.querySelector('[data-dashboard-dialog-close]')?.addEventListener('click', () => dialog.close());
+            dialog.addEventListener('click', (event) => {
+                if (event.target === dialog) dialog.close();
+            });
+            dialog.addEventListener('close', () => trigger.focus());
+        });
+    })();
+</script>
 </body>
 </html>

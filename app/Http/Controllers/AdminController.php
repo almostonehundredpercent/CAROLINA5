@@ -79,6 +79,38 @@ class AdminController extends Controller
             $recentBookings = Booking::with(['user', 'room'])->latest()->take(8)->get();
             $rooms = $this->roomsWithDisplayStatus();
             $operationalMetrics = $this->dashboardOperationalMetrics($rooms);
+            $availableRoomDetails = $rooms->where('display_status', 'available')->values();
+            $confirmedBookings = Booking::with(['user', 'room'])
+                ->where('status', 'confirmed')
+                ->orderBy('check_in_at')
+                ->orderBy('check_in')
+                ->get();
+            $paymentModalTotals = ['paid' => (float) $revenue, 'refunds' => 0.0, 'net_collected' => (float) $revenue];
+            $paymentDetails = collect();
+            try {
+                $paymentTotalsByStatus = Payment::query()
+                    ->whereIn('status', ['paid', 'refunded'])
+                    ->selectRaw('status, SUM(amount) as total')
+                    ->groupBy('status')
+                    ->get()
+                    ->keyBy('status');
+                $paidTotal = (float) ($paymentTotalsByStatus->get('paid')?->total ?? 0);
+                $refundTotal = (float) ($paymentTotalsByStatus->get('refunded')?->total ?? 0);
+                $paymentModalTotals = [
+                    'paid' => $paidTotal,
+                    'refunds' => $refundTotal,
+                    'net_collected' => $paidTotal - $refundTotal,
+                ];
+                $paymentDetails = Payment::with(['booking.room', 'booking.user'])
+                    ->whereIn('status', ['paid', 'refunded'])
+                    ->latest('created_at')
+                    ->take(12)
+                    ->get();
+            } catch (QueryException $exception) {
+                Log::warning('Payment detail modal unavailable; showing the legacy summary only.', [
+                    'exception' => $exception,
+                ]);
+            }
 
             return view('admin.admin_dashboard', [
                 'viewer' => AdminPermissions::role(request()->user()) === 'viewer',
@@ -89,6 +121,10 @@ class AdminController extends Controller
                 'revenue' => $revenue,
                 'paymentPending' => $paymentPending,
                 'paymentSourceLabel' => $paymentSourceLabel,
+                'paymentModalTotals' => $paymentModalTotals,
+                'paymentDetails' => $paymentDetails,
+                'availableRoomDetails' => $availableRoomDetails,
+                'confirmedBookings' => $confirmedBookings,
                 'checkedInCount' => $operationalMetrics['checkedInCount'],
                 'checkedOutCount' => $operationalMetrics['checkedOutCount'],
                 'cancelledCount' => Booking::where('status', 'cancelled')->count(),
@@ -120,6 +156,7 @@ class AdminController extends Controller
             $pendingCount = Booking::query()->blocking()->where('status', 'pending')->count();
             $confirmedCount = Booking::where('status', 'confirmed')->count();
             $cancelledCount = Booking::where('status', 'cancelled')->count();
+            $fallbackRevenue = (float) Booking::where('payment_status', 'paid')->sum('total_amount');
 
             return view('admin.admin_dashboard', [
                 'viewer' => AdminPermissions::role(request()->user()) === 'viewer',
@@ -127,9 +164,17 @@ class AdminController extends Controller
                 'pendingCount' => $pendingCount,
                 'confirmedCount' => $confirmedCount,
                 'roomCount' => $fallbackRooms->count(),
-                'revenue' => Booking::where('payment_status', 'paid')->sum('total_amount'),
+                'revenue' => $fallbackRevenue,
                 'paymentPending' => Booking::where('status', '!=', 'cancelled')->where('payment_status', '!=', 'paid')->count(),
                 'paymentSourceLabel' => 'Legacy booking payment records (ledger unavailable)',
+                'paymentModalTotals' => [
+                    'paid' => $fallbackRevenue,
+                    'refunds' => 0.0,
+                    'net_collected' => $fallbackRevenue,
+                ],
+                'paymentDetails' => collect(),
+                'availableRoomDetails' => $fallbackRooms->where('display_status', 'available')->values(),
+                'confirmedBookings' => Booking::with(['user', 'room'])->where('status', 'confirmed')->orderBy('check_in_at')->orderBy('check_in')->get(),
                 'checkedInCount' => $operationalMetrics['checkedInCount'],
                 'checkedOutCount' => $operationalMetrics['checkedOutCount'],
                 'cancelledCount' => $cancelledCount,
@@ -872,19 +917,13 @@ class AdminController extends Controller
         abort_unless($request->user()->canManageBookings(), 403, 'Your staff role cannot moderate reviews.');
         $approving = $request->input('status') === 'approved';
         $data = $request->validate([
-            'status' => 'required|in:approved',
-            'guest_name' => $approving ? 'required|string|max:255' : 'sometimes|required|string|max:255',
-            'comment' => $approving ? 'present|nullable|string|max:750' : 'sometimes|nullable|string|max:750',
-            'privacy_checked' => $approving ? 'accepted' : 'sometimes|accepted',
+            'status' => 'required|in:approved,hidden',
+            'guest_name' => 'prohibited',
+            'comment' => 'prohibited',
+            'privacy_checked' => 'prohibited',
         ]);
         $review->update([
             'status' => $data['status'],
-            'guest_name' => $approving
-                ? trim($data['guest_name'])
-                : $review->guest_name,
-            'comment' => $approving
-                ? (filled($data['comment']) ? trim($data['comment']) : null)
-                : $review->comment,
             'approved_at' => $approving ? now() : null,
             'approved_by' => $approving ? $request->user()->id : null,
         ]);

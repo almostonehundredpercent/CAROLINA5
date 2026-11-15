@@ -72,7 +72,7 @@
                 @endif
                 @if($booking->canCancelOnline())
                     <small>Cancel at least 3 days before check-in to qualify for a refund.</small>
-                    <form method="POST" action="{{ route('bookings.cancel', $booking) }}">@csrf @method('PATCH')<button class="link-danger">Cancel booking</button></form>
+                    <form method="POST" action="{{ route('bookings.cancel', $booking) }}" onsubmit="return confirm('Are you sure you want to cancel this booking? The room will become available again for these dates.');">@csrf @method('PATCH')<button class="link-danger" type="submit">Cancel booking</button></form>
                 @else
                     <small>Online cancellation is closed within 3 days of check-in.</small>
                 @endif
