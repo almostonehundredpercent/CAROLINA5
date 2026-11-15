@@ -1,7 +1,14 @@
 (() => {
     const formatDuration = (totalSeconds) => {
+        const hours = Math.floor(totalSeconds / 3600);
         const minutes = Math.floor(totalSeconds / 60);
         const seconds = totalSeconds % 60;
+
+        if (hours > 0) {
+            const remainingMinutes = Math.floor((totalSeconds % 3600) / 60);
+
+            return `${hours}:${String(remainingMinutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+        }
 
         return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
     };

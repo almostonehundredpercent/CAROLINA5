@@ -291,7 +291,7 @@ test('Manila check-in time enables and accepts check-in even while UTC is earlie
     }
 });
 
-test('checkout starts one twenty-minute cleaning timer and cannot be repeated', function () {
+test('checkout starts one two-hour cleaning timer and cannot be repeated', function () {
     Carbon::setTestNow('2026-10-24 12:00:00');
 
     try {
@@ -307,13 +307,13 @@ test('checkout starts one twenty-minute cleaning timer and cannot be repeated', 
         $this->actingAsStaff($admin)
             ->post(route('admin.bookings.check-out', $booking), ['action' => 'check_out'])
             ->assertRedirect()
-            ->assertSessionHas('success', 'Guest checked out. A 20-minute cleaning timer is now active.');
+            ->assertSessionHas('success', 'Guest checked out. A 2-hour cleaning timer is now active.');
 
         $block = RoomBlock::where('room_id', $room->id)->where('status', 'cleaning')->firstOrFail();
 
         expect(RoomBlock::where('room_id', $room->id)->where('status', 'cleaning')->count())->toBe(1)
             ->and($block->starts_at->equalTo(PropertyTime::now()))->toBeTrue()
-            ->and($block->ends_at->equalTo(PropertyTime::now()->addMinutes(20)))->toBeTrue()
+            ->and($block->ends_at->equalTo(PropertyTime::now()->addHours(2)))->toBeTrue()
             ->and($block->completed_at)->toBeNull();
 
         $this->actingAsStaff($admin)
@@ -406,9 +406,9 @@ test('front desk room operations shows a live countdown for active cleaning bloc
         RoomBlock::create([
             'room_id' => $room->id,
             'status' => 'cleaning',
-            'starts_at' => $propertyNow->copy()->subMinutes(14)->subSeconds(37),
+            'starts_at' => $propertyNow->copy()->subHours(1)->subMinutes(54)->subSeconds(37),
             'ends_at' => $propertyNow->copy()->addMinutes(5)->addSeconds(23),
-            'notes' => 'Automatic 20-minute cleaning period after check-out.',
+            'notes' => 'Automatic 2-hour cleaning period after check-out.',
         ]);
         $admin = User::factory()->create(['is_admin' => true]);
 

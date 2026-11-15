@@ -1,6 +1,10 @@
 @php
-    $minutesRemaining = intdiv($remainingSeconds, 60);
+    $hoursRemaining = intdiv($remainingSeconds, 3600);
+    $minutesRemaining = intdiv($remainingSeconds % 3600, 60);
     $secondsRemaining = $remainingSeconds % 60;
+    $formattedRemaining = $hoursRemaining > 0
+        ? sprintf('%d:%02d:%02d', $hoursRemaining, $minutesRemaining, $secondsRemaining)
+        : sprintf('%02d:%02d', $minutesRemaining, $secondsRemaining);
 @endphp
 <div class="cleaning-countdown" role="timer" aria-label="Cleaning time remaining" data-cleaning-countdown data-remaining-seconds="{{ $remainingSeconds }}">
     <span class="cleaning-countdown-icon" aria-hidden="true">
@@ -10,5 +14,5 @@
         <b data-countdown-label>Cleaning time remaining</b>
         <span data-countdown-complete hidden>Cleaning window complete — check the room's status.</span>
     </span>
-    <time class="cleaning-countdown-clock" data-countdown-value>{{ sprintf('%02d:%02d', $minutesRemaining, $secondsRemaining) }}</time>
+    <time class="cleaning-countdown-clock" data-countdown-value>{{ $formattedRemaining }}</time>
 </div>
