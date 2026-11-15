@@ -7,6 +7,7 @@
     $canResumePayment = ! $expiredHold && $booking->status === 'pending' && ! $booking->hasProtectedInventory();
     $showCancellation = $guestBooking && $booking->status !== 'cancelled' && ! $expiredHold;
     $canCancel = $showCancellation && $booking->canCancelOnline();
+    $canReschedule = $showCancellation && $booking->canRescheduleOnline();
     $showExtension = $booking->checked_in_at && ! $booking->checked_out_at && $booking->status !== 'cancelled';
     $hasPortalAside = $expiredHold || $canResumePayment || $showCancellation || $showExtension || $booking->status === 'cancelled' || ! $guestBooking;
     $portalStatus = $expiredHold ? 'Payment hold expired' : ucfirst($booking->status);
@@ -61,6 +62,12 @@
     .portal-cancel-form{width:100%;margin-top:auto}
     .portal-cancel-form .button{margin-top:0}
     .portal-cancel-form p{margin:0 0 14px;font-size:.78rem}
+    .portal-reschedule-form{display:grid;width:100%;gap:10px;margin:0 0 20px;padding:14px;border:1px solid var(--portal-border);border-radius:11px;background:var(--portal-subtle)}
+    .portal-reschedule-form label{display:grid;gap:5px;color:var(--muted);font-size:.8rem;font-weight:700}
+    .portal-reschedule-form input{width:100%;min-width:0;padding:10px;border:1px solid var(--portal-border);border-radius:8px;background:var(--portal-surface);color:var(--ink);font:inherit}
+    .portal-reschedule-form small{color:var(--muted);font-size:.76rem;line-height:1.4}
+    .portal-reschedule-form .button{margin-top:0}
+    .portal-reschedule-error{color:#a33932!important}
     .portal-help-link{margin-top:14px;color:var(--gold);font-size:.86rem;font-weight:750;text-decoration:underline;text-underline-offset:3px}
     .portal-status-message{margin:0;color:var(--muted);font-size:.94rem;line-height:1.55}
     .dark-mode .guest-portal{--portal-surface:#211a15;--portal-border:#514032;--portal-subtle:#29211b}
@@ -146,7 +153,24 @@
             @if($showCancellation)
                 <section class="portal-action-card">
                     <span class="portal-kicker">RESERVATION OPTIONS</span>
-                    <h2>{{ $canCancel ? 'Cancel booking' : 'Cancellation window closed' }}</h2>
+                    <h2>Manage booking</h2>
+                    @if($canReschedule)
+                        <p>Choose a new check-in at least 3 days ahead. Your room, stay length, and price stay the same. {{ $booking->reschedulesRemaining() }} of 2 reschedules remaining.</p>
+                        <form class="portal-reschedule-form" method="POST" action="{{ route('bookings.lookup.reschedule', $booking) }}">
+                            @csrf @method('PATCH')
+                            <input type="hidden" name="email" value="{{ $lookupEmail }}">
+                            <input type="hidden" name="reference" value="{{ $booking->reference }}">
+                            @if($booking->booking_type === 'hourly')
+                                <label>New check-in time<input type="datetime-local" name="new_check_in_at" min="{{ \App\Support\PropertyTime::now()->addDays(3)->format('Y-m-d\\TH:i') }}" required></label>
+                            @else
+                                <label>New check-in date<input type="date" name="new_check_in" min="{{ \App\Support\PropertyTime::now()->addDays(3)->toDateString() }}" required></label>
+                            @endif
+                            @error('reschedule')<small class="portal-reschedule-error">{{ $message }}</small>@enderror
+                            <button class="button secondary" type="submit">Save new time</button>
+                        </form>
+                    @elseif($showCancellation && $booking->reschedulesRemaining() === 0)
+                        <p>Online rescheduling limit reached (2). Contact Carolina if you need to change your stay.</p>
+                    @endif
                     @if($canCancel)
                         <p>Cancel at least 3 days before check-in to qualify for a refund. The room will reopen for these dates after cancellation.</p>
                         <form class="portal-cancel-form" method="POST" action="{{ route('bookings.lookup.cancel', $booking) }}" onsubmit="return confirm('Cancel this booking? The room will become available again for these dates.');">

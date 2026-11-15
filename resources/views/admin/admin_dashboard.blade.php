@@ -10,9 +10,20 @@
     <link rel="stylesheet" href="{{ asset('css/admin.css') }}?v={{ filemtime(public_path('css/admin.css')) }}">
     <style>
         .metric-grid .metric-card {
+            position: relative;
             min-height: 150px;
             padding: 20px 78px 18px 20px;
+            overflow: hidden;
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            background: var(--admin-card);
+            color: var(--ink);
+            text-decoration: none;
         }
+
+        .metric-grid a.metric-card { display: block; color: inherit; text-decoration: none; transition: border-color .15s ease, transform .15s ease, box-shadow .15s ease; }
+        .metric-grid a.metric-card:hover { border-color: var(--orange); transform: translateY(-2px); box-shadow: 0 12px 26px rgba(0, 0, 0, .16); }
+        .metric-grid a.metric-card:focus-visible { outline: 3px solid var(--orange); outline-offset: 3px; }
 
         .metric-grid .metric-card .metric-icon {
             position: absolute;
@@ -141,10 +152,10 @@
         <header class="admin-topbar"><div><p class="admin-kicker">OVERVIEW</p><h1>Dashboard</h1></div><div class="admin-user"><span class="avatar">{{ strtoupper(substr(auth()->user()->name, 0, 1)) }}</span><div><b>{{ auth()->user()->name }}</b><small>Organization Admin</small></div></div></header>
         @if(session('success'))<div class="admin-flash">{{ session('success') }}</div>@endif
         <section class="metric-grid" id="rooms">
-            <article class="metric-card metric-card--payments"><span class="metric-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 6.5A3.5 3.5 0 0 1 6.5 3h10A2.5 2.5 0 0 1 19 5.5V7h1a2 2 0 0 1 2 2v8.5a3.5 3.5 0 0 1-3.5 3.5h-12A3.5 3.5 0 0 1 3 17.5v-11Zm16 3.5h-4a2 2 0 1 0 0 4h4v-4Zm-4 1.25a.75.75 0 1 1 0 1.5.75.75 0 0 1 0-1.5Z"/></svg></span><small>Net payments recorded</small><strong>₱{{ number_format($revenue) }}</strong><em>{{ $paymentSourceLabel }}</em></article>
-            <article class="metric-card metric-card--bookings"><span class="metric-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8 2a2 2 0 0 0-2 2H5a3 3 0 0 0-3 3v12a3 3 0 0 0 3 3h14a3 3 0 0 0 3-3V7a3 3 0 0 0-3-3h-1a2 2 0 0 0-2-2H8Zm0 2h8v2H8V4Zm-2 6h2v2H6v-2Zm4 0h8v2h-8v-2Zm-4 4h2v2H6v-2Zm4 0h8v2h-8v-2Zm-4 4h2v2H6v-2Zm4 0h8v2h-8v-2Z"/></svg></span><small>Total bookings</small><strong>{{ $bookingCount }}</strong><em>All reservations</em></article>
-            <article class="metric-card metric-card--confirmed"><span class="metric-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path fill-rule="evenodd" d="M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20Zm4.78-12.88a1 1 0 0 0-1.56-1.24l-4.18 5.22-2.33-2.33a1 1 0 0 0-1.42 1.42l3.12 3.12a1 1 0 0 0 1.49-.08l4.88-6.11Z" clip-rule="evenodd"/></svg></span><small>Confirmed</small><strong>{{ $confirmedCount }}</strong><em>Ready for arrival</em></article>
-            <article class="metric-card metric-card--available"><span class="metric-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12.67 2.5a1 1 0 0 0-1.34 0l-9 8A1 1 0 0 0 3 12.25h1V20a2 2 0 0 0 2 2h4v-6h4v6h4a2 2 0 0 0 2-2v-7.75h1a1 1 0 0 0 .67-1.75l-9-8Z"/></svg></span><small>Available rooms</small><strong>{{ $roomsByStatus['available'] }}</strong><em>{{ $roomCount }} active room{{ $roomCount === 1 ? '' : 's' }}</em></article>
+            <a class="metric-card metric-card--payments" href="{{ route('admin.reports', ['metric' => 'payments']) }}"><span class="metric-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 6.5A3.5 3.5 0 0 1 6.5 3h10A2.5 2.5 0 0 1 19 5.5V7h1a2 2 0 0 1 2 2v8.5a3.5 3.5 0 0 1-3.5 3.5h-12A3.5 3.5 0 0 1 3 17.5v-11Zm16 3.5h-4a2 2 0 1 0 0 4h4v-4Zm-4 1.25a.75.75 0 1 1 0 1.5.75.75 0 0 1 0-1.5Z"/></svg></span><small>Net payments recorded</small><strong>₱{{ number_format($revenue) }}</strong><em>{{ $paymentSourceLabel }}</em></a>
+            <a class="metric-card metric-card--bookings" href="{{ route('admin.bookings') }}"><span class="metric-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8 2a2 2 0 0 0-2 2H5a3 3 0 0 0-3 3v12a3 3 0 0 0 3 3h14a3 3 0 0 0 3-3V7a3 3 0 0 0-3-3h-1a2 2 0 0 0-2-2H8Zm0 2h8v2H8V4Zm-2 6h2v2H6v-2Zm4 0h8v2h-8v-2Zm-4 4h2v2H6v-2Zm4 0h8v2h-8v-2Zm-4 4h2v2H6v-2Zm4 0h8v2h-8v-2Z"/></svg></span><small>Total bookings</small><strong>{{ $bookingCount }}</strong><em>All reservations</em></a>
+            <a class="metric-card metric-card--confirmed" href="{{ route('admin.bookings', ['status' => 'confirmed']) }}"><span class="metric-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path fill-rule="evenodd" d="M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20Zm4.78-12.88a1 1 0 0 0-1.56-1.24l-4.18 5.22-2.33-2.33a1 1 0 0 0-1.42 1.42l3.12 3.12a1 1 0 0 0 1.49-.08l4.88-6.11Z" clip-rule="evenodd"/></svg></span><small>Confirmed</small><strong>{{ $confirmedCount }}</strong><em>Ready for arrival</em></a>
+            <a class="metric-card metric-card--available" href="{{ route('admin.rooms') }}"><span class="metric-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12.67 2.5a1 1 0 0 0-1.34 0l-9 8A1 1 0 0 0 3 12.25h1V20a2 2 0 0 0 2 2h4v-6h4v6h4a2 2 0 0 0 2-2v-7.75h1a1 1 0 0 0 .67-1.75l-9-8Z"/></svg></span><small>Available rooms</small><strong>{{ $roomsByStatus['available'] }}</strong><em>{{ $roomCount }} active room{{ $roomCount === 1 ? '' : 's' }}</em></a>
         </section>
         <section class="dashboard-summary-grid" aria-label="Today's operations">
             <article class="panel dashboard-summary-panel">
@@ -213,11 +224,11 @@
                 <a class="dss-action" href="{{ route('admin.arrivals') }}">Open arrivals board <span aria-hidden="true">→</span></a>
             </article>
             <article class="panel">
-                <div class="panel-heading"><div><p class="admin-kicker">DEMAND</p><h2>Most booked rooms</h2></div></div>
-                @forelse($topRooms as $room)
-                    <div class="status-row"><span>{{ $room->room?->name ?? 'Archived room' }}</span><b>{{ $room->bookings_count }} stay{{ $room->bookings_count === 1 ? '' : 's' }}</b></div>
+                <div class="panel-heading"><div><p class="admin-kicker">DEMAND</p><h2>Least booked rooms</h2></div></div>
+                @forelse($leastBookedRooms as $room)
+                    <div class="status-row"><span>{{ $room->name }}</span><b>{{ $room->bookings_count }} confirmed booking{{ $room->bookings_count === 1 ? '' : 's' }}</b></div>
                 @empty
-                    <p class="empty-copy">No confirmed stays have been recorded yet.</p>
+                    <p class="empty-copy">No active rooms are available to compare.</p>
                 @endforelse
             </article>
         </section>

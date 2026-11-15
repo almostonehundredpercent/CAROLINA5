@@ -52,6 +52,24 @@
                 <a class="button button-outline booking-receipt-link" href="{{ \App\Http\Controllers\StayController::link($booking) }}">{{ $booking->payment_status === 'partial' ? 'View downpayment receipt' : 'View receipt' }}</a>
             @endif
             @if($booking->status !== 'cancelled' && $booking->check_in->isFuture())
+                @if($booking->canRescheduleOnline())
+                    <details class="booking-reschedule-details">
+                        <summary>Reschedule booking · {{ $booking->reschedulesRemaining() }} left</summary>
+                        <form class="booking-reschedule-form" method="POST" action="{{ route('bookings.reschedule', $booking) }}">
+                            @csrf @method('PATCH')
+                            @if($booking->booking_type === 'hourly')
+                                <label>New check-in time<input type="datetime-local" name="new_check_in_at" min="{{ \App\Support\PropertyTime::now()->addDays(3)->format('Y-m-d\\TH:i') }}" value="{{ old('new_check_in_at') }}" required></label>
+                            @else
+                                <label>New check-in date<input type="date" name="new_check_in" min="{{ \App\Support\PropertyTime::now()->addDays(3)->toDateString() }}" value="{{ old('new_check_in') }}" required></label>
+                            @endif
+                            <small>Same room, stay length, and price. Up to 2 online reschedules.</small>
+                            @error('reschedule')<small class="booking-reschedule-error">{{ $message }}</small>@enderror
+                            <button type="submit">Save new time</button>
+                        </form>
+                    </details>
+                @elseif($booking->reschedulesRemaining() === 0)
+                    <small>Online rescheduling limit reached (2). Contact Carolina if you need to change your stay.</small>
+                @endif
                 @if($booking->canCancelOnline())
                     <small>Cancel at least 3 days before check-in to qualify for a refund.</small>
                     <form method="POST" action="{{ route('bookings.cancel', $booking) }}">@csrf @method('PATCH')<button class="link-danger">Cancel booking</button></form>

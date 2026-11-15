@@ -14,7 +14,7 @@ class Booking extends Model
 
     protected function casts(): array
     {
-        return ['check_in' => 'date', 'check_out' => 'date', 'check_in_at' => 'datetime', 'check_out_at' => 'datetime', 'hours' => 'integer', 'room_rate_at_booking' => 'decimal:2', 'total_amount' => 'decimal:2', 'original_amount' => 'decimal:2', 'discount_amount' => 'decimal:2', 'deposit_amount' => 'decimal:2', 'deposit_due_at' => 'datetime', 'deposit_submitted_at' => 'datetime', 'deposit_verified_at' => 'datetime', 'add_ons' => 'array', 'hold_expires_at' => 'datetime', 'checked_in_at' => 'datetime', 'checked_out_at' => 'datetime', 'paid_at' => 'datetime', 'cancelled_at' => 'datetime'];
+        return ['check_in' => 'date', 'check_out' => 'date', 'check_in_at' => 'datetime', 'check_out_at' => 'datetime', 'hours' => 'integer', 'reschedule_count' => 'integer', 'room_rate_at_booking' => 'decimal:2', 'total_amount' => 'decimal:2', 'original_amount' => 'decimal:2', 'discount_amount' => 'decimal:2', 'deposit_amount' => 'decimal:2', 'deposit_due_at' => 'datetime', 'deposit_submitted_at' => 'datetime', 'deposit_verified_at' => 'datetime', 'add_ons' => 'array', 'hold_expires_at' => 'datetime', 'checked_in_at' => 'datetime', 'checked_out_at' => 'datetime', 'paid_at' => 'datetime', 'cancelled_at' => 'datetime'];
     }
 
     protected static function booted(): void
@@ -91,6 +91,20 @@ class Booking extends Model
             && ! $this->checked_in_at
             && ! $this->checked_out_at
             && PropertyTime::now()->lte($this->refundCutoffAt());
+    }
+
+    public function reschedulesRemaining(): int
+    {
+        return max(0, 2 - (int) ($this->reschedule_count ?? 0));
+    }
+
+    public function canRescheduleOnline(): bool
+    {
+        return $this->canCancelOnline()
+            && in_array($this->status, ['pending', 'confirmed'], true)
+            && ! $this->hasExpiredHold()
+            && ! $this->isExpiredHoldRecord()
+            && $this->reschedulesRemaining() > 0;
     }
 
     public function getOperationalStatusAttribute(): string

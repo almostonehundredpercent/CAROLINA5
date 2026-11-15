@@ -96,7 +96,9 @@ class AdminController extends Controller
                 'alerts' => $operationalMetrics['alerts'],
                 'bookings' => $recentBookings,
                 'recentActivity' => ActivityLog::with(['booking.room', 'user'])->latest()->take(6)->get(),
-                'topRooms' => Booking::query()->where('status', 'confirmed')->selectRaw('room_id, count(*) as bookings_count')->groupBy('room_id')->orderByDesc('bookings_count')->with('room')->take(3)->get(),
+                'leastBookedRooms' => Room::query()->where('is_active', true)
+                    ->withCount(['bookings as bookings_count' => fn ($query) => $query->where('status', 'confirmed')])
+                    ->orderBy('bookings_count')->orderBy('name')->take(3)->get(),
                 'turnovers' => $decisionSupport->upcomingTurnovers(),
                 'chartLabels' => $chartLabels,
                 'chartValues' => $chartValues,
@@ -135,7 +137,7 @@ class AdminController extends Controller
                 'alerts' => $operationalMetrics['alerts'],
                 'bookings' => Booking::with(['user', 'room'])->latest()->take(8)->get(),
                 'recentActivity' => collect(),
-                'topRooms' => collect(),
+                'leastBookedRooms' => collect(),
                 'turnovers' => collect(),
                 'chartLabels' => $chartLabels,
                 'chartValues' => $chartValues,
@@ -958,7 +960,7 @@ class AdminController extends Controller
         return back()->with('success', 'Password changed. Other signed-in sessions have been signed out.');
     }
 
-    public function reports(Request $request)
+    public function reports(Request $request, OperationalDecisionSupport $decisionSupport)
     {
         $this->refreshInventory();
         $period = $request->string('period', 'daily')->value();
@@ -1146,6 +1148,20 @@ class AdminController extends Controller
             }, $filename, ['Content-Type' => 'text/csv; charset=UTF-8']);
         }
 
+        $bookingReportMetrics = $metric === 'bookings' ? [
+            'total' => $bookings->count(),
+            'cancelled' => $bookings->where('status', 'cancelled')->count(),
+            'roomsBooked' => $bookings->where('status', '!=', 'cancelled')->pluck('room_id')->unique()->count(),
+            'completed' => Booking::whereNotNull('checked_out_at')->whereBetween('checked_out_at', [$periodStart, $periodEnd])->count(),
+        ] : null;
+        $guestReportMetrics = $metric === 'guests' ? [
+            'total' => $guestGroups->count(),
+            'new' => $guestGroups->keys()->filter(fn (string $key) => ! $previousGuestKeys->has($key))->count(),
+            'returning' => $guestGroups->keys()->filter(fn (string $key) => $previousGuestKeys->has($key))->count(),
+            'averageDurationHours' => $durationHours->isNotEmpty() ? round((float) $durationHours->avg(), 1) : null,
+        ] : null;
+        $carolReportInsight = $decisionSupport->reportInsight($metric, $financialMetrics, $bookingReportMetrics, $guestReportMetrics);
+
         return view('admin.reports', [
             'metric' => $metric,
             'period' => $period,
@@ -1157,19 +1173,10 @@ class AdminController extends Controller
             'chartValues' => $values,
             'chartGrouping' => $period === 'custom' ? ($customWeeklyBuckets ? 'weekly' : 'daily') : $period,
             'latestBookings' => $bookings->sortByDesc('created_at')->take(5)->values(),
-            'bookingReportMetrics' => $metric === 'bookings' ? [
-                'total' => $bookings->count(),
-                'cancelled' => $bookings->where('status', 'cancelled')->count(),
-                'roomsBooked' => $bookings->where('status', '!=', 'cancelled')->pluck('room_id')->unique()->count(),
-                'completed' => Booking::whereNotNull('checked_out_at')->whereBetween('checked_out_at', [$periodStart, $periodEnd])->count(),
-            ] : null,
-            'guestReportMetrics' => $metric === 'guests' ? [
-                'total' => $guestGroups->count(),
-                'new' => $guestGroups->keys()->filter(fn (string $key) => ! $previousGuestKeys->has($key))->count(),
-                'returning' => $guestGroups->keys()->filter(fn (string $key) => $previousGuestKeys->has($key))->count(),
-                'averageDurationHours' => $durationHours->isNotEmpty() ? round((float) $durationHours->avg(), 1) : null,
-            ] : null,
+            'bookingReportMetrics' => $bookingReportMetrics,
+            'guestReportMetrics' => $guestReportMetrics,
             'financialMetrics' => $financialMetrics,
+            'carolReportInsight' => $carolReportInsight,
         ]);
     }
 

@@ -13,6 +13,7 @@ use App\Models\Review;
 use App\Models\Room;
 use App\Models\RoomBlock;
 use App\Services\BookingTimeAdjustmentService;
+use App\Services\GuestBookingRescheduleService;
 use App\Services\PayMongoCheckout;
 use App\Services\PayMongoCheckoutCreationException;
 use App\Services\PayMongoPaymentReconciler;
@@ -806,6 +807,65 @@ class BookingController extends Controller
         session()->flash('success', 'Your booking has been cancelled. The room is available for those dates again.'.($refundEligible ? ' If you have already paid, this cancellation is eligible for a refund.' : ' This cancellation is non-refundable because it was made less than 3 days before check-in.'));
 
         return view('bookings.lookup-result', ['booking' => $booking->fresh('room'), 'lookupEmail' => $data['email']]);
+    }
+
+    public function reschedule(Request $request, Booking $booking, GuestBookingRescheduleService $rescheduler)
+    {
+        abort_unless($booking->user_id === $request->user()?->id, 403);
+        $newStart = $this->requestedRescheduleStart($request, $booking);
+        $updated = $rescheduler->reschedule($booking, $newStart, $request->user()?->id);
+        $message = $this->rescheduleMessage($updated);
+        $this->emailUpdate($updated, 'Your Carolina booking was rescheduled', $message);
+
+        return back()->with('success', $message);
+    }
+
+    public function rescheduleGuest(Request $request, Booking $booking, GuestBookingRescheduleService $rescheduler)
+    {
+        if ($request->filled('email')) {
+            $request->merge(['email' => strtolower(trim((string) $request->input('email')))]);
+        }
+        $data = $request->validate([
+            'email' => 'required|email:rfc|max:255',
+            'reference' => 'required|string',
+            'new_check_in' => 'required_without:new_check_in_at|nullable|date_format:Y-m-d',
+            'new_check_in_at' => 'required_without:new_check_in|nullable|date_format:Y-m-d\\TH:i',
+        ]);
+        abort_unless(
+            $booking->user_id === null
+                && strcasecmp($booking->reference, trim($data['reference'])) === 0
+                && strcasecmp((string) $booking->guest_email, trim($data['email'])) === 0,
+            403
+        );
+        $newStart = $this->requestedRescheduleStart($request, $booking);
+        $updated = $rescheduler->reschedule($booking, $newStart);
+        $message = $this->rescheduleMessage($updated);
+        $this->emailUpdate($updated, 'Your Carolina booking was rescheduled', $message);
+        session()->flash('success', $message);
+
+        return view('bookings.lookup-result', ['booking' => $updated, 'lookupEmail' => $data['email']]);
+    }
+
+    private function requestedRescheduleStart(Request $request, Booking $booking): Carbon
+    {
+        if ($booking->booking_type === 'hourly') {
+            $data = $request->validate(['new_check_in_at' => ['required', 'date_format:Y-m-d\\TH:i']]);
+
+            return Carbon::createFromFormat('Y-m-d\\TH:i', $data['new_check_in_at'], 'UTC');
+        }
+
+        $data = $request->validate(['new_check_in' => ['required', 'date_format:Y-m-d']]);
+        $oldStart = $booking->check_in_at ?? $booking->check_in->copy()->startOfDay();
+        $newStart = Carbon::createFromFormat('Y-m-d', $data['new_check_in'], 'UTC');
+
+        return $newStart->setTime($oldStart->hour, $oldStart->minute, $oldStart->second);
+    }
+
+    private function rescheduleMessage(Booking $booking): string
+    {
+        $newStart = $booking->check_in_at ?? $booking->check_in->copy()->startOfDay();
+
+        return 'Your booking is rescheduled to '.$newStart->format('M j, Y'.($booking->booking_type === 'hourly' ? ' · g:i A' : '')).'. The room and price are unchanged. '.($booking->reschedulesRemaining()).' online reschedule'.($booking->reschedulesRemaining() === 1 ? '' : 's').' remaining.';
     }
 
     public function lookupForm()

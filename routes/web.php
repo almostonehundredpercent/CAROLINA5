@@ -67,6 +67,7 @@ Route::get('/stay/{booking}', [StayController::class, 'show'])->middleware(['sig
 Route::post('/stay/{booking}/arrival', [StayController::class, 'arrival'])->middleware(['signed', 'throttle:10,1'])->name('stay.arrival');
 Route::post('/booking-lookup', [BookingController::class, 'lookup'])->middleware('throttle:5,1')->name('bookings.lookup.submit');
 Route::patch('/booking-lookup/{booking}/cancel', [BookingController::class, 'cancelGuest'])->middleware('throttle:5,1')->name('bookings.lookup.cancel');
+Route::patch('/booking-lookup/{booking}/reschedule', [BookingController::class, 'rescheduleGuest'])->middleware('throttle:5,1')->name('bookings.lookup.reschedule');
 Route::post('/booking-lookup/{booking}/extend', [BookingController::class, 'extendCheckedInStay'])->middleware('throttle:6,1')->name('bookings.lookup.extend');
 
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
@@ -119,6 +120,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/bookings', [BookingController::class, 'index'])->name('bookings.index');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::patch('/bookings/{booking}/cancel', [BookingController::class, 'cancel'])->name('bookings.cancel');
+    Route::patch('/bookings/{booking}/reschedule', [BookingController::class, 'reschedule'])->name('bookings.reschedule');
     Route::post('/bookings/{booking}/review', [BookingController::class, 'submitReview'])->name('bookings.review');
 });
 

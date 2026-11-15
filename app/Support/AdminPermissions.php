@@ -53,9 +53,8 @@ final class AdminPermissions
     public static function landingRoute(User $user): string
     {
         return match (self::role($user)) {
-            // Start people where their shift begins. The overview remains
-            // available, but daily work should not be hidden behind it.
-            'organization_admin', 'front_desk' => 'admin.frontdesk',
+            'organization_admin' => 'admin.dashboard',
+            'front_desk' => 'admin.frontdesk',
             'viewer' => 'admin.dashboard',
             'housekeeping' => 'admin.rooms',
             default => 'profile.show',
@@ -65,11 +64,11 @@ final class AdminPermissions
     public static function navigation(User $user): array
     {
         return [
+            ['label' => 'Overview', 'route' => 'admin.dashboard', 'icon' => '▦', 'ability' => 'dashboard', 'group' => 'primary'],
             ['label' => 'Today', 'route' => 'admin.frontdesk', 'icon' => '◷', 'ability' => 'frontdesk', 'group' => 'primary'],
             ['label' => 'Bookings', 'route' => 'admin.bookings', 'icon' => '▤', 'ability' => 'bookings', 'group' => 'primary'],
             ['label' => 'Rooms', 'route' => 'admin.rooms', 'icon' => '⌂', 'ability' => 'rooms', 'group' => 'primary'],
             ['label' => 'Guests', 'route' => 'admin.guests', 'icon' => '♙', 'ability' => 'guests', 'group' => 'primary'],
-            ['label' => 'Overview', 'route' => 'admin.dashboard', 'icon' => '▦', 'ability' => 'dashboard', 'group' => 'more'],
             ['label' => 'Reports', 'route' => 'admin.reports', 'icon' => '⌁', 'ability' => 'reports', 'group' => 'more'],
             ['label' => 'CAROL · Decision support', 'route' => 'admin.decision-support', 'icon' => '◈', 'ability' => 'decision_support', 'group' => 'more'],
             ['label' => 'Promo codes', 'route' => 'admin.promos', 'icon' => '%', 'ability' => 'promos', 'group' => 'more'],

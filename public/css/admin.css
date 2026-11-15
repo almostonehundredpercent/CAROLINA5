@@ -6324,6 +6324,16 @@ html .admin-theme-toggle { min-height: 44px; }
 }
 html.dark-mode .admin-theme-toggle .theme-switch-track { border-color: #e7a23d !important; background: #a95f00 !important; }
 html.dark-mode .admin-theme-toggle .theme-switch-thumb { background: #fffaf2 !important; color: #8a4d00 !important; transform: translateX(22px); }
+.metric-grid a.metric-card { position: relative; display: block; overflow: hidden; border: 1px solid var(--line); border-radius: 10px; background: var(--admin-card); color: var(--ink); text-decoration: none; }
+.metric-grid a.metric-card:hover { border-color: var(--orange); }
+.metric-grid a.metric-card:focus-visible { outline: 3px solid var(--orange); outline-offset: 3px; }
+.carol-report-insight { margin-bottom: 18px; padding: 18px 20px; border-left: 3px solid var(--orange); }
+.carol-report-insight .panel-heading { margin-bottom: 8px; }
+.carol-report-insight h2 { margin: 0; font-size: 17px; }
+.carol-report-insight > p { margin: 0 0 8px; line-height: 1.5; }
+.carol-report-insight > small { display: block; color: var(--muted); font-size: 11px; line-height: 1.5; }
+.carol-report-insight .dss-action { display: inline-flex; margin-top: 10px; color: var(--orange-dark); font-size: 12px; font-weight: 700; text-decoration: none; }
+.carol-report-insight .dss-action:hover { text-decoration: underline; }
 @media (prefers-reduced-motion: reduce) {
     .admin-theme-toggle .theme-switch-track,
     .admin-theme-toggle .theme-switch-thumb { transition: none !important; }

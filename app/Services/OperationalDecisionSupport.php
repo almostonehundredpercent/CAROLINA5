@@ -86,6 +86,52 @@ class OperationalDecisionSupport
         return $signals;
     }
 
+    /** Summarize only the selected report's recorded data and show its rule. */
+    public function reportInsight(string $metric, array $financialMetrics, ?array $bookingMetrics, ?array $guestMetrics): array
+    {
+        if ($metric === 'payments') {
+            $ledger = $financialMetrics['period_ledger'] ?? ['paid' => 0, 'refunds' => 0, 'net_collected' => 0];
+
+            return [
+                'title' => 'Recorded payment summary',
+                'evidence' => 'This period shows ₱'.number_format((float) $ledger['paid'], 2).' paid, ₱'.number_format((float) $ledger['refunds'], 2).' refunded, and ₱'.number_format((float) $ledger['net_collected'], 2).' net. Outstanding balances total ₱'.number_format((float) ($financialMetrics['outstanding_balance'] ?? 0), 2).'.',
+                'rule' => 'Paid and refunded totals come from payment entries dated in the selected period; outstanding balance is for bookings created in the period.',
+                'action_label' => 'Open payment report',
+                'action_url' => route('admin.reports', ['metric' => 'payments']),
+            ];
+        }
+
+        if ($metric === 'bookings') {
+            $total = (int) ($bookingMetrics['total'] ?? 0);
+            $cancelled = (int) ($bookingMetrics['cancelled'] ?? 0);
+            $cancellationRate = $total > 0 ? $cancelled / $total * 100 : 0;
+            $rate = (int) round($cancellationRate);
+            $elevated = $total >= 5 && $cancellationRate >= 25;
+
+            return [
+                'title' => $elevated ? 'Cancellation activity is elevated' : 'Booking activity in this period',
+                'evidence' => $elevated
+                    ? "{$cancelled} of {$total} bookings created in this period were cancelled ({$rate}%)."
+                    : "{$total} bookings were created and {$cancelled} were cancelled in this period.",
+                'rule' => $elevated
+                    ? 'Flagged with at least 5 bookings and a cancellation rate of 25% or higher.'
+                    : 'Uses booking creation dates and recorded booking status; no forecast is applied.',
+                'action_label' => 'Review bookings',
+                'action_url' => route('admin.bookings'),
+            ];
+        }
+
+        $guestMetrics ??= ['total' => 0, 'new' => 0, 'returning' => 0];
+
+        return [
+            'title' => 'Guest return activity',
+            'evidence' => ($guestMetrics['new'] ?? 0).' first-time and '.($guestMetrics['returning'] ?? 0).' returning guests appear among '.($guestMetrics['total'] ?? 0).' unique guests in this period.',
+            'rule' => 'First-time and returning status uses earlier booking records on file; it does not infer guest intent.',
+            'action_label' => 'Review guest report',
+            'action_url' => route('admin.reports', ['metric' => 'guests']),
+        ];
+    }
+
     public function upcomingTurnovers(): Collection
     {
         $now = now();
