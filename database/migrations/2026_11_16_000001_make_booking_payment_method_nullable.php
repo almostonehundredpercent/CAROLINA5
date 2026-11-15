@@ -15,6 +15,7 @@ return new class extends Migration
 
         DB::table('bookings')
             ->where('payment_method', 'cash')
+            ->where('status', 'pending')
             ->where('payment_status', 'pending')
             ->whereNull('paid_at')
             ->whereNotExists(function ($query) {
