@@ -6324,7 +6324,7 @@ html .admin-theme-toggle { min-height: 44px; }
 }
 html.dark-mode .admin-theme-toggle .theme-switch-track { border-color: #e7a23d !important; background: #a95f00 !important; }
 html.dark-mode .admin-theme-toggle .theme-switch-thumb { background: #fffaf2 !important; color: #8a4d00 !important; transform: translateX(22px); }
-.metric-grid a.metric-card { position: relative; display: block; overflow: hidden; border: 1px solid var(--line); border-radius: 10px; background: var(--admin-card); color: var(--ink); text-decoration: none; }
+.metric-grid a.metric-card { position: relative; display: block; overflow: hidden; border: 1px solid var(--line); border-radius: 10px; color: var(--ink); text-decoration: none; }
 .metric-grid a.metric-card:hover { border-color: var(--orange); }
 .metric-grid a.metric-card:focus-visible { outline: 3px solid var(--orange); outline-offset: 3px; }
 .carol-report-insight { margin-bottom: 18px; padding: 18px 20px; border-left: 3px solid var(--orange); }

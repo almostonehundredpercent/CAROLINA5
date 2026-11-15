@@ -16,7 +16,7 @@
             overflow: hidden;
             border: 1px solid var(--line);
             border-radius: 10px;
-            background: var(--admin-card);
+            background: linear-gradient(145deg, rgba(58, 39, 29, .89), rgba(32, 23, 19, .95));
             color: var(--ink);
             text-decoration: none;
         }
@@ -24,6 +24,15 @@
         .metric-grid a.metric-card { display: block; color: inherit; text-decoration: none; transition: border-color .15s ease, transform .15s ease, box-shadow .15s ease; }
         .metric-grid a.metric-card:hover { border-color: var(--orange); transform: translateY(-2px); box-shadow: 0 12px 26px rgba(0, 0, 0, .16); }
         .metric-grid a.metric-card:focus-visible { outline: 3px solid var(--orange); outline-offset: 3px; }
+
+        html:not(.dark-mode) .metric-grid a.metric-card {
+            border-color: #e5ddd4;
+            background: #fffdf9;
+            color: #2b211b;
+        }
+
+        html:not(.dark-mode) .metric-grid a.metric-card small { color: #74685e; }
+        html:not(.dark-mode) .metric-grid a.metric-card em { color: #8d4b0b; }
 
         .metric-grid .metric-card .metric-icon {
             position: absolute;
@@ -123,29 +132,6 @@
         .metric-grid .metric-card .metric-icon svg,
         .metric-grid .metric-card .metric-icon path {
             fill: #fff !important;
-        }
-
-        @media (min-width: 701px) and (max-width: 980px) {
-            .metric-grid {
-                grid-template-columns: repeat(2, minmax(0, 1fr));
-            }
-
-            .dashboard-summary-grid {
-                grid-template-columns: repeat(3, minmax(0, 1fr));
-            }
-
-            .dashboard-summary-grid > .dashboard-summary-panel:first-child {
-                grid-column: auto;
-            }
-
-            .decision-support-grid {
-                grid-template-columns: repeat(2, minmax(0, 1fr));
-                gap: 14px;
-            }
-
-            .decision-support-grid > .panel:last-child {
-                grid-column: 1 / -1;
-            }
         }
 
         @media (max-width: 700px) {
