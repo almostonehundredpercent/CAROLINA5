@@ -1,7 +1,9 @@
 .booking-cancel-dialog {
-    width: min(92vw, 500px);
-    max-width: none;
-    max-height: min(90vh, 720px);
+    box-sizing: border-box;
+    width: 600px;
+    max-width: calc(100vw - 32px);
+    max-height: 92vh;
+    margin: auto;
     padding: 0;
     overflow: visible;
     border: 0;
@@ -10,116 +12,214 @@
 }
 
 .booking-cancel-dialog::backdrop {
-    background: rgba(16, 12, 9, .64);
-    backdrop-filter: blur(3px);
+    background: rgba(16, 12, 9, .5);
+    backdrop-filter: blur(5px);
 }
 
 .booking-cancel-card {
     position: relative;
     display: grid;
-    gap: 12px;
-    padding: clamp(24px, 6vw, 34px);
-    max-height: min(88vh, 700px);
+    gap: 15px;
+    box-sizing: border-box;
+    max-height: 90vh;
     overflow: auto;
+    padding: clamp(26px, 5vw, 40px);
     border: 1px solid var(--line);
-    border-radius: 22px;
+    border-radius: 24px;
     background: var(--surface);
     color: var(--ink);
-    box-shadow: 0 24px 80px rgba(13, 10, 8, .32);
+    box-shadow: 0 28px 90px rgba(13, 10, 8, .32);
 }
 
 .booking-cancel-close {
     position: absolute;
-    top: 13px;
-    right: 14px;
+    top: 16px;
+    right: 17px;
     display: grid;
-    width: 38px;
-    height: 38px;
+    width: 40px;
+    height: 40px;
     place-items: center;
     border: 1px solid var(--line);
     border-radius: 50%;
-    background: transparent;
-    color: var(--ink);
+    background: var(--surface);
+    color: var(--muted);
     cursor: pointer;
     font: 400 26px/1 "DM Sans", sans-serif;
+    transition: background-color .15s ease, color .15s ease, transform .15s ease;
 }
 
-.booking-cancel-close:hover,
-.booking-cancel-keep:hover {
+.booking-cancel-close:hover {
+    transform: rotate(90deg);
     background: var(--sand);
+    color: var(--ink);
 }
 
 .booking-cancel-icon {
     display: grid;
-    width: 48px;
-    height: 48px;
+    width: 54px;
+    height: 54px;
     place-items: center;
-    border-radius: 15px;
-    background: rgba(201, 121, 0, .14);
+    border: 1px solid color-mix(in srgb, var(--gold) 36%, transparent);
+    border-radius: 17px;
+    background: color-mix(in srgb, var(--gold) 13%, var(--surface));
     color: var(--gold);
-    font-size: 25px;
-    font-weight: 800;
+}
+
+.booking-cancel-icon svg {
+    width: 26px;
+    height: 26px;
 }
 
 .booking-cancel-kicker {
-    margin: 2px 0 -8px;
+    margin: 0 0 -8px;
     color: var(--deep);
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 800;
-    letter-spacing: .12em;
+    letter-spacing: .14em;
+}
+
+.dark-mode .booking-cancel-kicker {
+    color: #e9ad59;
 }
 
 .booking-cancel-card h2 {
     margin: 0;
-    padding-right: 24px;
+    padding-right: 28px;
     color: var(--ink);
     font-family: "Playfair Display", Georgia, serif;
-    font-size: clamp(24px, 5vw, 30px);
-    line-height: 1.2;
+    font-size: clamp(28px, 5vw, 36px);
+    line-height: 1.16;
 }
 
 .booking-cancel-copy {
-    margin: 0;
+    max-width: 48ch;
+    margin: -4px 0 2px;
     color: var(--muted);
-    font-size: 15px;
+    font-size: 16px;
     line-height: 1.6;
 }
 
-.booking-cancel-policy {
+.booking-cancel-booking {
     display: grid;
-    gap: 0;
-    margin-top: 4px;
-    padding: 0 14px;
+    grid-template-columns: 46px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 13px;
+    padding: 15px 16px;
     border: 1px solid var(--line);
-    border-radius: 13px;
-    background: var(--paper);
+    border-radius: 15px;
+    background: color-mix(in srgb, var(--gold) 7%, var(--surface));
 }
 
-.booking-cancel-policy p {
+.booking-cancel-room-icon {
+    display: grid;
+    width: 44px;
+    height: 44px;
+    place-items: center;
+    border-radius: 13px;
+    background: color-mix(in srgb, var(--gold) 14%, var(--surface));
+    color: var(--deep);
+}
+
+.dark-mode .booking-cancel-room-icon {
+    color: var(--gold);
+}
+
+.booking-cancel-room-icon svg {
+    width: 23px;
+    height: 23px;
+}
+
+.booking-cancel-booking-copy {
     display: grid;
     gap: 3px;
-    margin: 0;
-    padding: 12px 0;
-    color: var(--ink);
+    min-width: 0;
+    color: var(--muted);
     font-size: 13px;
     line-height: 1.45;
 }
 
-.booking-cancel-policy p + p {
-    border-top: 1px solid var(--line);
+.booking-cancel-booking-copy strong {
+    overflow: hidden;
+    color: var(--ink);
+    font-size: 15px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
-.booking-cancel-policy strong {
+.booking-cancel-reference {
+    align-self: start;
+    padding: 6px 9px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    color: var(--muted);
+    font-size: 11px;
+    white-space: nowrap;
+}
+
+.booking-cancel-reference b {
+    color: var(--ink);
     font-weight: 750;
 }
 
-.booking-cancel-policy span,
-.booking-cancel-note {
+.booking-cancel-policy {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 11px;
+}
+
+.booking-cancel-policy-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 11px;
+    min-width: 0;
+    padding: 14px;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    background: color-mix(in srgb, var(--surface) 82%, var(--paper));
+}
+
+.booking-cancel-policy-mark {
+    display: grid;
+    width: 26px;
+    height: 26px;
+    flex: 0 0 26px;
+    place-items: center;
+    border-radius: 50%;
+    font-size: 13px;
+    font-weight: 800;
+}
+
+.booking-cancel-policy-mark.refundable {
+    background: rgba(54, 133, 88, .14);
+    color: #328452;
+}
+
+.booking-cancel-policy-mark.nonrefundable {
+    background: rgba(177, 56, 43, .12);
+    color: #b1382b;
+}
+
+.booking-cancel-policy-item > span:last-child {
+    display: grid;
+    gap: 4px;
+    min-width: 0;
+}
+
+.booking-cancel-policy-item strong {
+    color: var(--ink);
+    font-size: 13px;
+    line-height: 1.4;
+}
+
+.booking-cancel-policy-item small {
     color: var(--muted);
+    font-size: 12px;
+    line-height: 1.4;
 }
 
 .booking-cancel-note {
-    margin: -4px 0 0;
+    margin: -5px 0 0;
+    color: var(--muted);
     font-size: 12px;
     line-height: 1.45;
 }
@@ -128,18 +228,18 @@
     display: flex;
     flex-wrap: wrap;
     justify-content: flex-end;
-    gap: 10px;
-    margin-top: 8px;
+    gap: 11px;
+    margin-top: 5px;
 }
 
 .booking-cancel-actions button {
-    min-height: 46px;
-    padding: 11px 17px;
+    min-height: 48px;
+    padding: 12px 19px;
     border: 1px solid transparent;
-    border-radius: 10px;
+    border-radius: 11px;
     cursor: pointer;
-    font: 700 14px/1.25 "DM Sans", sans-serif;
-    transition: background-color .15s ease, transform .15s ease;
+    font: 750 14px/1.25 "DM Sans", sans-serif;
+    transition: background-color .15s ease, border-color .15s ease, transform .15s ease;
 }
 
 .booking-cancel-actions button:hover {
@@ -152,21 +252,54 @@
     color: var(--ink);
 }
 
+.booking-cancel-keep:hover {
+    background: var(--sand);
+}
+
 .booking-cancel-confirm {
     background: #a63224;
     color: #fff;
+    box-shadow: 0 5px 12px rgba(166, 50, 36, .2);
 }
 
 .booking-cancel-confirm:hover {
     background: #84271d;
 }
 
-.booking-cancel-dialog :is(button):focus-visible {
+.booking-cancel-dialog button:focus-visible {
     outline: 3px solid var(--gold);
     outline-offset: 3px;
 }
 
-@media (max-width: 520px) {
+@media (max-width: 620px) {
+    .booking-cancel-card {
+        gap: 13px;
+        padding: 26px 22px;
+        border-radius: 20px;
+    }
+
+    .booking-cancel-booking {
+        grid-template-columns: 42px minmax(0, 1fr);
+        gap: 11px;
+        padding: 13px;
+    }
+
+    .booking-cancel-room-icon {
+        width: 40px;
+        height: 40px;
+    }
+
+    .booking-cancel-reference {
+        grid-column: 2;
+        justify-self: start;
+        margin-top: -4px;
+    }
+
+    .booking-cancel-policy {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+
     .booking-cancel-actions {
         display: grid;
         grid-template-columns: 1fr;
@@ -178,7 +311,8 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .booking-cancel-actions button {
+    .booking-cancel-actions button,
+    .booking-cancel-close {
         transition: none;
     }
 }

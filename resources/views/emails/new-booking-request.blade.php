@@ -1,5 +1,5 @@
 <h1>New reservation request</h1>
-<p>A guest has submitted a reservation that needs staff review.</p>
+<p>A guest has submitted a reservation. Unpaid requests need staff review; a verified downpayment or full payment automatically confirms the booking if the room is available.</p>
 <p>
     <strong>Reference:</strong> {{ $booking->reference }}<br>
     <strong>Guest:</strong> {{ $booking->guest_name ?? $booking->user?->name ?? 'Guest' }}<br>

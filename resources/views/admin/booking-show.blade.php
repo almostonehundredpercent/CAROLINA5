@@ -3,7 +3,7 @@
     @php($depositTarget = (float) $booking->deposit_amount > 0 ? min((float) $booking->deposit_amount, (float) $booking->total_amount) : (float) $booking->total_amount)
     @php($minimumDue = $booking->deposit_status === 'verified' || $booking->deposit_verified_at ? $financial['outstanding'] : min($financial['outstanding'], max(0, $depositTarget - $financial['net_collected'])))
     @if((float) $booking->deposit_amount > 0 && $booking->deposit_status !== 'verified' && ! $booking->deposit_verified_at)
-        <p class="booking-note">Record at least the remaining downpayment of ₱{{ number_format($minimumDue, 2) }} before confirming. This protects the room time while staff reviews the reservation.</p>
+        <p class="booking-note">Record at least the remaining downpayment of ₱{{ number_format($minimumDue, 2) }}. The booking will be confirmed automatically after the payment is recorded if the room is still available.</p>
     @else
         <p class="booking-note">Outstanding balance: ₱{{ number_format($financial['outstanding'], 2) }}. Record each cash or GCash amount received at the property.</p>
     @endif

@@ -18,16 +18,22 @@
         event.preventDefault();
         pendingForm = form;
 
+        dialog.querySelector('[data-cancel-room]').textContent = form.dataset.cancelRoom || 'Selected room';
+        dialog.querySelector('[data-cancel-check-in]').textContent = form.dataset.cancelCheckIn || 'Check-in';
+        dialog.querySelector('[data-cancel-check-out]').textContent = form.dataset.cancelCheckOut || 'Check-out';
+        dialog.querySelector('[data-cancel-reference]').textContent = form.dataset.cancelReference || '—';
+
         if (typeof dialog.showModal === 'function') {
             dialog.showModal();
             return;
         }
 
         pendingForm = null;
-        const policy = Array.from(dialog.querySelectorAll('.booking-cancel-policy p'), row => row.innerText.trim()).join('\n');
+        const policy = Array.from(dialog.querySelectorAll('.booking-cancel-policy-item'), row => row.innerText.trim()).join('\n');
         const message = [
             dialog.querySelector('#booking-cancel-title')?.textContent.trim(),
             dialog.querySelector('#booking-cancel-copy')?.textContent.trim(),
+            dialog.querySelector('#booking-cancel-booking')?.innerText.trim(),
             policy,
             dialog.querySelector('.booking-cancel-note')?.textContent.trim(),
         ].filter(Boolean).join('\n\n');
@@ -35,6 +41,7 @@
             if (typeof form.requestSubmit === 'function') {
                 approvedSubmissions.add(form);
                 form.requestSubmit(event.submitter instanceof HTMLElement ? event.submitter : undefined);
+                window.setTimeout(() => approvedSubmissions.delete(form), 0);
             } else {
                 form.submit();
             }
@@ -58,7 +65,11 @@
         if (!form) return;
 
         approvedSubmissions.add(form);
-        if (typeof form.requestSubmit === 'function') form.requestSubmit();
-        else form.submit();
+        if (typeof form.requestSubmit === 'function') {
+            form.requestSubmit();
+            window.setTimeout(() => approvedSubmissions.delete(form), 0);
+        } else {
+            form.submit();
+        }
     });
 })();

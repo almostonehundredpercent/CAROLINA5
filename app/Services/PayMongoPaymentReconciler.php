@@ -48,7 +48,7 @@ class PayMongoPaymentReconciler
         return false;
     }
 
-    /** Record a verified payment and confirm only when the full booking value is paid. */
+    /** Record a verified payment and confirm after the downpayment or full amount clears availability. */
     public function recordPaid(Booking $booking, Payment $payment, ?int $actorId = null): bool
     {
         if (BookingTimeAdjustment::where('payment_id', $payment->id)->exists()) {
@@ -71,7 +71,9 @@ class PayMongoPaymentReconciler
             if ($lockedBooking->status === 'pending' && ! $expired) {
                 $startsAt = $lockedBooking->check_in_at ?? $lockedBooking->check_in->copy()->startOfDay();
                 $endsAt = $lockedBooking->check_out_at ?? $lockedBooking->check_out->copy()->startOfDay();
-                $conflict = $room->bookings()->whereKeyNot($lockedBooking->id)->blocking()->overlapping($startsAt, $endsAt)->exists()
+                $conflict = ! $room->is_active
+                    || $room->operational_status !== 'available'
+                    || $room->bookings()->whereKeyNot($lockedBooking->id)->blocking()->overlapping($startsAt, $endsAt)->exists()
                     || $room->blocks()->overlapping($startsAt, $endsAt)->exists();
             }
             $paidBefore = (float) Payment::where('booking_id', $lockedBooking->id)->where('status', 'paid')->sum('amount');
@@ -121,7 +123,7 @@ class PayMongoPaymentReconciler
                         ? 'Payment was confirmed after the reservation hold expired; staff resolution required.'
                         : 'Payment was confirmed after the room became unavailable; staff resolution required.',
                 ];
-            } elseif ($lockedBooking->status === 'pending' && $fullyPaid) {
+            } elseif ($lockedBooking->status === 'pending' && ($fullyPaid || $depositVerified)) {
                 $updates += [
                     'status' => 'confirmed',
                     'hold_expires_at' => null,
@@ -136,17 +138,25 @@ class PayMongoPaymentReconciler
                 'booking_id' => $lockedBooking->id,
                 'user_id' => $actorId,
                 'event' => 'payment_paid',
-                'description' => $fullyPaid ? 'Full GCash payment confirmed by PayMongo.' : 'GCash downpayment confirmed by PayMongo; booking remains pending staff review.',
+                'description' => $fullyPaid
+                    ? 'Full GCash payment confirmed by PayMongo.'
+                        : ($depositVerified
+                        ? ($lockedBooking->status === 'confirmed'
+                            ? 'GCash downpayment confirmed by PayMongo; booking automatically confirmed after availability check.'
+                            : 'GCash downpayment confirmed by PayMongo; booking needs staff resolution before it can be confirmed.')
+                        : 'GCash payment confirmed by PayMongo; the downpayment threshold has not been met.'),
                 'before_values' => ['payment_status' => 'pending'],
                 'after_values' => ['payment_status' => $lockedBooking->payment_status, 'deposit_status' => $lockedBooking->deposit_status, 'payment_method' => 'gcash', 'status' => $lockedBooking->status],
             ]);
 
-            if ($fullyPaid && $lockedBooking->status === 'confirmed' && $lockedBooking->wasChanged('status')) {
+            if (($fullyPaid || $depositVerified) && $lockedBooking->status === 'confirmed' && $lockedBooking->wasChanged('status')) {
                 ActivityLog::create([
                     'booking_id' => $lockedBooking->id,
                     'user_id' => $actorId,
                     'event' => 'booking_auto_confirmed',
-                    'description' => 'Booking automatically confirmed after full PayMongo payment and availability check.',
+                    'description' => $fullyPaid
+                        ? 'Booking automatically confirmed after full PayMongo payment and availability check.'
+                        : 'Booking automatically confirmed after verified PayMongo downpayment and availability check.',
                     'before_values' => ['status' => 'pending'],
                     'after_values' => ['status' => 'confirmed'],
                 ]);
@@ -160,9 +170,13 @@ class PayMongoPaymentReconciler
             $financial = \App\Support\FinancialSummary::forBooking($booking->load('payments'));
             $message = $booking->status === 'cancelled'
                 ? 'PayMongo confirmed your GCash payment, but the reservation is no longer active. Carolina staff will contact you to resolve the booking.'
-                : ($booking->payment_status === 'paid'
-                    ? 'PayMongo confirmed your full GCash payment and your reservation is confirmed.'
-                    : 'PayMongo confirmed your downpayment of ₱'.number_format((float) $payment->amount, 2).'. Your booking is protected while Carolina staff reviews it. Remaining balance: ₱'.number_format($financial['outstanding'], 2).'.');
+                : ($booking->status === 'confirmed'
+                    ? ($booking->payment_status === 'paid'
+                        ? 'PayMongo confirmed your full GCash payment and your reservation is confirmed.'
+                        : 'PayMongo confirmed your downpayment and automatically confirmed your reservation. Remaining balance: ₱'.number_format($financial['outstanding'], 2).', due at the property.')
+                    : ($booking->deposit_status === 'verified'
+                        ? 'PayMongo confirmed your downpayment, but staff must resolve an availability issue before your reservation can be confirmed.'
+                        : 'PayMongo recorded your payment, but it has not reached the downpayment amount required to confirm your reservation.'));
             $email = $booking->guest_email ?? $booking->user?->email;
 
             if ($email) {

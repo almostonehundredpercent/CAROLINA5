@@ -176,7 +176,7 @@
 <section class="confirmation receipt-page">
     <span class="eyebrow">{{ $booking->payment_status === 'refunded' ? 'REFUND RECORD' : ($booking->payment_status === 'paid' ? 'PAYMENT RECEIPT' : ($booking->status === 'confirmed' ? 'BOOKING CONFIRMED' : 'REQUEST RECEIVED')) }}</span>
     <h1>{{ $expiredHold ? 'Reservation hold expired' : ($booking->status === 'confirmed' ? 'Your reservation is confirmed.' : ($booking->status === 'cancelled' ? 'This reservation was cancelled.' : 'Your reservation request is in.')) }}</h1>
-    <p>@if($unavailable)This request no longer reserves the room. Choose another available stay or contact Carolina for help. This page keeps your booking and payment details for your records.@elseif($booking->status === 'confirmed')Carolina has confirmed your reservation.@else Keep your reference below. Staff confirmation is required before your stay is final.@endif</p>
+    <p>@if($unavailable)This request no longer reserves the room. Choose another available stay or contact Carolina for help. This page keeps your booking and payment details for your records.@elseif($booking->status === 'confirmed')Carolina has confirmed your reservation.@else Keep your reference below. A verified downpayment or full payment automatically confirms your booking if the room remains available. Unpaid requests may still need staff approval.@endif</p>
 
     <article class="receipt-unified-card">
     <header class="receipt-booking-context">
@@ -210,7 +210,7 @@
                     <small>Amount paid</small><b>₱{{ number_format($amountPaid, 2) }}</b><small class="receipt-financial-note">{{ $paidInFull ? 'Paid in full' : ($amountPaid > 0 ? 'Payment received' : 'No payment received yet') }}</small>
                 @endif
             </div>
-            <div class="receipt-financial-item"><small>{{ $booking->payment_status === 'refunded' ? 'Balance after refund' : 'Remaining balance' }}</small><b>₱{{ number_format($remainingBalance, 2) }}</b><small class="receipt-financial-note">@if($paidInFull)Paid in full.@elseif($booking->payment_status === 'refunded')Refund recorded.@elseif($booking->status === 'cancelled')No balance is due on this cancelled reservation.@elseif($unavailable)This expired reservation is inactive; contact Carolina before making another payment.@elseif($depositVerified)Due at the property after Carolina reviews your booking.@else Remaining amount for this reservation.@endif</small></div>
+            <div class="receipt-financial-item"><small>{{ $booking->payment_status === 'refunded' ? 'Balance after refund' : 'Remaining balance' }}</small><b>₱{{ number_format($remainingBalance, 2) }}</b><small class="receipt-financial-note">@if($paidInFull)Paid in full.@elseif($booking->payment_status === 'refunded')Refund recorded.@elseif($booking->status === 'cancelled')No balance is due on this cancelled reservation.@elseif($unavailable)This expired reservation is inactive; contact Carolina before making another payment.@elseif($depositVerified)Due at the property after the booking is confirmed.@else Remaining amount for this reservation.@endif</small></div>
         </div>
         <div class="receipt-payment-facts" aria-label="Payment details">
             <div><small>Payment option</small><b id="payment-option-label">{{ $paymentModeLabel }}</b></div>
@@ -224,8 +224,8 @@
             </div>
         @elseif($canPayOnline && $booking->status === 'confirmed')
             <div class="receipt-hold-alert receipt-payment-window-info" role="note">
-                <strong>{{ $depositVerified ? 'Your downpayment protects the requested room time' : 'The 30-minute hold does not apply to this confirmed booking' }}</strong>
-                <p>{{ $depositVerified ? 'The remaining balance is due at the property after staff reviews your booking.' : 'This limit applies only to unpaid requests awaiting confirmation.' }}</p>
+                <strong>{{ $depositVerified ? 'Your booking is confirmed after downpayment verification' : 'The 30-minute hold does not apply to this confirmed booking' }}</strong>
+                <p>{{ $depositVerified ? 'The remaining balance is due at the property.' : 'This limit applies only to unpaid requests awaiting confirmation.' }}</p>
             </div>
         @endif
         @if($canPayOnline && $activePayMongoCheckout)
@@ -238,7 +238,7 @@
                     <div class="payment-options" role="radiogroup" aria-label="Choose how much to pay now">
                         <label class="payment-option">
                             <input type="radio" name="payment_option" value="deposit" {{ $selectedPaymentOption === 'deposit' ? 'checked' : '' }}>
-                            <span><strong>Pay 30% downpayment · ₱{{ number_format($amountDueNow, 2) }}</strong><small>Reserve the room time while Carolina reviews your request. Pay the remaining balance at the property.</small></span>
+                            <span><strong>Pay 30% downpayment · ₱{{ number_format($amountDueNow, 2) }}</strong><small>A verified downpayment automatically confirms your booking if the room is available. Pay the remaining balance at the property.</small></span>
                         </label>
                         <label class="payment-option">
                             <input type="radio" name="payment_option" value="full" {{ $selectedPaymentOption === 'full' ? 'checked' : '' }}>
@@ -259,7 +259,7 @@
             @if($unavailable)
                 <p class="receipt-note"><strong>Reservation is no longer active.</strong> Contact Carolina to resolve this payment before making another.</p>
             @else
-                <p class="receipt-note"><strong>{{ $depositVerified ? 'Downpayment received.' : 'Partial payment recorded.' }}</strong> Carolina still needs to review and confirm your reservation. @if($depositVerified)The remaining balance shown above is due at the property.@else The downpayment is not complete yet; contact Carolina for help completing it.@endif</p>
+                <p class="receipt-note"><strong>{{ $depositVerified ? 'Downpayment received.' : 'Partial payment recorded.' }}</strong> @if($booking->status === 'confirmed')Your booking is confirmed automatically after the downpayment clears.@elseif($depositVerified)Your downpayment is verified. Contact Carolina if your booking still shows as pending.@else The payment has not reached the required downpayment amount, so the booking is still pending.@endif @if($depositVerified)The remaining balance shown above is due at the property.@endif</p>
             @endif
         @elseif($booking->payment_status === 'paid')
             <p class="receipt-note"><strong>Payment recorded.</strong> {{ $unavailable ? 'The room was not re-reserved. Contact staff to resolve this payment before making another one.' : ($booking->status === 'confirmed' ? 'Your reservation is confirmed.' : 'Your slot remains reserved while staff reviews your request.') }}</p>
@@ -296,10 +296,14 @@
     <p id="receipt-success-copy">
         @if($booking->payment_status === 'refunded')
             A refund of ₱{{ number_format((float) $financial['refunds'], 2) }} was recorded for this reservation.
+        @elseif($booking->status === 'cancelled' || $unavailable)
+            Your payment was recorded, but this reservation could not be confirmed. Carolina will contact you to resolve it.
         @elseif($paidInFull)
             Full payment of ₱{{ number_format($amountPaid, 2) }} was recorded. Remaining balance: ₱0.00.
+        @elseif($depositVerified && $booking->status === 'confirmed')
+            Your downpayment of ₱{{ number_format($amountPaid, 2) }} was received and your booking was automatically confirmed. Remaining balance: ₱{{ number_format($remainingBalance, 2) }}, due at the property.
         @elseif($amountPaid > 0)
-            ₱{{ number_format($amountPaid, 2) }} was received as a downpayment. Remaining balance: ₱{{ number_format($remainingBalance, 2) }}, due at the property after Carolina reviews your booking.
+            ₱{{ number_format($amountPaid, 2) }} was received. The booking will be confirmed automatically after the required downpayment is verified and availability is checked.
         @elseif($booking->payment_status === 'partial')
             Your partial payment was processed. Remaining balance: ₱{{ number_format($remainingBalance, 2) }}. Carolina will review your reservation and email you about the next steps.
         @elseif($booking->status === 'confirmed')

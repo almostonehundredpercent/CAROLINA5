@@ -287,9 +287,9 @@ class AdminController extends Controller
             'payment_reference' => 'nullable|string|max:100',
             'notes' => 'nullable|string|max:500',
         ]);
-        $before = $booking->only(['payment_status', 'payment_method', 'paid_at', 'deposit_status', 'deposit_verified_at']);
-        DB::transaction(function () use ($booking, $data, $request) {
-            Room::whereKey($booking->room_id)->lockForUpdate()->firstOrFail();
+        $before = $booking->only(['status', 'payment_status', 'payment_method', 'paid_at', 'deposit_status', 'deposit_verified_at']);
+        $confirmation = DB::transaction(function () use ($booking, $data, $request) {
+            $room = Room::whereKey($booking->room_id)->lockForUpdate()->firstOrFail();
             $lockedBooking = Booking::whereKey($booking->id)->lockForUpdate()->firstOrFail();
             $hasPendingPayMongoCheckout = Payment::where('booking_id', $lockedBooking->id)
                 ->where('reference', 'like', 'paymongo:%')
@@ -348,15 +348,65 @@ class AdminController extends Controller
                     $updates['hold_expires_at'] = null;
                 }
             }
+
+            $confirmationBlocked = false;
+            if ($depositVerified && $lockedBooking->status === 'pending') {
+                $startsAt = $lockedBooking->check_in_at ?? $lockedBooking->check_in->copy()->startOfDay();
+                $endsAt = $lockedBooking->check_out_at ?? $lockedBooking->check_out->copy()->startOfDay();
+                $conflict = ! $room->is_active
+                    || $room->operational_status !== 'available'
+                    || $room->bookings()->whereKeyNot($lockedBooking->id)->blocking()->overlapping($startsAt, $endsAt)->exists()
+                    || $room->blocks()->overlapping($startsAt, $endsAt)->exists();
+
+                if ($conflict) {
+                    $confirmationBlocked = true;
+                } else {
+                    $updates += [
+                        'status' => 'confirmed',
+                        'hold_expires_at' => null,
+                        'cancelled_at' => null,
+                        'cancelled_by' => null,
+                        'cancellation_reason' => null,
+                    ];
+                }
+            }
             $lockedBooking->update($updates);
+
+            $autoConfirmed = $lockedBooking->status === 'confirmed' && $lockedBooking->wasChanged('status');
+            if ($autoConfirmed) {
+                ActivityLog::create([
+                    'booking_id' => $lockedBooking->id,
+                    'user_id' => $request->user()->id,
+                    'event' => 'booking_auto_confirmed',
+                    'description' => $fullyPaid
+                        ? 'Booking automatically confirmed after staff recorded full payment and checked availability.'
+                        : 'Booking automatically confirmed after staff verified the downpayment and availability.',
+                    'before_values' => ['status' => 'pending'],
+                    'after_values' => ['status' => 'confirmed'],
+                ]);
+            }
+
+            return ['auto_confirmed' => $autoConfirmed, 'confirmation_blocked' => $confirmationBlocked];
         });
         $booking->refresh();
-        $after = $booking->fresh()->only(['payment_status', 'payment_method', 'paid_at', 'deposit_status', 'deposit_verified_at']);
+        $after = $booking->fresh()->only(['status', 'payment_status', 'payment_method', 'paid_at', 'deposit_status', 'deposit_verified_at']);
         $this->log($booking->fresh(), $request->user()->id, 'payment_recorded', 'Staff recorded ₱'.number_format((float) $data['amount'], 2).' via '.strtoupper($data['payment_method']).'.', $before, $after);
         $financial = FinancialSummary::forBooking($booking->fresh('payments'));
-        $this->email($booking->fresh('room'), 'Payment update for your Carolina booking', 'Carolina recorded a payment of ₱'.number_format((float) $data['amount'], 2).'. Remaining balance: ₱'.number_format($financial['outstanding'], 2).'.');
+        $emailMessage = $confirmation['auto_confirmed']
+            ? 'Carolina recorded your payment and automatically confirmed your booking after checking room availability. Remaining balance: ₱'.number_format($financial['outstanding'], 2).', due at the property.'
+            : ($confirmation['confirmation_blocked']
+                ? 'Carolina recorded your payment, but the requested room time is unavailable. Staff will contact you about your reservation.'
+                : 'Carolina recorded a payment of ₱'.number_format((float) $data['amount'], 2).'. Remaining balance: ₱'.number_format($financial['outstanding'], 2).'.');
+        $this->email($booking->fresh('room'), 'Payment update for your Carolina booking', $emailMessage);
 
-        return back()->with('success', 'Payment of ₱'.number_format((float) $data['amount'], 2).' recorded.');
+        $successMessage = 'Payment of ₱'.number_format((float) $data['amount'], 2).' recorded.';
+        if ($confirmation['auto_confirmed']) {
+            $successMessage .= ' The booking was confirmed automatically after the availability check.';
+        } elseif ($confirmation['confirmation_blocked']) {
+            $successMessage .= ' The payment is recorded, but the room is unavailable; staff follow-up is required before confirming.';
+        }
+
+        return back()->with('success', $successMessage);
     }
 
     public function recheckPayMongoPayment(Request $request, Booking $booking, PayMongoCheckout $checkout, PayMongoPaymentReconciler $payments)
@@ -401,9 +451,11 @@ class AdminController extends Controller
         return back()->with('success', $booking->status === 'cancelled'
             ? 'PayMongo confirmed payment, but the reservation is no longer active. Carolina staff must resolve the booking.'
             : ($booking->status === 'confirmed'
-                ? 'PayMongo confirmed the full payment; the booking was confirmed automatically.'
+                ? ($booking->payment_status === 'paid'
+                    ? 'PayMongo confirmed the full payment; the booking was confirmed automatically.'
+                    : 'PayMongo confirmed the downpayment; the booking was confirmed automatically after an availability check.')
                 : ($booking->deposit_status === 'verified'
-                    ? 'PayMongo confirmed the downpayment. The room time is protected and the booking is awaiting staff review.'
+                    ? 'PayMongo confirmed the downpayment, but the booking needs staff resolution before it can be confirmed.'
                     : 'PayMongo confirmed the full payment. Carolina staff must resolve the booking.')));
     }
 

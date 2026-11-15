@@ -249,7 +249,7 @@
                     <div>
                         <p class="admin-kicker">ALL RESERVATIONS</p>
                         <h2>Review requests</h2>
-                        <p class="booking-note">PayMongo updates the payment ledger automatically. A verified 30% downpayment protects the room while staff reviews the booking; fully paid available bookings are confirmed automatically.</p>
+                        <p class="booking-note">A verified downpayment or full payment automatically confirms the booking after an availability check. Unpaid requests still need staff review.</p>
                     </div>
                     <div class="booking-heading-actions"><a class="status-select" href="{{ route('admin.bookings.export', request()->query()) }}">Export CSV</a><span class="pill">{{ $individualBookings->total() }} total</span></div>
                 </div>

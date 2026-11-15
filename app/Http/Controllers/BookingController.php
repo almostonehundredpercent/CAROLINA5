@@ -332,7 +332,7 @@ class BookingController extends Controller
         $request->session()->forget('booking-submission:'.$room->id);
         $request->session()->forget('guest_booking_draft');
         try {
-            $this->log($booking, $request->user()?->id, 'booking_created', 'Booking created and awaiting staff confirmation.');
+            $this->log($booking, $request->user()?->id, 'booking_created', 'Booking created and awaiting payment verification or staff review.');
         } catch (\Throwable $exception) {
             report($exception);
         }
@@ -728,9 +728,11 @@ class BookingController extends Controller
             return redirect()->route('bookings.receipt', $booking)->with('success', $booking->status === 'cancelled'
                 ? 'PayMongo confirmed the payment, but the reservation is no longer active. Contact Carolina for staff resolution.'
                 : ($booking->status === 'confirmed'
-                    ? 'GCash payment confirmed by PayMongo. Your reservation is confirmed.'
+                    ? ($booking->payment_status === 'paid'
+                        ? 'GCash full payment confirmed by PayMongo. Your reservation is confirmed.'
+                        : 'GCash downpayment confirmed by PayMongo. Your reservation is confirmed automatically; the remaining balance is due at the property.')
                     : ($booking->deposit_status === 'verified'
-                        ? 'GCash downpayment confirmed by PayMongo. Your room time is protected while Carolina reviews your reservation.'
+                        ? 'GCash downpayment confirmed by PayMongo, but staff must resolve an availability issue before the reservation can be confirmed.'
                         : 'GCash payment confirmed by PayMongo. Contact Carolina for staff resolution.')))
                 ->with('booking_payment_success', true);
         }
@@ -777,9 +779,11 @@ class BookingController extends Controller
         return redirect()->route('bookings.receipt', $booking)->with('success', $booking->status === 'cancelled'
             ? 'Test payment recorded, but this reservation is no longer held. Contact Carolina for staff resolution; your room was not re-reserved.'
             : ($booking->status === 'confirmed'
-                ? 'GCash test payment confirmed. Your reservation is confirmed.'
+                ? ($booking->payment_status === 'paid'
+                    ? 'GCash full payment confirmed. Your reservation is confirmed.'
+                    : 'GCash downpayment confirmed. Your reservation is confirmed automatically; the remaining balance is due at the property.')
                 : ($booking->deposit_status === 'verified'
-                    ? 'GCash downpayment confirmed. Your room time is protected while Carolina reviews your reservation.'
+                    ? 'GCash downpayment confirmed, but staff must resolve an availability issue before the reservation can be confirmed.'
                     : 'GCash test payment confirmed. Contact Carolina for staff resolution.')))
             ->with('booking_payment_success', true);
     }

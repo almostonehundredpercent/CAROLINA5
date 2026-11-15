@@ -173,7 +173,7 @@
                     @endif
                     @if($canCancel)
                         <p>You can cancel online before check-in. Cancel at least 3 days ahead for a full refund; cancellations less than 3 days ahead are non-refundable. The room will reopen for these dates after cancellation.</p>
-                        <form class="portal-cancel-form" method="POST" action="{{ route('bookings.lookup.cancel', $booking) }}" data-booking-cancel-confirm>
+                        <form class="portal-cancel-form" method="POST" action="{{ route('bookings.lookup.cancel', $booking) }}" data-booking-cancel-confirm data-cancel-room="{{ $booking->room?->name ?? 'Room unavailable' }}" data-cancel-check-in="{{ $booking->check_in_at?->format('M j, Y · g:i A') ?? $booking->check_in->format('M j, Y') }}" data-cancel-check-out="{{ $booking->check_out_at?->format('M j, Y · g:i A') ?? $booking->check_out->format('M j, Y') }}" data-cancel-reference="{{ $booking->reference }}">
                             @csrf @method('PATCH')
                             <input type="hidden" name="email" value="{{ $lookupEmail }}">
                             <input type="hidden" name="reference" value="{{ $booking->reference }}">

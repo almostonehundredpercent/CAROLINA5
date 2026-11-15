@@ -72,7 +72,7 @@
                 @endif
                 @if($booking->canCancelOnline())
                     <small>Cancel at least 3 days before check-in for a full refund. Cancellations less than 3 days ahead are allowed before check-in but are non-refundable.</small>
-                    <form method="POST" action="{{ route('bookings.cancel', $booking) }}" data-booking-cancel-confirm>@csrf @method('PATCH')<button class="link-danger" type="submit">Cancel booking</button></form>
+                    <form method="POST" action="{{ route('bookings.cancel', $booking) }}" data-booking-cancel-confirm data-cancel-room="{{ $booking->room?->name ?? 'Room unavailable' }}" data-cancel-check-in="{{ $booking->check_in_at?->format('M j, Y · g:i A') ?? $booking->check_in->format('M j, Y') }}" data-cancel-check-out="{{ $booking->check_out_at?->format('M j, Y · g:i A') ?? $booking->check_out->format('M j, Y') }}" data-cancel-reference="{{ $booking->reference }}">@csrf @method('PATCH')<button class="link-danger" type="submit">Cancel booking</button></form>
                 @else
                     <small>Online cancellation closes at the scheduled check-in time. Contact Carolina if you need help.</small>
                 @endif

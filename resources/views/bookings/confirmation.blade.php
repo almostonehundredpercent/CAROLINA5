@@ -5,7 +5,7 @@
     <div class="check">✓</div>
     <span class="eyebrow">BOOKING RECEIVED</span>
     <h1>Your reservation request was received, {{ $booking->guest_name ?? auth()->user()?->name }}.</h1>
-    <p>Keep your reference number. Carolina will review availability and contact you with the next steps.</p>
+    <p>Keep your reference number. A verified downpayment or full payment automatically confirms your booking when the room is available. Unpaid requests may still need staff approval.</p>
     <div class="confirmation-card">
         <div><small>Stay</small><b>{{ $booking->check_in_at?->format('M j, g A') }} - {{ $booking->check_out_at?->format('M j, g A') }}</b></div>
         <div><small>Total</small><b>₱{{ number_format($booking->total_amount) }}</b>@if($booking->discount_amount > 0)<small>{{ $booking->promo_code }} saved ₱{{ number_format($booking->discount_amount) }}</small>@endif</div>
