@@ -112,10 +112,10 @@
                 <span class="stay-section-kicker">RESERVATION OPTIONS</span>
                 <h2 id="stay-cancellation-title">{{ $stayCancellationOpen ? 'Cancellation window open' : 'Cancellation window closed' }}</h2>
                 @if($stayCancellationOpen)
-                    <p>Online cancellation is available at least 3 days before check-in. Refund eligibility depends on the cancellation time and payment status.</p>
+                    <p>You can cancel online before check-in. Cancel at least 3 days ahead for a full refund; cancellations less than 3 days ahead are non-refundable.</p>
                     <a class="stay-help-link" href="{{ auth()->check() && auth()->id() === $booking->user_id ? route('bookings.index', ['section' => 'bookings']) : route('bookings.lookup') }}">Manage this reservation</a>
                 @else
-                    <p>Online cancellation is closed within 3 days of check-in. Contact Carolina if you need help with this reservation.</p>
+                    <p>Online cancellation closes at the scheduled check-in time. Contact Carolina if you need help with this reservation.</p>
                     <a class="stay-help-link" href="https://www.facebook.com/profile.php?id=61556306344437" target="_blank" rel="noopener noreferrer">Message Carolina</a>
                 @endif
             </section>

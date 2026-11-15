@@ -71,10 +71,10 @@
                     <small>Online rescheduling limit reached (2). Contact Carolina if you need to change your stay.</small>
                 @endif
                 @if($booking->canCancelOnline())
-                    <small>Cancel at least 3 days before check-in to qualify for a refund.</small>
-                    <form method="POST" action="{{ route('bookings.cancel', $booking) }}" onsubmit="return confirm('Are you sure you want to cancel this booking? The room will become available again for these dates.');">@csrf @method('PATCH')<button class="link-danger" type="submit">Cancel booking</button></form>
+                    <small>Cancel at least 3 days before check-in for a full refund. Cancellations less than 3 days ahead are allowed before check-in but are non-refundable.</small>
+                    <form method="POST" action="{{ route('bookings.cancel', $booking) }}" onsubmit="return confirm('Cancel this booking? Cancellations at least 3 days before check-in are eligible for a full refund. Cancellations less than 3 days ahead are non-refundable. The room will become available again.');">@csrf @method('PATCH')<button class="link-danger" type="submit">Cancel booking</button></form>
                 @else
-                    <small>Online cancellation is closed within 3 days of check-in.</small>
+                    <small>Online cancellation closes at the scheduled check-in time. Contact Carolina if you need help.</small>
                 @endif
             @endif
         </div>

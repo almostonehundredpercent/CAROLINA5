@@ -71,9 +71,12 @@ class Booking extends Model
 
     public function refundCutoffAt()
     {
-        $checkIn = $this->check_in_at ?? $this->check_in->copy()->startOfDay();
+        return $this->cancellationClosesAt()->copy()->subDays(3);
+    }
 
-        return $checkIn->copy()->subDays(3);
+    public function cancellationClosesAt()
+    {
+        return $this->check_in_at ?? $this->check_in->copy()->startOfDay();
     }
 
     public function isRefundEligible(): bool
@@ -90,7 +93,7 @@ class Booking extends Model
         return $this->status !== 'cancelled'
             && ! $this->checked_in_at
             && ! $this->checked_out_at
-            && PropertyTime::now()->lte($this->refundCutoffAt());
+            && PropertyTime::now()->lt($this->cancellationClosesAt());
     }
 
     public function reschedulesRemaining(): int
@@ -104,6 +107,7 @@ class Booking extends Model
             && in_array($this->status, ['pending', 'confirmed'], true)
             && ! $this->hasExpiredHold()
             && ! $this->isExpiredHoldRecord()
+            && PropertyTime::now()->lte($this->refundCutoffAt())
             && $this->reschedulesRemaining() > 0;
     }
 

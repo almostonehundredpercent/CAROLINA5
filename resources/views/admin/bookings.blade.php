@@ -391,7 +391,7 @@
                                             @elseif($refundableAmount > 0)
                                                 <div class="booking-action-note refund-ineligible" role="note">
                                                     <span class="refund-note-icon" aria-hidden="true">!</span>
-                                                    <span class="refund-note-copy"><strong>{{ $booking->status === 'cancelled' ? 'Outside the refund window' : 'Refund requires cancellation' }}</strong>{{ $booking->status === 'cancelled' ? 'Refunds aren’t available when cancellation is within 3 days of check-in.' : 'Record a refund only after cancellation at least 3 days before check-in.' }}</span>
+                                                    <span class="refund-note-copy"><strong>{{ $booking->status === 'cancelled' ? 'Outside the refund window' : 'Refund requires cancellation' }}</strong>{{ $booking->status === 'cancelled' ? 'Refunds aren’t available when cancellation is less than 3 days before check-in.' : 'A full refund is eligible after cancellation at least 3 days before check-in.' }}</span>
                                                 </div>
                                             @endif
                                         </div>

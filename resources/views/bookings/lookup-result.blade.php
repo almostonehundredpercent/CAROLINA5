@@ -172,15 +172,15 @@
                         <p>Online rescheduling limit reached (2). Contact Carolina if you need to change your stay.</p>
                     @endif
                     @if($canCancel)
-                        <p>Cancel at least 3 days before check-in to qualify for a refund. The room will reopen for these dates after cancellation.</p>
-                        <form class="portal-cancel-form" method="POST" action="{{ route('bookings.lookup.cancel', $booking) }}" onsubmit="return confirm('Cancel this booking? The room will become available again for these dates.');">
+                        <p>You can cancel online before check-in. Cancel at least 3 days ahead for a full refund; cancellations less than 3 days ahead are non-refundable. The room will reopen for these dates after cancellation.</p>
+                        <form class="portal-cancel-form" method="POST" action="{{ route('bookings.lookup.cancel', $booking) }}" onsubmit="return confirm('Cancel this booking? Cancellations at least 3 days before check-in are eligible for a full refund. Cancellations less than 3 days ahead are non-refundable. The room will become available again.');">
                             @csrf @method('PATCH')
                             <input type="hidden" name="email" value="{{ $lookupEmail }}">
                             <input type="hidden" name="reference" value="{{ $booking->reference }}">
                             <button class="button danger" type="submit">Cancel booking</button>
                         </form>
                     @else
-                        <p>Online cancellation is closed within 3 days of check-in. Contact Carolina if you need help with this reservation.</p>
+                        <p>Online cancellation closes at the scheduled check-in time. Contact Carolina if you need help with this reservation.</p>
                         <a class="portal-help-link" href="https://www.facebook.com/profile.php?id=61556306344437" target="_blank" rel="noopener noreferrer">Message Carolina</a>
                     @endif
                 </section>

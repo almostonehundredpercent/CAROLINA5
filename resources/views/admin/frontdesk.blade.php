@@ -83,6 +83,7 @@
                         <div><span><i class="is-reserved"></i>Reserved later</span><strong>{{ $roomStatusCounts['reserved'] }}</strong></div>
                         <div><span><i class="is-cleaning"></i>Cleaning / maintenance</span><strong>{{ $roomStatusCounts['cleaning'] + $roomStatusCounts['maintenance'] }}</strong></div>
                     </div>
+                    <p class="today-panel-note">Held arrivals count here before staff records the guest’s check-in.</p>
                     <a class="frontdesk-text-link" href="{{ route('admin.rooms') }}">View all rooms <span aria-hidden="true">→</span></a>
                 </section>
             </div>

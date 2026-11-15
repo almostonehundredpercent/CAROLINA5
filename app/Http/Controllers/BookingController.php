@@ -789,7 +789,7 @@ class BookingController extends Controller
         abort_unless($booking->user_id === $request->user()?->id, 403);
         $refundEligible = $this->cancelBeforeCheckIn($booking);
 
-        return back()->with('success', 'Your booking has been cancelled. The room is available for those dates again.'.($refundEligible ? ' If you have already paid, this cancellation is eligible for a refund.' : ' This cancellation is non-refundable because it was made less than 3 days before check-in.'));
+        return back()->with('success', 'Your booking has been cancelled. The room is available for those dates again.'.($refundEligible ? ' If you have already paid, this cancellation is eligible for a full refund.' : ' This cancellation is non-refundable because it was made less than 3 days before check-in.'));
     }
 
     public function cancelGuest(Request $request, Booking $booking)
@@ -806,7 +806,7 @@ class BookingController extends Controller
         );
 
         $refundEligible = $this->cancelBeforeCheckIn($booking);
-        session()->flash('success', 'Your booking has been cancelled. The room is available for those dates again.'.($refundEligible ? ' If you have already paid, this cancellation is eligible for a refund.' : ' This cancellation is non-refundable because it was made less than 3 days before check-in.'));
+        session()->flash('success', 'Your booking has been cancelled. The room is available for those dates again.'.($refundEligible ? ' If you have already paid, this cancellation is eligible for a full refund.' : ' This cancellation is non-refundable because it was made less than 3 days before check-in.'));
 
         return view('bookings.lookup-result', ['booking' => $booking->fresh('room'), 'lookupEmail' => $data['email']]);
     }
@@ -957,13 +957,13 @@ class BookingController extends Controller
             throw ValidationException::withMessages(['cancellation' => 'A stay that has started cannot be cancelled online.']);
         }
         $cancelledAt = now();
-        if (PropertyTime::wallClock($cancelledAt)->gt($booking->refundCutoffAt())) {
-            throw ValidationException::withMessages(['cancellation' => 'Online cancellation is only available when at least 3 days remain before check-in.']);
+        if (PropertyTime::wallClock($cancelledAt)->gte($booking->cancellationClosesAt())) {
+            throw ValidationException::withMessages(['cancellation' => 'Online cancellation is only available before the scheduled check-in time.']);
         }
         $booking->update(['status' => 'cancelled', 'cancelled_at' => $cancelledAt, 'cancellation_reason' => 'Cancelled by guest.']);
         $refundEligible = $booking->isRefundEligible();
         $this->log($booking, null, 'booking_cancelled', 'Booking cancelled by guest.');
-        $this->emailUpdate($booking, 'Your Carolina booking was cancelled', 'Your reservation has been cancelled and the room is available again.'.($refundEligible ? ' If you have already paid, this cancellation is eligible for a refund.' : ' This cancellation is non-refundable because it was made less than 3 days before check-in.'));
+        $this->emailUpdate($booking, 'Your Carolina booking was cancelled', 'Your reservation has been cancelled and the room is available again.'.($refundEligible ? ' If you have already paid, this cancellation is eligible for a full refund.' : ' This cancellation is non-refundable because it was made less than 3 days before check-in.'));
 
         return $refundEligible;
     }
