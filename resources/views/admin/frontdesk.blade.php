@@ -56,7 +56,7 @@
                             @else
                                 <span class="today-arrival-status">Expected today</span>
                             @endif
-                            <small>{{ $booking->room?->name }} · Payment: {{ ucfirst($booking->payment_status) }}</small>
+                            <small>{{ $booking->room?->name }} · Payment: {{ ucfirst((string) ($booking->payment_status ?: 'Not recorded')) }}</small>
                             <dl class="today-schedule">
                                 <div><dt>Check-in</dt><dd><time datetime="{{ $booking->check_in_at?->toIso8601String() }}">{{ $booking->check_in_at?->format('M j, Y') ?? $booking->check_in?->format('M j, Y') }}</time></dd><dd>{{ $booking->check_in_at?->format('g:i A') ?? 'Time not recorded' }}</dd></div>
                                 <div><dt>Check-out</dt><dd><time datetime="{{ $booking->check_out_at?->toIso8601String() }}">{{ $booking->check_out_at?->format('M j, Y') ?? $booking->check_out?->format('M j, Y') }}</time></dd><dd>{{ $booking->check_out_at?->format('g:i A') ?? 'Time not recorded' }}</dd></div>
