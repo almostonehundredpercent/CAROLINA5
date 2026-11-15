@@ -247,7 +247,7 @@ class BookingController extends Controller
         }
         $rules = ['booking_type' => 'required|in:hourly', 'guests' => 'required|integer|min:1|max:'.$room->booking_guest_limit, 'children_count' => 'nullable|integer|min:0|max:10|lte:guests', 'pets_count' => 'nullable|integer|min:0|max:5', 'special_request' => 'nullable|string|max:500', 'promo_code' => 'nullable|string|max:40', 'checkout_type' => 'required|in:guest,account', 'submission_token' => 'required|uuid', 'terms_accepted' => 'accepted', 'hours' => 'required|integer|in:'.implode(',', StayPricing::durations($room)), 'cooling_type' => 'required|in:fan,aircon', 'hourly_date' => 'required|date|after_or_equal:'.PropertyTime::today(), 'check_in_time' => ['required', 'date_format:H:i', 'regex:/^(0[6-9]|1[0-9]|2[0-3]):00$/']];
         if ($request->input('checkout_type') === 'guest') {
-            $rules += ['guest_name' => 'required|string|max:255', 'guest_email' => 'required|email:rfc|max:255', 'guest_phone' => ['required', 'regex:/^(?:\\+63|63|0)9\\d{9}$/'], 'terms_accepted' => 'accepted'];
+            $rules += ['guest_name' => 'required|string|max:255', 'guest_email' => 'required|email:rfc|max:255', 'guest_phone' => ['nullable', 'regex:/^(?:\\+63|63|0)9\\d{9}$/'], 'terms_accepted' => 'accepted'];
         }
         $data = $request->validate($rules);
         $restrictionEmail = $data['checkout_type'] === 'guest' ? ($data['guest_email'] ?? null) : $request->user()?->email;
@@ -273,7 +273,7 @@ class BookingController extends Controller
         $data['check_out'] = $checkOutAt->toDateString();
         $data['check_in_at'] = $checkInAt;
         $data['check_out_at'] = $checkOutAt;
-        $guestData = $data['checkout_type'] === 'guest' ? ['guest_name' => $data['guest_name'], 'guest_email' => $data['guest_email'], 'guest_phone' => $data['guest_phone']] : [];
+        $guestData = $data['checkout_type'] === 'guest' ? ['guest_name' => $data['guest_name'], 'guest_email' => $data['guest_email'], 'guest_phone' => $data['guest_phone'] ?? null] : [];
         try {
             $booking = DB::transaction(function () use ($room, $data, $guestData, $request, $nights, $total, $checkInAt, $checkOutAt) {
                 $lockedRoom = Room::whereKey($room->id)->lockForUpdate()->firstOrFail();

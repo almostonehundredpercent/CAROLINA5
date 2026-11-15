@@ -21,7 +21,8 @@ test('guest booking form shows useful examples in contact and special request fi
         ->assertSee('placeholder="e.g., Maria Santos"', false)
         ->assertSee('placeholder="e.g., maria@example.com"', false)
         ->assertSee('placeholder="09XX XXX XXXX"', false)
-        ->assertSee('title="Enter a Philippine mobile number, such as 09XX XXX XXXX or +63 9XX XXX XXXX."', false)
+        ->assertSee('Phone number (optional)')
+        ->assertSee('title="If provided, enter a Philippine mobile number, such as 09XX XXX XXXX or +63 9XX XXX XXXX."', false)
         ->assertSee('placeholder="e.g., Extra pillow, if available."', false);
 });
 
