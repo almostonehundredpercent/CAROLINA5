@@ -70,6 +70,8 @@ Route::patch('/booking-lookup/{booking}/cancel', [BookingController::class, 'can
 Route::patch('/booking-lookup/{booking}/reschedule', [BookingController::class, 'rescheduleGuest'])->middleware('throttle:5,1')->name('bookings.lookup.reschedule');
 Route::post('/booking-lookup/{booking}/extend', [BookingController::class, 'extendCheckedInStay'])->middleware('throttle:6,1')->name('bookings.lookup.extend');
 Route::post('/booking-lookup/{booking}/early-checkout', [BookingController::class, 'earlyCheckout'])->middleware('throttle:5,1')->name('bookings.lookup.early-checkout');
+Route::get('/guest-feedback/{booking}', [BookingController::class, 'guestReviewForm'])->middleware(['signed', 'throttle:30,1'])->name('bookings.guest-review.form');
+Route::post('/guest-feedback/{booking}', [BookingController::class, 'submitGuestReview'])->middleware(['signed', 'throttle:6,1'])->name('bookings.guest-review.submit');
 
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
 Route::get('/login/form', [AuthController::class, 'showLoginForm'])->name('login.form');

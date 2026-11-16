@@ -18,6 +18,7 @@ use App\Models\RoomPriceChangeRequest;
 use App\Models\RoomBlock;
 use App\Models\User;
 use App\Services\OperationalDecisionSupport;
+use App\Services\GuestReviewInvitationService;
 use App\Services\PayMongoCheckout;
 use App\Services\PayMongoPaymentReconciler;
 use App\Support\AdminPermissions;
@@ -197,7 +198,7 @@ class AdminController extends Controller
         }
     }
 
-    public function updateBooking(Request $request, Booking $booking)
+    public function updateBooking(Request $request, Booking $booking, GuestReviewInvitationService $reviewInvitations)
     {
         abort_unless($request->user()->canManageBookings(), 403, 'Your staff role cannot manage bookings.');
         $action = $request->input('action');
@@ -227,7 +228,7 @@ class AdminController extends Controller
                 ]);
             });
             $this->log($booking, $request->user()->id, 'checked_out', 'Guest checked out; 2-hour room cleaning timer started.');
-            $this->email($booking->fresh('room'), 'Thank you for staying with Carolina', 'You have been checked out. Thank you for choosing Carolina.');
+            $reviewInvitations->send($booking->fresh(['room', 'user']));
 
             return back()->with('success', 'Guest checked out. A 2-hour cleaning timer is now active.');
         }

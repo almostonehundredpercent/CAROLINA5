@@ -14,6 +14,7 @@ use App\Models\Room;
 use App\Models\RoomBlock;
 use App\Services\BookingTimeAdjustmentService;
 use App\Services\GuestBookingRescheduleService;
+use App\Services\GuestReviewInvitationService;
 use App\Services\PayMongoCheckout;
 use App\Services\PayMongoCheckoutCreationException;
 use App\Services\PayMongoPaymentReconciler;
@@ -388,6 +389,55 @@ class BookingController extends Controller
         $this->log($booking, $request->user()->id, 'review_submitted', 'Guest submitted a review for staff approval.');
 
         return back()->with('success', 'Thank you. Your review was submitted for approval.');
+    }
+
+    public function guestReviewForm(Request $request, Booking $booking)
+    {
+        abort_if($booking->status === 'cancelled' || ! $booking->checked_out_at, 404);
+        $booking->loadMissing(['room', 'user', 'review']);
+
+        return response()->view('bookings.guest-review', compact('booking'))
+            ->header('Cache-Control', 'private, no-store')
+            ->header('Referrer-Policy', 'no-referrer')
+            ->header('X-Robots-Tag', 'noindex, nofollow');
+    }
+
+    public function submitGuestReview(Request $request, Booking $booking)
+    {
+        abort_if($booking->status === 'cancelled' || ! $booking->checked_out_at, 404);
+        $data = $request->validate([
+            'guest_name' => 'required|string|max:100',
+            'rating' => 'required|integer|between:1,5',
+            'comment' => 'nullable|string|max:750',
+            'publish_consent' => 'accepted',
+        ]);
+
+        $submitted = DB::transaction(function () use ($booking, $data) {
+            $locked = Booking::whereKey($booking->id)->lockForUpdate()->firstOrFail();
+            abort_if($locked->status === 'cancelled' || ! $locked->checked_out_at, 404);
+            if ($locked->review()->exists()) {
+                return false;
+            }
+
+            Review::create([
+                'booking_id' => $locked->id,
+                'room_id' => $locked->room_id,
+                'user_id' => $locked->user_id,
+                'guest_name' => trim($data['guest_name']),
+                'rating' => $data['rating'],
+                'comment' => $data['comment'] ?? null,
+                'status' => 'pending',
+            ]);
+
+            $this->log($locked, $locked->user_id, 'review_submitted', 'Guest submitted a review through the post-checkout email link.');
+
+            return true;
+        });
+
+        return redirect()->route('bookings.guest-review.form', array_merge(['booking' => $booking->id], $request->query()))
+            ->with($submitted ? 'success' : 'info', $submitted
+                ? 'Thank you. Your feedback was submitted and is awaiting staff review.'
+                : 'We already received feedback for this stay. Thank you.');
     }
 
     public function receipt(Request $request, Booking $booking)
@@ -957,7 +1007,7 @@ class BookingController extends Controller
         return back()->with('success', $hoursToAdd.' extra hour'.($hoursToAdd === 1 ? '' : 's').' added for ₱'.number_format(StayPricing::EXTRA_HOUR_RATE * $hoursToAdd, 2).'. Your updated checkout time and balance are shown below.');
     }
 
-    public function earlyCheckout(Request $request, Booking $booking)
+    public function earlyCheckout(Request $request, Booking $booking, GuestReviewInvitationService $reviewInvitations)
     {
         $this->authorizeBookingAccess($request, $booking);
 
@@ -981,6 +1031,8 @@ class BookingController extends Controller
             ]);
             $this->log($locked, $request->user()?->id, 'guest_early_checkout', 'Guest checked out early; the original booking total remains unchanged and a 2-hour cleaning timer started.');
         });
+
+        $reviewInvitations->send($booking->fresh(['room', 'user']));
 
         return back()->with('success', 'You are checked out. Your room is released for cleaning. The original booking total and any refund eligibility are unchanged; any remaining balance is still due.');
     }
