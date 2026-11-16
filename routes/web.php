@@ -69,6 +69,7 @@ Route::post('/booking-lookup', [BookingController::class, 'lookup'])->middleware
 Route::patch('/booking-lookup/{booking}/cancel', [BookingController::class, 'cancelGuest'])->middleware('throttle:5,1')->name('bookings.lookup.cancel');
 Route::patch('/booking-lookup/{booking}/reschedule', [BookingController::class, 'rescheduleGuest'])->middleware('throttle:5,1')->name('bookings.lookup.reschedule');
 Route::post('/booking-lookup/{booking}/extend', [BookingController::class, 'extendCheckedInStay'])->middleware('throttle:6,1')->name('bookings.lookup.extend');
+Route::post('/booking-lookup/{booking}/early-checkout', [BookingController::class, 'earlyCheckout'])->middleware('throttle:5,1')->name('bookings.lookup.early-checkout');
 
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
 Route::get('/login/form', [AuthController::class, 'showLoginForm'])->name('login.form');

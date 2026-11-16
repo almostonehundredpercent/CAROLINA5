@@ -913,30 +913,34 @@ class BookingController extends Controller
     public function extendCheckedInStay(Request $request, Booking $booking)
     {
         $this->authorizeBookingAccess($request, $booking);
-        DB::transaction(function () use ($booking, $request) {
+        $data = $request->validate(['hours' => 'nullable|integer|min:1|max:168']);
+        $hoursToAdd = (int) ($data['hours'] ?? 1);
+
+        DB::transaction(function () use ($booking, $request, $hoursToAdd) {
             $room = Room::whereKey($booking->room_id)->lockForUpdate()->firstOrFail();
             $locked = Booking::whereKey($booking->id)->lockForUpdate()->firstOrFail();
             abort_unless($locked->checked_in_at && ! $locked->checked_out_at && $locked->status !== 'cancelled', 422, 'An extra hour is available only during an active checked-in stay.');
             $oldCheckout = $locked->check_out_at ?? $locked->check_out->copy()->startOfDay();
             $extensionStart = $oldCheckout->gt(PropertyTime::now()) ? $oldCheckout->copy() : PropertyTime::now();
-            $newCheckout = $extensionStart->copy()->addHour();
+            $newCheckout = $extensionStart->copy()->addHours($hoursToAdd);
             $bookingConflict = $room->bookings()->blocking()->overlapping($extensionStart, $newCheckout)->whereKeyNot($locked->id)->exists();
             $blockConflict = $room->blocks()->overlapping($extensionStart, $newCheckout)->exists();
             if ($bookingConflict || $blockConflict) {
-                throw ValidationException::withMessages(['extension' => 'The room is reserved or unavailable after your current checkout time, so it cannot be extended by an hour. Please contact Carolina.']);
+                throw ValidationException::withMessages(['extension' => 'The room is reserved or unavailable for that extension. Choose fewer hours or contact Carolina.']);
             }
             $oldTotal = (float) $locked->total_amount;
             $oldOriginal = (float) ($locked->original_amount ?? $oldTotal);
             $before = ['check_out_at' => $oldCheckout->toIso8601String(), 'total_amount' => $oldTotal, 'hours' => (int) ($locked->hours ?? 0)];
             $locked->check_out_at = $newCheckout;
             $locked->check_out = $newCheckout->toDateString();
-            $locked->hours = (int) ($locked->hours ?? 0) + 1;
+            $locked->hours = (int) ($locked->hours ?? 0) + $hoursToAdd;
             $locked->nights = max(1, (int) ceil(($locked->check_in_at ?? $locked->check_in->copy()->startOfDay())->diffInSeconds($newCheckout) / 86400));
-            $locked->total_amount = round($oldTotal + StayPricing::EXTRA_HOUR_RATE, 2);
-            $locked->original_amount = round($oldOriginal + StayPricing::EXTRA_HOUR_RATE, 2);
+            $extraHourTotal = round(StayPricing::EXTRA_HOUR_RATE * $hoursToAdd, 2);
+            $locked->total_amount = round($oldTotal + $extraHourTotal, 2);
+            $locked->original_amount = round($oldOriginal + $extraHourTotal, 2);
             $addOns = $locked->add_ons ?? [];
-            $addOns['extra_hours'] = (int) ($addOns['extra_hours'] ?? 0) + 1;
-            $addOns['extra_hour_total'] = round((float) ($addOns['extra_hour_total'] ?? 0) + StayPricing::EXTRA_HOUR_RATE, 2);
+            $addOns['extra_hours'] = (int) ($addOns['extra_hours'] ?? 0) + $hoursToAdd;
+            $addOns['extra_hour_total'] = round((float) ($addOns['extra_hour_total'] ?? 0) + $extraHourTotal, 2);
             $locked->add_ons = $addOns;
             $ledger = FinancialSummary::forBooking($locked->load('payments'));
             $locked->payment_status = $ledger['net_collected'] >= (float) $locked->total_amount ? 'paid' : ($ledger['net_collected'] > 0 ? 'partial' : 'pending');
@@ -945,12 +949,40 @@ class BookingController extends Controller
                 'booking_id' => $locked->id,
                 'user_id' => $request->user()?->id,
                 'event' => 'stay_extended',
-                'description' => 'Guest added one hour to the checked-in stay for ₱100.',
+                'description' => 'Guest added '.$hoursToAdd.' hour'.($hoursToAdd === 1 ? '' : 's').' to the checked-in stay for ₱'.number_format($extraHourTotal, 2).'.',
                 'before_values' => $before,
                 'after_values' => ['check_out_at' => $newCheckout->toIso8601String(), 'total_amount' => (float) $locked->total_amount, 'hours' => (int) $locked->hours],
             ]);
         });
-        return back()->with('success', 'One extra hour was added for ₱100. Your updated checkout time and balance are shown below.');
+        return back()->with('success', $hoursToAdd.' extra hour'.($hoursToAdd === 1 ? '' : 's').' added for ₱'.number_format(StayPricing::EXTRA_HOUR_RATE * $hoursToAdd, 2).'. Your updated checkout time and balance are shown below.');
+    }
+
+    public function earlyCheckout(Request $request, Booking $booking)
+    {
+        $this->authorizeBookingAccess($request, $booking);
+
+        DB::transaction(function () use ($booking, $request) {
+            $room = Room::whereKey($booking->room_id)->lockForUpdate()->firstOrFail();
+            $locked = Booking::whereKey($booking->id)->lockForUpdate()->firstOrFail();
+            abort_unless($locked->status === 'confirmed' && $locked->checked_in_at && ! $locked->checked_out_at, 422, 'Early checkout is available only during an active checked-in stay.');
+
+            $checkedOutAt = PropertyTime::now();
+            $scheduledCheckout = $locked->check_out_at ?? $locked->check_out->copy()->endOfDay();
+            abort_if($scheduledCheckout->lte($checkedOutAt), 422, 'Your scheduled checkout time has passed. Please contact reception to check out.');
+
+            $locked->update(['checked_out_at' => $checkedOutAt]);
+            RoomBlock::create([
+                'room_id' => $room->id,
+                'status' => 'cleaning',
+                'starts_at' => $checkedOutAt,
+                'ends_at' => $checkedOutAt->copy()->addHours(2),
+                'notes' => 'Automatic 2-hour cleaning period after guest early checkout.',
+                'created_by' => $request->user()?->id,
+            ]);
+            $this->log($locked, $request->user()?->id, 'guest_early_checkout', 'Guest checked out early; the original booking total remains unchanged and a 2-hour cleaning timer started.');
+        });
+
+        return back()->with('success', 'You are checked out. Your room is released for cleaning. The original booking total and any refund eligibility are unchanged; any remaining balance is still due.');
     }
     private function cancelBeforeCheckIn(Booking $booking): bool
     {

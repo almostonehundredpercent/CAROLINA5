@@ -5,13 +5,16 @@
     $expiredHold = $booking->hasExpiredHold() || $booking->isExpiredHoldRecord();
     $guestBooking = $booking->user_id === null;
     $canResumePayment = ! $expiredHold && $booking->status === 'pending' && ! $booking->hasProtectedInventory();
-    $showCancellation = $guestBooking && $booking->status !== 'cancelled' && ! $expiredHold;
+    $showCancellation = $guestBooking && $booking->status !== 'cancelled' && ! $expiredHold && ! $booking->checked_in_at && ! $booking->checked_out_at;
     $canCancel = $showCancellation && $booking->canCancelOnline();
     $canReschedule = $showCancellation && $booking->canRescheduleOnline();
     $showExtension = $booking->checked_in_at && ! $booking->checked_out_at && $booking->status !== 'cancelled';
-    $hasPortalAside = $expiredHold || $canResumePayment || $showCancellation || $showExtension || $booking->status === 'cancelled' || ! $guestBooking;
-    $portalStatus = $expiredHold ? 'Payment hold expired' : ucfirst($booking->status);
-    $portalStatusClass = $expiredHold ? 'expired' : strtolower($booking->status);
+    $extensionHours = max(1, min(168, (int) old('hours', 1)));
+    $scheduledCheckoutAt = $booking->check_out_at ?? $booking->check_out?->copy()->endOfDay();
+    $showEarlyCheckout = $showExtension && $booking->status === 'confirmed' && $scheduledCheckoutAt?->gt(\App\Support\PropertyTime::now());
+    $hasPortalAside = $expiredHold || $canResumePayment || $showCancellation || $showExtension || $booking->checked_out_at || $booking->status === 'cancelled' || ! $guestBooking;
+    $portalStatus = $booking->checked_out_at ? 'Checked out' : ($expiredHold ? 'Payment hold expired' : ucfirst($booking->status));
+    $portalStatusClass = $booking->checked_out_at ? 'checked-out' : ($expiredHold ? 'expired' : strtolower($booking->status));
 @endphp
 
 <style>
@@ -43,6 +46,7 @@
     .portal-status:before{width:7px;height:7px;border-radius:50%;background:currentColor;content:''}
     .portal-status.confirmed{border-color:#b9dfc4;background:#e9f7ed;color:#21653a}
     .portal-status.pending{border-color:#efd9a7;background:#fff4da;color:#805100}
+    .portal-status.checked-out{border-color:#cdd8e8;background:#eef3fa;color:#3b5879}
     .portal-status.cancelled,.portal-status.expired{border-color:#efc4bc;background:#fff0ed;color:#9a3829}
     .portal-facts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
     .portal-fact{display:grid;align-content:start;gap:6px;min-height:88px;padding:14px 15px;border:1px solid var(--portal-border);border-radius:12px;background:var(--portal-subtle)}
@@ -62,6 +66,47 @@
     .portal-cancel-form{width:100%;margin-top:auto}
     .portal-cancel-form .button{margin-top:0}
     .portal-cancel-form p{margin:0 0 14px;font-size:.78rem}
+    .portal-active-stay-card{border-color:#e7c18e;background:linear-gradient(145deg,#fff9ef,#fffaf4)}
+    .portal-stay-intro{margin-bottom:16px!important}
+    .portal-hour-picker{display:grid;width:100%;gap:8px;margin:0 0 12px}
+    .portal-hour-picker>label{color:var(--ink);font-size:.78rem;font-weight:800}
+    .portal-hour-stepper{display:grid;grid-template-columns:44px minmax(0,1fr) 44px;gap:7px}
+    .portal-hour-stepper button{width:44px;height:44px;border:1px solid var(--portal-border);border-radius:10px;background:var(--portal-subtle);color:var(--ink);font-size:1.25rem;font-weight:800;cursor:pointer}
+    .portal-hour-stepper input{width:100%;min-width:0;height:44px;border:1px solid var(--portal-border);border-radius:10px;background:var(--portal-surface);color:var(--ink);text-align:center;font:700 1rem 'DM Sans',sans-serif}
+    .portal-hour-picker small{color:var(--muted);font-size:.75rem;line-height:1.4}
+    .portal-extension-total{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;margin:2px 0 16px;padding:12px 14px;border:1px solid #e7d0ae;border-radius:12px;background:#fffdf8}
+    .portal-extension-total span{color:var(--muted);font-size:.8rem}
+    .portal-extension-total strong{color:#8d4b0b;font-size:1.08rem;font-weight:850}
+    .portal-extension-error{width:100%;margin:0 0 12px!important;color:#a33932!important;font-size:.82rem!important;font-weight:700}
+    .portal-early-card{border-color:#d8cfc4;background:linear-gradient(145deg,#fbf8f3,#f7f1e8)}
+    .portal-early-policy{width:100%;margin:0 0 16px;padding:11px 12px;border:1px solid var(--portal-border);border-radius:11px;background:var(--portal-subtle);color:var(--muted);font-size:.78rem;line-height:1.5}
+    .portal-early-policy strong{color:var(--ink)}
+    .portal-early-button{border:1px solid #c9b9a6!important;background:#f6efe5!important;color:#513c2b!important}
+    .portal-early-button:hover{background:#eee2d3!important}
+    .portal-action-dialog{width:min(480px,calc(100% - 28px));max-width:none;max-height:min(90dvh,700px);margin:auto;padding:26px;border:1px solid #dfcbb1;border-radius:20px;background:var(--portal-surface);color:var(--ink);box-shadow:0 28px 90px rgba(35,24,14,.35)}
+    .portal-action-dialog::backdrop{background:rgba(24,18,13,.62);backdrop-filter:blur(4px)}
+    .portal-dialog-top{display:flex;justify-content:space-between;align-items:center;gap:14px;margin-bottom:10px}
+    .portal-dialog-top .portal-kicker{margin:0}
+    .portal-dialog-close{display:grid;place-items:center;width:36px;height:36px;border:1px solid var(--portal-border);border-radius:50%;background:transparent;color:var(--muted);font-size:1.25rem;cursor:pointer}
+    .portal-action-dialog h2{margin:0 0 10px;color:var(--ink);font:750 1.55rem/1.15 'DM Sans',sans-serif}
+    .portal-action-dialog p{margin:0 0 18px;color:var(--muted);font-size:.92rem;line-height:1.55}
+    .portal-dialog-total{display:flex;justify-content:space-between;gap:12px;margin:0 0 20px;padding:14px;border:1px solid #e7d0ae;border-radius:12px;background:var(--portal-subtle)}
+    .portal-dialog-total span{color:var(--muted);font-size:.83rem}
+    .portal-dialog-total strong{color:#8d4b0b;font-size:1.05rem}
+    .portal-dialog-actions{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+    .portal-dialog-actions button{min-height:46px;padding:10px;border:1px solid var(--portal-border);border-radius:10px;background:transparent;color:var(--ink);font:700 .85rem 'DM Sans',sans-serif;cursor:pointer}
+    .portal-dialog-actions button[data-dialog-confirm]{border-color:#a95308;background:#a95308;color:#fff}
+    .portal-early-dialog .portal-dialog-actions button[data-dialog-confirm]{border-color:#a23e30;background:#a23e30}
+    .dark-mode .portal-active-stay-card{border-color:#79582e;background:linear-gradient(145deg,#342719,#251d17)}
+    .dark-mode .portal-extension-total,.dark-mode .portal-dialog-total{border-color:#665034;background:#2a2119}
+    .dark-mode .portal-extension-total strong,.dark-mode .portal-dialog-total strong{color:#ffc16b}
+    .dark-mode .portal-early-card{border-color:#514638;background:linear-gradient(145deg,#2b241d,#211a15)}
+    .dark-mode .portal-early-policy{border-color:#514638;background:#29211b}
+    .dark-mode .portal-early-policy strong{color:var(--ink)}
+    .dark-mode .portal-early-button{border-color:#655641!important;background:#30271e!important;color:#f6e9d8!important}
+    .dark-mode .portal-dialog-actions button[data-dialog-confirm]{color:#fff}
+    .dark-mode .portal-early-dialog .portal-dialog-actions button[data-dialog-confirm]{background:#963c2c}
+    .dark-mode .portal-status.checked-out{border-color:#48586c;background:#252f3a;color:#c4d6ef}
     .portal-reschedule-form{display:grid;width:100%;gap:10px;margin:0 0 20px;padding:14px;border:1px solid var(--portal-border);border-radius:11px;background:var(--portal-subtle)}
     .portal-reschedule-form label{display:grid;gap:5px;color:var(--muted);font-size:.8rem;font-weight:700}
     .portal-reschedule-form input{width:100%;min-width:0;padding:10px;border:1px solid var(--portal-border);border-radius:8px;background:var(--portal-surface);color:var(--ink);font:inherit}
@@ -80,7 +125,7 @@
     .dark-mode .portal-action-card .button.secondary{border-color:var(--portal-border);color:var(--ink)}
     .guest-portal :focus-visible{outline:3px solid #d99223;outline-offset:3px}
     @media(max-width:760px){.guest-portal{width:min(100% - 32px,620px);margin:32px auto 48px}.guest-portal-context{align-items:flex-start;flex-direction:column;gap:10px;margin-bottom:20px}.guest-portal-identifiers{width:100%}.guest-portal-identifiers>div{min-width:0;flex:1;padding:2px 10px}.guest-portal-identifiers>div:first-child{padding-left:0}.guest-portal-header{align-items:stretch;flex-direction:column;gap:18px;margin-bottom:18px;padding-bottom:20px}.guest-arrival-link{width:100%}.guest-portal-grid{grid-template-columns:1fr;gap:14px}.portal-surface,.portal-action-card{padding:20px}}
-    @media(max-width:480px){.guest-portal{width:calc(100% - 24px);margin-top:24px}.guest-portal-header h1{font-size:2.55rem}.portal-summary-heading{align-items:flex-start;flex-direction:column;gap:12px}.portal-facts{grid-template-columns:1fr}.portal-fact{min-height:72px;padding:12px 14px}.portal-surface,.portal-action-card{padding:18px;border-radius:15px}}
+    @media(max-width:480px){.guest-portal{width:calc(100% - 24px);margin-top:24px}.guest-portal-header h1{font-size:2.55rem}.portal-summary-heading{align-items:flex-start;flex-direction:column;gap:12px}.portal-facts{grid-template-columns:1fr}.portal-fact{min-height:72px;padding:12px 14px}.portal-surface,.portal-action-card{padding:18px;border-radius:15px}.portal-action-dialog{padding:21px;border-radius:17px}.portal-dialog-actions{grid-template-columns:1fr}.portal-hour-stepper{grid-template-columns:44px minmax(0,1fr) 44px}}
 </style>
 
 <section class="guest-portal" aria-labelledby="guest-portal-title">
@@ -112,7 +157,7 @@
             <div class="portal-facts">
                 <div class="portal-fact"><small>Stay</small><strong>{{ $booking->check_in_at ? $booking->check_in_at->format('M j, g A') . ' – ' . $booking->check_out_at->format('M j, g A') : $booking->check_in->format('M j') . ' – ' . $booking->check_out->format('M j, Y') }}</strong></div>
                 <div class="portal-fact"><small>Total</small><strong>₱{{ number_format($booking->total_amount, 2) }}</strong></div>
-                <div class="portal-fact"><small>Check-in</small><strong>{{ $booking->checked_in_at ? 'Checked in' : 'Awaiting arrival' }}</strong></div>
+                <div class="portal-fact"><small>Stay status</small><strong>{{ $booking->checked_out_at ? 'Checked out · '.$booking->checked_out_at->format('M j, g:i A') : ($booking->checked_in_at ? 'Checked in' : 'Awaiting arrival') }}</strong></div>
                 <div class="portal-fact"><small>Room</small><strong>{{ $booking->room->name }}</strong></div>
             </div>
         </section>
@@ -120,15 +165,37 @@
         @if($hasPortalAside)
         <aside class="portal-action-column" aria-label="Booking actions">
             @if($showExtension)
-                <section class="portal-action-card">
-                    <span class="portal-kicker">ACTIVE STAY</span>
-                    <h2>Add one more hour</h2>
-                    <p>Extend your current checked-in stay by one hour for ₱100. We’ll check that the room is still free after your current checkout time.</p>
-                    @if($errors->has('extension'))<p role="alert">{{ $errors->first('extension') }}</p>@endif
-                    @if(session('success'))<p role="status">{{ session('success') }}</p>@endif
-                    <form class="portal-cancel-form" method="POST" action="{{ route('bookings.lookup.extend', $booking) }}" onsubmit="return confirm('Add one hour to your stay for ₱100?');">
+                <section class="portal-action-card portal-active-stay-card">
+                    <span class="portal-kicker">ACTIVE STAY · EXTRA TIME</span>
+                    <h2>Stay a little longer</h2>
+                    <p class="portal-stay-intro">Choose how many extra hours you need. Each hour is ₱100, and we’ll check that the room is available.</p>
+                    @if($errors->has('extension') || $errors->has('hours'))<p class="portal-extension-error" role="alert">{{ $errors->first('extension') ?: $errors->first('hours') }}</p>@endif
+                    <form id="portal-extension-form" class="portal-cancel-form" method="POST" action="{{ route('bookings.lookup.extend', $booking) }}">
                         @csrf
-                        <button class="button" type="submit">Add 1 hour · ₱100</button>
+                        <div class="portal-hour-picker">
+                            <label for="portal-extension-hours">Extra hours</label>
+                            <div class="portal-hour-stepper">
+                                <button type="button" data-hours-step="-1" aria-label="Remove one hour">−</button>
+                                <input id="portal-extension-hours" name="hours" type="number" min="1" max="168" step="1" inputmode="numeric" value="{{ $extensionHours }}" data-rate="{{ \App\Support\StayPricing::EXTRA_HOUR_RATE }}" required aria-describedby="portal-hours-help">
+                                <button type="button" data-hours-step="1" aria-label="Add one hour">+</button>
+                            </div>
+                            <small id="portal-hours-help">1–168 hours · ₱{{ number_format(\App\Support\StayPricing::EXTRA_HOUR_RATE, 0) }} per hour. Longer stays can be arranged with reception.</small>
+                        </div>
+                        <div class="portal-extension-total"><span>Additional charge</span><strong id="portal-extension-total" aria-live="polite">₱{{ number_format($extensionHours * \App\Support\StayPricing::EXTRA_HOUR_RATE, 0) }}</strong></div>
+                        <button class="button" type="submit">Review stay extension</button>
+                    </form>
+                </section>
+            @endif
+
+            @if($showEarlyCheckout)
+                <section class="portal-action-card portal-early-card">
+                    <span class="portal-kicker">LEAVING AHEAD OF SCHEDULE?</span>
+                    <h2>Check out early</h2>
+                    <p>End your stay now and let Carolina know the room is ready for cleaning.</p>
+                    <div class="portal-early-policy"><strong>Before you continue:</strong> Your original booking total stays the same. Any remaining balance is still due, and no refund is issued automatically.</div>
+                    <form id="portal-early-checkout-form" class="portal-cancel-form" method="POST" action="{{ route('bookings.lookup.early-checkout', $booking) }}">
+                        @csrf
+                        <button class="button portal-early-button" type="submit">Check out now</button>
                     </form>
                 </section>
             @endif
@@ -184,6 +251,12 @@
                         <a class="portal-help-link" href="https://www.facebook.com/profile.php?id=61556306344437" target="_blank" rel="noopener noreferrer">Message Carolina</a>
                     @endif
                 </section>
+            @elseif($booking->checked_out_at)
+                <section class="portal-action-card">
+                    <span class="portal-kicker">STAY UPDATE</span>
+                    <h2>Check-out recorded</h2>
+                    <p class="portal-status-message">Your check-out was recorded for {{ $booking->checked_out_at->format('M j, Y · g:i A') }}. Your original booking total remains unchanged; any outstanding balance is still due.</p>
+                </section>
             @elseif($booking->status === 'cancelled')
                 <section class="portal-action-card">
                     <span class="portal-kicker">RESERVATION UPDATE</span>
@@ -202,5 +275,93 @@
         @endif
     </div>
 </section>
+@if($showExtension)
+    <dialog class="portal-action-dialog" id="portal-extension-dialog" aria-labelledby="portal-extension-dialog-title" aria-describedby="portal-extension-dialog-copy">
+        <div class="portal-dialog-top"><span class="portal-kicker">CONFIRM EXTRA TIME</span><button class="portal-dialog-close" type="button" data-dialog-close aria-label="Close confirmation">×</button></div>
+        <h2 id="portal-extension-dialog-title">Extend your stay?</h2>
+        <p id="portal-extension-dialog-copy">We’ll confirm availability before changing your checkout time. The added charge is ₱{{ number_format(\App\Support\StayPricing::EXTRA_HOUR_RATE, 0) }} per extra hour.</p>
+        <div class="portal-dialog-total"><span><strong id="portal-confirm-hours">{{ $extensionHours }} extra hour{{ $extensionHours === 1 ? '' : 's' }}</strong></span><strong id="portal-confirm-total">₱{{ number_format($extensionHours * \App\Support\StayPricing::EXTRA_HOUR_RATE, 0) }}</strong></div>
+        <div class="portal-dialog-actions"><button type="button" data-dialog-close>Keep current checkout</button><button type="button" data-dialog-confirm>Confirm extension</button></div>
+    </dialog>
+@endif
+@if($showEarlyCheckout)
+    <dialog class="portal-action-dialog portal-early-dialog" id="portal-early-checkout-dialog" aria-labelledby="portal-early-dialog-title" aria-describedby="portal-early-dialog-copy">
+        <div class="portal-dialog-top"><span class="portal-kicker">GUEST CHECK-OUT</span><button class="portal-dialog-close" type="button" data-dialog-close aria-label="Close confirmation">×</button></div>
+        <h2 id="portal-early-dialog-title">Check out now?</h2>
+        <p id="portal-early-dialog-copy">This records your departure immediately and releases the room for cleaning. Your original booking total stays the same, no automatic refund is issued, and any remaining balance is still due.</p>
+        <div class="portal-dialog-actions"><button type="button" data-dialog-close>Stay a little longer</button><button type="button" data-dialog-confirm>Confirm check-out</button></div>
+    </dialog>
+@endif
+<script>
+    (() => {
+        const extensionForm = document.getElementById('portal-extension-form');
+        if (extensionForm) {
+            const hoursInput = document.getElementById('portal-extension-hours');
+            const total = document.getElementById('portal-extension-total');
+            const dialog = document.getElementById('portal-extension-dialog');
+            const confirmHours = document.getElementById('portal-confirm-hours');
+            const confirmTotal = document.getElementById('portal-confirm-total');
+            const rate = Number(hoursInput.dataset.rate || 100);
+            const formatMoney = amount => '₱' + new Intl.NumberFormat('en-PH', { maximumFractionDigits: 0 }).format(amount);
+            const updateExtensionTotal = () => {
+                const hours = Math.max(1, Math.min(168, Number.parseInt(hoursInput.value, 10) || 1));
+                const amount = hours * rate;
+                total.textContent = formatMoney(amount);
+                confirmHours.textContent = `${hours} extra hour${hours === 1 ? '' : 's'}`;
+                confirmTotal.textContent = formatMoney(amount);
+            };
+
+            hoursInput.addEventListener('input', updateExtensionTotal);
+            extensionForm.querySelectorAll('[data-hours-step]').forEach(control => control.addEventListener('click', () => {
+                const current = Number.parseInt(hoursInput.value, 10) || 1;
+                hoursInput.value = String(Math.max(1, Math.min(168, current + Number(control.dataset.hoursStep))));
+                updateExtensionTotal();
+            }));
+            updateExtensionTotal();
+            extensionForm.addEventListener('submit', event => {
+                if (extensionForm.dataset.confirmed === 'true') {
+                    delete extensionForm.dataset.confirmed;
+                    return;
+                }
+                event.preventDefault();
+                updateExtensionTotal();
+                if (dialog && typeof dialog.showModal === 'function') dialog.showModal();
+                else if (window.confirm(`Add ${hoursInput.value} extra hour(s) for ${formatMoney(Number(hoursInput.value) * rate)}?`)) {
+                    extensionForm.dataset.confirmed = 'true';
+                    extensionForm.requestSubmit();
+                }
+            });
+            dialog?.querySelectorAll('[data-dialog-close]').forEach(control => control.addEventListener('click', () => dialog.close()));
+            dialog?.querySelector('[data-dialog-confirm]')?.addEventListener('click', () => {
+                dialog.close();
+                extensionForm.dataset.confirmed = 'true';
+                extensionForm.requestSubmit();
+            });
+        }
+
+        const checkoutForm = document.getElementById('portal-early-checkout-form');
+        const checkoutDialog = document.getElementById('portal-early-checkout-dialog');
+        if (checkoutForm && checkoutDialog) {
+            checkoutForm.addEventListener('submit', event => {
+                if (checkoutForm.dataset.confirmed === 'true') {
+                    delete checkoutForm.dataset.confirmed;
+                    return;
+                }
+                event.preventDefault();
+                if (typeof checkoutDialog.showModal === 'function') checkoutDialog.showModal();
+                else if (window.confirm('Check out now? Your original booking total will not change and any balance remains due.')) {
+                    checkoutForm.dataset.confirmed = 'true';
+                    checkoutForm.requestSubmit();
+                }
+            });
+            checkoutDialog.querySelectorAll('[data-dialog-close]').forEach(control => control.addEventListener('click', () => checkoutDialog.close()));
+            checkoutDialog.querySelector('[data-dialog-confirm]')?.addEventListener('click', () => {
+                checkoutDialog.close();
+                checkoutForm.dataset.confirmed = 'true';
+                checkoutForm.requestSubmit();
+            });
+        }
+    })();
+</script>
 @include('bookings.cancel-dialog')
 @endsection
