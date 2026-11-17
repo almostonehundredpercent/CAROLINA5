@@ -332,6 +332,9 @@
                                         @if((float) $booking->deposit_amount > 0)
                                             <small class="booking-payment-method">Downpayment ₱{{ number_format((float) $booking->deposit_amount, 2) }} · {{ $booking->deposit_status === 'verified' || $booking->deposit_verified_at ? 'Verified' : 'Awaiting payment' }}</small>
                                         @endif
+                                        @if($booking->early_checkout_status === 'requested' && ! $booking->checked_out_at)
+                                            <span class="hold-expiry" role="status">Early check-out requested · {{ $booking->early_checkout_requested_at?->format('M j, g:i A') }}</span>
+                                        @endif
                                         @if($timeAdjustment?->status === 'needs_review')
                                             <span class="hold-expiry" role="status">Extra-time payment received · staff follow-up needed</span>
                                         @elseif($timeAdjustment?->status === 'pending' && $timeAdjustment->expires_at?->lte(now()))
@@ -397,7 +400,14 @@
                                                         </form>
                                                     @endif
 
-                                                    @if($booking->checked_in_at && ! $booking->checked_out_at)
+                                                    @if($booking->early_checkout_status === 'requested' && $booking->checked_in_at && ! $booking->checked_out_at)
+                                                        <form method="POST" action="{{ route('admin.bookings.early-checkout.resolve', $booking) }}" data-admin-confirm data-confirm-title="Confirm early check-out?" data-confirm-message="This records the guest’s departure and starts a 2-hour cleaning period. The booking total stays the same; refunds are handled separately." data-confirm-action="Confirm check-out">
+                                                            @csrf<input type="hidden" name="decision" value="confirm"><button class="status-select confirmed" type="submit">Confirm check-out</button>
+                                                        </form>
+                                                        <form method="POST" action="{{ route('admin.bookings.early-checkout.resolve', $booking) }}" data-admin-confirm data-confirm-title="Decline this request?" data-confirm-message="The guest will remain checked in. Contact them to coordinate the departure." data-confirm-action="Decline request" data-confirm-style="cancellation">
+                                                            @csrf<input type="hidden" name="decision" value="decline"><button class="status-select cancelled" type="submit">Decline request</button>
+                                                        </form>
+                                                    @elseif($booking->checked_in_at && ! $booking->checked_out_at)
                                                         <form method="POST" action="{{ route('admin.bookings.check-out', $booking) }}" data-admin-confirm data-confirm-title="Check out now?" data-confirm-message="This records the guest’s actual checkout and starts room cleaning. It does not automatically refund unused time." data-confirm-action="Check out now">
                                                             @csrf
                                                             <input type="hidden" name="action" value="check_out">

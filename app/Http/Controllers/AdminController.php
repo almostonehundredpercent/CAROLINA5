@@ -214,23 +214,53 @@ class AdminController extends Controller
         }
         if ($action === 'check_out') {
             abort_if(! $booking->checked_in_at || $booking->checked_out_at, 422, 'This guest is not currently checked in.');
-            DB::transaction(function () use ($booking, $request) {
+            $checkout = DB::transaction(function () use ($booking, $request) {
                 $lockedRoom = Room::whereKey($booking->room_id)->lockForUpdate()->firstOrFail();
+                $lockedBooking = Booking::whereKey($booking->id)->lockForUpdate()->firstOrFail();
+                abort_if(! $lockedBooking->checked_in_at || $lockedBooking->checked_out_at, 422, 'This guest is not currently checked in.');
+
                 $checkedOutAt = PropertyTime::now();
-                $booking->update(['checked_out_at' => $checkedOutAt]);
+                $wasEarlyCheckoutRequest = $lockedBooking->early_checkout_status === 'requested';
+                $attributes = ['checked_out_at' => $checkedOutAt];
+                if ($wasEarlyCheckoutRequest) {
+                    $attributes += [
+                        'early_checkout_status' => 'confirmed',
+                        'early_checkout_reviewed_at' => $checkedOutAt,
+                        'early_checkout_reviewed_by' => $request->user()->id,
+                    ];
+                }
+                $lockedBooking->update($attributes);
                 RoomBlock::create([
                     'room_id' => $lockedRoom->id,
                     'status' => 'cleaning',
                     'starts_at' => $checkedOutAt,
                     'ends_at' => $checkedOutAt->copy()->addHours(2),
-                    'notes' => 'Automatic 2-hour cleaning period after check-out.',
+                    'notes' => $wasEarlyCheckoutRequest
+                        ? 'Automatic 2-hour cleaning period after staff-confirmed early check-out.'
+                        : 'Automatic 2-hour cleaning period after check-out.',
                     'created_by' => $request->user()->id,
                 ]);
+                return ['booking' => $lockedBooking, 'early_request' => $wasEarlyCheckoutRequest, 'checked_out_at' => $checkedOutAt];
             });
-            $this->log($booking, $request->user()->id, 'checked_out', 'Guest checked out; 2-hour room cleaning timer started.');
-            $reviewInvitations->send($booking->fresh(['room', 'user']));
+            $checkedOutBooking = $checkout['booking'];
+            $this->log(
+                $checkedOutBooking,
+                $request->user()->id,
+                $checkout['early_request'] ? 'early_checkout_confirmed' : 'checked_out',
+                $checkout['early_request']
+                    ? 'Staff confirmed the guest’s early check-out request; the actual departure was recorded and a 2-hour cleaning timer started.'
+                    : 'Guest checked out; 2-hour room cleaning timer started.',
+                $checkout['early_request'] ? ['early_checkout_status' => 'requested'] : [],
+                ['checked_out_at' => $checkout['checked_out_at']->toIso8601String()],
+            );
+            if ($checkout['early_request']) {
+                $this->email($checkedOutBooking->fresh(['room', 'user']), 'Early check-out confirmed', 'Reception confirmed your early check-out and recorded your departure at '.$checkout['checked_out_at']->format('M j, Y g:i A').'. Your booking total is unchanged; any remaining balance is still due. No refund is issued automatically.');
+            }
+            $reviewInvitations->send($checkedOutBooking->fresh(['room', 'user']));
 
-            return back()->with('success', 'Guest checked out. A 2-hour cleaning timer is now active.');
+            return back()->with('success', $checkout['early_request']
+                ? 'Early check-out confirmed. The departure was recorded and a 2-hour cleaning timer is now active.'
+                : 'Guest checked out. A 2-hour cleaning timer is now active.');
         }
 
         $data = $request->validate(['status' => 'required|in:pending,confirmed,cancelled', 'staff_note' => 'nullable|string|max:500', 'cancellation_reason' => 'nullable|string|max:500']);
@@ -277,6 +307,93 @@ class AdminController extends Controller
         $this->email($booking->fresh('room'), 'Your Carolina booking was updated', 'Your booking status is now '.$status.'.');
 
         return back()->with('success', 'Booking status updated.');
+    }
+
+    public function resolveEarlyCheckout(Request $request, Booking $booking, GuestReviewInvitationService $reviewInvitations)
+    {
+        abort_unless($request->user()->canManageBookings(), 403, 'Your staff role cannot manage bookings.');
+        $data = $request->validate(['decision' => 'required|in:confirm,decline']);
+
+        $resolution = DB::transaction(function () use ($booking, $request, $data) {
+            $room = Room::whereKey($booking->room_id)->lockForUpdate()->firstOrFail();
+            $locked = Booking::whereKey($booking->id)->lockForUpdate()->firstOrFail();
+            abort_unless(
+                $locked->early_checkout_status === 'requested'
+                    && $locked->status === 'confirmed'
+                    && $locked->checked_in_at
+                    && ! $locked->checked_out_at,
+                409,
+                'This early check-out request is no longer waiting for review.',
+            );
+
+            $resolvedAt = PropertyTime::now();
+            $before = [
+                'early_checkout_status' => $locked->early_checkout_status,
+                'checked_out_at' => $locked->checked_out_at?->toIso8601String(),
+            ];
+            if ($data['decision'] === 'confirm') {
+                $locked->update([
+                    'early_checkout_status' => 'confirmed',
+                    'checked_out_at' => $resolvedAt,
+                    'early_checkout_reviewed_at' => $resolvedAt,
+                    'early_checkout_reviewed_by' => $request->user()->id,
+                ]);
+                RoomBlock::create([
+                    'room_id' => $room->id,
+                    'status' => 'cleaning',
+                    'starts_at' => $resolvedAt,
+                    'ends_at' => $resolvedAt->copy()->addHours(2),
+                    'notes' => 'Automatic 2-hour cleaning period after staff-confirmed early check-out.',
+                    'created_by' => $request->user()->id,
+                ]);
+            } else {
+                $locked->update([
+                    'early_checkout_status' => 'declined',
+                    'early_checkout_reviewed_at' => $resolvedAt,
+                    'early_checkout_reviewed_by' => $request->user()->id,
+                ]);
+            }
+
+            return [
+                'booking' => $locked,
+                'decision' => $data['decision'],
+                'resolved_at' => $resolvedAt,
+                'before' => $before,
+            ];
+        });
+
+        $confirmed = $resolution['decision'] === 'confirm';
+        $this->log(
+            $resolution['booking'],
+            $request->user()->id,
+            $confirmed ? 'early_checkout_confirmed' : 'early_checkout_declined',
+            $confirmed
+                ? 'Staff confirmed the guest’s early check-out request; the departure was recorded and a 2-hour cleaning timer started.'
+                : 'Staff declined the guest’s early check-out request; the stay remains active.',
+            $resolution['before'],
+            [
+                'early_checkout_status' => $confirmed ? 'confirmed' : 'declined',
+                'checked_out_at' => $confirmed ? $resolution['resolved_at']->toIso8601String() : null,
+                'early_checkout_reviewed_at' => $resolution['resolved_at']->toIso8601String(),
+                'early_checkout_reviewed_by' => $request->user()->id,
+            ],
+        );
+
+        if ($confirmed) {
+            $freshBooking = $resolution['booking']->fresh(['room', 'user']);
+            $this->email($freshBooking, 'Early check-out confirmed', 'Reception confirmed your early check-out and recorded your departure at '.$resolution['resolved_at']->format('M j, Y g:i A').'. Your booking total is unchanged; any remaining balance is still due. No refund is issued automatically.');
+            $reviewInvitations->send($freshBooking);
+
+            return back()->with('success', 'Early check-out confirmed. The departure was recorded and a 2-hour cleaning timer is now active.');
+        }
+
+        $this->email(
+            $resolution['booking']->fresh(['room', 'user']),
+            'Early check-out request update',
+            'Reception could not confirm your early check-out request. Your stay remains active until staff records your departure. Please contact reception to arrange check-out.',
+        );
+
+        return back()->with('success', 'Request declined. The guest remains checked in; contact them to coordinate the departure.');
     }
 
     public function updatePayment(Request $request, Booking $booking)
@@ -560,6 +677,7 @@ class AdminController extends Controller
         return view('admin.frontdesk', [
             'arrivals' => Booking::with(['user', 'room'])->where('status', 'confirmed')->whereDate('check_in', $today)->whereNull('checked_in_at')->get(),
             'activeStays' => Booking::with(['user', 'room'])->whereNotNull('checked_in_at')->whereNull('checked_out_at')->get(),
+            'earlyCheckoutRequests' => Booking::with(['user', 'room'])->where('early_checkout_status', 'requested')->whereNull('checked_out_at')->orderBy('early_checkout_requested_at')->get(),
             'departures' => Booking::with(['user', 'room'])->whereNotNull('checked_in_at')->whereNull('checked_out_at')->whereDate('check_out', '<=', $today)->get(),
             'roomOperationBlocks' => RoomBlock::with('room')->whereIn('status', ['cleaning', 'maintenance'])->overlapping($today, $tomorrow)->orderBy('starts_at')->get(),
             'propertyNow' => $propertyNow,

@@ -51,6 +51,16 @@
             @if($booking->status === 'confirmed' || in_array($booking->payment_status, ['paid', 'partial', 'refunded'], true))
                 <a class="button button-outline booking-receipt-link" href="{{ \App\Http\Controllers\StayController::link($booking) }}">{{ $booking->payment_status === 'partial' ? 'View downpayment receipt' : 'View receipt' }}</a>
             @endif
+            @if($booking->early_checkout_status === 'requested' && ! $booking->checked_out_at)
+                <small>Early check-out request sent. Reception must confirm before your stay ends.</small>
+            @elseif($booking->early_checkout_status === 'declined' && ! $booking->checked_out_at)
+                <small>Reception could not confirm your request. Contact Carolina to arrange check-out.</small>
+            @elseif($booking->status === 'confirmed' && $booking->checked_in_at && ! $booking->checked_out_at && ($booking->check_out_at ?? $booking->check_out->copy()->endOfDay())->gt(\App\Support\PropertyTime::now()))
+                <form method="POST" action="{{ route('bookings.early-checkout', $booking) }}" onsubmit="return window.confirm('Send an early check-out request? Your stay remains active until reception confirms your departure. Your booking total stays the same.')">
+                    @csrf
+                    <button class="button button-outline booking-receipt-link" type="submit">Request early check-out</button>
+                </form>
+            @endif
             @if($booking->status !== 'cancelled' && $booking->check_in->isFuture())
                 @if($booking->canRescheduleOnline())
                     <details class="booking-reschedule-details">
@@ -72,7 +82,7 @@
                 @endif
                 @if($booking->canCancelOnline())
                     <small>Cancel at least 3 days before check-in for a full refund. Cancellations less than 3 days ahead are allowed before check-in but are non-refundable.</small>
-                    <form method="POST" action="{{ route('bookings.cancel', $booking) }}" data-booking-cancel-confirm data-cancel-room="{{ $booking->room?->name ?? 'Room unavailable' }}" data-cancel-check-in="{{ $booking->check_in_at?->format('M j, Y · g:i A') ?? $booking->check_in->format('M j, Y') }}" data-cancel-check-out="{{ $booking->check_out_at?->format('M j, Y · g:i A') ?? $booking->check_out->format('M j, Y') }}" data-cancel-reference="{{ $booking->reference }}">@csrf @method('PATCH')<button class="link-danger" type="submit">Cancel booking</button></form>
+                    <form method="POST" action="{{ route('bookings.cancel', $booking) }}" data-booking-cancel-confirm>@csrf @method('PATCH')<button class="link-danger" type="submit">Cancel booking</button></form>
                 @else
                     <small>Online cancellation closes at the scheduled check-in time. Contact Carolina if you need help.</small>
                 @endif

@@ -11,7 +11,7 @@
     $showExtension = $booking->checked_in_at && ! $booking->checked_out_at && $booking->status !== 'cancelled';
     $extensionHours = max(1, min(168, (int) old('hours', 1)));
     $scheduledCheckoutAt = $booking->check_out_at ?? $booking->check_out?->copy()->endOfDay();
-    $showEarlyCheckout = $showExtension && $booking->status === 'confirmed' && $scheduledCheckoutAt?->gt(\App\Support\PropertyTime::now());
+    $showEarlyCheckout = $showExtension && $booking->status === 'confirmed' && $scheduledCheckoutAt?->gt(\App\Support\PropertyTime::now()) && ! in_array($booking->early_checkout_status, ['requested', 'declined', 'confirmed'], true);
     $hasPortalAside = $expiredHold || $canResumePayment || $showCancellation || $showExtension || $booking->checked_out_at || $booking->status === 'cancelled' || ! $guestBooking;
     $portalStatus = $booking->checked_out_at ? 'Checked out' : ($expiredHold ? 'Payment hold expired' : ucfirst($booking->status));
     $portalStatusClass = $booking->checked_out_at ? 'checked-out' : ($expiredHold ? 'expired' : strtolower($booking->status));
@@ -187,15 +187,28 @@
                 </section>
             @endif
 
-            @if($showEarlyCheckout)
+            @if($booking->early_checkout_status === 'requested')
+                <section class="portal-action-card portal-early-card">
+                    <span class="portal-kicker">REQUEST SENT</span>
+                    <h2>Waiting for reception</h2>
+                    <p>Your early check-out request is waiting for staff confirmation. You remain checked in until reception records your departure.</p>
+                </section>
+            @elseif($booking->early_checkout_status === 'declined')
+                <section class="portal-action-card portal-early-card">
+                    <span class="portal-kicker">REQUEST UPDATE</span>
+                    <h2>Please contact reception</h2>
+                    <p>Reception could not confirm your request. Your stay remains active until staff records your departure.</p>
+                    <a class="portal-help-link" href="{{ route('contact') }}">Contact Carolina</a>
+                </section>
+            @elseif($showEarlyCheckout)
                 <section class="portal-action-card portal-early-card">
                     <span class="portal-kicker">LEAVING AHEAD OF SCHEDULE?</span>
                     <h2>Check out early</h2>
-                    <p>End your stay now and let Carolina know the room is ready for cleaning.</p>
-                    <div class="portal-early-policy"><strong>Before you continue:</strong> Your original booking total stays the same. Any remaining balance is still due, and no refund is issued automatically.</div>
+                    <p>Ask reception to confirm your departure. You remain checked in until staff approves the request.</p>
+                    <div class="portal-early-policy"><strong>Booking total stays the same.</strong> Any remaining balance is still due; refunds are handled separately.</div>
                     <form id="portal-early-checkout-form" class="portal-cancel-form" method="POST" action="{{ route('bookings.lookup.early-checkout', $booking) }}">
                         @csrf
-                        <button class="button portal-early-button" type="submit">Check out now</button>
+                        <button class="button portal-early-button" type="submit">Request early check-out</button>
                     </form>
                 </section>
             @endif
@@ -240,7 +253,7 @@
                     @endif
                     @if($canCancel)
                         <p>You can cancel online before check-in. Cancel at least 3 days ahead for a full refund; cancellations less than 3 days ahead are non-refundable. The room will reopen for these dates after cancellation.</p>
-                        <form class="portal-cancel-form" method="POST" action="{{ route('bookings.lookup.cancel', $booking) }}" data-booking-cancel-confirm data-cancel-room="{{ $booking->room?->name ?? 'Room unavailable' }}" data-cancel-check-in="{{ $booking->check_in_at?->format('M j, Y · g:i A') ?? $booking->check_in->format('M j, Y') }}" data-cancel-check-out="{{ $booking->check_out_at?->format('M j, Y · g:i A') ?? $booking->check_out->format('M j, Y') }}" data-cancel-reference="{{ $booking->reference }}">
+                        <form class="portal-cancel-form" method="POST" action="{{ route('bookings.lookup.cancel', $booking) }}" data-booking-cancel-confirm>
                             @csrf @method('PATCH')
                             <input type="hidden" name="email" value="{{ $lookupEmail }}">
                             <input type="hidden" name="reference" value="{{ $booking->reference }}">
@@ -286,10 +299,10 @@
 @endif
 @if($showEarlyCheckout)
     <dialog class="portal-action-dialog portal-early-dialog" id="portal-early-checkout-dialog" aria-labelledby="portal-early-dialog-title" aria-describedby="portal-early-dialog-copy">
-        <div class="portal-dialog-top"><span class="portal-kicker">GUEST CHECK-OUT</span><button class="portal-dialog-close" type="button" data-dialog-close aria-label="Close confirmation">×</button></div>
-        <h2 id="portal-early-dialog-title">Check out now?</h2>
-        <p id="portal-early-dialog-copy">This records your departure immediately and releases the room for cleaning. Your original booking total stays the same, no automatic refund is issued, and any remaining balance is still due.</p>
-        <div class="portal-dialog-actions"><button type="button" data-dialog-close>Stay a little longer</button><button type="button" data-dialog-confirm>Confirm check-out</button></div>
+        <div class="portal-dialog-top"><span class="portal-kicker">EARLY CHECK-OUT REQUEST</span><button class="portal-dialog-close" type="button" data-dialog-close aria-label="Close confirmation">×</button></div>
+        <h2 id="portal-early-dialog-title">Send this request?</h2>
+        <p id="portal-early-dialog-copy">Reception must confirm your departure. Your stay remains active until staff records check-out. Your booking total stays the same; refunds are handled separately.</p>
+        <div class="portal-dialog-actions"><button type="button" data-dialog-close>Go back</button><button type="button" data-dialog-confirm>Send request</button></div>
     </dialog>
 @endif
 <script>
@@ -349,7 +362,7 @@
                 }
                 event.preventDefault();
                 if (typeof checkoutDialog.showModal === 'function') checkoutDialog.showModal();
-                else if (window.confirm('Check out now? Your original booking total will not change and any balance remains due.')) {
+                else if (window.confirm('Send an early check-out request? Your stay remains active until reception confirms your departure.')) {
                     checkoutForm.dataset.confirmed = 'true';
                     checkoutForm.requestSubmit();
                 }

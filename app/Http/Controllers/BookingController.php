@@ -14,7 +14,6 @@ use App\Models\Room;
 use App\Models\RoomBlock;
 use App\Services\BookingTimeAdjustmentService;
 use App\Services\GuestBookingRescheduleService;
-use App\Services\GuestReviewInvitationService;
 use App\Services\PayMongoCheckout;
 use App\Services\PayMongoCheckoutCreationException;
 use App\Services\PayMongoPaymentReconciler;
@@ -1007,34 +1006,47 @@ class BookingController extends Controller
         return back()->with('success', $hoursToAdd.' extra hour'.($hoursToAdd === 1 ? '' : 's').' added for ₱'.number_format(StayPricing::EXTRA_HOUR_RATE * $hoursToAdd, 2).'. Your updated checkout time and balance are shown below.');
     }
 
-    public function earlyCheckout(Request $request, Booking $booking, GuestReviewInvitationService $reviewInvitations)
+    public function earlyCheckout(Request $request, Booking $booking)
     {
         $this->authorizeBookingAccess($request, $booking);
 
-        DB::transaction(function () use ($booking, $request) {
-            $room = Room::whereKey($booking->room_id)->lockForUpdate()->firstOrFail();
+        $requestResult = DB::transaction(function () use ($booking) {
+            Room::whereKey($booking->room_id)->lockForUpdate()->firstOrFail();
             $locked = Booking::whereKey($booking->id)->lockForUpdate()->firstOrFail();
             abort_unless($locked->status === 'confirmed' && $locked->checked_in_at && ! $locked->checked_out_at, 422, 'Early checkout is available only during an active checked-in stay.');
 
-            $checkedOutAt = PropertyTime::now();
+            abort_if($locked->early_checkout_status === 'requested', 409, 'Your early check-out request is already waiting for reception.');
+            abort_if($locked->early_checkout_status === 'confirmed', 409, 'Reception has already confirmed your early check-out.');
+            abort_if($locked->early_checkout_status === 'declined', 409, 'Reception could not approve your last request. Please contact reception to arrange an early check-out.');
+
+            $requestedAt = PropertyTime::now();
             $scheduledCheckout = $locked->check_out_at ?? $locked->check_out->copy()->endOfDay();
-            abort_if($scheduledCheckout->lte($checkedOutAt), 422, 'Your scheduled checkout time has passed. Please contact reception to check out.');
+            abort_if($scheduledCheckout->lte($requestedAt), 422, 'Your scheduled checkout time has passed. Please contact reception to check out.');
 
-            $locked->update(['checked_out_at' => $checkedOutAt]);
-            RoomBlock::create([
-                'room_id' => $room->id,
-                'status' => 'cleaning',
-                'starts_at' => $checkedOutAt,
-                'ends_at' => $checkedOutAt->copy()->addHours(2),
-                'notes' => 'Automatic 2-hour cleaning period after guest early checkout.',
-                'created_by' => $request->user()?->id,
+            $locked->update([
+                'early_checkout_status' => 'requested',
+                'early_checkout_requested_at' => $requestedAt,
+                'early_checkout_reviewed_at' => null,
+                'early_checkout_reviewed_by' => null,
             ]);
-            $this->log($locked, $request->user()?->id, 'guest_early_checkout', 'Guest checked out early; the original booking total remains unchanged and a 2-hour cleaning timer started.');
+
+            return $locked;
         });
+        $requested = $requestResult;
 
-        $reviewInvitations->send($booking->fresh(['room', 'user']));
+        $this->log(
+            $requested,
+            $request->user()?->id,
+            'early_checkout_requested',
+            'Guest requested an early check-out. The stay remains active until reception confirms the departure.',
+        );
+        $this->emailUpdate(
+            $requested->fresh(['room', 'user']),
+            'Early check-out request received',
+            'Reception received your request to check out early. Your stay remains active until staff confirms your departure. Your booking total is unchanged, and no refund is issued automatically.',
+        );
 
-        return back()->with('success', 'You are checked out. Your room is released for cleaning. The original booking total and any refund eligibility are unchanged; any remaining balance is still due.');
+        return back()->with('success', 'Your early check-out request was sent to reception. Your stay remains active until staff confirms your departure.');
     }
     private function cancelBeforeCheckIn(Booking $booking): bool
     {

@@ -124,6 +124,7 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::patch('/bookings/{booking}/cancel', [BookingController::class, 'cancel'])->name('bookings.cancel');
     Route::patch('/bookings/{booking}/reschedule', [BookingController::class, 'reschedule'])->name('bookings.reschedule');
+    Route::post('/bookings/{booking}/early-checkout', [BookingController::class, 'earlyCheckout'])->middleware('throttle:5,1')->name('bookings.early-checkout');
     Route::post('/bookings/{booking}/review', [BookingController::class, 'submitReview'])->name('bookings.review');
 });
 
@@ -175,6 +176,7 @@ Route::middleware(['auth', 'admin', 'staff.mfa'])->prefix('admin')->name('admin.
     Route::patch('/bookings/{booking}/payment', [AdminController::class, 'updatePayment'])->middleware('admin.permission:payments')->name('bookings.payment');
     Route::post('/bookings/{booking}/payment/recheck-paymongo', [AdminController::class, 'recheckPayMongoPayment'])->middleware('admin.permission:payments')->name('bookings.payment.recheck-paymongo');
     Route::post('/bookings/{booking}/refunds', [AdminController::class, 'refundPayment'])->middleware('admin.permission:payments')->name('bookings.refunds.store');
+    Route::post('/bookings/{booking}/early-checkout', [AdminController::class, 'resolveEarlyCheckout'])->middleware('admin.permission:bookings')->name('bookings.early-checkout.resolve');
     Route::post('/bookings/{booking}/check-in', [AdminController::class, 'updateBooking'])->middleware('admin.permission:bookings')->name('bookings.check-in');
     Route::post('/bookings/{booking}/check-out', [AdminController::class, 'updateBooking'])->middleware('admin.permission:bookings')->name('bookings.check-out');
     Route::patch('/reviews/{review}', [AdminController::class, 'updateReview'])->middleware('admin.permission:reviews')->name('reviews.update');

@@ -73,6 +73,7 @@
                 <section class="frontdesk-feature frontdesk-attention">
                     <div class="frontdesk-feature-title"><span class="frontdesk-feature-icon" aria-hidden="true">!</span><div><p class="admin-kicker">SHIFT PRIORITIES</p><h2>Needs attention</h2></div></div>
                     <p><strong>{{ $pendingRequests }}</strong> booking request{{ $pendingRequests === 1 ? '' : 's' }} waiting for review</p>
+                    @if($earlyCheckoutRequests->isNotEmpty())<p><strong>{{ $earlyCheckoutRequests->count() }}</strong> early check-out request{{ $earlyCheckoutRequests->count() === 1 ? '' : 's' }} waiting for confirmation</p>@endif
                     <a class="frontdesk-primary-link" href="{{ route('admin.bookings') }}">Review bookings <span aria-hidden="true">→</span></a>
                 </section>
                 <section class="frontdesk-feature frontdesk-status">
@@ -116,6 +117,30 @@
         <div class="frontdesk-details-heading"><div><p class="admin-kicker">FRONT DESK</p><h2>Shift details</h2><p>Arrivals, active stays, departures, and room operations.</p></div></div>
 
         <section class="today-grid">
+            @if($earlyCheckoutRequests->isNotEmpty())
+                <section class="panel" aria-labelledby="early-checkout-requests-title">
+                    <div class="panel-heading"><div><p class="admin-kicker">GUEST REQUESTS</p><h2 id="early-checkout-requests-title">{{ $earlyCheckoutRequests->count() }} early check-out request{{ $earlyCheckoutRequests->count() === 1 ? '' : 's' }}</h2></div></div>
+                    <p class="today-panel-note">The guest remains checked in until you confirm the departure.</p>
+                    <div class="today-list">
+                        @foreach($earlyCheckoutRequests as $booking)
+                            <article class="today-item">
+                                <b>{{ $booking->reference }} · {{ $booking->guest_name ?? $booking->user?->name ?? 'Guest' }}</b>
+                                <small>{{ $booking->room?->name }} · Requested {{ $booking->early_checkout_requested_at?->format('M j, g:i A') }}</small>
+                                <div class="today-actions">
+                                    <form method="POST" action="{{ route('admin.bookings.early-checkout.resolve', $booking) }}" data-admin-confirm data-confirm-title="Confirm early check-out?" data-confirm-message="Confirm {{ $booking->guest_name ?? $booking->user?->name ?? 'this guest' }}’s departure now? This marks the booking checked out and starts room cleaning. The booking total stays the same; refunds are handled separately." data-confirm-action="Confirm check-out">
+                                        @csrf<input type="hidden" name="decision" value="confirm"><button class="status-select confirmed" type="submit">Confirm check-out</button>
+                                    </form>
+                                    <form method="POST" action="{{ route('admin.bookings.early-checkout.resolve', $booking) }}" data-admin-confirm data-confirm-title="Decline this request?" data-confirm-message="Decline this early check-out request? The guest will remain checked in." data-confirm-action="Decline request" data-confirm-style="cancellation">
+                                        @csrf<input type="hidden" name="decision" value="decline"><button class="status-select cancelled" type="submit">Decline</button>
+                                    </form>
+                                    <a class="status-select" href="{{ route('admin.bookings.show', ['booking' => $booking, 'from' => 'today']) }}">View booking</a>
+                                </div>
+                            </article>
+                        @endforeach
+                    </div>
+                </section>
+            @endif
+
             <section class="panel">
                 <div class="panel-heading"><div><p class="admin-kicker">ARRIVALS</p><h2>{{ $arrivals->count() }} awaiting check-in</h2></div></div>
                 <p class="today-panel-note">A guest appears under In house after staff records their actual arrival.</p>
@@ -177,8 +202,8 @@
                                 <div><dt>Check-out</dt><dd><time datetime="{{ $booking->check_out_at?->toIso8601String() }}">{{ $booking->check_out_at?->format('M j, Y') ?? $booking->check_out?->format('M j, Y') }}</time></dd><dd>{{ $booking->check_out_at?->format('g:i A') ?? 'Time not recorded' }}</dd></div>
                             </dl>
                             <div class="today-actions">
-                                <form method="POST" action="{{ route('admin.bookings.check-out', $booking) }}" data-admin-confirm data-confirm-kicker="GUEST DEPARTURE" data-confirm-title="Check out this guest?" data-confirm-message="Check out {{ $booking->guest_name ?? $booking->user?->name ?? 'this guest' }} now? This records the departure and marks the room for cleaning." data-confirm-action="Check out guest">
-                                    @csrf<input type="hidden" name="action" value="check_out"><button class="status-select">Check out</button>
+                                <form method="POST" action="{{ route('admin.bookings.check-out', $booking) }}" data-admin-confirm data-confirm-kicker="GUEST DEPARTURE" data-confirm-title="{{ $booking->early_checkout_status === 'requested' ? 'Confirm early check-out?' : 'Check out this guest?' }}" data-confirm-message="{{ $booking->early_checkout_status === 'requested' ? 'Confirm this guest’s requested departure now? This records check-out and starts room cleaning. The booking total stays the same.' : 'Check out ' . ($booking->guest_name ?? $booking->user?->name ?? 'this guest') . ' now? This records the departure and marks the room for cleaning.' }}" data-confirm-action="{{ $booking->early_checkout_status === 'requested' ? 'Confirm check-out' : 'Check out guest' }}">
+                                    @csrf<input type="hidden" name="action" value="check_out"><button class="status-select">{{ $booking->early_checkout_status === 'requested' ? 'Confirm request' : 'Check out' }}</button>
                                 </form>
                                 <a class="status-select" href="{{ route('admin.bookings.show', ['booking' => $booking, 'from' => 'today']) }}">View booking</a>
                             </div>
