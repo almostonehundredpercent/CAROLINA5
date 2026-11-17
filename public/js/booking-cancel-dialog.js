@@ -24,7 +24,7 @@
         }
 
         pendingForm = null;
-        const message = dialog.querySelector('#booking-cancel-title')?.textContent.trim() || 'Cancel this booking?';
+        const message = dialog.querySelector('#booking-cancel-title')?.textContent.trim() || 'Request to cancel this booking?';
         if (window.confirm(message || 'Are you sure you want to cancel this booking?')) {
             if (typeof form.requestSubmit === 'function') {
                 approvedSubmissions.add(form);
