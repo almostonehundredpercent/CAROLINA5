@@ -11,3 +11,4 @@
     </div>
 </dialog>
 <script src="{{ asset('js/admin-confirmations.js') }}?v={{ filemtime(public_path('js/admin-confirmations.js')) }}" defer></script>
+<script src="{{ asset('js/admin-balance-dialog.js') }}?v={{ filemtime(public_path('js/admin-balance-dialog.js')) }}" defer></script>

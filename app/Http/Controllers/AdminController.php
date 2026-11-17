@@ -228,11 +228,8 @@ class AdminController extends Controller
 
                 $checkedOutAt = PropertyTime::now();
                 $wasEarlyCheckoutRequest = $lockedBooking->early_checkout_status === 'requested';
-                $scheduledCheckoutAt = $lockedBooking->check_out_at ?? $lockedBooking->check_out->copy()->endOfDay();
-                if ($wasEarlyCheckoutRequest || $scheduledCheckoutAt->gt($checkedOutAt)) {
-                    $financial = FinancialSummary::forBooking($lockedBooking->load('payments'));
-                    abort_if($financial['outstanding'] > 0.001, 422, 'Record the remaining balance before confirming an early check-out.');
-                }
+                $financial = FinancialSummary::forBooking($lockedBooking->load('payments'));
+                abort_if($financial['outstanding'] > 0.001, 422, 'Record the remaining balance before checking out this guest.');
                 $attributes = ['checked_out_at' => $checkedOutAt];
                 if ($wasEarlyCheckoutRequest) {
                     $attributes += [

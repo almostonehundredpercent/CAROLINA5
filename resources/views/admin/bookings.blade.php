@@ -360,7 +360,6 @@
                                             @php($refundableAmount = max(0, (float) $booking->payments->where('status', 'paid')->sum('amount') - (float) $booking->payments->where('status', 'refunded')->sum('amount')))
                                             @php($refundPolicyEligible = $booking->isRefundEligible())
                                             @php($earlyCheckoutBalance = \App\Support\FinancialSummary::forBooking($booking)['outstanding'])
-                                            @php($scheduledCheckoutAt = $booking->check_out_at ?? $booking->check_out->copy()->endOfDay())
                                             @if($hasPaidPayMongoPayment && ! $expiredCashHold)
                                                 <div class="booking-payment-proof" role="status">
                                                     <span class="booking-payment-proof-icon" aria-hidden="true">✓</span>
@@ -420,25 +419,23 @@
                                                     @endif
 
                                                     @if($booking->early_checkout_status === 'requested' && $booking->checked_in_at && ! $booking->checked_out_at)
-                                                        @if($earlyCheckoutBalance <= 0.001)
-                                                            <form method="POST" action="{{ route('admin.bookings.early-checkout.resolve', $booking) }}" data-admin-confirm data-confirm-title="Confirm early check-out?" data-confirm-message="This records the guest’s departure and starts a 2-hour cleaning period. The booking total stays the same; refunds are handled separately." data-confirm-action="Confirm check-out">
-                                                                @csrf<input type="hidden" name="decision" value="confirm"><button class="status-select confirmed" type="submit">Confirm check-out</button>
-                                                            </form>
-                                                        @else
-                                                            <span class="hold-expiry" role="status">₱{{ number_format($earlyCheckoutBalance, 2) }} remains due · collect before confirming early check-out</span>
+                                                        <form method="POST" action="{{ route('admin.bookings.early-checkout.resolve', $booking) }}" data-admin-confirm data-confirm-title="Confirm early check-out?" data-confirm-message="This records the guest’s departure and starts a 2-hour cleaning period. The booking total stays the same; refunds are handled separately." data-confirm-action="Confirm check-out">
+                                                            @csrf<input type="hidden" name="decision" value="confirm"><button class="checkout-action-button" type="submit" @disabled($earlyCheckoutBalance > 0.001)>Confirm check-out</button>
+                                                        </form>
+                                                        @if($earlyCheckoutBalance > 0.001)
+                                                            @include('admin.partials.balance-dialog', ['booking' => $booking, 'balance' => $earlyCheckoutBalance, 'dialogContext' => 'bookings'])
                                                         @endif
                                                         <form method="POST" action="{{ route('admin.bookings.early-checkout.resolve', $booking) }}" data-admin-confirm data-confirm-title="Decline this request?" data-confirm-message="The guest will remain checked in. Contact them to coordinate the departure." data-confirm-action="Decline request" data-confirm-style="cancellation">
                                                             @csrf<input type="hidden" name="decision" value="decline"><button class="status-select cancelled" type="submit">Decline request</button>
                                                         </form>
                                                     @elseif($booking->checked_in_at && ! $booking->checked_out_at)
-                                                        @if($scheduledCheckoutAt->gt($propertyNow) && $earlyCheckoutBalance > 0.001)
-                                                            <span class="hold-expiry" role="status">Early check-out blocked · ₱{{ number_format($earlyCheckoutBalance, 2) }} remains due</span>
-                                                        @else
-                                                            <form method="POST" action="{{ route('admin.bookings.check-out', $booking) }}" data-admin-confirm data-confirm-title="Check out now?" data-confirm-message="This records the guest’s actual checkout and starts room cleaning. It does not automatically refund unused time." data-confirm-action="Check out now">
-                                                                @csrf
-                                                                <input type="hidden" name="action" value="check_out">
-                                                                <button class="status-select" type="submit">Check out now</button>
-                                                            </form>
+                                                        <form method="POST" action="{{ route('admin.bookings.check-out', $booking) }}" data-admin-confirm data-confirm-title="Check out now?" data-confirm-message="This records the guest’s actual checkout and starts room cleaning. It does not automatically refund unused time." data-confirm-action="Check out now">
+                                                            @csrf
+                                                            <input type="hidden" name="action" value="check_out">
+                                                            <button class="checkout-action-button" type="submit" @disabled($earlyCheckoutBalance > 0.001)>Check out now</button>
+                                                        </form>
+                                                        @if($earlyCheckoutBalance > 0.001)
+                                                            @include('admin.partials.balance-dialog', ['booking' => $booking, 'balance' => $earlyCheckoutBalance, 'dialogContext' => 'bookings'])
                                                         @endif
                                                     @endif
 
