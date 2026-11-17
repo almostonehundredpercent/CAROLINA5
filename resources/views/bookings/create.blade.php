@@ -275,7 +275,7 @@
                     <p class="promo-message" id="promo-message" role="status" aria-live="polite">Choose your stay, enter a code, then tap Apply to see the discounted total.</p>
                     </div>
                 </details>
-                <label class="checkbox"><input name="terms_accepted" type="checkbox" value="1" @checked(old('terms_accepted')) required><span><strong>Accept reservation terms</strong><small>A verified downpayment or full payment confirms the booking automatically when the room is available; unpaid requests may need staff approval. I can cancel online before check-in; cancellations at least 3 days ahead are eligible for a full refund, while later cancellations are non-refundable. Minors must be accompanied by a parent throughout the stay. <a href="{{ route('terms') }}" target="_blank">Read terms</a>.</small></span></label>
+                <label class="checkbox"><input name="terms_accepted" type="checkbox" value="1" @checked(old('terms_accepted')) required><span><strong>Accept reservation terms</strong><small>A verified downpayment or full payment confirms the booking automatically when the room is available; unpaid requests may need staff approval. I can request cancellation online before check-in; it takes effect after reception confirms it. Approved cancellations at least 3 days ahead may be eligible for a full refund. Minors must be accompanied by a parent throughout the stay. <a href="{{ route('terms') }}" target="_blank">Read terms</a>.</small></span></label>
 
                 <label>Special request<textarea name="special_request" rows="3" placeholder="e.g., Extra pillow, if available.">{{ old('special_request') }}</textarea></label>
                 <x-contact-card class="booking-contact-help" />

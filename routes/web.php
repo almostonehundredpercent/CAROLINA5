@@ -176,6 +176,7 @@ Route::middleware(['auth', 'admin', 'staff.mfa'])->prefix('admin')->name('admin.
     Route::patch('/bookings/{booking}/payment', [AdminController::class, 'updatePayment'])->middleware('admin.permission:payments')->name('bookings.payment');
     Route::post('/bookings/{booking}/payment/recheck-paymongo', [AdminController::class, 'recheckPayMongoPayment'])->middleware('admin.permission:payments')->name('bookings.payment.recheck-paymongo');
     Route::post('/bookings/{booking}/refunds', [AdminController::class, 'refundPayment'])->middleware('admin.permission:payments')->name('bookings.refunds.store');
+    Route::post('/bookings/{booking}/cancellation-request', [AdminController::class, 'resolveCancellationRequest'])->middleware('admin.permission:bookings')->name('bookings.cancellation-request.resolve');
     Route::post('/bookings/{booking}/early-checkout', [AdminController::class, 'resolveEarlyCheckout'])->middleware('admin.permission:bookings')->name('bookings.early-checkout.resolve');
     Route::post('/bookings/{booking}/check-in', [AdminController::class, 'updateBooking'])->middleware('admin.permission:bookings')->name('bookings.check-in');
     Route::post('/bookings/{booking}/check-out', [AdminController::class, 'updateBooking'])->middleware('admin.permission:bookings')->name('bookings.check-out');

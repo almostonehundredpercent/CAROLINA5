@@ -61,7 +61,11 @@
                     <button class="button button-outline booking-receipt-link" type="submit">Request early check-out</button>
                 </form>
             @endif
-            @if($booking->status !== 'cancelled' && $booking->check_in->isFuture())
+            @if($booking->cancellation_request_status === 'requested' && $booking->status !== 'cancelled')
+                <small role="status">Cancellation request sent. Your booking remains active until reception confirms it.</small>
+            @elseif($booking->cancellation_request_status === 'declined' && $booking->status !== 'cancelled')
+                <small role="status">Reception could not approve your cancellation request. Your booking remains active; contact Carolina for help.</small>
+            @elseif($booking->status !== 'cancelled' && ($booking->check_in->isFuture() || $booking->canCancelOnline() || in_array($booking->cancellation_request_status, ['requested', 'declined'], true)))
                 @if($booking->canRescheduleOnline())
                     <details class="booking-reschedule-details">
                         <summary>Reschedule booking · {{ $booking->reschedulesRemaining() }} left</summary>
@@ -81,8 +85,8 @@
                     <small>Online rescheduling limit reached (2). Contact Carolina if you need to change your stay.</small>
                 @endif
                 @if($booking->canCancelOnline())
-                    <small>Cancel at least 3 days before check-in for a full refund. Cancellations less than 3 days ahead are allowed before check-in but are non-refundable.</small>
-                    <form method="POST" action="{{ route('bookings.cancel', $booking) }}" data-booking-cancel-confirm>@csrf @method('PATCH')<button class="link-danger" type="submit">Cancel booking</button></form>
+                    <small>Your booking remains active until reception confirms the cancellation.</small>
+                    <form method="POST" action="{{ route('bookings.cancel', $booking) }}" data-booking-cancel-confirm>@csrf @method('PATCH')<button class="link-danger" type="submit">Request cancellation</button></form>
                 @else
                     <small>Online cancellation closes at the scheduled check-in time. Contact Carolina if you need help.</small>
                 @endif

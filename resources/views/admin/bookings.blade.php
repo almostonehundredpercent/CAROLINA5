@@ -328,6 +328,13 @@
                                             <span class="mini-status {{ $expiredCashHold ? 'hold-expired' : $booking->status }}" aria-label="Booking status: {{ $expiredCashHold ? 'Hold expired' : ($booking->status === 'pending' ? 'Pending staff confirmation' : ucfirst($booking->status)) }}">{{ $expiredCashHold ? 'Hold expired' : ($booking->status === 'pending' ? 'Pending staff confirmation' : ucfirst($booking->status)) }}</span>
                                             <span class="mini-status booking-payment-status {{ $paymentStatus }} {{ $paymentStatusClass }}" aria-label="Payment status: {{ ucfirst($paymentStatus) }}">Payment {{ ucfirst($paymentStatus) }}</span>
                                         </div>
+                                        @if($booking->cancellation_request_status === 'requested' && $booking->status !== 'cancelled')
+                                            <span class="hold-expiry" role="status">Cancellation requested · {{ $booking->cancellation_requested_at?->format('M j, g:i A') }}</span>
+                                        @elseif($booking->cancellation_request_status === 'requested' && $booking->status === 'cancelled' && $expiredCashHold)
+                                            <span class="hold-expiry" role="status">Cancellation request closed because the unpaid hold expired</span>
+                                        @elseif($booking->cancellation_request_status === 'declined')
+                                            <span class="hold-expiry" role="status">Cancellation request declined · {{ $booking->cancellation_reviewed_at?->format('M j, g:i A') }}</span>
+                                        @endif
                                         <small class="booking-payment-method">{{ $paymentMethodLabel }}</small>
                                         @if((float) $booking->deposit_amount > 0)
                                             <small class="booking-payment-method">Downpayment ₱{{ number_format((float) $booking->deposit_amount, 2) }} · {{ $booking->deposit_status === 'verified' || $booking->deposit_verified_at ? 'Verified' : 'Awaiting payment' }}</small>
@@ -359,18 +366,28 @@
                                                 </div>
                                             @endif
                                                 <div class="booking-action-buttons">
-                                                    @if($expiredCashHold)
-                                                        <form method="POST" action="{{ route('admin.bookings.update', $booking) }}"
-                                                            data-admin-confirm
-                                                            data-confirm-kicker="EXPIRED BOOKING HOLD"
-                                                            data-confirm-icon="↻"
-                                                            data-confirm-title="Check availability and restore?"
-                                                            data-confirm-message="The original hold has expired. This checks the room again and confirms the booking only if it is still available. No payment will be recorded."
-                                                            data-confirm-action="Check and restore">
-                                                            @csrf @method('PATCH')
-                                                            <input type="hidden" name="status" value="confirmed">
-                                                            <button class="status-select confirmed restore-booking-button" type="submit">Check availability &amp; restore</button>
+                                                    @if($booking->cancellation_request_status === 'requested' && $booking->status !== 'cancelled')
+                                                        <form method="POST" action="{{ route('admin.bookings.cancellation-request.resolve', $booking) }}" data-admin-confirm data-confirm-title="Confirm cancellation?" data-confirm-message="Confirm this guest’s request? This cancels the booking and releases the room dates." data-confirm-action="Confirm cancellation" data-confirm-style="cancellation">
+                                                            @csrf<input type="hidden" name="decision" value="confirm"><button class="status-select cancelled" type="submit">Confirm cancellation</button>
                                                         </form>
+                                                        <form method="POST" action="{{ route('admin.bookings.cancellation-request.resolve', $booking) }}" data-admin-confirm data-confirm-title="Decline cancellation?" data-confirm-message="Decline this request? The booking remains active and the room stays reserved." data-confirm-action="Decline request">
+                                                            @csrf<input type="hidden" name="decision" value="decline"><button class="status-select" type="submit">Decline request</button>
+                                                        </form>
+                                                    @endif
+                                                    @if($expiredCashHold)
+                                                        @if($booking->cancellation_request_status !== 'requested')
+                                                            <form method="POST" action="{{ route('admin.bookings.update', $booking) }}"
+                                                                data-admin-confirm
+                                                                data-confirm-kicker="EXPIRED BOOKING HOLD"
+                                                                data-confirm-icon="↻"
+                                                                data-confirm-title="Check availability and restore?"
+                                                                data-confirm-message="The original hold has expired. This checks the room again and confirms the booking only if it is still available. No payment will be recorded."
+                                                                data-confirm-action="Check and restore">
+                                                                @csrf @method('PATCH')
+                                                                <input type="hidden" name="status" value="confirmed">
+                                                                <button class="status-select confirmed restore-booking-button" type="submit">Check availability &amp; restore</button>
+                                                            </form>
+                                                        @endif
                                                     @elseif(! $hasPaidPayMongoPayment && $payMongoPayment?->status === 'pending')
                                                         <form method="POST" action="{{ route('admin.bookings.payment.recheck-paymongo', $booking) }}" onsubmit="return confirm('Check this GCash checkout directly with PayMongo?')">
                                                             @csrf
@@ -379,7 +396,7 @@
                                                     @elseif($booking->status !== 'cancelled')
                                                         <a class="status-select" href="{{ route('admin.bookings.show', $booking) }}">Payment details</a>
                                                     @endif
-                                                    @if($booking->status === 'pending' && ! $expiredCashHold)
+                                                    @if($booking->status === 'pending' && ! $expiredCashHold && $booking->cancellation_request_status !== 'requested')
                                                         <form method="POST" action="{{ route('admin.bookings.update', $booking) }}">
                                                             @csrf
                                                             @method('PATCH')
@@ -392,7 +409,7 @@
                                                         </form>
                                                     @endif
 
-                                                    @if($booking->status === 'confirmed' && ! $booking->checked_in_at && (! $booking->check_in_at || $booking->check_in_at->lte($propertyNow)))
+                                                    @if($booking->status === 'confirmed' && $booking->cancellation_request_status !== 'requested' && ! $booking->checked_in_at && (! $booking->check_in_at || $booking->check_in_at->lte($propertyNow)))
                                                         <form method="POST" action="{{ route('admin.bookings.check-in', $booking) }}" data-admin-confirm data-confirm-title="Check in this guest?" data-confirm-message="Check in {{ $booking->guest_name ?? $booking->user?->name ?? 'this guest' }} now? This marks the reservation as checked in." data-confirm-action="Check in guest">
                                                             @csrf
                                                             <input type="hidden" name="action" value="check_in">
@@ -415,7 +432,7 @@
                                                         </form>
                                                     @endif
 
-                                                    @if($booking->status !== 'cancelled' && ! ($booking->checked_in_at && ! $booking->checked_out_at))
+                                                    @if($booking->status !== 'cancelled' && $booking->cancellation_request_status !== 'requested' && ! ($booking->checked_in_at && ! $booking->checked_out_at))
                                                         <form method="POST" action="{{ route('admin.bookings.update', $booking) }}"
                                                             data-admin-confirm
                                                             data-confirm-kicker="BOOKING CANCELLATION"

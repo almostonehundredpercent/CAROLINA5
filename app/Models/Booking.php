@@ -10,11 +10,11 @@ use Illuminate\Validation\ValidationException;
 
 class Booking extends Model
 {
-    protected $fillable = ['user_id', 'guest_name', 'guest_email', 'guest_phone', 'room_id', 'cooling_type', 'room_rate_at_booking', 'promo_code_id', 'reference', 'submission_token', 'check_in', 'check_out', 'check_in_at', 'check_out_at', 'booking_type', 'hours', 'guests', 'children_count', 'pets_count', 'nights', 'total_amount', 'promo_code', 'original_amount', 'discount_amount', 'deposit_amount', 'deposit_status', 'deposit_due_at', 'deposit_submitted_at', 'deposit_verified_at', 'deposit_verified_by', 'hold_expires_at', 'paymongo_checkout_attempt_id', 'status', 'payment_method', 'payment_status', 'paid_at', 'special_request', 'add_ons', 'staff_notes', 'checked_in_at', 'checked_out_at', 'early_checkout_status', 'early_checkout_requested_at', 'early_checkout_reviewed_at', 'early_checkout_reviewed_by', 'review_invited_at', 'cancelled_at', 'cancelled_by', 'cancellation_reason'];
+    protected $fillable = ['user_id', 'guest_name', 'guest_email', 'guest_phone', 'room_id', 'cooling_type', 'room_rate_at_booking', 'promo_code_id', 'reference', 'submission_token', 'check_in', 'check_out', 'check_in_at', 'check_out_at', 'booking_type', 'hours', 'guests', 'children_count', 'pets_count', 'nights', 'total_amount', 'promo_code', 'original_amount', 'discount_amount', 'deposit_amount', 'deposit_status', 'deposit_due_at', 'deposit_submitted_at', 'deposit_verified_at', 'deposit_verified_by', 'hold_expires_at', 'paymongo_checkout_attempt_id', 'status', 'payment_method', 'payment_status', 'paid_at', 'special_request', 'add_ons', 'staff_notes', 'checked_in_at', 'checked_out_at', 'early_checkout_status', 'early_checkout_requested_at', 'early_checkout_reviewed_at', 'early_checkout_reviewed_by', 'review_invited_at', 'cancelled_at', 'cancelled_by', 'cancellation_reason', 'cancellation_request_status', 'cancellation_requested_at', 'cancellation_reviewed_at', 'cancellation_reviewed_by'];
 
     protected function casts(): array
     {
-        return ['check_in' => 'date', 'check_out' => 'date', 'check_in_at' => 'datetime', 'check_out_at' => 'datetime', 'hours' => 'integer', 'reschedule_count' => 'integer', 'room_rate_at_booking' => 'decimal:2', 'total_amount' => 'decimal:2', 'original_amount' => 'decimal:2', 'discount_amount' => 'decimal:2', 'deposit_amount' => 'decimal:2', 'deposit_due_at' => 'datetime', 'deposit_submitted_at' => 'datetime', 'deposit_verified_at' => 'datetime', 'add_ons' => 'array', 'hold_expires_at' => 'datetime', 'checked_in_at' => 'datetime', 'checked_out_at' => 'datetime', 'early_checkout_requested_at' => 'datetime', 'early_checkout_reviewed_at' => 'datetime', 'review_invited_at' => 'datetime', 'paid_at' => 'datetime', 'cancelled_at' => 'datetime'];
+        return ['check_in' => 'date', 'check_out' => 'date', 'check_in_at' => 'datetime', 'check_out_at' => 'datetime', 'hours' => 'integer', 'reschedule_count' => 'integer', 'room_rate_at_booking' => 'decimal:2', 'total_amount' => 'decimal:2', 'original_amount' => 'decimal:2', 'discount_amount' => 'decimal:2', 'deposit_amount' => 'decimal:2', 'deposit_due_at' => 'datetime', 'deposit_submitted_at' => 'datetime', 'deposit_verified_at' => 'datetime', 'add_ons' => 'array', 'hold_expires_at' => 'datetime', 'checked_in_at' => 'datetime', 'checked_out_at' => 'datetime', 'early_checkout_requested_at' => 'datetime', 'early_checkout_reviewed_at' => 'datetime', 'cancellation_requested_at' => 'datetime', 'cancellation_reviewed_at' => 'datetime', 'review_invited_at' => 'datetime', 'paid_at' => 'datetime', 'cancelled_at' => 'datetime'];
     }
 
     protected static function booted(): void
@@ -74,6 +74,11 @@ class Booking extends Model
         return $this->belongsTo(User::class, 'early_checkout_reviewed_by');
     }
 
+    public function cancellationReviewedBy()
+    {
+        return $this->belongsTo(User::class, 'cancellation_reviewed_by');
+    }
+
     public function refundCutoffAt()
     {
         return $this->cancellationClosesAt()->copy()->subDays(3);
@@ -86,18 +91,30 @@ class Booking extends Model
 
     public function isRefundEligible(): bool
     {
-        $cancelledOrRequestedAt = $this->cancelled_at
-            ? PropertyTime::wallClock($this->cancelled_at)
-            : PropertyTime::now();
+        $cancelledOrRequestedAt = $this->cancellation_request_status === 'confirmed' && $this->cancellation_requested_at
+            ? PropertyTime::wallClock($this->cancellation_requested_at)
+            : ($this->cancelled_at ? PropertyTime::wallClock($this->cancelled_at) : PropertyTime::now());
 
         return $cancelledOrRequestedAt->lte($this->refundCutoffAt());
     }
 
+    public function cancellationRequestRefundEligible(): bool
+    {
+        if (! $this->cancellation_requested_at) {
+            return $this->isRefundEligible();
+        }
+
+        return PropertyTime::wallClock($this->cancellation_requested_at)->lte($this->refundCutoffAt());
+    }
+
     public function canCancelOnline(): bool
     {
-        return $this->status !== 'cancelled'
+        return in_array($this->status, ['pending', 'confirmed'], true)
             && ! $this->checked_in_at
             && ! $this->checked_out_at
+            && ! in_array($this->cancellation_request_status, ['requested', 'declined'], true)
+            && ! $this->hasExpiredHold()
+            && ! $this->isExpiredHoldRecord()
             && PropertyTime::now()->lt($this->cancellationClosesAt());
     }
 

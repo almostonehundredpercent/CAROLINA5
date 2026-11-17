@@ -840,9 +840,9 @@ class BookingController extends Controller
     public function cancel(Request $request, Booking $booking)
     {
         abort_unless($booking->user_id === $request->user()?->id, 403);
-        $refundEligible = $this->cancelBeforeCheckIn($booking);
+        $this->storeCancellationRequest($booking, $request->user()?->id);
 
-        return back()->with('success', 'Your booking has been cancelled. The room is available for those dates again.'.($refundEligible ? ' If you have already paid, this cancellation is eligible for a full refund.' : ' This cancellation is non-refundable because it was made less than 3 days before check-in.'));
+        return back()->with('success', 'Your cancellation request was sent to reception. Your booking remains active until staff confirms it.');
     }
 
     public function cancelGuest(Request $request, Booking $booking)
@@ -858,8 +858,8 @@ class BookingController extends Controller
             403
         );
 
-        $refundEligible = $this->cancelBeforeCheckIn($booking);
-        session()->flash('success', 'Your booking has been cancelled. The room is available for those dates again.'.($refundEligible ? ' If you have already paid, this cancellation is eligible for a full refund.' : ' This cancellation is non-refundable because it was made less than 3 days before check-in.'));
+        $this->storeCancellationRequest($booking, null);
+        session()->flash('success', 'Your cancellation request was sent to reception. Your booking remains active until staff confirms it.');
 
         return view('bookings.lookup-result', ['booking' => $booking->fresh('room'), 'lookupEmail' => $data['email']]);
     }
@@ -1048,24 +1048,34 @@ class BookingController extends Controller
 
         return back()->with('success', 'Your early check-out request was sent to reception. Your stay remains active until staff confirms your departure.');
     }
-    private function cancelBeforeCheckIn(Booking $booking): bool
+    private function storeCancellationRequest(Booking $booking, ?int $userId): Booking
     {
-        if ($booking->status === 'cancelled') {
-            throw ValidationException::withMessages(['cancellation' => 'This booking has already been cancelled.']);
-        }
-        if ($booking->checked_in_at || $booking->checked_out_at) {
-            throw ValidationException::withMessages(['cancellation' => 'A stay that has started cannot be cancelled online.']);
-        }
-        $cancelledAt = now();
-        if (PropertyTime::wallClock($cancelledAt)->gte($booking->cancellationClosesAt())) {
-            throw ValidationException::withMessages(['cancellation' => 'Online cancellation is only available before the scheduled check-in time.']);
-        }
-        $booking->update(['status' => 'cancelled', 'cancelled_at' => $cancelledAt, 'cancellation_reason' => 'Cancelled by guest.']);
-        $refundEligible = $booking->isRefundEligible();
-        $this->log($booking, null, 'booking_cancelled', 'Booking cancelled by guest.');
-        $this->emailUpdate($booking, 'Your Carolina booking was cancelled', 'Your reservation has been cancelled and the room is available again.'.($refundEligible ? ' If you have already paid, this cancellation is eligible for a full refund.' : ' This cancellation is non-refundable because it was made less than 3 days before check-in.'));
+        $requested = DB::transaction(function () use ($booking) {
+            Room::whereKey($booking->room_id)->lockForUpdate()->firstOrFail();
+            $locked = Booking::whereKey($booking->id)->lockForUpdate()->firstOrFail();
 
-        return $refundEligible;
+            if (! $locked->canCancelOnline()) {
+                throw ValidationException::withMessages(['cancellation' => 'This booking cannot accept another online cancellation request. Contact reception for help.']);
+            }
+
+            $locked->update([
+                'cancellation_request_status' => 'requested',
+                'cancellation_requested_at' => PropertyTime::now(),
+                'cancellation_reviewed_at' => null,
+                'cancellation_reviewed_by' => null,
+            ]);
+
+            return $locked;
+        });
+
+        $this->log($requested, $userId, 'cancellation_requested', 'Guest requested cancellation. The booking remains active until reception confirms it.');
+        $this->emailUpdate(
+            $requested->fresh(['room', 'user']),
+            'Cancellation request received',
+            'Reception received your request to cancel this booking. Your booking remains active and the room stays reserved until staff confirms the cancellation.',
+        );
+
+        return $requested;
     }
 
     private function authorizeBookingAccess(Request $request, Booking $booking): void

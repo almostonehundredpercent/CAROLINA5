@@ -19,7 +19,7 @@
         $stayPaymentMethod = match ($stayPaymentMethodValue) { 'gcash' => 'GCash', 'cash' => 'Cash', null => 'Not paid yet', default => strtoupper((string) $stayPaymentMethodValue) };
         $stayCheckIn = $booking->check_in_at ?? $booking->check_in->copy()->startOfDay();
         $stayCheckOut = $booking->check_out_at ?? $booking->check_out->copy()->endOfDay();
-        $stayCancellationVisible = $booking->status !== 'cancelled' && !$stayExpiredHold && $stayCheckIn->isFuture();
+        $stayCancellationVisible = $booking->status !== 'cancelled' && !$stayExpiredHold && ($stayCheckIn->isFuture() || in_array($booking->cancellation_request_status, ['requested', 'declined'], true));
         $stayCancellationOpen = $stayCancellationVisible && $booking->canCancelOnline();
         $backUrl = auth()->check() && auth()->id() === $booking->user_id
             ? route('bookings.index', ['section' => 'bookings'])
@@ -110,9 +110,15 @@
         @if($stayCancellationVisible)
             <section class="stay-cancellation-section" aria-labelledby="stay-cancellation-title">
                 <span class="stay-section-kicker">RESERVATION OPTIONS</span>
-                <h2 id="stay-cancellation-title">{{ $stayCancellationOpen ? 'Cancellation window open' : 'Cancellation window closed' }}</h2>
-                @if($stayCancellationOpen)
-                    <p>You can cancel online before check-in. Cancel at least 3 days ahead for a full refund; cancellations less than 3 days ahead are non-refundable.</p>
+                <h2 id="stay-cancellation-title">{{ $booking->cancellation_request_status === 'requested' ? 'Cancellation requested' : ($booking->cancellation_request_status === 'declined' ? 'Request declined' : ($stayCancellationOpen ? 'Cancellation window open' : 'Cancellation window closed')) }}</h2>
+                @if($booking->cancellation_request_status === 'requested')
+                    <p>Your request is with reception. The booking remains active until staff confirms it.</p>
+                    <a class="stay-help-link" href="{{ $backUrl }}">Manage this reservation</a>
+                @elseif($booking->cancellation_request_status === 'declined')
+                    <p>Reception could not approve your cancellation request. Your booking remains active.</p>
+                    <a class="stay-help-link" href="{{ route('contact') }}">Contact Carolina</a>
+                @elseif($stayCancellationOpen)
+                    <p>You can request cancellation online before check-in. The booking remains active until reception confirms it.</p>
                     <a class="stay-help-link" href="{{ auth()->check() && auth()->id() === $booking->user_id ? route('bookings.index', ['section' => 'bookings']) : route('bookings.lookup') }}">Manage this reservation</a>
                 @else
                     <p>Online cancellation closes at the scheduled check-in time. Contact Carolina if you need help with this reservation.</p>

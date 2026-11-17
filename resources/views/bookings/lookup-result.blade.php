@@ -234,34 +234,41 @@
                 <section class="portal-action-card">
                     <span class="portal-kicker">RESERVATION OPTIONS</span>
                     <h2>Manage booking</h2>
-                    @if($canReschedule)
-                        <p>Choose a new check-in at least 3 days ahead. Your room, stay length, and price stay the same. {{ $booking->reschedulesRemaining() }} of 2 reschedules remaining.</p>
-                        <form class="portal-reschedule-form" method="POST" action="{{ route('bookings.lookup.reschedule', $booking) }}">
-                            @csrf @method('PATCH')
-                            <input type="hidden" name="email" value="{{ $lookupEmail }}">
-                            <input type="hidden" name="reference" value="{{ $booking->reference }}">
-                            @if($booking->booking_type === 'hourly')
-                                <label>New check-in time<input type="datetime-local" name="new_check_in_at" min="{{ \App\Support\PropertyTime::now()->addDays(3)->format('Y-m-d\\TH:i') }}" required></label>
-                            @else
-                                <label>New check-in date<input type="date" name="new_check_in" min="{{ \App\Support\PropertyTime::now()->addDays(3)->toDateString() }}" required></label>
-                            @endif
-                            @error('reschedule')<small class="portal-reschedule-error">{{ $message }}</small>@enderror
-                            <button class="button secondary" type="submit">Save new time</button>
-                        </form>
-                    @elseif($showCancellation && $booking->reschedulesRemaining() === 0)
-                        <p>Online rescheduling limit reached (2). Contact Carolina if you need to change your stay.</p>
-                    @endif
-                    @if($canCancel)
-                        <p>You can cancel online before check-in. Cancel at least 3 days ahead for a full refund; cancellations less than 3 days ahead are non-refundable. The room will reopen for these dates after cancellation.</p>
-                        <form class="portal-cancel-form" method="POST" action="{{ route('bookings.lookup.cancel', $booking) }}" data-booking-cancel-confirm>
-                            @csrf @method('PATCH')
-                            <input type="hidden" name="email" value="{{ $lookupEmail }}">
-                            <input type="hidden" name="reference" value="{{ $booking->reference }}">
-                            <button class="button danger" type="submit">Cancel booking</button>
-                        </form>
+                    @if($booking->cancellation_request_status === 'requested')
+                        <p role="status">Your cancellation request was sent. The booking remains active until reception confirms it.</p>
+                    @elseif($booking->cancellation_request_status === 'declined')
+                        <p role="status">Reception could not approve your cancellation request. Your booking remains active.</p>
+                        <a class="portal-help-link" href="{{ route('contact') }}">Contact Carolina</a>
                     @else
-                        <p>Online cancellation closes at the scheduled check-in time. Contact Carolina if you need help with this reservation.</p>
-                        <a class="portal-help-link" href="https://www.facebook.com/profile.php?id=61556306344437" target="_blank" rel="noopener noreferrer">Message Carolina</a>
+                        @if($canReschedule)
+                            <p>Choose a new check-in at least 3 days ahead. Your room, stay length, and price stay the same. {{ $booking->reschedulesRemaining() }} of 2 reschedules remaining.</p>
+                            <form class="portal-reschedule-form" method="POST" action="{{ route('bookings.lookup.reschedule', $booking) }}">
+                                @csrf @method('PATCH')
+                                <input type="hidden" name="email" value="{{ $lookupEmail }}">
+                                <input type="hidden" name="reference" value="{{ $booking->reference }}">
+                                @if($booking->booking_type === 'hourly')
+                                    <label>New check-in time<input type="datetime-local" name="new_check_in_at" min="{{ \App\Support\PropertyTime::now()->addDays(3)->format('Y-m-d\\TH:i') }}" required></label>
+                                @else
+                                    <label>New check-in date<input type="date" name="new_check_in" min="{{ \App\Support\PropertyTime::now()->addDays(3)->toDateString() }}" required></label>
+                                @endif
+                                @error('reschedule')<small class="portal-reschedule-error">{{ $message }}</small>@enderror
+                                <button class="button secondary" type="submit">Save new time</button>
+                            </form>
+                        @elseif($booking->reschedulesRemaining() === 0)
+                            <p>Online rescheduling limit reached (2). Contact Carolina if you need to change your stay.</p>
+                        @endif
+                        @if($canCancel)
+                            <p>Your booking remains active until reception confirms the cancellation.</p>
+                            <form class="portal-cancel-form" method="POST" action="{{ route('bookings.lookup.cancel', $booking) }}" data-booking-cancel-confirm>
+                                @csrf @method('PATCH')
+                                <input type="hidden" name="email" value="{{ $lookupEmail }}">
+                                <input type="hidden" name="reference" value="{{ $booking->reference }}">
+                                <button class="button danger" type="submit">Request cancellation</button>
+                            </form>
+                        @else
+                            <p>Online cancellation closes at the scheduled check-in time. Contact Carolina if you need help with this reservation.</p>
+                            <a class="portal-help-link" href="https://www.facebook.com/profile.php?id=61556306344437" target="_blank" rel="noopener noreferrer">Message Carolina</a>
+                        @endif
                     @endif
                 </section>
             @elseif($booking->checked_out_at)

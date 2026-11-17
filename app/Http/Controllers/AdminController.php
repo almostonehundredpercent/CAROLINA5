@@ -204,11 +204,18 @@ class AdminController extends Controller
         $action = $request->input('action');
 
         if ($action === 'check_in') {
-            abort_if($booking->status !== 'confirmed' || $booking->checked_out_at, 422, 'Only confirmed bookings can be checked in.');
-            abort_if($booking->check_in_at && $booking->check_in_at->gt(PropertyTime::now()), 422, 'This guest cannot be checked in before the scheduled arrival time.');
-            $booking->update(['checked_in_at' => PropertyTime::now(), 'status' => 'confirmed']);
-            $this->log($booking, $request->user()->id, 'checked_in', 'Guest checked in by staff.');
-            $this->email($booking->fresh('room'), 'Welcome to Carolina', 'You have been checked in. We hope you enjoy your stay.');
+            $checkedIn = DB::transaction(function () use ($booking) {
+                Room::whereKey($booking->room_id)->lockForUpdate()->firstOrFail();
+                $locked = Booking::whereKey($booking->id)->lockForUpdate()->firstOrFail();
+                abort_if($locked->status !== 'confirmed' || $locked->checked_out_at, 422, 'Only confirmed bookings can be checked in.');
+                abort_if($locked->cancellation_request_status === 'requested', 422, 'Resolve the guest’s cancellation request before checking them in.');
+                abort_if($locked->check_in_at && $locked->check_in_at->gt(PropertyTime::now()), 422, 'This guest cannot be checked in before the scheduled arrival time.');
+                $locked->update(['checked_in_at' => PropertyTime::now(), 'status' => 'confirmed']);
+
+                return $locked;
+            });
+            $this->log($checkedIn, $request->user()->id, 'checked_in', 'Guest checked in by staff.');
+            $this->email($checkedIn->fresh('room'), 'Welcome to Carolina', 'You have been checked in. We hope you enjoy your stay.');
 
             return back()->with('success', 'Guest checked in and notified.');
         }
@@ -268,8 +275,9 @@ class AdminController extends Controller
         $before = DB::transaction(function () use ($booking, $status, $data, $request) {
             $lockedRoom = Room::whereKey($booking->room_id)->lockForUpdate()->firstOrFail();
             $lockedBooking = Booking::whereKey($booking->id)->lockForUpdate()->firstOrFail();
-            $before = $lockedBooking->only(['status', 'staff_notes', 'cancelled_at', 'cancelled_by', 'cancellation_reason']);
+            $before = $lockedBooking->only(['status', 'staff_notes', 'cancelled_at', 'cancelled_by', 'cancellation_reason', 'cancellation_request_status', 'cancellation_reviewed_at', 'cancellation_reviewed_by']);
             if ($status === 'confirmed') {
+                abort_if($lockedBooking->cancellation_request_status === 'requested', 422, 'Resolve the guest’s cancellation request before confirming this booking.');
                 if ((float) $lockedBooking->deposit_amount > 0 && $lockedBooking->deposit_status !== 'verified' && ! $lockedBooking->deposit_verified_at) {
                     throw ValidationException::withMessages(['status' => 'Verify the required downpayment before confirming this online reservation.']);
                 }
@@ -286,13 +294,29 @@ class AdminController extends Controller
                 if ($conflict) {
                     throw ValidationException::withMessages(['status' => 'This room is no longer available for the requested stay.']);
                 }
-                $lockedBooking->update(['status' => 'confirmed', 'hold_expires_at' => null, 'cancelled_at' => null, 'cancelled_by' => null, 'cancellation_reason' => null]);
+                $resetCancellationRequest = $lockedBooking->status === 'cancelled';
+                $lockedBooking->update([
+                    'status' => 'confirmed',
+                    'hold_expires_at' => null,
+                    'cancelled_at' => null,
+                    'cancelled_by' => null,
+                    'cancellation_reason' => null,
+                ] + ($resetCancellationRequest ? [
+                    'cancellation_request_status' => null,
+                    'cancellation_requested_at' => null,
+                    'cancellation_reviewed_at' => null,
+                    'cancellation_reviewed_by' => null,
+                ] : []));
             } else {
                 abort_if($status === 'cancelled' && $lockedBooking->checked_in_at && ! $lockedBooking->checked_out_at, 422, 'Check out the guest before cancelling their booking.');
+                $cancellationRequestConfirmed = $status === 'cancelled' && $lockedBooking->cancellation_request_status === 'requested';
                 $lockedBooking->update(['status' => $status, 'hold_expires_at' => null] + ($status === 'cancelled' ? [
                     'cancelled_at' => now(),
                     'cancelled_by' => $request->user()->id,
                     'cancellation_reason' => trim((string) ($data['cancellation_reason'] ?? '')) ?: 'Cancelled by staff.',
+                    'cancellation_request_status' => $cancellationRequestConfirmed ? 'confirmed' : $lockedBooking->cancellation_request_status,
+                    'cancellation_reviewed_at' => $cancellationRequestConfirmed ? PropertyTime::now() : $lockedBooking->cancellation_reviewed_at,
+                    'cancellation_reviewed_by' => $cancellationRequestConfirmed ? $request->user()->id : $lockedBooking->cancellation_reviewed_by,
                 ] : ['cancelled_at' => null, 'cancelled_by' => null, 'cancellation_reason' => null]));
             }
 
@@ -303,10 +327,82 @@ class AdminController extends Controller
         if ($note !== '') {
             $booking->update(['staff_notes' => trim(($booking->staff_notes ? $booking->staff_notes."\n" : '').now()->format('Y-m-d H:i').' · '.$request->user()->name.': '.$note)]);
         }
-        $this->log($booking->fresh(), $request->user()->id, 'booking_'.$status, 'Booking status changed to '.$status.($note ? '. Note: '.$note : '.'), $before, $booking->fresh()->only(['status', 'staff_notes', 'cancelled_at', 'cancelled_by', 'cancellation_reason']));
+        $this->log($booking->fresh(), $request->user()->id, 'booking_'.$status, 'Booking status changed to '.$status.($note ? '. Note: '.$note : '.'), $before, $booking->fresh()->only(['status', 'staff_notes', 'cancelled_at', 'cancelled_by', 'cancellation_reason', 'cancellation_request_status', 'cancellation_reviewed_at', 'cancellation_reviewed_by']));
         $this->email($booking->fresh('room'), 'Your Carolina booking was updated', 'Your booking status is now '.$status.'.');
 
         return back()->with('success', 'Booking status updated.');
+    }
+
+    public function resolveCancellationRequest(Request $request, Booking $booking)
+    {
+        abort_unless($request->user()->canManageBookings(), 403, 'Your staff role cannot manage bookings.');
+        $data = $request->validate(['decision' => 'required|in:confirm,decline']);
+
+        $resolution = DB::transaction(function () use ($booking, $request, $data) {
+            Room::whereKey($booking->room_id)->lockForUpdate()->firstOrFail();
+            $locked = Booking::whereKey($booking->id)->lockForUpdate()->firstOrFail();
+            abort_unless(
+                $locked->cancellation_request_status === 'requested'
+                    && $locked->status !== 'cancelled'
+                    && ! $locked->checked_in_at
+                    && ! $locked->checked_out_at,
+                409,
+                'This cancellation request is no longer waiting for review.',
+            );
+
+            $reviewedAt = PropertyTime::now();
+            $before = [
+                'status' => $locked->status,
+                'cancellation_request_status' => $locked->cancellation_request_status,
+                'cancellation_requested_at' => $locked->cancellation_requested_at?->toIso8601String(),
+            ];
+            $attributes = [
+                'cancellation_request_status' => $data['decision'] === 'confirm' ? 'confirmed' : 'declined',
+                'cancellation_reviewed_at' => $reviewedAt,
+                'cancellation_reviewed_by' => $request->user()->id,
+            ];
+            if ($data['decision'] === 'confirm') {
+                $attributes += [
+                    'status' => 'cancelled',
+                    'hold_expires_at' => null,
+                    'cancelled_at' => $reviewedAt,
+                    'cancelled_by' => $request->user()->id,
+                    'cancellation_reason' => 'Cancelled at guest request.',
+                ];
+            }
+            $locked->update($attributes);
+
+            return [
+                'booking' => $locked,
+                'before' => $before,
+                'after' => $locked->only(['status', 'cancellation_request_status', 'cancellation_requested_at', 'cancellation_reviewed_at', 'cancellation_reviewed_by', 'cancelled_at', 'cancelled_by', 'cancellation_reason']),
+                'reviewed_at' => $reviewedAt,
+            ];
+        });
+
+        $resolvedBooking = $resolution['booking']->fresh(['room', 'user']);
+        $confirmed = $data['decision'] === 'confirm';
+        $this->log(
+            $resolvedBooking,
+            $request->user()->id,
+            $confirmed ? 'cancellation_request_confirmed' : 'cancellation_request_declined',
+            $confirmed
+                ? 'Reception confirmed the guest’s cancellation request. The booking was cancelled and room time released.'
+                : 'Reception declined the guest’s cancellation request. The booking remains active.',
+            $resolution['before'],
+            $resolution['after'],
+        );
+        $this->email(
+            $resolvedBooking,
+            $confirmed ? 'Your Carolina cancellation was confirmed' : 'Your Carolina cancellation request was declined',
+            $confirmed
+                ? 'Reception confirmed your cancellation request. Your booking is now cancelled and the room dates are available again. Any eligible refund is handled separately by Carolina.'
+                : 'Reception could not approve your cancellation request. Your booking remains active. Please contact Carolina if you need help.',
+        );
+
+        return back()->with('success', $confirmed
+            ? 'Cancellation confirmed. The booking is cancelled and the room time is available again.'
+            : 'Cancellation request declined. The booking remains active.');
     }
 
     public function resolveEarlyCheckout(Request $request, Booking $booking, GuestReviewInvitationService $reviewInvitations)
@@ -678,11 +774,14 @@ class AdminController extends Controller
             'arrivals' => Booking::with(['user', 'room'])->where('status', 'confirmed')->whereDate('check_in', $today)->whereNull('checked_in_at')->get(),
             'activeStays' => Booking::with(['user', 'room'])->whereNotNull('checked_in_at')->whereNull('checked_out_at')->get(),
             'earlyCheckoutRequests' => Booking::with(['user', 'room'])->where('early_checkout_status', 'requested')->whereNull('checked_out_at')->orderBy('early_checkout_requested_at')->get(),
+            'cancellationRequests' => Booking::with(['user', 'room'])->where('cancellation_request_status', 'requested')->where('status', '!=', 'cancelled')->whereNull('checked_in_at')->whereNull('checked_out_at')->orderBy('cancellation_requested_at')->get(),
             'departures' => Booking::with(['user', 'room'])->whereNotNull('checked_in_at')->whereNull('checked_out_at')->whereDate('check_out', '<=', $today)->get(),
             'roomOperationBlocks' => RoomBlock::with('room')->whereIn('status', ['cleaning', 'maintenance'])->overlapping($today, $tomorrow)->orderBy('starts_at')->get(),
             'propertyNow' => $propertyNow,
             'roomStatusCounts' => $roomStatusCounts,
-            'pendingRequests' => Booking::query()->blocking()->where('status', 'pending')->count(),
+            'pendingRequests' => Booking::query()->blocking()->where('status', 'pending')->where(function ($query) {
+                $query->whereNull('cancellation_request_status')->orWhere('cancellation_request_status', '!=', 'requested');
+            })->count(),
             'recentActivity' => $canSeeDecisionSupport ? ActivityLog::latest()->take(3)->get() : collect(),
             'carolSignal' => $canSeeDecisionSupport ? $decisionSupport->dashboardSignals($rooms)->first() : null,
             'canSeeDecisionSupport' => $canSeeDecisionSupport,

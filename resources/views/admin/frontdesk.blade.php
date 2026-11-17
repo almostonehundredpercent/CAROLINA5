@@ -73,6 +73,7 @@
                 <section class="frontdesk-feature frontdesk-attention">
                     <div class="frontdesk-feature-title"><span class="frontdesk-feature-icon" aria-hidden="true">!</span><div><p class="admin-kicker">SHIFT PRIORITIES</p><h2>Needs attention</h2></div></div>
                     <p><strong>{{ $pendingRequests }}</strong> booking request{{ $pendingRequests === 1 ? '' : 's' }} waiting for review</p>
+                    @if($cancellationRequests->isNotEmpty())<p><strong>{{ $cancellationRequests->count() }}</strong> cancellation request{{ $cancellationRequests->count() === 1 ? '' : 's' }} waiting for confirmation</p>@endif
                     @if($earlyCheckoutRequests->isNotEmpty())<p><strong>{{ $earlyCheckoutRequests->count() }}</strong> early check-out request{{ $earlyCheckoutRequests->count() === 1 ? '' : 's' }} waiting for confirmation</p>@endif
                     <a class="frontdesk-primary-link" href="{{ route('admin.bookings') }}">Review bookings <span aria-hidden="true">→</span></a>
                 </section>
@@ -117,6 +118,30 @@
         <div class="frontdesk-details-heading"><div><p class="admin-kicker">FRONT DESK</p><h2>Shift details</h2><p>Arrivals, active stays, departures, and room operations.</p></div></div>
 
         <section class="today-grid">
+            @if($cancellationRequests->isNotEmpty())
+                <section class="panel" aria-labelledby="cancellation-requests-title">
+                    <div class="panel-heading"><div><p class="admin-kicker">GUEST REQUESTS</p><h2 id="cancellation-requests-title">{{ $cancellationRequests->count() }} cancellation request{{ $cancellationRequests->count() === 1 ? '' : 's' }}</h2></div></div>
+                    <p class="today-panel-note">The booking stays active and the room stays reserved until you confirm.</p>
+                    <div class="today-list">
+                        @foreach($cancellationRequests as $booking)
+                            <article class="today-item">
+                                <b>{{ $booking->reference }} · {{ $booking->guest_name ?? $booking->user?->name ?? 'Guest' }}</b>
+                                <small>{{ $booking->room?->name }} · Requested {{ $booking->cancellation_requested_at?->format('M j, g:i A') }}</small>
+                                <div class="today-actions">
+                                    <form method="POST" action="{{ route('admin.bookings.cancellation-request.resolve', $booking) }}" data-admin-confirm data-confirm-title="Confirm cancellation?" data-confirm-message="Confirm this guest’s request? This cancels the booking and releases the room dates." data-confirm-action="Confirm cancellation" data-confirm-style="cancellation">
+                                        @csrf<input type="hidden" name="decision" value="confirm"><button class="status-select cancelled" type="submit">Confirm cancellation</button>
+                                    </form>
+                                    <form method="POST" action="{{ route('admin.bookings.cancellation-request.resolve', $booking) }}" data-admin-confirm data-confirm-title="Decline cancellation?" data-confirm-message="Decline this request? The booking will remain active and the room will stay reserved." data-confirm-action="Decline request">
+                                        @csrf<input type="hidden" name="decision" value="decline"><button class="status-select" type="submit">Decline</button>
+                                    </form>
+                                    <a class="status-select" href="{{ route('admin.bookings.show', ['booking' => $booking, 'from' => 'today']) }}">View booking</a>
+                                </div>
+                            </article>
+                        @endforeach
+                    </div>
+                </section>
+            @endif
+
             @if($earlyCheckoutRequests->isNotEmpty())
                 <section class="panel" aria-labelledby="early-checkout-requests-title">
                     <div class="panel-heading"><div><p class="admin-kicker">GUEST REQUESTS</p><h2 id="early-checkout-requests-title">{{ $earlyCheckoutRequests->count() }} early check-out request{{ $earlyCheckoutRequests->count() === 1 ? '' : 's' }}</h2></div></div>
@@ -160,7 +185,7 @@
                             </dl>
                             <div class="today-actions">
                                 <a class="status-select" href="{{ route('admin.bookings.show', ['booking' => $booking, 'from' => 'today']) }}">View booking</a>
-                                @if($booking->check_in_at?->lte($propertyNow))
+                                @if($booking->cancellation_request_status !== 'requested' && $booking->check_in_at?->lte($propertyNow))
                                     <form method="POST" action="{{ route('admin.bookings.check-in', $booking) }}" data-admin-confirm data-confirm-title="Check in this guest?" data-confirm-message="Check in {{ $booking->guest_name ?? $booking->user?->name ?? 'this guest' }} now? This marks the reservation as checked in." data-confirm-action="Check in guest">
                                         @csrf<input type="hidden" name="action" value="check_in"><button class="status-select confirmed">Check in</button>
                                     </form>
