@@ -228,6 +228,11 @@ class AdminController extends Controller
 
                 $checkedOutAt = PropertyTime::now();
                 $wasEarlyCheckoutRequest = $lockedBooking->early_checkout_status === 'requested';
+                $scheduledCheckoutAt = $lockedBooking->check_out_at ?? $lockedBooking->check_out->copy()->endOfDay();
+                if ($wasEarlyCheckoutRequest || $scheduledCheckoutAt->gt($checkedOutAt)) {
+                    $financial = FinancialSummary::forBooking($lockedBooking->load('payments'));
+                    abort_if($financial['outstanding'] > 0.001, 422, 'Record the remaining balance before confirming an early check-out.');
+                }
                 $attributes = ['checked_out_at' => $checkedOutAt];
                 if ($wasEarlyCheckoutRequest) {
                     $attributes += [
@@ -261,7 +266,7 @@ class AdminController extends Controller
                 ['checked_out_at' => $checkout['checked_out_at']->toIso8601String()],
             );
             if ($checkout['early_request']) {
-                $this->email($checkedOutBooking->fresh(['room', 'user']), 'Early check-out confirmed', 'Reception confirmed your early check-out and recorded your departure at '.$checkout['checked_out_at']->format('M j, Y g:i A').'. Your booking total is unchanged; any remaining balance is still due. No refund is issued automatically.');
+                $this->email($checkedOutBooking->fresh(['room', 'user']), 'Early check-out confirmed', 'Reception confirmed your early check-out and recorded your departure at '.$checkout['checked_out_at']->format('M j, Y g:i A').'. Your booking total is unchanged. Refunds are handled separately and are not issued automatically.');
             }
             $reviewInvitations->send($checkedOutBooking->fresh(['room', 'user']));
 
@@ -428,6 +433,8 @@ class AdminController extends Controller
                 'checked_out_at' => $locked->checked_out_at?->toIso8601String(),
             ];
             if ($data['decision'] === 'confirm') {
+                $financial = FinancialSummary::forBooking($locked->load('payments'));
+                abort_if($financial['outstanding'] > 0.001, 422, 'Record the remaining balance before confirming this early check-out.');
                 $locked->update([
                     'early_checkout_status' => 'confirmed',
                     'checked_out_at' => $resolvedAt,
@@ -477,7 +484,7 @@ class AdminController extends Controller
 
         if ($confirmed) {
             $freshBooking = $resolution['booking']->fresh(['room', 'user']);
-            $this->email($freshBooking, 'Early check-out confirmed', 'Reception confirmed your early check-out and recorded your departure at '.$resolution['resolved_at']->format('M j, Y g:i A').'. Your booking total is unchanged; any remaining balance is still due. No refund is issued automatically.');
+            $this->email($freshBooking, 'Early check-out confirmed', 'Reception confirmed your early check-out and recorded your departure at '.$resolution['resolved_at']->format('M j, Y g:i A').'. Your booking total is unchanged. Refunds are handled separately and are not issued automatically.');
             $reviewInvitations->send($freshBooking);
 
             return back()->with('success', 'Early check-out confirmed. The departure was recorded and a 2-hour cleaning timer is now active.');
@@ -772,10 +779,10 @@ class AdminController extends Controller
 
         return view('admin.frontdesk', [
             'arrivals' => Booking::with(['user', 'room'])->where('status', 'confirmed')->whereDate('check_in', $today)->whereNull('checked_in_at')->get(),
-            'activeStays' => Booking::with(['user', 'room'])->whereNotNull('checked_in_at')->whereNull('checked_out_at')->get(),
-            'earlyCheckoutRequests' => Booking::with(['user', 'room'])->where('early_checkout_status', 'requested')->whereNull('checked_out_at')->orderBy('early_checkout_requested_at')->get(),
+            'activeStays' => Booking::with(['user', 'room', 'payments'])->whereNotNull('checked_in_at')->whereNull('checked_out_at')->get(),
+            'earlyCheckoutRequests' => Booking::with(['user', 'room', 'payments'])->where('early_checkout_status', 'requested')->whereNull('checked_out_at')->orderBy('early_checkout_requested_at')->get(),
             'cancellationRequests' => Booking::with(['user', 'room'])->where('cancellation_request_status', 'requested')->where('status', '!=', 'cancelled')->whereNull('checked_in_at')->whereNull('checked_out_at')->orderBy('cancellation_requested_at')->get(),
-            'departures' => Booking::with(['user', 'room'])->whereNotNull('checked_in_at')->whereNull('checked_out_at')->whereDate('check_out', '<=', $today)->get(),
+            'departures' => Booking::with(['user', 'room', 'payments'])->whereNotNull('checked_in_at')->whereNull('checked_out_at')->whereDate('check_out', '<=', $today)->get(),
             'roomOperationBlocks' => RoomBlock::with('room')->whereIn('status', ['cleaning', 'maintenance'])->overlapping($today, $tomorrow)->orderBy('starts_at')->get(),
             'propertyNow' => $propertyNow,
             'roomStatusCounts' => $roomStatusCounts,

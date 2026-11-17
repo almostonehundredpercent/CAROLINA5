@@ -151,10 +151,16 @@
                             <article class="today-item">
                                 <b>{{ $booking->reference }} · {{ $booking->guest_name ?? $booking->user?->name ?? 'Guest' }}</b>
                                 <small>{{ $booking->room?->name }} · Requested {{ $booking->early_checkout_requested_at?->format('M j, g:i A') }}</small>
+                                @php($earlyCheckoutBalance = \App\Support\FinancialSummary::forBooking($booking)['outstanding'])
+                                @if($earlyCheckoutBalance > 0.001)
+                                    <p class="today-panel-note" role="status">₱{{ number_format($earlyCheckoutBalance, 2) }} remains due. Collect the balance before confirming early check-out.</p>
+                                @endif
                                 <div class="today-actions">
-                                    <form method="POST" action="{{ route('admin.bookings.early-checkout.resolve', $booking) }}" data-admin-confirm data-confirm-title="Confirm early check-out?" data-confirm-message="Confirm {{ $booking->guest_name ?? $booking->user?->name ?? 'this guest' }}’s departure now? This marks the booking checked out and starts room cleaning. The booking total stays the same; refunds are handled separately." data-confirm-action="Confirm check-out">
-                                        @csrf<input type="hidden" name="decision" value="confirm"><button class="status-select confirmed" type="submit">Confirm check-out</button>
-                                    </form>
+                                    @if($earlyCheckoutBalance <= 0.001)
+                                        <form method="POST" action="{{ route('admin.bookings.early-checkout.resolve', $booking) }}" data-admin-confirm data-confirm-title="Confirm early check-out?" data-confirm-message="Confirm {{ $booking->guest_name ?? $booking->user?->name ?? 'this guest' }}’s departure now? This marks the booking checked out and starts room cleaning. The booking total stays the same; refunds are handled separately." data-confirm-action="Confirm check-out">
+                                            @csrf<input type="hidden" name="decision" value="confirm"><button class="status-select confirmed" type="submit">Confirm check-out</button>
+                                        </form>
+                                    @endif
                                     <form method="POST" action="{{ route('admin.bookings.early-checkout.resolve', $booking) }}" data-admin-confirm data-confirm-title="Decline this request?" data-confirm-message="Decline this early check-out request? The guest will remain checked in." data-confirm-action="Decline request" data-confirm-style="cancellation">
                                         @csrf<input type="hidden" name="decision" value="decline"><button class="status-select cancelled" type="submit">Decline</button>
                                     </form>
@@ -221,15 +227,22 @@
                 <div class="today-list">
                     @forelse($departures as $booking)
                         <article class="today-item">
+                            @php($departureBalance = \App\Support\FinancialSummary::forBooking($booking)['outstanding'])
+                            @php($departureScheduledCheckout = $booking->check_out_at ?? $booking->check_out->copy()->endOfDay())
+                            @php($departureEarlyCheckoutBlocked = ($booking->early_checkout_status === 'requested' || $departureScheduledCheckout->gt($propertyNow)) && $departureBalance > 0.001)
                             <b>{{ $booking->reference }} · {{ $booking->guest_name ?? $booking->user?->name ?? 'Guest' }}</b><small>{{ $booking->room?->name }}</small>
                             <dl class="today-schedule">
                                 <div><dt>Check-in</dt><dd><time datetime="{{ $booking->check_in_at?->toIso8601String() }}">{{ $booking->check_in_at?->format('M j, Y') ?? $booking->check_in?->format('M j, Y') }}</time></dd><dd>{{ $booking->check_in_at?->format('g:i A') ?? 'Time not recorded' }}</dd></div>
                                 <div><dt>Check-out</dt><dd><time datetime="{{ $booking->check_out_at?->toIso8601String() }}">{{ $booking->check_out_at?->format('M j, Y') ?? $booking->check_out?->format('M j, Y') }}</time></dd><dd>{{ $booking->check_out_at?->format('g:i A') ?? 'Time not recorded' }}</dd></div>
                             </dl>
                             <div class="today-actions">
-                                <form method="POST" action="{{ route('admin.bookings.check-out', $booking) }}" data-admin-confirm data-confirm-kicker="GUEST DEPARTURE" data-confirm-title="{{ $booking->early_checkout_status === 'requested' ? 'Confirm early check-out?' : 'Check out this guest?' }}" data-confirm-message="{{ $booking->early_checkout_status === 'requested' ? 'Confirm this guest’s requested departure now? This records check-out and starts room cleaning. The booking total stays the same.' : 'Check out ' . ($booking->guest_name ?? $booking->user?->name ?? 'this guest') . ' now? This records the departure and marks the room for cleaning.' }}" data-confirm-action="{{ $booking->early_checkout_status === 'requested' ? 'Confirm check-out' : 'Check out guest' }}">
-                                    @csrf<input type="hidden" name="action" value="check_out"><button class="status-select">{{ $booking->early_checkout_status === 'requested' ? 'Confirm request' : 'Check out' }}</button>
-                                </form>
+                                @if($departureEarlyCheckoutBlocked)
+                                    <span class="today-panel-note" role="status">Early check-out is blocked while ₱{{ number_format($departureBalance, 2) }} remains due.</span>
+                                @else
+                                    <form method="POST" action="{{ route('admin.bookings.check-out', $booking) }}" data-admin-confirm data-confirm-kicker="GUEST DEPARTURE" data-confirm-title="{{ $booking->early_checkout_status === 'requested' ? 'Confirm early check-out?' : 'Check out this guest?' }}" data-confirm-message="{{ $booking->early_checkout_status === 'requested' ? 'Confirm this guest’s requested departure now? This records check-out and starts room cleaning. The booking total stays the same.' : 'Check out ' . ($booking->guest_name ?? $booking->user?->name ?? 'this guest') . ' now? This records the departure and marks the room for cleaning.' }}" data-confirm-action="{{ $booking->early_checkout_status === 'requested' ? 'Confirm check-out' : 'Check out guest' }}">
+                                        @csrf<input type="hidden" name="action" value="check_out"><button class="status-select">{{ $booking->early_checkout_status === 'requested' ? 'Confirm request' : 'Check out' }}</button>
+                                    </form>
+                                @endif
                                 <a class="status-select" href="{{ route('admin.bookings.show', ['booking' => $booking, 'from' => 'today']) }}">View booking</a>
                             </div>
                         </article>

@@ -1014,6 +1014,8 @@ class BookingController extends Controller
             Room::whereKey($booking->room_id)->lockForUpdate()->firstOrFail();
             $locked = Booking::whereKey($booking->id)->lockForUpdate()->firstOrFail();
             abort_unless($locked->status === 'confirmed' && $locked->checked_in_at && ! $locked->checked_out_at, 422, 'Early checkout is available only during an active checked-in stay.');
+            $financial = FinancialSummary::forBooking($locked->load('payments'));
+            abort_if($financial['outstanding'] > 0.001, 422, 'Pay the remaining balance before requesting an early check-out.');
 
             abort_if($locked->early_checkout_status === 'requested', 409, 'Your early check-out request is already waiting for reception.');
             abort_if($locked->early_checkout_status === 'confirmed', 409, 'Reception has already confirmed your early check-out.');

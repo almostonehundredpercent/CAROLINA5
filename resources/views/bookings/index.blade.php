@@ -53,13 +53,20 @@
             @endif
             @if($booking->early_checkout_status === 'requested' && ! $booking->checked_out_at)
                 <small>Early check-out request sent. Reception must confirm before your stay ends.</small>
+                @if($bookingFinance['outstanding'] > 0.001)
+                    <small role="status">Pay the remaining balance of ₱{{ number_format($bookingFinance['outstanding'], 2) }} before reception can confirm early check-out.</small>
+                @endif
             @elseif($booking->early_checkout_status === 'declined' && ! $booking->checked_out_at)
                 <small>Reception could not confirm your request. Contact Carolina to arrange check-out.</small>
             @elseif($booking->status === 'confirmed' && $booking->checked_in_at && ! $booking->checked_out_at && ($booking->check_out_at ?? $booking->check_out->copy()->endOfDay())->gt(\App\Support\PropertyTime::now()))
-                <form method="POST" action="{{ route('bookings.early-checkout', $booking) }}" onsubmit="return window.confirm('Send an early check-out request? Your stay remains active until reception confirms your departure. Your booking total stays the same.')">
-                    @csrf
-                    <button class="button button-outline booking-receipt-link" type="submit">Request early check-out</button>
-                </form>
+                @if($bookingFinance['outstanding'] <= 0.001)
+                    <form method="POST" action="{{ route('bookings.early-checkout', $booking) }}" onsubmit="return window.confirm('Send an early check-out request? Your stay remains active until reception confirms your departure. Your booking total stays the same.')">
+                        @csrf
+                        <button class="button button-outline booking-receipt-link" type="submit">Request early check-out</button>
+                    </form>
+                @else
+                    <small role="status">Pay the remaining balance of ₱{{ number_format($bookingFinance['outstanding'], 2) }} before requesting an early check-out.</small>
+                @endif
             @endif
             @if($booking->cancellation_request_status === 'requested' && $booking->status !== 'cancelled')
                 <small role="status">Cancellation request sent. Your booking remains active until reception confirms it.</small>

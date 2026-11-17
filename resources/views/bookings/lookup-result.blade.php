@@ -11,7 +11,10 @@
     $showExtension = $booking->checked_in_at && ! $booking->checked_out_at && $booking->status !== 'cancelled';
     $extensionHours = max(1, min(168, (int) old('hours', 1)));
     $scheduledCheckoutAt = $booking->check_out_at ?? $booking->check_out?->copy()->endOfDay();
-    $showEarlyCheckout = $showExtension && $booking->status === 'confirmed' && $scheduledCheckoutAt?->gt(\App\Support\PropertyTime::now()) && ! in_array($booking->early_checkout_status, ['requested', 'declined', 'confirmed'], true);
+    $earlyCheckoutBalance = \App\Support\FinancialSummary::forBooking($booking)['outstanding'];
+    $earlyCheckoutWindowOpen = $showExtension && $booking->status === 'confirmed' && $scheduledCheckoutAt?->gt(\App\Support\PropertyTime::now()) && ! in_array($booking->early_checkout_status, ['requested', 'declined', 'confirmed'], true);
+    $showEarlyCheckout = $earlyCheckoutWindowOpen && $earlyCheckoutBalance <= 0.001;
+    $earlyCheckoutBlockedByBalance = $earlyCheckoutWindowOpen && $earlyCheckoutBalance > 0.001;
     $hasPortalAside = $expiredHold || $canResumePayment || $showCancellation || $showExtension || $booking->checked_out_at || $booking->status === 'cancelled' || ! $guestBooking;
     $portalStatus = $booking->checked_out_at ? 'Checked out' : ($expiredHold ? 'Payment hold expired' : ucfirst($booking->status));
     $portalStatusClass = $booking->checked_out_at ? 'checked-out' : ($expiredHold ? 'expired' : strtolower($booking->status));
@@ -192,6 +195,9 @@
                     <span class="portal-kicker">REQUEST SENT</span>
                     <h2>Waiting for reception</h2>
                     <p>Your early check-out request is waiting for staff confirmation. You remain checked in until reception records your departure.</p>
+                    @if($earlyCheckoutBalance > 0.001)
+                        <p role="status">Pay the remaining balance of ₱{{ number_format($earlyCheckoutBalance, 2) }} before reception can confirm early check-out.</p>
+                    @endif
                 </section>
             @elseif($booking->early_checkout_status === 'declined')
                 <section class="portal-action-card portal-early-card">
@@ -205,11 +211,17 @@
                     <span class="portal-kicker">LEAVING AHEAD OF SCHEDULE?</span>
                     <h2>Check out early</h2>
                     <p>Ask reception to confirm your departure. You remain checked in until staff approves the request.</p>
-                    <div class="portal-early-policy"><strong>Booking total stays the same.</strong> Any remaining balance is still due; refunds are handled separately.</div>
+                    <div class="portal-early-policy"><strong>Booking total stays the same.</strong> Refunds are handled separately.</div>
                     <form id="portal-early-checkout-form" class="portal-cancel-form" method="POST" action="{{ route('bookings.lookup.early-checkout', $booking) }}">
                         @csrf
                         <button class="button portal-early-button" type="submit">Request early check-out</button>
                     </form>
+                </section>
+            @elseif($earlyCheckoutBlockedByBalance)
+                <section class="portal-action-card portal-early-card">
+                    <span class="portal-kicker">BALANCE DUE</span>
+                    <h2>Settle your balance first</h2>
+                    <p>Pay the remaining balance of ₱{{ number_format($earlyCheckoutBalance, 2) }} to reception before requesting an early check-out.</p>
                 </section>
             @endif
 
