@@ -25,16 +25,19 @@ class RoomController extends Controller
         if (isset($filters['guests'])) {
             $rooms->whereRaw('CASE WHEN guests < 2 THEN 2 ELSE guests END >= ?', [(int) $filters['guests']]);
         }
-        if (($filters['sort'] ?? 'recommended') === 'price_asc') {
-            $rooms->orderBy('price_per_night')->orderBy('id');
-        } elseif (($filters['sort'] ?? 'recommended') === 'price_desc') {
-            $rooms->orderByDesc('price_per_night')->orderBy('id');
-        } else {
-            $rooms->orderBy('id');
-        }
+        $rooms->orderBy('id');
 
         [$startsAt, $endsAt] = RoomAvailability::window($filters);
         $roomListings = RoomAvailability::annotate($rooms->get(), $startsAt, $endsAt);
+        $sort = $filters['sort'] ?? 'recommended';
+        if (in_array($sort, ['price_asc', 'price_desc'], true)) {
+            $direction = $sort === 'price_asc' ? 1 : -1;
+            $roomListings = $roomListings->sort(function (Room $left, Room $right) use ($direction): int {
+                $priceOrder = StayPricing::startingPrice($left) <=> StayPricing::startingPrice($right);
+
+                return $priceOrder !== 0 ? $priceOrder * $direction : $left->id <=> $right->id;
+            })->values();
+        }
 
         return response()->view('rooms.index', [
             // Keep the numbered inventory in room-number order (the first six

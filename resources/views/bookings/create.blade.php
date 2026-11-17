@@ -177,7 +177,7 @@
                     <span class="booking-type-label">Choose your stay type</span>
                     <div class="booking-type-options">
                         <a class="{{ $bookingMode !== 'hourly' ? 'active' : '' }}" href="{{ route('bookings.create', ['room' => $room, 'guest' => $isGuest ? 1 : null, 'mode' => 'dates'] + $bookingSearch) }}"><strong>Book by dates</strong><small>Overnight or multi-day stays</small></a>
-                        <a class="{{ $bookingMode === 'hourly' ? 'active' : '' }}" href="{{ route('bookings.create', ['room' => $room, 'guest' => $isGuest ? 1 : null, 'mode' => 'hourly'] + $bookingSearch) }}"><strong>Rent by hours</strong><small>Short stays for 3, 12, or 24 hours</small></a>
+                        <a class="{{ $bookingMode === 'hourly' ? 'active' : '' }}" href="{{ route('bookings.create', ['room' => $room, 'guest' => $isGuest ? 1 : null, 'mode' => 'hourly'] + $bookingSearch) }}"><strong>Rent by hours</strong><small>Hourly and monthly packages</small></a>
                     </div>
                 </section>
                 @endif
