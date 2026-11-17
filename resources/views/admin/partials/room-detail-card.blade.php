@@ -27,7 +27,7 @@
             <div>
                 <h2 class="room-card-title" id="room-detail-title-{{ $slot }}">{{ $room->name }}</h2>
                 <p class="room-card-meta">{{ $room->room_type }} · Sleeps {{ $room->guests }}</p>
-                <span class="room-card-rate">₱{{ number_format($room->price_per_night) }} {{ $room->rate_label }}</span>
+                <span class="room-card-rate">₱{{ number_format(\App\Support\StayPricing::startingPrice($room)) }} <small>Starting price · {{ \App\Support\StayPricing::startingPackageLabel($room) }}</small></span>
             </div>
             <span class="room-status {{ $roomVisualStatus }}">{{ ucfirst($roomVisualStatus) }}</span>
         </div>
