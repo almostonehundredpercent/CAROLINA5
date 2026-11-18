@@ -258,22 +258,11 @@
                 <div class="panel-heading">
                     <div>
                         <p class="admin-kicker">CAROL · DECISION SUPPORT</p>
-                        <h2>Operational signals</h2>
+                        <h2>Recommendation</h2>
                         <p class="dss-brand-expansion">Carolina Assistant for Reservations, Operations &amp; Lodging</p>
                     </div>
                 </div>
-                <div class="dss-list">
-                    @forelse($recommendations as $recommendation)
-                        <section class="dss-signal">
-                            <h3>{{ $recommendation['title'] }}</h3>
-                            <p>{{ $recommendation['evidence'] }}</p>
-                            <small class="dss-rule">Rule: {{ $recommendation['rule'] }}</small>
-                            <a class="dss-action" href="{{ $recommendation['action_url'] }}">{{ $recommendation['action_label'] }} <span aria-hidden="true">→</span></a>
-                        </section>
-                    @empty
-                        <p class="empty-copy">No operational rules were triggered by the current data.</p>
-                    @endforelse
-                </div>
+                @include('admin.partials.carol-recommendation-deck', ['signals' => $recommendations, 'paymentReminderEnabled' => $carolPaymentReminderEnabled ?? false])
             </article>
             <article class="panel">
                 <div class="panel-heading">
@@ -290,7 +279,6 @@
                         <p class="empty-copy">No same-day room turnovers are scheduled in the next 7 days.</p>
                     @endforelse
                 </div>
-                <a class="dss-action" href="{{ route('admin.arrivals') }}">Open arrivals board <span aria-hidden="true">→</span></a>
             </article>
             <article class="panel">
                 <div class="panel-heading"><div><p class="admin-kicker">DEMAND</p><h2>Least booked rooms</h2></div></div>

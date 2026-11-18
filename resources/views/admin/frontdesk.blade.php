@@ -120,43 +120,7 @@
                 </section>
                 <section class="frontdesk-feature frontdesk-carol">
                     <div class="frontdesk-feature-title"><span class="frontdesk-feature-icon" aria-hidden="true">✦</span><div><p class="admin-kicker">CAROL · DECISION SUPPORT</p><h2>Recommendation</h2></div></div>
-                    @if($carolPaymentReminderEnabled)
-                        <div class="frontdesk-carol-active">
-                            <p><strong>Payment reminders are on.</strong> One email is sent five minutes before an unpaid hold expires.</p>
-                            <form method="POST" action="{{ route('admin.decision-support.payment-reminder', 'disable') }}">
-                                @csrf
-                                <button class="frontdesk-carol-button" type="submit">Turn off reminders</button>
-                            </form>
-                        </div>
-                    @elseif($carolSignal && ($carolSignal['kind'] ?? null) === 'unpaid_hold_payment_reminder')
-                        <details class="frontdesk-carol-recommendation">
-                            <summary>
-                                <h3>{{ $carolSignal['title'] }}</h3>
-                                <p>{{ $carolSignal['evidence'] }}</p>
-                                <span>View suggestion <span aria-hidden="true">→</span></span>
-                            </summary>
-                            <div class="frontdesk-carol-detail">
-                                <p>{{ $carolSignal['recommendation'] }}</p>
-                                <div class="frontdesk-carol-actions">
-                                    <form method="POST" action="{{ route('admin.decision-support.payment-reminder', 'apply') }}">
-                                        @csrf
-                                        <button class="frontdesk-carol-button is-primary" type="submit">Apply suggestion</button>
-                                    </form>
-                                    <form method="POST" action="{{ route('admin.decision-support.payment-reminder', 'dismiss') }}">
-                                        @csrf
-                                        <button class="frontdesk-carol-button" type="submit">Dismiss</button>
-                                    </form>
-                                </div>
-                            </div>
-                        </details>
-                    @elseif($carolSignal)
-                        <h3>{{ $carolSignal['title'] }}</h3>
-                        <p>{{ $carolSignal['evidence'] }}</p>
-                        <a class="frontdesk-text-link" href="{{ $carolSignal['action_url'] }}">{{ $carolSignal['action_label'] }} <span aria-hidden="true">→</span></a>
-                    @else
-                        <p class="frontdesk-empty">No operational rules need attention right now.</p>
-                        <a class="frontdesk-text-link" href="{{ route('admin.decision-support') }}">Open CAROL <span aria-hidden="true">→</span></a>
-                    @endif
+                    @include('admin.partials.carol-recommendation-deck', ['signals' => $carolSignals ?? collect(), 'paymentReminderEnabled' => $carolPaymentReminderEnabled])
                 </section>
             </div>
             @endif

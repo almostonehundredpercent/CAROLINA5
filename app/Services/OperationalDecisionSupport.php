@@ -18,7 +18,7 @@ class OperationalDecisionSupport
 
     private const MIN_AVAILABLE_HOURS = 6;
 
-    public function dashboardSignals(Collection $rooms): Collection
+    public function dashboardSignals(Collection $rooms, array $dismissedSignatures = []): Collection
     {
         $signals = collect();
         $windowStart = now()->subDays(90);
@@ -28,6 +28,7 @@ class OperationalDecisionSupport
         $cancelledQuery = Booking::where('status', 'cancelled')
             ->where('created_at', '>=', $windowStart);
         $cancelled = (clone $cancelledQuery)->count();
+        $latestCancellationAt = (clone $cancelledQuery)->max('created_at');
         $expiredUnpaidHolds = (clone $cancelledQuery)
             ->where('cancellation_reason', 'Unpaid reservation hold expired.')
             ->count();
@@ -55,33 +56,34 @@ class OperationalDecisionSupport
                 'evidence' => "{$expiredUnpaidHolds} of {$cancelled} cancellations among bookings created in the last 90 days were unpaid holds that expired.",
                 'recommendation' => 'Send one payment reminder five minutes before an unpaid hold expires.',
                 'rule' => 'At least 5 bookings created in the last 90 days, a cancellation rate of 25% or higher, and 3 or more expired holds making up at least half of cancellations.',
-                'action_label' => 'Review cancelled bookings',
-                'action_url' => route('admin.bookings', ['status' => 'cancelled']),
             ]);
         } elseif ($elevated && ! $settings?->unpaid_hold_reminders_enabled && ! $dismissedAfterLatestExpiry) {
             $displayRate = (int) round($cancellationRate);
             $signals->push([
+                'kind' => 'elevated_cancellations',
+                'signature' => hash('sha256', "cancellations:{$cancelled}:{$decided}:{$latestCancellationAt}"),
                 'title' => 'Cancellation activity is elevated',
                 'evidence' => "{$cancelled} of {$decided} bookings created in the last 90 days were cancelled ({$displayRate}%).",
                 'rule' => 'At least 5 bookings created in the last 90 days and a cancellation rate of 25% or higher.',
-                'action_label' => 'Review cancelled bookings',
-                'action_url' => route('admin.bookings', ['status' => 'cancelled']),
+                'recommendation' => 'Confirm to review recent cancelled bookings here.',
             ]);
         }
 
         if ($rooms->isNotEmpty() && $rooms->where('display_status', 'available')->isEmpty()) {
+            $availabilityState = $rooms->sortBy('id')->map(fn ($room) => $room->id.':'.$room->display_status)->implode('|');
             $signals->push([
+                'kind' => 'no_rooms_available',
+                'signature' => hash('sha256', 'availability:'.$availabilityState),
                 'title' => 'No rooms are available right now',
                 'evidence' => "All {$rooms->count()} active rooms are currently reserved or unavailable.",
                 'rule' => 'Triggered when no active room is marked available at this moment.',
-                'action_label' => 'Check today’s arrivals',
-                'action_url' => route('admin.arrivals'),
+                'recommendation' => 'Confirm to review today’s arrivals here.',
             ]);
         }
 
         $maintenance = RoomBlock::where('status', 'maintenance')
             ->where('created_at', '>=', now()->subDays(30))
-            ->selectRaw('room_id, count(*) as total')
+            ->selectRaw('room_id, count(*) as total, max(created_at) as latest_at')
             ->groupBy('room_id')
             ->havingRaw('COUNT(*) >= ?', [3])
             ->with('room')
@@ -90,16 +92,18 @@ class OperationalDecisionSupport
         foreach ($maintenance as $block) {
             $roomName = $block->room?->name ?? 'A room';
             $signals->push([
+                'kind' => 'repeated_maintenance',
+                'room_id' => (int) $block->room_id,
+                'signature' => hash('sha256', "maintenance:{$block->room_id}:{$block->total}:{$block->latest_at}"),
                 'title' => "Review maintenance for {$roomName}",
                 'evidence' => "{$block->total} maintenance blocks were recorded for this room in the last 30 days.",
                 'rule' => 'Triggered at 3 or more maintenance blocks for one room within 30 days.',
-                'action_label' => 'Review room operations',
-                'action_url' => route('admin.rooms'),
+                'recommendation' => 'Confirm to review the room’s recent maintenance entries here.',
             ]);
         }
 
         $topRoom = Booking::where('status', 'confirmed')
-            ->selectRaw('room_id, count(*) as total')
+            ->selectRaw('room_id, count(*) as total, max(created_at) as latest_at')
             ->groupBy('room_id')
             ->orderByDesc('total')
             ->with('room')
@@ -108,15 +112,19 @@ class OperationalDecisionSupport
         if ($topRoom && $topRoom->total >= 5) {
             $roomName = $topRoom->room?->name ?? 'One room';
             $signals->push([
+                'kind' => 'high_booking_demand',
+                'room_id' => (int) $topRoom->room_id,
+                'signature' => hash('sha256', "demand:{$topRoom->room_id}:{$topRoom->total}:{$topRoom->latest_at}"),
                 'title' => "High booking demand for {$roomName}",
                 'evidence' => "{$topRoom->total} confirmed stays are recorded for this room.",
                 'rule' => 'Triggered at 5 or more confirmed stays across recorded history.',
-                'action_label' => 'Review room schedule',
-                'action_url' => route('admin.rooms'),
+                'recommendation' => 'Confirm to review the room’s upcoming bookings here.',
             ]);
         }
 
-        return $signals;
+        $dismissedSignatures = array_flip($dismissedSignatures);
+
+        return $signals->reject(fn (array $signal) => isset($dismissedSignatures[$signal['signature'] ?? '']))->values();
     }
 
     /** Summarize only the selected report's recorded data and show its rule. */

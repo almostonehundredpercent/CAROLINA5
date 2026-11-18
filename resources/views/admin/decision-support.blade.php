@@ -41,6 +41,15 @@
         .dss-form input[type="number"] { max-width: 170px; }
         .dss-primary, .dss-secondary { width: fit-content; padding: 10px 14px; border: 0; border-radius: 8px; background: var(--orange); color: #fff; font: inherit; font-weight: 700; text-decoration: none; cursor: pointer; }
         .dss-secondary { padding: 7px 10px; background: transparent; color: var(--orange-dark); }
+        .dss-promo-drafts { display: grid; gap: 10px; margin: 14px 0; }
+        .dss-promo-review { display: grid; gap: 8px; padding: 14px; border: 1px solid var(--line); border-radius: 10px; background: var(--paper); }
+        .dss-promo-review h3,.dss-promo-review p { margin: 0; }
+        .dss-promo-review h3 { font-size: 15px; }
+        .dss-promo-review p,.dss-promo-review small { color: var(--muted); line-height: 1.45; }
+        .dss-promo-review-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+        .dss-promo-review-actions form { margin: 0; }
+        .dss-promo-result { margin: 0; color: var(--orange-dark); font-size: 12px; font-weight: 700; }
+        .dss-promo-review[hidden], .dss-promo-review-actions[hidden], .dss-promo-result[hidden], .dss-promo-next[hidden], [data-carol-promo-caught-up][hidden] { display: none !important; }
         .dss-primary:focus-visible, .dss-secondary:focus-visible, .dss-review-banner a:focus-visible, .dss-card .dss-action:focus-visible { outline: 3px solid #ffc16b; outline-offset: 3px; }
         .dss-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); gap: 13px; }
         .dss-card { display: flex; min-width: 0; flex-direction: column; padding: 16px; border: 1px solid #eadbca; border-radius: 14px; background: #fffdf9; color: #30251d; box-shadow: 0 5px 16px rgba(48,31,14,.05); }
@@ -137,14 +146,31 @@
         </header>
         @include('admin.partials.flash')
         <section class="panel">
-            <div class="panel-heading"><div><p class="admin-kicker">RECOMMENDED ROOMS</p><h2>Quiet room opportunities</h2></div><a class="dss-primary" href="{{ route('admin.promos') }}">Review promo drafts</a></div>
+            <div class="panel-heading"><div><p class="admin-kicker">RECOMMENDED ROOMS</p><h2>Quiet room opportunities</h2></div>@if($pendingPromoCount)<a class="dss-primary" href="#carol-promo-drafts">Review promo drafts</a>@endif</div>
             <p class="dss-lead">Showing rooms with less than {{ $threshold }}% of their weekly bookable time confirmed and at least 6 hours still open. CAROL uses confirmed bookings and planned cleaning or maintenance, then creates an inactive 10% promo draft for review. These are rules-based suggestions, not demand forecasts.</p>
             <div class="dss-overview-strip" aria-label="Suggestion overview">
                 <div class="dss-overview-item"><strong>{{ $opportunities->count() }}</strong><small>room{{ $opportunities->count() === 1 ? '' : 's' }} meet the rule</small></div>
                 <div class="dss-overview-item"><strong>&lt; {{ $threshold }}%</strong><small>weekly occupancy threshold</small></div>
                 <div class="dss-overview-item"><strong>90 days</strong><small>look-ahead period</small></div>
             </div>
-            <div class="dss-review-banner" role="status"><span class="dss-review-count">{{ $pendingPromoCount }}</span><span class="dss-review-copy"><strong>{{ $pendingPromoCount ? 'Promo drafts need your review' : 'You are all caught up' }}</strong><small>{{ $pendingPromoCount ? 'Drafts remain inactive until an admin approves them.' : 'No CAROL promo drafts are waiting for review.' }}</small></span><a href="{{ route('admin.promos') }}">{{ $pendingPromoCount ? 'Open promo drafts →' : 'Manage promo codes →' }}</a></div>
+            <div class="dss-review-banner" role="status"><span class="dss-review-count" data-carol-promo-count>{{ $pendingPromoCount }}</span><span class="dss-review-copy"><strong data-carol-promo-heading>{{ $pendingPromoCount ? 'Promo drafts need your confirmation' : 'You are all caught up' }}</strong><small data-carol-promo-copy>{{ $pendingPromoCount ? 'Confirm here to activate a draft; no other page is needed.' : 'No CAROL promo drafts are waiting for review.' }}</small></span>@if($pendingPromoCount)<a href="#carol-promo-drafts" data-carol-promo-link>Review here →</a>@endif</div>
+            @if($promoDrafts->isNotEmpty())
+                <section id="carol-promo-drafts" class="dss-promo-drafts" data-carol-promo-deck aria-label="CAROL promo drafts awaiting confirmation">
+                    @foreach($promoDrafts as $index => $promo)
+                        <article class="dss-promo-review" data-carol-promo @if($index > 0) hidden @endif>
+                            <div class="dss-card-top"><div><h3>{{ $promo->name }}</h3><small>{{ $promo->code }} · {{ $promo->rooms->pluck('name')->join(', ') }}</small></div><span class="dss-tag">Inactive draft</span></div>
+                            <p>{{ $promo->carol_notes ?: $promo->description }}</p>
+                            <div class="dss-promo-review-actions" data-carol-promo-actions>
+                                <form method="POST" action="{{ route('admin.decision-support.promo-drafts.review', ['promo' => $promo, 'decision' => 'approve']) }}" data-carol-promo-action>@csrf<button class="dss-primary" type="submit">Confirm &amp; activate</button></form>
+                                <form method="POST" action="{{ route('admin.decision-support.promo-drafts.review', ['promo' => $promo, 'decision' => 'dismiss']) }}" data-carol-promo-action>@csrf<button class="dss-secondary" type="submit">Dismiss draft</button></form>
+                            </div>
+                            <p class="dss-promo-result" data-carol-promo-result role="status" aria-live="polite" hidden></p>
+                            <button class="dss-secondary dss-promo-next" type="button" data-carol-promo-next hidden>Next recommendation</button>
+                        </article>
+                    @endforeach
+                    <p class="empty-copy" data-carol-promo-caught-up hidden>No more CAROL promo drafts need review.</p>
+                </section>
+            @endif
             @if($opportunities->isNotEmpty())
                 <div class="dss-grid">
                     @foreach($opportunities as $opportunity)
@@ -165,7 +191,7 @@
                                 <div><small>Still available to book</small><strong>{{ number_format($opportunity['available_hours'], 1) }} h</strong></div>
                             </div>
                             <small>{{ number_format($opportunity['sellable_hours'], 1) }} h bookable this week after cleaning and maintenance.</small>
-                            <div class="dss-card-footer"><span class="dss-draft-label">Suggested discount · 10%</span><a class="dss-action" href="{{ route('admin.promos') }}">Manage promo codes →</a></div>
+                            <div class="dss-card-footer"><span class="dss-draft-label">Suggested discount · 10%</span><span class="dss-note">Review and confirm the draft above.</span></div>
                         </article>
                     @endforeach
                 </div>
@@ -232,5 +258,6 @@
         </section>
     </main>
 </div>
+<script src="{{ asset('js/carol-recommendations.js') }}?v={{ filemtime(public_path('js/carol-recommendations.js')) }}" defer></script>
 </body>
 </html>

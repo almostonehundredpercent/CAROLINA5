@@ -140,7 +140,8 @@ class AdminController extends Controller
                 'turnovers' => $decisionSupport->upcomingTurnovers(),
                 'chartLabels' => $chartLabels,
                 'chartValues' => $chartValues,
-                'recommendations' => $decisionSupport->dashboardSignals($rooms),
+                'recommendations' => $decisionSupport->dashboardSignals($rooms, session('carol.dismissed_signatures', [])),
+                'carolPaymentReminderEnabled' => (bool) DecisionSupportSetting::find(1)?->unpaid_hold_reminders_enabled,
             ]);
         } catch (\Throwable $exception) {
             // The dashboard is an operational overview. A non-essential
@@ -189,12 +190,12 @@ class AdminController extends Controller
                 'chartLabels' => $chartLabels,
                 'chartValues' => $chartValues,
                 'recommendations' => collect([[
+                    'kind' => null,
                     'title' => 'Operational summary temporarily unavailable',
                     'evidence' => 'The dashboard is showing core booking data while a non-essential operational summary is restored.',
                     'rule' => 'This message appears when an operational summary query fails.',
-                    'action_label' => 'Review bookings',
-                    'action_url' => route('admin.bookings'),
                 ]]),
+                'carolPaymentReminderEnabled' => (bool) DecisionSupportSetting::find(1)?->unpaid_hold_reminders_enabled,
             ]);
         }
     }
@@ -789,7 +790,9 @@ class AdminController extends Controller
                 $query->whereNull('cancellation_request_status')->orWhere('cancellation_request_status', '!=', 'requested');
             })->count(),
             'recentActivity' => $canSeeDecisionSupport ? ActivityLog::latest()->take(3)->get() : collect(),
-            'carolSignal' => $canSeeDecisionSupport ? $decisionSupport->dashboardSignals($rooms)->first() : null,
+            'carolSignals' => $canSeeDecisionSupport
+                ? $decisionSupport->dashboardSignals($rooms, session('carol.dismissed_signatures', []))
+                : collect(),
             'carolPaymentReminderEnabled' => (bool) $decisionSupportSetting?->unpaid_hold_reminders_enabled,
             'canSeeDecisionSupport' => $canSeeDecisionSupport,
         ]);
