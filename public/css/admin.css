@@ -6507,7 +6507,7 @@ html.dark-mode .balance-dialog-close { border-color: #a95500; background: #a9550
 .carol-action-button{min-height:38px;padding:8px 12px;border:1px solid var(--line);border-radius:8px;background:var(--paper);color:var(--ink);font:inherit;font-size:12px;font-weight:750;cursor:pointer}
 .carol-action-button.is-primary{border-color:var(--orange-dark);background:var(--orange-dark);color:#fff}
 .carol-action-button:disabled{opacity:.65;cursor:wait}
-.carol-recommendation-card[hidden],.carol-recommendation-actions[hidden],.carol-action-result[hidden],.carol-next-button[hidden]{display:none!important}
+.carol-recommendation-card[hidden],.carol-recommendation-actions[hidden],.carol-action-result[hidden],.carol-next-button[hidden],.carol-reminder-status form[hidden]{display:none!important}
 .carol-action-result{display:grid;gap:7px;padding:10px 11px;border-radius:9px;background:var(--paper);color:var(--ink);font-size:12px;line-height:1.45}
 .carol-action-result p{margin:0;color:var(--ink)}
 .carol-action-result ul{display:grid;gap:6px;margin:0;padding-left:18px}

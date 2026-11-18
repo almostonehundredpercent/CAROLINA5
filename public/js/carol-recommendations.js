@@ -67,9 +67,14 @@
                 if (!response.ok) throw new Error(payload.message || 'CAROL could not complete this suggestion. Refresh and try again.');
 
                 if (reminderStatus) {
-                    const copy = reminderStatus.querySelector('span');
+                    const copy = reminderStatus.querySelector('[data-carol-reminder-copy]');
                     if (copy) copy.textContent = payload.message;
-                    form.remove();
+                    form.hidden = true;
+                    const state = payload.enabled ? 'on' : 'off';
+                    const nextForm = reminderStatus.querySelector(`[data-carol-reminder-state="${state}"]`);
+                    const nextButton = nextForm?.querySelector('button[type="submit"]');
+                    if (nextButton) nextButton.disabled = false;
+                    if (nextForm) nextForm.hidden = false;
                     return;
                 }
 

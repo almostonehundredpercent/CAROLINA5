@@ -53,7 +53,7 @@ class DecisionSupportController extends Controller
         OperationalDecisionSupport $decisionSupport,
         string $decision,
     ) {
-        abort_unless(in_array($decision, ['apply', 'dismiss', 'disable'], true), 404);
+        abort_unless(in_array($decision, ['apply', 'enable', 'dismiss', 'disable'], true), 404);
 
         if ($decision === 'apply') {
             $hasActiveRecommendation = $decisionSupport
@@ -65,7 +65,7 @@ class DecisionSupportController extends Controller
         $setting = DecisionSupportSetting::findOrNew(1);
         $setting->low_occupancy_threshold ??= 40;
 
-        if ($decision === 'apply') {
+        if (in_array($decision, ['apply', 'enable'], true)) {
             $setting->unpaid_hold_reminders_enabled = true;
             $setting->unpaid_hold_reminder_dismissed_at = null;
             $message = 'Payment reminders are on. One email will be sent about five minutes before an unpaid hold expires.';
@@ -81,7 +81,11 @@ class DecisionSupportController extends Controller
         $setting->save();
 
         if ($request->expectsJson()) {
-            return response()->json(['message' => $message, 'completed' => true]);
+            return response()->json([
+                'message' => $message,
+                'enabled' => (bool) $setting->unpaid_hold_reminders_enabled,
+                'completed' => true,
+            ]);
         }
 
         return back()->with('success', $message);

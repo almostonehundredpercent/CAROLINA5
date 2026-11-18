@@ -1,13 +1,15 @@
 <div class="carol-recommendation-deck" data-carol-deck>
-    @if($paymentReminderEnabled ?? false)
-        <div class="carol-reminder-status" role="status">
-            <span><strong>Payment reminders are on.</strong> CAROL sends one email five minutes before an unpaid hold expires.</span>
-            <form method="POST" action="{{ route('admin.decision-support.payment-reminder', 'disable') }}" data-carol-action>
-                @csrf
-                <button class="carol-action-button" type="submit">Turn off</button>
-            </form>
-        </div>
-    @endif
+    <div class="carol-reminder-status" role="status">
+        <span data-carol-reminder-copy>{{ ($paymentReminderEnabled ?? false) ? 'Payment reminders are on. CAROL sends one email five minutes before an unpaid hold expires.' : 'Payment reminders are off.' }}</span>
+        <form method="POST" action="{{ route('admin.decision-support.payment-reminder', 'disable') }}" data-carol-action data-carol-reminder-state="on" @if(!($paymentReminderEnabled ?? false)) hidden @endif>
+            @csrf
+            <button class="carol-action-button" type="submit">Turn off</button>
+        </form>
+        <form method="POST" action="{{ route('admin.decision-support.payment-reminder', 'enable') }}" data-carol-action data-carol-reminder-state="off" @if($paymentReminderEnabled ?? false) hidden @endif>
+            @csrf
+            <button class="carol-action-button is-primary" type="submit">Turn on reminders</button>
+        </form>
+    </div>
 
     @forelse($signals as $index => $signal)
         @php($kind = $signal['kind'] ?? null)
