@@ -98,6 +98,7 @@ class DecisionSupportController extends Controller
             'no_rooms_available',
             'repeated_maintenance',
             'high_booking_demand',
+            'zero_turnover_gap',
         ], true), 404);
 
         $data = $request->validate([
@@ -117,6 +118,13 @@ class DecisionSupportController extends Controller
         } elseif ($kind === 'elevated_cancellations') {
             $current = $decisionSupport->dashboardSignals(collect(), $dismissedSignatures)->first(
                 fn (array $signal) => ($signal['kind'] ?? null) === $kind && ($signal['signature'] ?? null) === $data['signature']
+            );
+            abort_unless($current, 409, 'This CAROL recommendation is no longer active.');
+        } elseif ($kind === 'zero_turnover_gap') {
+            $current = $decisionSupport->dashboardSignals(collect(), $dismissedSignatures)->first(
+                fn (array $signal) => ($signal['kind'] ?? null) === $kind
+                    && (int) ($signal['room_id'] ?? 0) === $roomId
+                    && ($signal['signature'] ?? null) === $data['signature']
             );
             abort_unless($current, 409, 'This CAROL recommendation is no longer active.');
         }
@@ -149,6 +157,16 @@ class DecisionSupportController extends Controller
                     'label' => trim(($booking->room?->name ?? 'Room').' · '.($booking->reference ?? 'Booking')),
                     'detail' => ($booking->guest_name ?? $booking->user?->name ?? 'Guest').' · '.($booking->check_in_at?->format('M j, g:i A') ?? 'Upcoming stay'),
                 ])->values(),
+            'zero_turnover_gap' => Booking::with(['room', 'user'])
+                ->whereIn('id', [$current['departure_booking_id'], $current['next_arrival_booking_id']])
+                ->get()->keyBy('id')
+                ->only([$current['departure_booking_id'], $current['next_arrival_booking_id']])
+                ->map(fn (Booking $booking, int $bookingId) => [
+                    'label' => trim(($booking->room?->name ?? 'Room').' · '.($booking->reference ?? 'Booking')),
+                    'detail' => ($bookingId === (int) $current['departure_booking_id'] ? 'Checkout' : 'Next check-in')
+                        .' · '.($booking->guest_name ?? $booking->user?->name ?? 'Guest')
+                        .' · '.(($bookingId === (int) $current['departure_booking_id'] ? $booking->check_out_at : $booking->check_in_at)?->format('M j, g:i A') ?? 'Time unavailable'),
+                ])->values(),
         };
 
         if ($kind === 'high_booking_demand' && $rows->isEmpty()) {
@@ -178,6 +196,7 @@ class DecisionSupportController extends Controller
             'no_rooms_available',
             'repeated_maintenance',
             'high_booking_demand',
+            'zero_turnover_gap',
         ], true), 404);
 
         $data = $request->validate([

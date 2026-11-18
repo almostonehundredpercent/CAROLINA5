@@ -123,6 +123,28 @@ class OperationalDecisionSupport
         }
 
         $dismissedSignatures = array_flip($dismissedSignatures);
+        $zeroGapTurnovers = $this->upcomingTurnovers()
+            ->filter(fn (array $turnover) => $turnover['gap_minutes'] === 0)
+            ->reverse();
+        foreach ($zeroGapTurnovers as $zeroGapTurnover) {
+            if (isset($dismissedSignatures[$zeroGapTurnover['signature']])) {
+                continue;
+            }
+
+            $roomName = $zeroGapTurnover['room']?->name ?? 'A room';
+            $signature = $zeroGapTurnover['signature'];
+            $signals->prepend([
+                'kind' => 'zero_turnover_gap',
+                'room_id' => (int) $zeroGapTurnover['room']?->id,
+                'signature' => $signature,
+                'departure_booking_id' => $zeroGapTurnover['departure_booking_id'],
+                'next_arrival_booking_id' => $zeroGapTurnover['next_arrival_booking_id'],
+                'title' => "No room-prep time for {$roomName}",
+                'evidence' => 'Checkout and the next check-in are scheduled for the same time on '.$zeroGapTurnover['check_out_at']->format('D, M j · g:i A').'.',
+                'rule' => 'Triggered when confirmed stays in one room have identical checkout and next check-in times within the next 7 days.',
+                'recommendation' => 'Confirm to review both bookings here.',
+            ]);
+        }
 
         return $signals->reject(fn (array $signal) => isset($dismissedSignatures[$signal['signature'] ?? '']))->values();
     }
@@ -210,10 +232,13 @@ class OperationalDecisionSupport
 
             return [
                 'room' => $departure->room,
+                'departure_booking_id' => $departure->id,
+                'next_arrival_booking_id' => $nextArrival->id,
                 'check_out_at' => $departure->check_out_at,
                 'next_check_in_at' => $nextArrival->check_in_at,
                 'gap_minutes' => $gapMinutes,
                 'gap_label' => $gapLabel,
+                'signature' => hash('sha256', 'zero_turnover_gap:'.$departure->room_id.':'.$departure->id.':'.$nextArrival->id.':'.$departure->check_out_at->toIso8601String().':'.$nextArrival->check_in_at->toIso8601String()),
             ];
         })->filter()->sortBy('gap_minutes')->take(8)->values();
     }
