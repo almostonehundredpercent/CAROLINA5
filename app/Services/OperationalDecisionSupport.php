@@ -4,8 +4,10 @@ namespace App\Services;
 
 use App\Models\Booking;
 use App\Models\DecisionSupportSeason;
+use App\Models\DecisionSupportSetting;
 use App\Models\PromoCode;
 use App\Models\RoomBlock;
+use Carbon\Carbon;
 use Illuminate\Support\Collection;
 
 class OperationalDecisionSupport
@@ -19,22 +21,52 @@ class OperationalDecisionSupport
     public function dashboardSignals(Collection $rooms): Collection
     {
         $signals = collect();
-        $confirmed = Booking::where('status', 'confirmed')->count();
-        $cancelled = Booking::where('status', 'cancelled')->count();
+        $windowStart = now()->subDays(90);
+        $confirmed = Booking::where('status', 'confirmed')
+            ->where('created_at', '>=', $windowStart)
+            ->count();
+        $cancelledQuery = Booking::where('status', 'cancelled')
+            ->where('created_at', '>=', $windowStart);
+        $cancelled = (clone $cancelledQuery)->count();
+        $expiredUnpaidHolds = (clone $cancelledQuery)
+            ->where('cancellation_reason', 'Unpaid reservation hold expired.')
+            ->count();
         $decided = $confirmed + $cancelled;
+        $cancellationRate = $decided > 0 ? $cancelled / $decided * 100 : 0;
+        $settings = DecisionSupportSetting::find(1);
+        $latestExpiredHoldAt = (clone $cancelledQuery)
+            ->where('cancellation_reason', 'Unpaid reservation hold expired.')
+            ->max('cancelled_at');
+        $latestExpiredHoldAt ??= (clone $cancelledQuery)
+            ->where('cancellation_reason', 'Unpaid reservation hold expired.')
+            ->max('created_at');
+        $dismissedAfterLatestExpiry = $settings?->unpaid_hold_reminder_dismissed_at
+            && $latestExpiredHoldAt
+            && $settings->unpaid_hold_reminder_dismissed_at->greaterThanOrEqualTo(Carbon::parse($latestExpiredHoldAt));
+        $elevated = $decided >= 5 && $cancellationRate >= 25;
+        $holdExpiriesAreLeadingCause = $cancelled >= 3 && $expiredUnpaidHolds >= ceil($cancelled / 2);
 
-        if ($decided >= 5) {
-            $cancellationRate = $cancelled / $decided * 100;
-            if ($cancellationRate >= 25) {
-                $displayRate = (int) round($cancellationRate);
-                $signals->push([
-                    'title' => 'Cancellation activity is elevated',
-                    'evidence' => "{$cancelled} of {$decided} decided bookings were cancelled ({$displayRate}%).",
-                    'rule' => 'At least 5 decided bookings and a cancellation rate of 25% or higher.',
-                    'action_label' => 'Review booking requests',
-                    'action_url' => route('admin.bookings'),
-                ]);
-            }
+        if ($elevated && $holdExpiriesAreLeadingCause
+            && ! $settings?->unpaid_hold_reminders_enabled
+            && ! $dismissedAfterLatestExpiry) {
+            $signals->push([
+                'kind' => 'unpaid_hold_payment_reminder',
+                'title' => 'Unpaid holds are expiring before payment',
+                'evidence' => "{$expiredUnpaidHolds} of {$cancelled} cancellations among bookings created in the last 90 days were unpaid holds that expired.",
+                'recommendation' => 'Send one payment reminder five minutes before an unpaid hold expires.',
+                'rule' => 'At least 5 bookings created in the last 90 days, a cancellation rate of 25% or higher, and 3 or more expired holds making up at least half of cancellations.',
+                'action_label' => 'Review cancelled bookings',
+                'action_url' => route('admin.bookings', ['status' => 'cancelled']),
+            ]);
+        } elseif ($elevated && ! $settings?->unpaid_hold_reminders_enabled && ! $dismissedAfterLatestExpiry) {
+            $displayRate = (int) round($cancellationRate);
+            $signals->push([
+                'title' => 'Cancellation activity is elevated',
+                'evidence' => "{$cancelled} of {$decided} bookings created in the last 90 days were cancelled ({$displayRate}%).",
+                'rule' => 'At least 5 bookings created in the last 90 days and a cancellation rate of 25% or higher.',
+                'action_label' => 'Review cancelled bookings',
+                'action_url' => route('admin.bookings', ['status' => 'cancelled']),
+            ]);
         }
 
         if ($rooms->isNotEmpty() && $rooms->where('display_status', 'available')->isEmpty()) {

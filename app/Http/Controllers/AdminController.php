@@ -8,6 +8,7 @@ use App\Mail\RoomPriceChangeApplied;
 use App\Models\ActivityLog;
 use App\Models\Booking;
 use App\Models\BookingTimeAdjustment;
+use App\Models\DecisionSupportSetting;
 use App\Models\GuestNote;
 use App\Models\GuestRestriction;
 use App\Models\Payment;
@@ -773,6 +774,7 @@ class AdminController extends Controller
             'maintenance' => $rooms->where('display_status', 'maintenance')->count(),
         ];
         $canSeeDecisionSupport = AdminPermissions::allows(request()->user(), 'decision_support');
+        $decisionSupportSetting = $canSeeDecisionSupport ? DecisionSupportSetting::find(1) : null;
 
         return view('admin.frontdesk', [
             'arrivals' => Booking::with(['user', 'room'])->where('status', 'confirmed')->whereDate('check_in', $today)->whereNull('checked_in_at')->get(),
@@ -788,6 +790,7 @@ class AdminController extends Controller
             })->count(),
             'recentActivity' => $canSeeDecisionSupport ? ActivityLog::latest()->take(3)->get() : collect(),
             'carolSignal' => $canSeeDecisionSupport ? $decisionSupport->dashboardSignals($rooms)->first() : null,
+            'carolPaymentReminderEnabled' => (bool) $decisionSupportSetting?->unpaid_hold_reminders_enabled,
             'canSeeDecisionSupport' => $canSeeDecisionSupport,
         ]);
     }

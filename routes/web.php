@@ -161,6 +161,7 @@ Route::middleware(['auth', 'admin', 'staff.mfa'])->prefix('admin')->name('admin.
     Route::patch('/account/rate-approval-email', [AdminController::class, 'updateRateApprovalEmail'])->middleware('admin.permission:rate_approval_settings')->name('account.rate-approval-email');
     Route::get('/decision-support', [DecisionSupportController::class, 'index'])->middleware('admin.permission:decision_support')->name('decision-support');
     Route::patch('/decision-support/settings', [DecisionSupportController::class, 'updateSettings'])->middleware('admin.permission:decision_support')->name('decision-support.settings');
+    Route::post('/decision-support/payment-reminder/{decision}', [DecisionSupportController::class, 'resolvePaymentReminderRecommendation'])->whereIn('decision', ['apply', 'dismiss', 'disable'])->middleware('admin.permission:decision_support')->name('decision-support.payment-reminder');
     Route::post('/decision-support/seasons', [DecisionSupportController::class, 'storeSeason'])->middleware('admin.permission:decision_support')->name('decision-support.seasons.store');
     Route::delete('/decision-support/seasons/{season}', [DecisionSupportController::class, 'destroySeason'])->middleware('admin.permission:decision_support')->name('decision-support.seasons.destroy');
     Route::get('/promos', [PromoCodeController::class, 'index'])->middleware('admin.permission:promos')->name('promos');

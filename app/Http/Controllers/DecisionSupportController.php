@@ -41,6 +41,41 @@ class DecisionSupportController extends Controller
         return back()->with('success', 'Low-occupancy rule saved. Recommendations now use the updated threshold.');
     }
 
+    public function resolvePaymentReminderRecommendation(
+        Request $request,
+        OperationalDecisionSupport $decisionSupport,
+        string $decision,
+    ) {
+        abort_unless(in_array($decision, ['apply', 'dismiss', 'disable'], true), 404);
+
+        if ($decision === 'apply') {
+            $hasActiveRecommendation = $decisionSupport
+                ->dashboardSignals(collect())
+                ->contains(fn (array $signal) => ($signal['kind'] ?? null) === 'unpaid_hold_payment_reminder');
+            abort_unless($hasActiveRecommendation, 409, 'This recommendation is no longer active.');
+        }
+
+        $setting = DecisionSupportSetting::findOrNew(1);
+        $setting->low_occupancy_threshold ??= 40;
+
+        if ($decision === 'apply') {
+            $setting->unpaid_hold_reminders_enabled = true;
+            $setting->unpaid_hold_reminder_dismissed_at = null;
+            $message = 'Payment reminders are on. One email will be sent about five minutes before an unpaid hold expires.';
+        } elseif ($decision === 'dismiss') {
+            $setting->unpaid_hold_reminder_dismissed_at = now();
+            $message = 'CAROL’s recommendation was dismissed.';
+        } else {
+            $setting->unpaid_hold_reminders_enabled = false;
+            $setting->unpaid_hold_reminder_dismissed_at = now();
+            $message = 'Payment reminders are off.';
+        }
+
+        $setting->save();
+
+        return back()->with('success', $message);
+    }
+
     public function storeSeason(Request $request)
     {
         $data = $request->validate([

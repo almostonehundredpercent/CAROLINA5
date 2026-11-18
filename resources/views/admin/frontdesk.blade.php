@@ -26,6 +26,24 @@
         .today-maintenance-item{background:rgba(215,132,25,.07)}
         .today-maintenance-label{display:inline-flex;width:max-content;padding:4px 7px;border-radius:99px;background:rgba(215,132,25,.14);color:#efaa4c;font-size:.66rem;font-weight:800;letter-spacing:.04em;text-transform:uppercase}
         .today-maintenance-note{margin:0;color:var(--muted);font-size:.82rem;line-height:1.4}
+        .frontdesk-carol-recommendation{border:1px solid var(--line);border-radius:10px;background:rgba(255,255,255,.24)}
+        .frontdesk-carol-recommendation summary{display:block;padding:12px;list-style:none;cursor:pointer}
+        .frontdesk-carol-recommendation summary::-webkit-details-marker{display:none}
+        .frontdesk-carol-recommendation summary h3{margin:0 0 6px;color:var(--frontdesk-ink);font-size:1rem}
+        .frontdesk-carol-recommendation summary p{margin:0;color:var(--frontdesk-muted);font-size:.84rem;line-height:1.45}
+        .frontdesk-carol-recommendation summary span{display:inline-flex;margin-top:9px;color:#995006;font-size:.8rem;font-weight:800}
+        .frontdesk-carol-detail{padding:0 12px 12px}
+        .frontdesk-carol-detail p{margin:0;color:var(--frontdesk-ink);font-size:.84rem;line-height:1.5}
+        .frontdesk-carol-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+        .frontdesk-carol-actions form{margin:0}
+        .frontdesk-carol-button{min-height:38px;padding:8px 12px;border:1px solid var(--line);border-radius:8px;background:var(--paper);color:var(--frontdesk-ink);font:inherit;font-size:.78rem;font-weight:800}
+        .frontdesk-carol-button.is-primary{border-color:#a1500a;background:#a1500a;color:#fff}
+        .frontdesk-carol-active{display:grid;gap:10px}
+        .frontdesk-carol-active p{margin:0;color:var(--frontdesk-muted);font-size:.87rem;line-height:1.5}
+        .frontdesk-carol-active form{margin:0}
+        html.dark-mode .frontdesk-carol-recommendation{background:rgba(255,255,255,.035)}
+        html.dark-mode .frontdesk-carol-recommendation summary span{color:#ffc17d}
+        html.dark-mode .frontdesk-carol-button.is-primary{border-color:#a1500a;background:#a1500a}
         @media(max-width:1250px){.today-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
         @media(max-width:700px){.today-grid{grid-template-columns:1fr;gap:12px}.today-schedule{gap:6px}.today-schedule>div{padding:8px}}
     </style>
@@ -102,7 +120,36 @@
                 </section>
                 <section class="frontdesk-feature frontdesk-carol">
                     <div class="frontdesk-feature-title"><span class="frontdesk-feature-icon" aria-hidden="true">✦</span><div><p class="admin-kicker">CAROL · DECISION SUPPORT</p><h2>Recommendation</h2></div></div>
-                    @if($carolSignal)
+                    @if($carolPaymentReminderEnabled)
+                        <div class="frontdesk-carol-active">
+                            <p><strong>Payment reminders are on.</strong> One email is sent five minutes before an unpaid hold expires.</p>
+                            <form method="POST" action="{{ route('admin.decision-support.payment-reminder', 'disable') }}">
+                                @csrf
+                                <button class="frontdesk-carol-button" type="submit">Turn off reminders</button>
+                            </form>
+                        </div>
+                    @elseif($carolSignal && ($carolSignal['kind'] ?? null) === 'unpaid_hold_payment_reminder')
+                        <details class="frontdesk-carol-recommendation">
+                            <summary>
+                                <h3>{{ $carolSignal['title'] }}</h3>
+                                <p>{{ $carolSignal['evidence'] }}</p>
+                                <span>View suggestion <span aria-hidden="true">→</span></span>
+                            </summary>
+                            <div class="frontdesk-carol-detail">
+                                <p>{{ $carolSignal['recommendation'] }}</p>
+                                <div class="frontdesk-carol-actions">
+                                    <form method="POST" action="{{ route('admin.decision-support.payment-reminder', 'apply') }}">
+                                        @csrf
+                                        <button class="frontdesk-carol-button is-primary" type="submit">Apply suggestion</button>
+                                    </form>
+                                    <form method="POST" action="{{ route('admin.decision-support.payment-reminder', 'dismiss') }}">
+                                        @csrf
+                                        <button class="frontdesk-carol-button" type="submit">Dismiss</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </details>
+                    @elseif($carolSignal)
                         <h3>{{ $carolSignal['title'] }}</h3>
                         <p>{{ $carolSignal['evidence'] }}</p>
                         <a class="frontdesk-text-link" href="{{ $carolSignal['action_url'] }}">{{ $carolSignal['action_label'] }} <span aria-hidden="true">→</span></a>
