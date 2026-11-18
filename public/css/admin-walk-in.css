@@ -119,6 +119,313 @@
     font-size: 13px;
 }
 
+.walkin-room-picker,
+.walkin-date-time-field {
+    position: relative;
+    min-width: 0;
+}
+
+.walkin-choice-trigger {
+    display: flex;
+    width: 100%;
+    min-height: 48px;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 11px 14px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: var(--admin-card);
+    color: var(--ink);
+    font: inherit;
+    font-size: 14px;
+    font-weight: 700;
+    text-align: left;
+    cursor: pointer;
+    transition: border-color .16s ease, box-shadow .16s ease;
+}
+
+.walkin-choice-trigger:hover:not(:disabled),
+.walkin-choice-trigger[aria-expanded="true"] {
+    border-color: var(--orange);
+}
+
+.walkin-choice-trigger:focus-visible {
+    outline: 3px solid color-mix(in srgb, var(--orange) 25%, transparent);
+    outline-offset: 2px;
+}
+
+.walkin-choice-trigger:disabled {
+    cursor: not-allowed;
+    opacity: .55;
+}
+
+.walkin-choice-trigger > span:first-child {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.walkin-chevron {
+    flex: 0 0 auto;
+    color: var(--orange);
+    font-size: 18px;
+    line-height: 1;
+}
+
+.walkin-choice-panel {
+    position: absolute;
+    z-index: 30;
+    top: calc(100% + 8px);
+    left: 0;
+    width: min(100%, 740px);
+    box-sizing: border-box;
+    padding: 14px;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    background: var(--admin-card);
+    box-shadow: 0 18px 40px rgba(20, 12, 4, .16);
+}
+
+.walkin-choice-panel[hidden] {
+    display: none;
+}
+
+.walkin-choice-panel-heading,
+.walkin-calendar-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
+    color: var(--ink);
+    font-size: 13px;
+}
+
+.walkin-choice-panel-heading button {
+    padding: 6px 10px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: transparent;
+    color: var(--muted);
+    font: inherit;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.walkin-room-options {
+    display: grid;
+    max-height: 330px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    overflow: auto;
+}
+
+.walkin-room-option,
+.walkin-guest-option,
+.walkin-calendar-day,
+.walkin-time-option {
+    border: 1px solid var(--line);
+    background: var(--admin-card);
+    color: var(--ink);
+    cursor: pointer;
+    transition: border-color .14s ease, background .14s ease, color .14s ease;
+}
+
+.walkin-room-option {
+    display: grid;
+    min-height: 66px;
+    align-content: center;
+    gap: 5px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    text-align: left;
+}
+
+.walkin-room-option strong {
+    font-size: 13px;
+}
+
+.walkin-room-option small {
+    color: var(--muted);
+    font-size: 11px;
+}
+
+.walkin-room-option:hover,
+.walkin-guest-option:hover,
+.walkin-calendar-day:hover:not(:disabled),
+.walkin-time-option:hover:not(:disabled) {
+    border-color: var(--orange);
+}
+
+.walkin-room-option.is-selected,
+.walkin-guest-option.is-selected,
+.walkin-calendar-day.is-selected,
+.walkin-time-option.is-selected {
+    border-color: var(--orange);
+    background: color-mix(in srgb, var(--orange) 11%, var(--admin-card));
+    box-shadow: inset 0 0 0 1px var(--orange);
+}
+
+.walkin-room-option:focus-visible,
+.walkin-choice-panel-heading button:focus-visible,
+.walkin-guest-option:focus-visible,
+.walkin-calendar-heading button:focus-visible,
+.walkin-calendar-day:focus-visible,
+.walkin-time-option:focus-visible {
+    outline: 3px solid color-mix(in srgb, var(--orange) 30%, transparent);
+    outline-offset: 2px;
+}
+
+.walkin-guest-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 9px;
+}
+
+.walkin-guest-option {
+    min-width: 100px;
+    min-height: 43px;
+    padding: 9px 14px;
+    border-radius: 10px;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.walkin-field-note {
+    margin: 10px 0 0;
+    color: var(--muted);
+    font-size: 12px;
+}
+
+.walkin-date-time-buttons {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.walkin-date-time-field {
+    display: grid;
+    align-content: start;
+    gap: 7px;
+}
+
+.walkin-field-title {
+    color: var(--ink);
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.walkin-calendar {
+    width: min(100%, 350px);
+}
+
+.walkin-calendar-heading button {
+    display: grid;
+    width: 34px;
+    height: 34px;
+    place-items: center;
+    border: 1px solid var(--line);
+    border-radius: 9px;
+    background: transparent;
+    color: var(--ink);
+    font-size: 20px;
+    cursor: pointer;
+}
+
+.walkin-calendar-heading button:disabled {
+    cursor: default;
+    opacity: .35;
+}
+
+.walkin-calendar-week,
+.walkin-calendar-days {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 4px;
+}
+
+.walkin-calendar-week {
+    margin-bottom: 5px;
+    color: var(--muted);
+    font-size: 11px;
+    text-align: center;
+}
+
+.walkin-calendar-week span {
+    padding: 5px 0;
+}
+
+.walkin-calendar-day,
+.walkin-calendar-spacer {
+    display: grid;
+    min-width: 0;
+    aspect-ratio: 1;
+    place-items: center;
+    border-radius: 9px;
+    font: inherit;
+    font-size: 12px;
+}
+
+.walkin-calendar-spacer {
+    border: 0;
+}
+
+.walkin-calendar-day.is-today {
+    color: var(--orange);
+    font-weight: 800;
+}
+
+.walkin-calendar-day:disabled,
+.walkin-time-option:disabled {
+    cursor: not-allowed;
+    opacity: .35;
+}
+
+.walkin-time-options {
+    display: grid;
+    max-height: 300px;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 7px;
+    overflow: auto;
+}
+
+.walkin-time-option {
+    min-height: 39px;
+    padding: 7px 5px;
+    border-radius: 8px;
+    font: inherit;
+    font-size: 12px;
+}
+
+.walkin-selection-error[hidden] {
+    display: none;
+}
+
+.walkin-optional-details {
+    display: grid;
+    gap: 14px;
+    padding: 17px;
+    border: 1px solid var(--line);
+    border-radius: 13px;
+}
+
+.walkin-optional-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    color: var(--ink);
+    font-size: 14px;
+}
+
+.walkin-optional-heading span {
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 500;
+}
+
 .walkin-package-grid {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -254,6 +561,10 @@
     font-size: 13px;
 }
 
+.walkin-errors[hidden] {
+    display: none;
+}
+
 .walkin-inline-error {
     margin: 12px 0 0;
 }
@@ -313,6 +624,14 @@ html:not(.dark-mode) .walkin-page .walkin-submit {
     }
 
     .walkin-package-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .walkin-room-options {
+        grid-template-columns: 1fr;
+    }
+
+    .walkin-date-time-buttons {
         grid-template-columns: 1fr;
     }
 

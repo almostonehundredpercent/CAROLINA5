@@ -825,7 +825,7 @@ class AdminController extends Controller
 
         $data = $request->validate([
             'room_id' => 'required|exists:rooms,id',
-            'guest_name' => 'required|string|max:255',
+            'guest_name' => 'nullable|string|max:255',
             'guest_email' => 'nullable|email:rfc|max:255',
             'guest_phone' => 'nullable|string|max:30',
             'guests' => 'required|integer|min:1|max:30',
@@ -879,7 +879,7 @@ class AdminController extends Controller
                 'hours' => $hours,
                 'cooling_type' => $coolingType,
                 'room_rate_at_booking' => $packageRate,
-                'guest_name' => $data['guest_name'],
+                'guest_name' => $data['guest_name'] ?? null,
                 'guest_email' => $data['guest_email'] ?? null,
                 'guest_phone' => $data['guest_phone'] ?? null,
                 'billing_street' => 'Walk-in guest',
