@@ -1,4 +1,13 @@
 (() => {
+    const confirmationMessages = {
+        unpaid_hold_payment_reminder: 'This will turn on one automatic email reminder five minutes before an unpaid booking hold expires.',
+        elevated_cancellations: 'CAROL will show recent cancelled bookings here for review. No booking will be changed.',
+        no_rooms_available: 'CAROL will show today’s arrivals here for review. No room or booking details will be changed.',
+        repeated_maintenance: 'CAROL will show this room’s maintenance records here for review. Its status will not change.',
+        high_booking_demand: 'CAROL will show this room’s recent bookings here for review. No bookings or rates will change.',
+        zero_turnover_gap: 'CAROL will show both bookings for review here. It will not change their check-out or check-in times.',
+    };
+
     const showNext = (deck, card) => {
         const cards = Array.from(deck.querySelectorAll('[data-carol-card]'));
         const currentIndex = cards.indexOf(card);
@@ -81,7 +90,7 @@
                 event.preventDefault();
                 const card = form.closest('[data-carol-card]');
                 const title = card?.querySelector('h3')?.textContent.trim() || 'Confirm this recommendation';
-                const message = form.dataset.carolConfirmMessage || 'CAROL will show matching records here for review.';
+                const message = confirmationMessages[form.dataset.carolConfirmKind] || 'CAROL will show matching records here for review.';
 
                 if (!confirmationDialog?.showModal) {
                     if (window.confirm(`${title}\n\n${message}`)) {
