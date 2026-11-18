@@ -24,25 +24,7 @@
         @endif
         <p class="walkin-errors" id="walkin-selection-error" role="alert" hidden></p>
 
-        @php
-            $walkInRates = $rooms->mapWithKeys(function ($room) {
-                $packages = [];
-                foreach (\App\Support\StayPricing::rates($room) as $hours => $rates) {
-                    foreach ($rates as $cooling => $rate) {
-                        $packages[] = [
-                            'hours' => (int) $hours,
-                            'duration' => \App\Support\StayPricing::durationLabel((int) $hours),
-                            'cooling' => $cooling,
-                            'coolingLabel' => $cooling === 'fan' ? 'Fan' : 'Air-conditioned',
-                            'rate' => (float) $rate,
-                        ];
-                    }
-                }
-
-                return [$room->id => $packages];
-            });
-        @endphp
-        <script type="application/json" id="walkin-pricing-data">@json(['rooms' => $walkInRates, 'extraGuestRate' => \App\Support\StayPricing::EXTRA_GUEST_RATE, 'today' => \App\Support\PropertyTime::today(), 'now' => \App\Support\PropertyTime::now()->format('Y-m-d H:i')])</script>
+        <script type="application/json" id="walkin-pricing-data">@json($walkInPricingData)</script>
 
         <section class="panel walkin-card">
             <form method="POST" action="{{ route('admin.walk-ins.store') }}" class="walkin-form" id="walkin-form" novalidate>

@@ -758,8 +758,30 @@ class AdminController extends Controller
             ->where('is_active', true)
             ->orderBy('id')
             ->get();
+        $walkInRates = $rooms->mapWithKeys(function (Room $room): array {
+            $packages = [];
+            foreach (StayPricing::rates($room) as $hours => $rates) {
+                foreach ($rates as $cooling => $rate) {
+                    $packages[] = [
+                        'hours' => (int) $hours,
+                        'duration' => StayPricing::durationLabel((int) $hours),
+                        'cooling' => $cooling,
+                        'coolingLabel' => $cooling === 'fan' ? 'Fan' : 'Air-conditioned',
+                        'rate' => (float) $rate,
+                    ];
+                }
+            }
 
-        return view('admin.walk_in', compact('rooms'));
+            return [$room->id => $packages];
+        });
+        $walkInPricingData = [
+            'rooms' => $walkInRates->all(),
+            'extraGuestRate' => StayPricing::EXTRA_GUEST_RATE,
+            'today' => PropertyTime::today(),
+            'now' => PropertyTime::now()->format('Y-m-d H:i'),
+        ];
+
+        return view('admin.walk_in', compact('rooms', 'walkInPricingData'));
     }
 
     public function frontdesk(OperationalDecisionSupport $decisionSupport)
