@@ -141,7 +141,7 @@
                         <section class="dashboard-detail-section">
                             <h3>Unconfirmed bookings · {{ $pendingBookingRequests->count() }}</h3>
                             <div class="dashboard-detail-table-wrap" role="region" aria-label="Booking requests waiting for review" tabindex="0">
-                                <table class="dashboard-detail-table"><thead><tr><th>Guest / reference</th><th>Room</th><th>Stay</th><th>Guests</th><th>Payment</th></tr></thead><tbody>
+                                <table class="dashboard-detail-table"><thead><tr><th>Guest / reference</th><th>Room</th><th>Stay</th><th>Guests</th><th>Payment</th><th>Action</th></tr></thead><tbody>
                                     @foreach($pendingBookingRequests as $requestBooking)
                                         <tr>
                                             <td><strong>{{ $requestBooking->guest_name ?? $requestBooking->user?->name ?? 'Guest' }}</strong><small>{{ $requestBooking->reference }}</small></td>
@@ -151,6 +151,18 @@
                                             <td>₱{{ number_format((float) $requestBooking->total_amount, 2) }}<small>{{ $requestBooking->payment_method ? strtoupper($requestBooking->payment_method).' · ' : '' }}{{ ucfirst(str_replace('_', ' ', (string) $requestBooking->payment_status)) }}</small>
                                                 @if((float) $requestBooking->deposit_amount > 0)<small>Downpayment ₱{{ number_format((float) $requestBooking->deposit_amount, 2) }} · {{ $requestBooking->deposit_status === 'verified' || $requestBooking->deposit_verified_at ? 'verified' : 'awaiting verification' }}</small>@endif
                                             </td>
+                                            <td><div class="frontdesk-request-actions">
+                                                @if((float) $requestBooking->deposit_amount <= 0 || $requestBooking->deposit_status === 'verified' || $requestBooking->deposit_verified_at)
+                                                    <form method="POST" action="{{ route('admin.bookings.update', $requestBooking) }}" data-admin-confirm data-confirm-title="Confirm this booking?" data-confirm-message="Confirm {{ $requestBooking->guest_name ?? $requestBooking->user?->name ?? 'this guest' }}’s booking for {{ $requestBooking->room?->name ?? 'this room' }}? This reserves the room for the listed stay dates." data-confirm-action="Confirm booking">
+                                                        @csrf @method('PATCH')<input type="hidden" name="status" value="confirmed"><button class="status-select confirmed" type="submit">Confirm</button>
+                                                    </form>
+                                                @else
+                                                    <button class="status-select" type="button" disabled title="Verify the required downpayment before confirming">Verify payment first</button>
+                                                @endif
+                                                <form method="POST" action="{{ route('admin.bookings.update', $requestBooking) }}" data-admin-confirm data-confirm-title="Cancel this booking?" data-confirm-message="Cancel {{ $requestBooking->reference }}? The room dates will be released." data-confirm-action="Cancel booking" data-confirm-style="cancellation">
+                                                    @csrf @method('PATCH')<input type="hidden" name="status" value="cancelled"><button class="status-select cancelled" type="submit">Cancel</button>
+                                                </form>
+                                            </div></td>
                                         </tr>
                                     @endforeach
                                 </tbody></table>
@@ -184,9 +196,19 @@
                         <section class="dashboard-detail-section">
                             <h3>Cancellation requests · {{ $cancellationRequests->count() }}</h3>
                             <div class="dashboard-detail-table-wrap" role="region" aria-label="Cancellation requests waiting for confirmation" tabindex="0">
-                                <table class="dashboard-detail-table"><thead><tr><th>Guest / reference</th><th>Room</th><th>Check-in</th><th>Requested</th><th>Reason</th></tr></thead><tbody>
+                                <table class="dashboard-detail-table"><thead><tr><th>Guest / reference</th><th>Room</th><th>Check-in</th><th>Requested</th><th>Reason</th><th>Action</th></tr></thead><tbody>
                                     @foreach($cancellationRequests as $cancellationRequest)
-                                        <tr><td><strong>{{ $cancellationRequest->guest_name ?? $cancellationRequest->user?->name ?? 'Guest' }}</strong><small>{{ $cancellationRequest->reference }}</small></td><td>{{ $cancellationRequest->room?->name ?? 'Room removed' }}</td><td>{{ $cancellationRequest->check_in_at?->format('M j, Y · g:i A') ?? $cancellationRequest->check_in?->format('M j, Y') }}</td><td>{{ $cancellationRequest->cancellation_requested_at?->format('M j · g:i A') ?? '—' }}</td><td>{{ $cancellationRequest->cancellation_reason ?: 'No reason provided' }}</td></tr>
+                                        <tr>
+                                            <td><strong>{{ $cancellationRequest->guest_name ?? $cancellationRequest->user?->name ?? 'Guest' }}</strong><small>{{ $cancellationRequest->reference }}</small></td><td>{{ $cancellationRequest->room?->name ?? 'Room removed' }}</td><td>{{ $cancellationRequest->check_in_at?->format('M j, Y · g:i A') ?? $cancellationRequest->check_in?->format('M j, Y') }}</td><td>{{ $cancellationRequest->cancellation_requested_at?->format('M j · g:i A') ?? '—' }}</td><td>{{ $cancellationRequest->cancellation_reason ?: 'No reason provided' }}</td>
+                                            <td><div class="frontdesk-request-actions">
+                                                <form method="POST" action="{{ route('admin.bookings.cancellation-request.resolve', $cancellationRequest) }}" data-admin-confirm data-confirm-title="Confirm cancellation?" data-confirm-message="Confirm {{ $cancellationRequest->guest_name ?? $cancellationRequest->user?->name ?? 'this guest' }}’s request? This cancels the booking and releases the room dates." data-confirm-action="Confirm cancellation" data-confirm-style="cancellation">
+                                                    @csrf<input type="hidden" name="decision" value="confirm"><button class="status-select cancelled" type="submit">Confirm</button>
+                                                </form>
+                                                <form method="POST" action="{{ route('admin.bookings.cancellation-request.resolve', $cancellationRequest) }}" data-admin-confirm data-confirm-title="Decline cancellation?" data-confirm-message="Decline this request? The booking will remain active and the room will stay reserved." data-confirm-action="Decline request">
+                                                    @csrf<input type="hidden" name="decision" value="decline"><button class="status-select" type="submit">Decline</button>
+                                                </form>
+                                            </div></td>
+                                        </tr>
                                     @endforeach
                                 </tbody></table>
                             </div>
@@ -197,9 +219,20 @@
                         <section class="dashboard-detail-section">
                             <h3>Early check-out requests · {{ $earlyCheckoutRequests->count() }}</h3>
                             <div class="dashboard-detail-table-wrap" role="region" aria-label="Early check-out requests waiting for confirmation" tabindex="0">
-                                <table class="dashboard-detail-table"><thead><tr><th>Guest / reference</th><th>Room</th><th>Scheduled check-out</th><th>Requested</th></tr></thead><tbody>
+                                <table class="dashboard-detail-table"><thead><tr><th>Guest / reference</th><th>Room</th><th>Scheduled check-out</th><th>Requested</th><th>Balance</th><th>Action</th></tr></thead><tbody>
                                     @foreach($earlyCheckoutRequests as $earlyCheckoutRequest)
-                                        <tr><td><strong>{{ $earlyCheckoutRequest->guest_name ?? $earlyCheckoutRequest->user?->name ?? 'Guest' }}</strong><small>{{ $earlyCheckoutRequest->reference }}</small></td><td>{{ $earlyCheckoutRequest->room?->name ?? 'Room removed' }}</td><td>{{ $earlyCheckoutRequest->check_out_at?->format('M j, Y · g:i A') ?? $earlyCheckoutRequest->check_out?->format('M j, Y') }}</td><td>{{ $earlyCheckoutRequest->early_checkout_requested_at?->format('M j · g:i A') ?? '—' }}</td></tr>
+                                        @php($earlyCheckoutBalance = \App\Support\FinancialSummary::forBooking($earlyCheckoutRequest)['outstanding'])
+                                        <tr>
+                                            <td><strong>{{ $earlyCheckoutRequest->guest_name ?? $earlyCheckoutRequest->user?->name ?? 'Guest' }}</strong><small>{{ $earlyCheckoutRequest->reference }}</small></td><td>{{ $earlyCheckoutRequest->room?->name ?? 'Room removed' }}</td><td>{{ $earlyCheckoutRequest->check_out_at?->format('M j, Y · g:i A') ?? $earlyCheckoutRequest->check_out?->format('M j, Y') }}</td><td>{{ $earlyCheckoutRequest->early_checkout_requested_at?->format('M j · g:i A') ?? '—' }}</td><td>₱{{ number_format($earlyCheckoutBalance, 2) }}@if($earlyCheckoutBalance > 0.001)<small>Pay before check-out</small>@endif</td>
+                                            <td><div class="frontdesk-request-actions">
+                                                <form method="POST" action="{{ route('admin.bookings.early-checkout.resolve', $earlyCheckoutRequest) }}" data-admin-confirm data-confirm-title="Confirm early check-out?" data-confirm-message="Confirm {{ $earlyCheckoutRequest->guest_name ?? $earlyCheckoutRequest->user?->name ?? 'this guest' }}’s departure now? This marks the booking checked out and starts room cleaning. The booking total stays the same; refunds are handled separately." data-confirm-action="Confirm check-out">
+                                                    @csrf<input type="hidden" name="decision" value="confirm"><button class="status-select confirmed" type="submit" @disabled($earlyCheckoutBalance > 0.001) title="{{ $earlyCheckoutBalance > 0.001 ? 'Pay the remaining balance before confirming' : 'Confirm early check-out' }}">Confirm check-out</button>
+                                                </form>
+                                                <form method="POST" action="{{ route('admin.bookings.early-checkout.resolve', $earlyCheckoutRequest) }}" data-admin-confirm data-confirm-title="Decline early check-out?" data-confirm-message="Decline this request? The guest will remain checked in." data-confirm-action="Decline request" data-confirm-style="cancellation">
+                                                    @csrf<input type="hidden" name="decision" value="decline"><button class="status-select cancelled" type="submit">Decline</button>
+                                                </form>
+                                            </div></td>
+                                        </tr>
                                     @endforeach
                                 </tbody></table>
                             </div>

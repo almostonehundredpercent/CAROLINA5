@@ -103,6 +103,9 @@ html:not(.dark-mode) .frontdesk-page .admin-sidebar .admin-logout .logout-button
 .frontdesk-page .frontdesk-walkin:hover,
 .frontdesk-primary-link:hover { background: #974e06 !important; }
 .frontdesk-page button.frontdesk-primary-link { font: inherit; cursor: pointer; }
+.frontdesk-request-actions { display: flex; flex-wrap: wrap; gap: 6px; min-width: 154px; }
+.frontdesk-request-actions form { display: flex; margin: 0; }
+.frontdesk-request-actions .status-select { min-height: 34px !important; padding: 6px 9px !important; font-size: 11px !important; white-space: nowrap; }
 
 .frontdesk-summary { display: grid; gap: 16px; }
 .frontdesk-metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
