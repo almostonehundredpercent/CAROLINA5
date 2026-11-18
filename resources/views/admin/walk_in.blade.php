@@ -79,7 +79,7 @@
                     <p class="walkin-inline-error" id="walkin-package-error" role="alert" hidden>Choose a rate package to continue.</p>
                 </section>
 
-                <section class="walkin-section">
+                <section class="walkin-section" id="walkin-guest-section" hidden>
                     <div class="walkin-section-heading">
                         <span class="walkin-step">3</span>
                         <div><h2>Guest details</h2><p>Prices include up to 2 guests.</p></div>
@@ -92,7 +92,7 @@
                     </div>
                 </section>
 
-                <section class="walkin-section walkin-time-section">
+                <section class="walkin-section walkin-time-section" id="walkin-arrival-section" hidden>
                     <div class="walkin-section-heading">
                         <span class="walkin-step">4</span>
                         <div><h2>Arrival</h2><p>Checkout is suggested from the selected package.</p></div>
@@ -103,13 +103,15 @@
                     </div>
                 </section>
 
-                <section class="walkin-summary" aria-live="polite">
-                    <div class="walkin-summary-item"><span>Suggested checkout</span><strong id="walkin-checkout">Choose a rate and arrival time</strong></div>
-                    <div class="walkin-summary-total"><span>Estimated total</span><strong id="walkin-total">—</strong><small id="walkin-total-copy">The selected package includes up to 2 guests.</small></div>
-                </section>
+                <div class="walkin-finish" id="walkin-finish-section" hidden>
+                    <section class="walkin-summary" aria-live="polite">
+                        <div class="walkin-summary-item"><span>Suggested checkout</span><strong id="walkin-checkout">Choose a rate and arrival time</strong></div>
+                        <div class="walkin-summary-total"><span>Estimated total</span><strong id="walkin-total">—</strong><small id="walkin-total-copy">The selected package includes up to 2 guests.</small></div>
+                    </section>
 
-                <p class="walkin-help">This confirms the walk-in stay. Record any payment from the booking’s Payment details page. Room availability is checked again when you submit.</p>
-                <button class="walkin-submit" type="submit">Confirm walk-in booking</button>
+                    <p class="walkin-help">This confirms the walk-in stay. Record any payment from the booking’s Payment details page. Room availability is checked again when you submit.</p>
+                    <button class="walkin-submit" type="submit">Confirm walk-in booking</button>
+                </div>
             </form>
         </section>
     </main>

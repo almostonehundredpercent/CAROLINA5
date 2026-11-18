@@ -7,6 +7,9 @@
     const roomSelect = document.getElementById('walkin-room');
     const roomSummary = document.getElementById('walkin-room-summary');
     const packageSection = document.getElementById('walkin-package-section');
+    const guestSection = document.getElementById('walkin-guest-section');
+    const arrivalSection = document.getElementById('walkin-arrival-section');
+    const finishSection = document.getElementById('walkin-finish-section');
     const packageCopy = document.getElementById('walkin-package-copy');
     const packageGrid = document.getElementById('walkin-package-grid');
     const packageError = document.getElementById('walkin-package-error');
@@ -82,6 +85,9 @@
             option.setAttribute('aria-pressed', isSelected ? 'true' : 'false');
         });
         packageError.hidden = true;
+        guestSection.hidden = false;
+        arrivalSection.hidden = false;
+        finishSection.hidden = false;
         updateSummary();
     }
 
@@ -102,6 +108,9 @@
         selectedPackage = null;
         hoursInput.value = '';
         coolingInput.value = '';
+        guestSection.hidden = true;
+        arrivalSection.hidden = true;
+        finishSection.hidden = true;
 
         packages.forEach(packageOption => {
             const button = document.createElement('button');

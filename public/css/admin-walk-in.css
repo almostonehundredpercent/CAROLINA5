@@ -29,6 +29,15 @@
     display: none;
 }
 
+.walkin-finish {
+    display: grid;
+    gap: 16px;
+}
+
+.walkin-finish[hidden] {
+    display: none;
+}
+
 .walkin-section-heading {
     display: flex;
     align-items: flex-start;
