@@ -1,0 +1,315 @@
+.walkin-page {
+    width: min(100%, 1120px);
+    margin-inline: auto;
+}
+
+.walkin-header {
+    margin-bottom: 20px;
+}
+
+.walkin-card {
+    max-width: 960px;
+    padding: clamp(18px, 3vw, 32px);
+    border: 1px solid var(--line);
+    border-radius: 18px;
+}
+
+.walkin-form {
+    display: grid;
+    gap: 0;
+}
+
+.walkin-section {
+    padding: 0 0 26px;
+    margin: 0 0 24px;
+    border-bottom: 1px solid var(--line);
+}
+
+.walkin-section[hidden] {
+    display: none;
+}
+
+.walkin-section-heading {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 18px;
+}
+
+.walkin-step {
+    display: grid;
+    width: 30px;
+    height: 30px;
+    flex: 0 0 30px;
+    place-items: center;
+    border-radius: 50%;
+    background: color-mix(in srgb, var(--orange) 12%, var(--admin-card));
+    color: var(--orange);
+    font-size: 13px;
+    font-weight: 800;
+}
+
+.walkin-section-heading h2 {
+    margin: 0;
+    color: var(--ink);
+    font-size: 18px;
+    line-height: 1.25;
+}
+
+.walkin-section-heading p {
+    margin: 4px 0 0;
+    color: var(--muted);
+    font-size: 13px;
+}
+
+.walkin-field {
+    display: grid;
+    min-width: 0;
+    gap: 7px;
+    color: var(--ink);
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.walkin-field em {
+    margin-left: 5px;
+    color: var(--muted);
+    font-size: 11px;
+    font-style: normal;
+    font-weight: 500;
+}
+
+.walkin-field input,
+.walkin-field select {
+    width: 100%;
+    min-height: 46px;
+    box-sizing: border-box;
+    padding: 11px 13px;
+    border: 1px solid var(--line) !important;
+    border-radius: 10px;
+    background: var(--admin-card) !important;
+    color: var(--ink) !important;
+    font: inherit;
+    font-size: 14px;
+    outline: none;
+    transition: border-color .16s ease, box-shadow .16s ease;
+}
+
+.walkin-field input:focus,
+.walkin-field select:focus {
+    border-color: var(--orange) !important;
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--orange) 18%, transparent);
+}
+
+.walkin-room-summary {
+    margin: 10px 0 0;
+    padding: 10px 12px;
+    border-radius: 10px;
+    background: color-mix(in srgb, var(--orange) 8%, var(--admin-card));
+    color: var(--muted);
+    font-size: 13px;
+}
+
+.walkin-package-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.walkin-package-option {
+    display: flex;
+    min-height: 76px;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 14px;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: var(--admin-card);
+    color: var(--ink);
+    text-align: left;
+    cursor: pointer;
+    transition: border-color .16s ease, background .16s ease, transform .16s ease;
+}
+
+.walkin-package-option:hover {
+    border-color: var(--orange);
+    transform: translateY(-1px);
+}
+
+.walkin-package-option:focus-visible {
+    outline: 3px solid color-mix(in srgb, var(--orange) 35%, transparent);
+    outline-offset: 2px;
+}
+
+.walkin-package-option.is-selected {
+    border-color: var(--orange);
+    background: color-mix(in srgb, var(--orange) 10%, var(--admin-card));
+    box-shadow: inset 0 0 0 1px var(--orange);
+}
+
+.walkin-package-copy {
+    display: grid;
+    gap: 5px;
+}
+
+.walkin-package-copy strong {
+    font-size: 14px;
+}
+
+.walkin-package-copy small {
+    color: var(--muted);
+    font-size: 12px;
+}
+
+.walkin-package-option > b {
+    color: var(--orange);
+    font-size: 16px;
+    white-space: nowrap;
+}
+
+.walkin-fields {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.walkin-field small {
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 500;
+}
+
+.walkin-summary {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(220px, .7fr);
+    gap: 18px;
+    align-items: center;
+    margin: 0 0 18px;
+    padding: 18px;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    background: color-mix(in srgb, var(--orange) 5%, var(--admin-card));
+}
+
+.walkin-summary-item,
+.walkin-summary-total {
+    display: grid;
+    gap: 6px;
+}
+
+.walkin-summary-item span,
+.walkin-summary-total > span {
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+}
+
+.walkin-summary-item strong {
+    color: var(--ink);
+    font-size: 15px;
+}
+
+.walkin-summary-total {
+    padding-left: 18px;
+    border-left: 1px solid var(--line);
+}
+
+.walkin-summary-total strong {
+    color: var(--orange);
+    font-size: 25px;
+}
+
+.walkin-summary-total small {
+    color: var(--muted);
+    font-size: 11px;
+}
+
+.walkin-help {
+    margin: 0 0 16px;
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.55;
+}
+
+.walkin-errors,
+.walkin-inline-error {
+    margin: 0 0 16px;
+    padding: 11px 13px;
+    border: 1px solid #e7b4ac;
+    border-radius: 10px;
+    background: #fff2f0;
+    color: #9f3025;
+    font-size: 13px;
+}
+
+.walkin-inline-error {
+    margin: 12px 0 0;
+}
+
+.walkin-submit {
+    min-height: 50px;
+    border: 0;
+    border-radius: 11px;
+    background: var(--orange);
+    color: #fff;
+    font: 700 15px system-ui, sans-serif;
+    cursor: pointer;
+    transition: filter .16s ease, transform .16s ease;
+}
+
+html .walkin-page .walkin-submit {
+    min-height: 50px !important;
+    padding: 0 18px !important;
+    border: 1px solid var(--orange) !important;
+    border-radius: 11px !important;
+    background: var(--orange) !important;
+    color: #fff !important;
+    font-size: 15px !important;
+    box-shadow: none !important;
+}
+
+html:not(.dark-mode) .walkin-page .walkin-submit {
+    border-color: #b96100 !important;
+    background: linear-gradient(135deg, #d67a00, #ad5100) !important;
+    color: #fff !important;
+}
+
+.walkin-submit:hover {
+    filter: brightness(.95);
+    transform: translateY(-1px);
+}
+
+.walkin-page .walkin-submit:hover {
+    filter: brightness(.95);
+}
+
+.walkin-submit:focus-visible {
+    outline: 3px solid color-mix(in srgb, var(--orange) 35%, transparent);
+    outline-offset: 3px;
+}
+
+@media (max-width: 760px) {
+    .walkin-package-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 560px) {
+    .walkin-fields,
+    .walkin-summary {
+        grid-template-columns: 1fr;
+    }
+
+    .walkin-package-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .walkin-summary-total {
+        padding: 14px 0 0;
+        border-top: 1px solid var(--line);
+        border-left: 0;
+    }
+}

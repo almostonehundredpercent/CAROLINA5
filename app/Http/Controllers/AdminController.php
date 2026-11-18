@@ -25,6 +25,7 @@ use App\Services\PayMongoPaymentReconciler;
 use App\Support\AdminPermissions;
 use App\Support\FinancialSummary;
 use App\Support\PropertyTime;
+use App\Support\StayPricing;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
 use Illuminate\Database\QueryException;
@@ -802,28 +803,65 @@ class AdminController extends Controller
     {
         abort_unless($request->user()->canManageBookings(), 403, 'Your staff role cannot create walk-ins.');
         $this->refreshInventory();
+
+        if (! $request->filled('hours') && $request->filled('check_out')) {
+            $staleForm = $request->validate([
+                'room_id' => 'required|exists:rooms,id',
+                'check_in' => ['required', 'date_format:Y-m-d', 'after_or_equal:'.PropertyTime::today()],
+                'check_out' => ['required', 'date_format:Y-m-d', 'after:check_in'],
+                'check_in_time' => 'nullable|date_format:H:i',
+                'check_out_time' => 'nullable|date_format:H:i',
+            ]);
+            $room = Room::whereKey($staleForm['room_id'])->firstOrFail();
+            $startsAt = Carbon::parse($staleForm['check_in'].' '.($staleForm['check_in_time'] ?? '12:00'), 'UTC');
+            $endsAt = Carbon::parse($staleForm['check_out'].' '.($staleForm['check_out_time'] ?? '12:00'), 'UTC');
+            if ($endsAt->gt($startsAt) && ($room->bookings()->blocking()->overlapping($startsAt, $endsAt)->exists()
+                || $room->blocks()->overlapping($startsAt, $endsAt)->exists())) {
+                throw ValidationException::withMessages(['room_id' => 'That room is unavailable for the selected stay.']);
+            }
+
+            throw ValidationException::withMessages(['room_id' => 'Refresh this form to choose a room rate package.']);
+        }
+
         $data = $request->validate([
             'room_id' => 'required|exists:rooms,id',
             'guest_name' => 'required|string|max:255',
             'guest_email' => 'nullable|email:rfc|max:255',
             'guest_phone' => 'nullable|string|max:30',
             'guests' => 'required|integer|min:1|max:30',
-            'check_in' => 'required|date|after_or_equal:today',
-            'check_out' => 'required|date|after:check_in',
-            'check_in_time' => 'nullable|date_format:H:i',
-            'check_out_time' => 'nullable|date_format:H:i',
+            'booking_type' => 'required|in:hourly',
+            'hours' => 'required|integer|min:3|max:720',
+            'cooling_type' => 'required|in:fan,aircon',
+            'check_in' => ['required', 'date_format:Y-m-d', 'after_or_equal:'.PropertyTime::today()],
+            'check_in_time' => ['required', 'date_format:H:i', 'regex:/^\d{2}:00$/'],
         ]);
 
-        $checkInAt = Carbon::parse($data['check_in'].' '.($data['check_in_time'] ?? '12:00'));
-        $checkOutAt = Carbon::parse($data['check_out'].' '.($data['check_out_time'] ?? '12:00'));
-        if ($checkOutAt->lte($checkInAt)) {
-            return back()->withInput()->withErrors(['check_out_time' => 'Check-out must be after check-in.']);
+        $room = Room::whereKey($data['room_id'])->firstOrFail();
+        abort_unless($room->is_active, 422, 'This room is unavailable.');
+        $guests = (int) $data['guests'];
+        $hours = (int) $data['hours'];
+        $coolingType = $data['cooling_type'];
+        if (! StayPricing::isOffered($hours, $coolingType, $room)) {
+            throw ValidationException::withMessages(['hours' => 'That rate package is not available for the selected room.']);
         }
-        $nights = max(1, (int) ceil($checkInAt->diffInHours($checkOutAt) / 24));
-        $booking = DB::transaction(function () use ($data, $checkInAt, $checkOutAt, $nights) {
+        if ($guests > $room->booking_guest_limit) {
+            throw ValidationException::withMessages(['guests' => "{$room->name} accommodates up to {$room->booking_guest_limit} guests."]);
+        }
+
+        $checkInAt = Carbon::parse($data['check_in'].' '.($data['check_in_time'] ?? '12:00'), 'UTC');
+        if ($checkInAt->lt(PropertyTime::now())) {
+            throw ValidationException::withMessages(['check_in_time' => 'Choose a future check-in time.']);
+        }
+        $checkOutAt = StayPricing::checkoutAt($checkInAt, $hours);
+        $nights = max(1, (int) ceil($checkInAt->diffInSeconds($checkOutAt) / 86400));
+        $booking = DB::transaction(function () use ($data, $checkInAt, $checkOutAt, $nights, $hours, $coolingType, $guests) {
             $room = Room::whereKey($data['room_id'])->lockForUpdate()->firstOrFail();
-            if ($data['guests'] > $room->booking_guest_limit) {
+            abort_unless($room->is_active, 422, 'This room is unavailable.');
+            if ($guests > $room->booking_guest_limit) {
                 throw ValidationException::withMessages(['guests' => "{$room->name} accommodates up to {$room->booking_guest_limit} guests."]);
+            }
+            if (! StayPricing::isOffered($hours, $coolingType, $room)) {
+                throw ValidationException::withMessages(['hours' => 'That rate package is not available for the selected room.']);
             }
             $conflict = $room->bookings()->blocking()->overlapping($checkInAt, $checkOutAt)->exists()
                 || $room->blocks()->overlapping($checkInAt, $checkOutAt)->exists();
@@ -831,12 +869,18 @@ class AdminController extends Controller
                 throw ValidationException::withMessages(['room_id' => 'That room is unavailable for the selected stay.']);
             }
 
+            $packageRate = StayPricing::rate($hours, $coolingType, $room);
+            $total = StayPricing::total($hours, $coolingType, $guests, $room);
+
             return Booking::create([
                 'user_id' => null,
                 'room_id' => $room->id,
-                'room_rate_at_booking' => $room->price_per_night,
+                'booking_type' => 'hourly',
+                'hours' => $hours,
+                'cooling_type' => $coolingType,
+                'room_rate_at_booking' => $packageRate,
                 'guest_name' => $data['guest_name'],
-                'guest_email' => $data['guest_email'],
+                'guest_email' => $data['guest_email'] ?? null,
                 'guest_phone' => $data['guest_phone'] ?? null,
                 'billing_street' => 'Walk-in guest',
                 'billing_city' => 'Tabaco City',
@@ -847,9 +891,16 @@ class AdminController extends Controller
                 'check_out' => $checkOutAt->toDateString(),
                 'check_in_at' => $checkInAt,
                 'check_out_at' => $checkOutAt,
-                'guests' => $data['guests'],
+                'guests' => $guests,
                 'nights' => $nights,
-                'total_amount' => $room->price_per_night * $nights,
+                'total_amount' => $total,
+                'original_amount' => $total,
+                'discount_amount' => 0,
+                'add_ons' => [
+                    'cooling_type' => $coolingType,
+                    'package_rate' => $packageRate,
+                    'extra_guests' => max(0, $guests - 2),
+                ],
                 'status' => 'confirmed',
                 'payment_method' => 'cash',
                 'special_request' => 'Walk-in booking created by admin.',
