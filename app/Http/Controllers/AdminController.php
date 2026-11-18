@@ -799,6 +799,9 @@ class AdminController extends Controller
         ];
         $canSeeDecisionSupport = AdminPermissions::allows(request()->user(), 'decision_support');
         $decisionSupportSetting = $canSeeDecisionSupport ? DecisionSupportSetting::find(1) : null;
+        $pendingBookingRequests = Booking::with(['user', 'room'])->blocking()->where('status', 'pending')->where(function ($query) {
+            $query->whereNull('cancellation_request_status')->orWhere('cancellation_request_status', '!=', 'requested');
+        })->orderBy('created_at')->get();
 
         return view('admin.frontdesk', [
             'arrivals' => Booking::with(['user', 'room'])->where('status', 'confirmed')->whereDate('check_in', $today)->whereNull('checked_in_at')->get(),
@@ -809,9 +812,8 @@ class AdminController extends Controller
             'roomOperationBlocks' => RoomBlock::with('room')->whereIn('status', ['cleaning', 'maintenance'])->overlapping($today, $tomorrow)->orderBy('starts_at')->get(),
             'propertyNow' => $propertyNow,
             'roomStatusCounts' => $roomStatusCounts,
-            'pendingRequests' => Booking::query()->blocking()->where('status', 'pending')->where(function ($query) {
-                $query->whereNull('cancellation_request_status')->orWhere('cancellation_request_status', '!=', 'requested');
-            })->count(),
+            'pendingRequests' => $pendingBookingRequests->count(),
+            'pendingBookingRequests' => $pendingBookingRequests,
             'recentActivity' => $canSeeDecisionSupport ? ActivityLog::latest()->take(3)->get() : collect(),
             'carolSignals' => $canSeeDecisionSupport
                 ? $decisionSupport->dashboardSignals($rooms, session('carol.dismissed_signatures', []))

@@ -93,7 +93,9 @@
                     <p><strong>{{ $pendingRequests }}</strong> booking request{{ $pendingRequests === 1 ? '' : 's' }} waiting for review</p>
                     @if($cancellationRequests->isNotEmpty())<p><strong>{{ $cancellationRequests->count() }}</strong> cancellation request{{ $cancellationRequests->count() === 1 ? '' : 's' }} waiting for confirmation</p>@endif
                     @if($earlyCheckoutRequests->isNotEmpty())<p><strong>{{ $earlyCheckoutRequests->count() }}</strong> early check-out request{{ $earlyCheckoutRequests->count() === 1 ? '' : 's' }} waiting for confirmation</p>@endif
-                    <a class="frontdesk-primary-link" href="{{ route('admin.bookings') }}">Review bookings <span aria-hidden="true">→</span></a>
+                    @if($pendingRequests || $cancellationRequests->isNotEmpty() || $earlyCheckoutRequests->isNotEmpty())
+                        <button class="frontdesk-primary-link" type="button" data-frontdesk-request-dialog-open>View request details <span aria-hidden="true">→</span></button>
+                    @endif
                 </section>
                 <section class="frontdesk-feature frontdesk-status">
                     <div class="frontdesk-feature-title"><span class="frontdesk-feature-icon" aria-hidden="true">⌂</span><div><p class="admin-kicker">LIVE INVENTORY</p><h2>Room status</h2></div></div>
@@ -125,6 +127,65 @@
             </div>
             @endif
         </section>
+
+        @if($pendingRequests || $cancellationRequests->isNotEmpty() || $earlyCheckoutRequests->isNotEmpty())
+            <dialog class="dashboard-detail-dialog" id="frontdesk-request-dialog" aria-labelledby="frontdesk-request-dialog-title">
+                <div class="dashboard-detail-shell">
+                    <header class="dashboard-detail-header">
+                        <div><p class="admin-kicker">SHIFT PRIORITIES</p><h2 id="frontdesk-request-dialog-title">Requests waiting for review</h2><p>Booking, cancellation, and early check-out requests.</p></div>
+                        <button class="dashboard-detail-close" type="button" data-frontdesk-request-dialog-close aria-label="Close request details">×</button>
+                    </header>
+                    <div class="dashboard-detail-body">
+                        @if($pendingBookingRequests->isNotEmpty())
+                        <section class="dashboard-detail-section">
+                            <h3>Booking requests · {{ $pendingBookingRequests->count() }}</h3>
+                            <div class="dashboard-detail-table-wrap" role="region" aria-label="Booking requests waiting for review" tabindex="0">
+                                <table class="dashboard-detail-table"><thead><tr><th>Guest / reference</th><th>Room</th><th>Stay</th><th>Guests</th><th>Payment</th></tr></thead><tbody>
+                                    @foreach($pendingBookingRequests as $requestBooking)
+                                        <tr>
+                                            <td><strong>{{ $requestBooking->guest_name ?? $requestBooking->user?->name ?? 'Guest' }}</strong><small>{{ $requestBooking->reference }}</small></td>
+                                            <td>{{ $requestBooking->room?->name ?? 'Room removed' }}</td>
+                                            <td>{{ $requestBooking->check_in_at?->format('M j, Y · g:i A') ?? $requestBooking->check_in?->format('M j, Y') }}<br>{{ $requestBooking->check_out_at?->format('M j, Y · g:i A') ?? $requestBooking->check_out?->format('M j, Y') }}</td>
+                                            <td>{{ $requestBooking->guests ?? 1 }}</td>
+                                            <td>₱{{ number_format((float) $requestBooking->total_amount, 2) }}<small>{{ $requestBooking->payment_method ? strtoupper($requestBooking->payment_method).' · ' : '' }}{{ ucfirst(str_replace('_', ' ', (string) $requestBooking->payment_status)) }}</small>
+                                                @if((float) $requestBooking->deposit_amount > 0)<small>Downpayment ₱{{ number_format((float) $requestBooking->deposit_amount, 2) }} · {{ $requestBooking->deposit_status === 'verified' || $requestBooking->deposit_verified_at ? 'verified' : 'awaiting verification' }}</small>@endif
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                </tbody></table>
+                            </div>
+                        </section>
+                        @endif
+
+                        @if($cancellationRequests->isNotEmpty())
+                        <section class="dashboard-detail-section">
+                            <h3>Cancellation requests · {{ $cancellationRequests->count() }}</h3>
+                            <div class="dashboard-detail-table-wrap" role="region" aria-label="Cancellation requests waiting for confirmation" tabindex="0">
+                                <table class="dashboard-detail-table"><thead><tr><th>Guest / reference</th><th>Room</th><th>Check-in</th><th>Requested</th><th>Reason</th></tr></thead><tbody>
+                                    @foreach($cancellationRequests as $cancellationRequest)
+                                        <tr><td><strong>{{ $cancellationRequest->guest_name ?? $cancellationRequest->user?->name ?? 'Guest' }}</strong><small>{{ $cancellationRequest->reference }}</small></td><td>{{ $cancellationRequest->room?->name ?? 'Room removed' }}</td><td>{{ $cancellationRequest->check_in_at?->format('M j, Y · g:i A') ?? $cancellationRequest->check_in?->format('M j, Y') }}</td><td>{{ $cancellationRequest->cancellation_requested_at?->format('M j · g:i A') ?? '—' }}</td><td>{{ $cancellationRequest->cancellation_reason ?: 'No reason provided' }}</td></tr>
+                                    @endforeach
+                                </tbody></table>
+                            </div>
+                        </section>
+                        @endif
+
+                        @if($earlyCheckoutRequests->isNotEmpty())
+                        <section class="dashboard-detail-section">
+                            <h3>Early check-out requests · {{ $earlyCheckoutRequests->count() }}</h3>
+                            <div class="dashboard-detail-table-wrap" role="region" aria-label="Early check-out requests waiting for confirmation" tabindex="0">
+                                <table class="dashboard-detail-table"><thead><tr><th>Guest / reference</th><th>Room</th><th>Scheduled check-out</th><th>Requested</th></tr></thead><tbody>
+                                    @foreach($earlyCheckoutRequests as $earlyCheckoutRequest)
+                                        <tr><td><strong>{{ $earlyCheckoutRequest->guest_name ?? $earlyCheckoutRequest->user?->name ?? 'Guest' }}</strong><small>{{ $earlyCheckoutRequest->reference }}</small></td><td>{{ $earlyCheckoutRequest->room?->name ?? 'Room removed' }}</td><td>{{ $earlyCheckoutRequest->check_out_at?->format('M j, Y · g:i A') ?? $earlyCheckoutRequest->check_out?->format('M j, Y') }}</td><td>{{ $earlyCheckoutRequest->early_checkout_requested_at?->format('M j · g:i A') ?? '—' }}</td></tr>
+                                    @endforeach
+                                </tbody></table>
+                            </div>
+                        </section>
+                        @endif
+                    </div>
+                </div>
+            </dialog>
+        @endif
 
         <div class="frontdesk-details-heading"><div><p class="admin-kicker">FRONT DESK</p><h2>Shift details</h2><p>Arrivals, active stays, departures, and room operations.</p></div></div>
 
@@ -296,5 +357,19 @@
     @endforeach
 </nav>
 @include('admin.partials.confirmation-dialog')
+<script>
+    (() => {
+        const trigger = document.querySelector('[data-frontdesk-request-dialog-open]');
+        const dialog = document.getElementById('frontdesk-request-dialog');
+        if (!trigger || !dialog || typeof dialog.showModal !== 'function') return;
+
+        trigger.addEventListener('click', () => dialog.showModal());
+        dialog.querySelector('[data-frontdesk-request-dialog-close]')?.addEventListener('click', () => dialog.close());
+        dialog.addEventListener('click', (event) => {
+            if (event.target === dialog) dialog.close();
+        });
+        dialog.addEventListener('close', () => trigger.focus());
+    })();
+</script>
 </body>
 </html>

@@ -102,6 +102,7 @@ html:not(.dark-mode) .frontdesk-page .admin-sidebar .admin-logout .logout-button
 
 .frontdesk-page .frontdesk-walkin:hover,
 .frontdesk-primary-link:hover { background: #974e06 !important; }
+.frontdesk-page button.frontdesk-primary-link { font: inherit; cursor: pointer; }
 
 .frontdesk-summary { display: grid; gap: 16px; }
 .frontdesk-metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
