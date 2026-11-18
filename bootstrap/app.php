@@ -21,6 +21,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withSchedule(function (Schedule $schedule): void {
         $schedule->command('bookings:expire-holds')->everyMinute()->withoutOverlapping(10);
         $schedule->command('bookings:send-hold-reminders')->everyMinute()->withoutOverlapping(10);
+        $schedule->command('bookings:send-check-in-reminders')->everyMinute()->withoutOverlapping(10);
         $schedule->command('carol:generate-promo-drafts')->dailyAt('02:00')->timezone('Asia/Manila')->withoutOverlapping();
     })
     ->withMiddleware(function (Middleware $middleware): void {
