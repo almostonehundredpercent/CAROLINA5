@@ -90,10 +90,11 @@
             <div class="frontdesk-feature-grid">
                 <section class="frontdesk-feature frontdesk-attention">
                     <div class="frontdesk-feature-title"><span class="frontdesk-feature-icon" aria-hidden="true">!</span><div><p class="admin-kicker">SHIFT PRIORITIES</p><h2>Needs attention</h2></div></div>
-                    <p><strong>{{ $pendingRequests }}</strong> booking request{{ $pendingRequests === 1 ? '' : 's' }} waiting for review</p>
+                    <p><strong>{{ $pendingRequests }}</strong> booking{{ $pendingRequests === 1 ? '' : 's' }} not yet confirmed</p>
+                    @if($pastPendingBookings->isNotEmpty())<p><strong>{{ $pastPendingBookings->count() }}</strong> past booking{{ $pastPendingBookings->count() === 1 ? '' : 's' }} still marked pending</p>@endif
                     @if($cancellationRequests->isNotEmpty())<p><strong>{{ $cancellationRequests->count() }}</strong> cancellation request{{ $cancellationRequests->count() === 1 ? '' : 's' }} waiting for confirmation</p>@endif
                     @if($earlyCheckoutRequests->isNotEmpty())<p><strong>{{ $earlyCheckoutRequests->count() }}</strong> early check-out request{{ $earlyCheckoutRequests->count() === 1 ? '' : 's' }} waiting for confirmation</p>@endif
-                    @if($pendingRequests || $cancellationRequests->isNotEmpty() || $earlyCheckoutRequests->isNotEmpty())
+                    @if($pendingRequests || $pastPendingBookings->isNotEmpty() || $cancellationRequests->isNotEmpty() || $earlyCheckoutRequests->isNotEmpty())
                         <button class="frontdesk-primary-link" type="button" data-frontdesk-request-dialog-open>View request details <span aria-hidden="true">→</span></button>
                     @endif
                 </section>
@@ -128,20 +129,42 @@
             @endif
         </section>
 
-        @if($pendingRequests || $cancellationRequests->isNotEmpty() || $earlyCheckoutRequests->isNotEmpty())
+        @if($pendingRequests || $pastPendingBookings->isNotEmpty() || $cancellationRequests->isNotEmpty() || $earlyCheckoutRequests->isNotEmpty())
             <dialog class="dashboard-detail-dialog" id="frontdesk-request-dialog" aria-labelledby="frontdesk-request-dialog-title">
                 <div class="dashboard-detail-shell">
                     <header class="dashboard-detail-header">
-                        <div><p class="admin-kicker">SHIFT PRIORITIES</p><h2 id="frontdesk-request-dialog-title">Requests waiting for review</h2><p>Booking, cancellation, and early check-out requests.</p></div>
+                        <div><p class="admin-kicker">SHIFT PRIORITIES</p><h2 id="frontdesk-request-dialog-title">Requests needing action</h2><p>Pending bookings are not confirmed yet. Past stays are listed separately.</p></div>
                         <button class="dashboard-detail-close" type="button" data-frontdesk-request-dialog-close aria-label="Close request details">×</button>
                     </header>
                     <div class="dashboard-detail-body">
                         @if($pendingBookingRequests->isNotEmpty())
                         <section class="dashboard-detail-section">
-                            <h3>Booking requests · {{ $pendingBookingRequests->count() }}</h3>
+                            <h3>Unconfirmed bookings · {{ $pendingBookingRequests->count() }}</h3>
                             <div class="dashboard-detail-table-wrap" role="region" aria-label="Booking requests waiting for review" tabindex="0">
                                 <table class="dashboard-detail-table"><thead><tr><th>Guest / reference</th><th>Room</th><th>Stay</th><th>Guests</th><th>Payment</th></tr></thead><tbody>
                                     @foreach($pendingBookingRequests as $requestBooking)
+                                        <tr>
+                                            <td><strong>{{ $requestBooking->guest_name ?? $requestBooking->user?->name ?? 'Guest' }}</strong><small>{{ $requestBooking->reference }}</small></td>
+                                            <td>{{ $requestBooking->room?->name ?? 'Room removed' }}</td>
+                                            <td>{{ $requestBooking->check_in_at?->format('M j, Y · g:i A') ?? $requestBooking->check_in?->format('M j, Y') }}<br>{{ $requestBooking->check_out_at?->format('M j, Y · g:i A') ?? $requestBooking->check_out?->format('M j, Y') }}</td>
+                                            <td>{{ $requestBooking->guests ?? 1 }}</td>
+                                            <td>₱{{ number_format((float) $requestBooking->total_amount, 2) }}<small>{{ $requestBooking->payment_method ? strtoupper($requestBooking->payment_method).' · ' : '' }}{{ ucfirst(str_replace('_', ' ', (string) $requestBooking->payment_status)) }}</small>
+                                                @if((float) $requestBooking->deposit_amount > 0)<small>Downpayment ₱{{ number_format((float) $requestBooking->deposit_amount, 2) }} · {{ $requestBooking->deposit_status === 'verified' || $requestBooking->deposit_verified_at ? 'verified' : 'awaiting verification' }}</small>@endif
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                </tbody></table>
+                            </div>
+                        </section>
+                        @endif
+
+                        @if($pastPendingBookings->isNotEmpty())
+                        <section class="dashboard-detail-section">
+                            <h3>Past stays still marked pending · {{ $pastPendingBookings->count() }}</h3>
+                            <p class="dashboard-detail-empty">These stay dates have ended, but the booking status was never finalized.</p>
+                            <div class="dashboard-detail-table-wrap" role="region" aria-label="Past stays still marked pending" tabindex="0">
+                                <table class="dashboard-detail-table"><thead><tr><th>Guest / reference</th><th>Room</th><th>Stay</th><th>Guests</th><th>Payment</th></tr></thead><tbody>
+                                    @foreach($pastPendingBookings as $requestBooking)
                                         <tr>
                                             <td><strong>{{ $requestBooking->guest_name ?? $requestBooking->user?->name ?? 'Guest' }}</strong><small>{{ $requestBooking->reference }}</small></td>
                                             <td>{{ $requestBooking->room?->name ?? 'Room removed' }}</td>
