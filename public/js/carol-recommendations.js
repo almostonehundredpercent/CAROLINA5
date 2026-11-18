@@ -38,7 +38,35 @@
     };
 
     document.querySelectorAll('[data-carol-deck]').forEach(deck => {
+        const confirmationDialog = deck.querySelector('[data-carol-confirm-dialog]');
+        const confirmationTitle = confirmationDialog?.querySelector('[data-carol-confirm-recommendation]');
+        const confirmationMessage = confirmationDialog?.querySelector('[data-carol-confirm-message]');
+        let pendingSuggestionForm = null;
+
+        confirmationDialog?.addEventListener('cancel', () => {
+            pendingSuggestionForm = null;
+        });
+
         deck.addEventListener('click', event => {
+            const cancelConfirmation = event.target.closest('[data-carol-confirm-cancel]');
+            if (cancelConfirmation && confirmationDialog) {
+                pendingSuggestionForm = null;
+                confirmationDialog.close('cancel');
+                return;
+            }
+
+            const continueConfirmation = event.target.closest('[data-carol-confirm-continue]');
+            if (continueConfirmation && confirmationDialog) {
+                const form = pendingSuggestionForm;
+                pendingSuggestionForm = null;
+                confirmationDialog.close('confirm');
+                if (form) {
+                    form.dataset.carolConfirmed = 'true';
+                    form.requestSubmit(form.querySelector('button[type="submit"]'));
+                }
+                return;
+            }
+
             const nextButton = event.target.closest('[data-carol-next]');
             if (!nextButton || !deck.contains(nextButton)) return;
             const card = nextButton.closest('[data-carol-card]');
@@ -48,6 +76,29 @@
         deck.addEventListener('submit', async event => {
             const form = event.target.closest('form[data-carol-action]');
             if (!form || !deck.contains(form)) return;
+
+            if (form.hasAttribute('data-carol-confirm-suggestion') && form.dataset.carolConfirmed !== 'true') {
+                event.preventDefault();
+                const card = form.closest('[data-carol-card]');
+                const title = card?.querySelector('h3')?.textContent.trim() || 'Confirm this recommendation';
+                const message = form.dataset.carolConfirmMessage || 'CAROL will show matching records here for review.';
+
+                if (!confirmationDialog?.showModal) {
+                    if (window.confirm(`${title}\n\n${message}`)) {
+                        form.dataset.carolConfirmed = 'true';
+                        form.requestSubmit(form.querySelector('button[type="submit"]'));
+                    }
+                    return;
+                }
+
+                if (confirmationTitle) confirmationTitle.textContent = title;
+                if (confirmationMessage) confirmationMessage.textContent = message;
+                pendingSuggestionForm = form;
+                confirmationDialog.showModal();
+                return;
+            }
+
+            delete form.dataset.carolConfirmed;
             event.preventDefault();
 
             const submit = form.querySelector('button[type="submit"]');

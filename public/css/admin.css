@@ -6513,6 +6513,16 @@ html.dark-mode .balance-dialog-close { border-color: #a95500; background: #a9550
 .carol-action-result ul{display:grid;gap:6px;margin:0;padding-left:18px}
 .carol-action-result li{display:grid;gap:2px}
 .carol-action-result li span{color:var(--muted)}
+.carol-confirm-dialog{width:min(440px,calc(100% - 32px));max-width:440px;margin:auto;padding:0;border:1px solid var(--line);border-radius:14px;background:var(--paper);color:var(--ink);box-shadow:0 24px 80px rgba(35,25,16,.28)}
+.carol-confirm-dialog::backdrop{background:rgba(35,25,16,.5);backdrop-filter:blur(2px)}
+.carol-confirm-dialog-content{display:grid;gap:12px;padding:22px}
+.carol-confirm-dialog-content .admin-kicker{margin:0;color:var(--orange-dark);font-size:10px;font-weight:800;letter-spacing:.08em}
+.carol-confirm-dialog-content h2{margin:0;color:var(--ink);font-size:21px;line-height:1.25}
+.carol-confirm-dialog-content>p:not(.admin-kicker){margin:0;color:var(--muted);font-size:13px;line-height:1.5}
+.carol-confirm-dialog-content .carol-confirm-recommendation{color:var(--ink);font-weight:750}
+.carol-confirm-actions{display:flex;justify-content:flex-end;flex-wrap:wrap;gap:8px;margin-top:4px}
+html.dark-mode .carol-confirm-dialog{border-color:var(--line);background:var(--paper);color:var(--ink)}
+@media(max-width:520px){.carol-confirm-dialog-content{padding:18px}.carol-confirm-actions,.carol-confirm-actions button{width:100%}}
 .carol-next-button{width:fit-content}
 .carol-readonly-note,.carol-action-error{color:var(--muted);font-size:12px}
 .carol-action-error{color:var(--danger,#a93226)}
