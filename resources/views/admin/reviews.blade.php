@@ -43,8 +43,8 @@
                         <form method="POST" action="{{ route('admin.reviews.update', $review) }}" class="review-moderation-form">
                             @csrf @method('PATCH')
                             <div class="review-moderation-actions">
-                                @if($review->status !== 'approved')<button class="review-moderation-button review-moderation-approve" type="submit" name="status" value="approved">{{ $review->status === 'pending' ? 'Approve' : 'Publish' }}</button>@endif
-                                @if($review->status !== 'hidden')<button class="review-moderation-button review-moderation-hide" type="submit" name="status" value="hidden">Hide</button>@endif
+                                @if($review->status !== 'approved')<button class="review-moderation-button review-moderation-approve" type="submit" name="status" value="approved">{{ $review->status === 'pending' ? 'Approve' : 'Publish unchanged' }}</button>@endif
+                                @if($review->status !== 'hidden')<button class="review-moderation-button review-moderation-hide" type="submit" name="status" value="hidden">Hide review</button>@endif
                             </div>
                         </form>
                     </article>
