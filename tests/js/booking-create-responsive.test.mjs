@@ -33,11 +33,14 @@ test('a stalled availability check lets the guest retry Continue to review', asy
             <div id="booking-entry-fields"></div><div id="booking-review-panel" hidden></div>
             <p id="booking-availability-status"></p><button id="booking-submit">Continue to review</button>
             </form><script>
+            window.availabilityRequests = 0;
             window.fetch = (url, {signal}) => new Promise((resolve, reject) => {
+                window.availabilityRequests++;
                 signal?.addEventListener('abort', () => reject(signal.reason), {once: true});
             });
             ${script}</script>`);
         await page.locator('form').dispatchEvent('submit', {cancelable: true, bubbles: true});
+        assert.equal(await page.evaluate(() => window.availabilityRequests), 1, 'review should reuse the in-flight check for the same stay');
         assert.match(await page.locator('#booking-availability-status').textContent(), /Checking your selected stay/);
         await page.clock.fastForward(16000);
         assert.match(await page.locator('#booking-availability-status').textContent(), /Please try again/);

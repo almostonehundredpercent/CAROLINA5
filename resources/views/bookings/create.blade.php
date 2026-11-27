@@ -771,7 +771,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         window.addEventListener('pagehide', () => { clearTimeout(guestDraftTimer); void saveGuestDraft(true); });
     }
-    let sequence = 0, allowed = false, timer;
+    let sequence = 0, allowed = false, pendingCheck;
     const durationEndForAvailability = (start, duration) => {
         const end = new Date(start);
         if (duration === 720) {
@@ -797,25 +797,37 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!data.get('check_in') || !data.get('check_out')) { status.textContent = 'Choose both check-in and check-out dates before continuing.'; return false; }
             start = `${data.get('check_in')}T00:00:00Z`; end = `${data.get('check_out')}T00:00:00Z`;
         }
+        const key = JSON.stringify([start, end, data.get('booking_type')]);
+        if (pendingCheck?.key !== key) {
+            const request = {key, promise: fetchAvailability(start, end, data.get('booking_type'))};
+            pendingCheck = request;
+            const clearPending = () => { if (pendingCheck === request) pendingCheck = undefined; };
+            void request.promise.then(clearPending, clearPending);
+        }
+        try {
+            const result = await pendingCheck.promise;
+            if (run !== sequence) return false;
+            status.textContent = result.available ? '✓ Available now. We will reserve this time when you submit.' : result.reason === 'past' ? 'That check-in date or time has already passed. Choose a future date or time.' : 'This stay overlaps an existing reservation or room operation. Choose another date or time.';
+            return result.available;
+        } catch {
+            if (run === sequence) status.textContent = 'We could not refresh availability. Please try again.';
+            return false;
+        }
+    };
+    async function fetchAvailability(start, end, bookingType) {
         status.textContent = 'Checking your selected stay…';
         const controller = new AbortController();
         const timeout = setTimeout(() => controller.abort(), 12000);
         try {
             const url = new URL(@json(route('rooms.availability', $room)));
-            url.searchParams.set('start', start); url.searchParams.set('end', end); url.searchParams.set('booking_type', data.get('booking_type'));
+            url.searchParams.set('start', start); url.searchParams.set('end', end); url.searchParams.set('booking_type', bookingType || 'dates');
             const response = await fetch(url, {headers:{Accept:'application/json'},cache:'no-store',signal:controller.signal});
             if (!response.ok) throw new Error('Availability unavailable');
-            const result = await response.json();
-            if (run !== sequence) return false;
-            status.textContent = result.available ? '✓ Available now. We will reserve this time when you submit.' : result.reason === 'past' ? 'That check-in date or time has already passed. Choose a future date or time.' : 'This stay overlaps an existing reservation or room operation. Choose another date or time.';
-            return result.available;
-        } catch (error) {
-            if (run === sequence) status.textContent = 'We could not refresh availability. Please try again.';
-            return false;
+            return await response.json();
         } finally {
             clearTimeout(timeout);
         }
-    };
+    }
     const dateLabel = value => value ? new Date(`${value}T00:00:00`).toLocaleDateString('en-PH', {month:'short', day:'numeric', year:'numeric'}) : '';
     const timeLabel = value => value ? new Date(`2000-01-01T${value}`).toLocaleTimeString('en-PH', {hour:'numeric', minute:'2-digit'}) : '';
     const addReviewItem = (label, value, wide = false) => {
@@ -857,12 +869,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const estimate = document.getElementById(hourly ? 'hourly-total' : 'date-deposit-preview')?.textContent?.trim();
         if (estimate) addReviewItem('Current estimate', estimate, true);
     };
-    form.addEventListener('click', event => { if (event.target.closest('#booking-submit, #booking-review-panel')) return; clearTimeout(timer); timer = setTimeout(check, 100); });
-    form.addEventListener('change', check);
+    form.addEventListener('change', event => {
+        if (['booking_type', 'check_in', 'check_out', 'hourly_date', 'check_in_time', 'hours'].includes(event.target.name)) void check();
+    }, true);
     check();
     form.addEventListener('submit', async event => {
         if (allowed) return;
-        event.preventDefault(); event.stopImmediatePropagation(); clearTimeout(timer); submit.disabled = true;
+        event.preventDefault(); event.stopImmediatePropagation(); submit.disabled = true;
         if (await check()) {
             if (reviewPanel.hidden) {
                 buildReview(); entryFields.hidden = true; reviewPanel.hidden = false;
