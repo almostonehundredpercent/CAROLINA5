@@ -29,6 +29,10 @@
 .network-loader.is-visible .network-loader-steps i:nth-child(2)::before { animation-delay: .22s; }
 .network-loader.is-visible .network-loader-steps i:nth-child(3)::before { animation-delay: .44s; }
 .dark-mode .network-loader-steps { --step-color: #f5ad54; }
+.network-loader.is-visible.is-complete .network-loader-steps i::before {
+    animation: none;
+    transform: scaleX(1);
+}
 @keyframes availability-step {
     0% { transform: scaleX(0); opacity: 1; }
     22%, 42% { transform: scaleX(1); opacity: 1; }

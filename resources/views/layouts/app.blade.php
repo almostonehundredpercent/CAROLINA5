@@ -139,6 +139,8 @@
             const network = document.getElementById('network-loader');
             let networkRequests = 0;
             let networkTimer;
+            let networkHideTimer;
+            let networkFailed = false;
             const show = (heading = 'Preparing your stay', detail = 'Just a moment…') => { title.textContent = heading; message.textContent = detail; loader.classList.add('is-visible'); };
             const hide = () => loader.classList.remove('is-visible');
             window.CarolinaLoading = { show, hide };
@@ -160,10 +162,29 @@
             const originalFetch = window.fetch.bind(window);
             window.fetch = (...args) => {
                 if (args[0] === '/deployment-version') return originalFetch(...args);
+                if (!networkRequests) {
+                    clearTimeout(networkHideTimer);
+                    network.classList.remove('is-complete');
+                    networkFailed = false;
+                    networkTimer = setTimeout(() => network.classList.add('is-visible'), 220);
+                }
                 networkRequests += 1;
-                clearTimeout(networkTimer);
-                networkTimer = setTimeout(() => { if (networkRequests) network.classList.add('is-visible'); }, 220);
-                return originalFetch(...args).finally(() => { networkRequests = Math.max(0, networkRequests - 1); if (!networkRequests) { clearTimeout(networkTimer); network.classList.remove('is-visible'); } });
+                return originalFetch(...args).then(response => {
+                    networkFailed ||= !response.ok;
+                    return response;
+                }, error => {
+                    networkFailed = true;
+                    throw error;
+                }).finally(() => {
+                    if (--networkRequests) return;
+                    clearTimeout(networkTimer);
+                    if (networkFailed || !network.classList.contains('is-visible')) {
+                        network.classList.remove('is-visible');
+                        return;
+                    }
+                    network.classList.add('is-complete');
+                    networkHideTimer = setTimeout(() => network.classList.remove('is-visible', 'is-complete'), 450);
+                });
             };
             window.addEventListener('pageshow', hide);
         })();
