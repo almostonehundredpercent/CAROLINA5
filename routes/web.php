@@ -21,6 +21,10 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
 
+Route::get('/deployment-version', fn () => response()
+    ->json(['version' => config('app.deployment_version')])
+    ->header('Cache-Control', 'no-store'))->name('deployment.version');
+
 Route::get('/', function () {
     $rooms = Room::where('is_active', true)
         ->withAvg('approvedReviews', 'rating')

@@ -159,6 +159,7 @@
             });
             const originalFetch = window.fetch.bind(window);
             window.fetch = (...args) => {
+                if (args[0] === '/deployment-version') return originalFetch(...args);
                 networkRequests += 1;
                 clearTimeout(networkTimer);
                 networkTimer = setTimeout(() => { if (networkRequests) network.classList.add('is-visible'); }, 220);
@@ -212,5 +213,9 @@
         });
     </script>
     <script src="{{ asset('js/site-back.js') }}?v={{ filemtime(public_path('js/site-back.js')) }}" defer></script>
+    @if(config('app.deployment_version') && request()->routeIs('home', 'about', 'rooms.index', 'rooms.show'))
+        <script src="{{ asset('js/deployment-refresh.js') }}?v={{ filemtime(public_path('js/deployment-refresh.js')) }}"
+                data-version="{{ config('app.deployment_version') }}" data-endpoint="{{ route('deployment.version', [], false) }}" defer></script>
+    @endif
 </body>
 </html>
