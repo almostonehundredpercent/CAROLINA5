@@ -92,8 +92,8 @@
                     <small>Online rescheduling limit reached (2). Contact Carolina if you need to change your stay.</small>
                 @endif
                 @if($booking->canCancelOnline())
-                    <small>Your booking remains active until reception confirms the cancellation.</small>
-                    <form method="POST" action="{{ route('bookings.cancel', $booking) }}" data-booking-cancel-confirm>@csrf @method('PATCH')<button class="link-danger" type="submit">Request cancellation</button></form>
+                    <small>{{ $booking->isRefundEligible() ? 'Cancellation is immediate. Recorded payments may qualify for a refund.' : 'Cancellation is immediate and non-refundable (less than 3 days before check-in).' }}</small>
+                    <form method="POST" action="{{ route('bookings.cancel', $booking) }}" data-booking-cancel-confirm>@csrf @method('PATCH')<button class="link-danger" type="submit">Cancel booking</button></form>
                 @else
                     <small>Online cancellation closes at the scheduled check-in time. Contact Carolina if you need help.</small>
                 @endif

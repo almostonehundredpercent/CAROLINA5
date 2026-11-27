@@ -840,9 +840,9 @@ class BookingController extends Controller
     public function cancel(Request $request, Booking $booking)
     {
         abort_unless($booking->user_id === $request->user()?->id, 403);
-        $this->storeCancellationRequest($booking, $request->user()?->id);
+        $this->cancelOnline($booking, $request->user()?->id);
 
-        return back()->with('success', 'Your cancellation request was sent to reception. Your booking remains active until staff confirms it.');
+        return back()->with('success', 'Your booking was cancelled. Any eligible refund is handled separately by Carolina.');
     }
 
     public function cancelGuest(Request $request, Booking $booking)
@@ -858,8 +858,8 @@ class BookingController extends Controller
             403
         );
 
-        $this->storeCancellationRequest($booking, null);
-        session()->flash('success', 'Your cancellation request was sent to reception. Your booking remains active until staff confirms it.');
+        $this->cancelOnline($booking, null);
+        session()->flash('success', 'Your booking was cancelled. Any eligible refund is handled separately by Carolina.');
 
         return view('bookings.lookup-result', ['booking' => $booking->fresh('room'), 'lookupEmail' => $data['email']]);
     }
@@ -1050,34 +1050,35 @@ class BookingController extends Controller
 
         return back()->with('success', 'Your early check-out request was sent to reception. Your stay remains active until staff confirms your departure.');
     }
-    private function storeCancellationRequest(Booking $booking, ?int $userId): Booking
+    private function cancelOnline(Booking $booking, ?int $userId): void
     {
-        $requested = DB::transaction(function () use ($booking) {
+        $cancelled = DB::transaction(function () use ($booking, $userId) {
             Room::whereKey($booking->room_id)->lockForUpdate()->firstOrFail();
             $locked = Booking::whereKey($booking->id)->lockForUpdate()->firstOrFail();
 
             if (! $locked->canCancelOnline()) {
-                throw ValidationException::withMessages(['cancellation' => 'This booking cannot accept another online cancellation request. Contact reception for help.']);
+                throw ValidationException::withMessages(['cancellation' => 'This booking cannot be cancelled online. Contact reception for help.']);
             }
 
             $locked->update([
-                'cancellation_request_status' => 'requested',
-                'cancellation_requested_at' => PropertyTime::now(),
-                'cancellation_reviewed_at' => null,
-                'cancellation_reviewed_by' => null,
+                'status' => 'cancelled',
+                'hold_expires_at' => null,
+                'cancelled_at' => PropertyTime::now(),
+                'cancelled_by' => $userId,
+                'cancellation_reason' => 'Cancelled online by guest.',
             ]);
 
             return $locked;
         });
 
-        $this->log($requested, $userId, 'cancellation_requested', 'Guest requested cancellation. The booking remains active until reception confirms it.');
+        $this->log($cancelled, $userId, 'booking_cancelled', 'Guest cancelled online; room time was released.');
         $this->emailUpdate(
-            $requested->fresh(['room', 'user']),
-            'Cancellation request received',
-            'Reception received your request to cancel this booking. Your booking remains active and the room stays reserved until staff confirms the cancellation.',
+            $cancelled->fresh(['room', 'user']),
+            'Your Carolina booking was cancelled',
+            $cancelled->isRefundEligible()
+                ? 'Your booking is cancelled. Contact Carolina about any eligible refund of recorded payments.'
+                : 'Your booking is cancelled. It was cancelled less than 3 days before check-in and is not eligible for a refund.',
         );
-
-        return $requested;
     }
 
     private function authorizeBookingAccess(Request $request, Booking $booking): void

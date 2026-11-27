@@ -118,7 +118,7 @@
                     <p>Reception could not approve your cancellation request. Your booking remains active.</p>
                     <a class="stay-help-link" href="{{ route('contact') }}">Contact Carolina</a>
                 @elseif($stayCancellationOpen)
-                    <p>You can request cancellation online before check-in. The booking remains active until reception confirms it.</p>
+                    <p>You can cancel online before check-in. Cancellation takes effect immediately; refunds are only available for eligible cancellations made at least 3 days before check-in.</p>
                     <a class="stay-help-link" href="{{ auth()->check() && auth()->id() === $booking->user_id ? route('bookings.index', ['section' => 'bookings']) : route('bookings.lookup') }}">Manage this reservation</a>
                 @else
                     <p>Online cancellation closes at the scheduled check-in time. Contact Carolina if you need help with this reservation.</p>

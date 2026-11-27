@@ -270,12 +270,12 @@
                             <p>Online rescheduling limit reached (2). Contact Carolina if you need to change your stay.</p>
                         @endif
                         @if($canCancel)
-                            <p>Your booking remains active until reception confirms the cancellation.</p>
+                            <p>{{ $booking->isRefundEligible() ? 'Cancellation is immediate. Recorded payments may qualify for a refund.' : 'Cancellation is immediate and non-refundable (less than 3 days before check-in).' }}</p>
                             <form class="portal-cancel-form" method="POST" action="{{ route('bookings.lookup.cancel', $booking) }}" data-booking-cancel-confirm>
                                 @csrf @method('PATCH')
                                 <input type="hidden" name="email" value="{{ $lookupEmail }}">
                                 <input type="hidden" name="reference" value="{{ $booking->reference }}">
-                                <button class="button danger" type="submit">Request cancellation</button>
+                                <button class="button danger" type="submit">Cancel booking</button>
                             </form>
                         @else
                             <p>Online cancellation closes at the scheduled check-in time. Contact Carolina if you need help with this reservation.</p>

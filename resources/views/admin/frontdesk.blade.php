@@ -92,7 +92,7 @@
                     <div class="frontdesk-feature-title"><span class="frontdesk-feature-icon" aria-hidden="true">!</span><div><p class="admin-kicker">SHIFT PRIORITIES</p><h2>Needs attention</h2></div></div>
                     <p><strong>{{ $pendingRequests }}</strong> booking{{ $pendingRequests === 1 ? '' : 's' }} not yet confirmed</p>
                     @if($pastPendingBookings->isNotEmpty())<p><strong>{{ $pastPendingBookings->count() }}</strong> past booking{{ $pastPendingBookings->count() === 1 ? '' : 's' }} still marked pending</p>@endif
-                    @if($cancellationRequests->isNotEmpty())<p><strong>{{ $cancellationRequests->count() }}</strong> cancellation request{{ $cancellationRequests->count() === 1 ? '' : 's' }} waiting for confirmation</p>@endif
+                    @if($cancellationRequests->isNotEmpty())<p><strong>{{ $cancellationRequests->count() }}</strong> cancellation request{{ $cancellationRequests->count() === 1 ? '' : 's' }} from the previous approval workflow</p>@endif
                     @if($earlyCheckoutRequests->isNotEmpty())<p><strong>{{ $earlyCheckoutRequests->count() }}</strong> early check-out request{{ $earlyCheckoutRequests->count() === 1 ? '' : 's' }} waiting for confirmation</p>@endif
                     @if($pendingRequests || $pastPendingBookings->isNotEmpty() || $cancellationRequests->isNotEmpty() || $earlyCheckoutRequests->isNotEmpty())
                         <button class="frontdesk-primary-link" type="button" data-frontdesk-request-dialog-open>View request details <span aria-hidden="true">→</span></button>
@@ -195,7 +195,7 @@
                         @if($cancellationRequests->isNotEmpty())
                         <section class="dashboard-detail-section">
                             <h3>Cancellation requests · {{ $cancellationRequests->count() }}</h3>
-                            <div class="dashboard-detail-table-wrap" role="region" aria-label="Cancellation requests waiting for confirmation" tabindex="0">
+                            <div class="dashboard-detail-table-wrap" role="region" aria-label="Cancellation requests from the previous approval workflow" tabindex="0">
                                 <table class="dashboard-detail-table"><thead><tr><th>Guest / reference</th><th>Room</th><th>Check-in</th><th>Requested</th><th>Reason</th><th>Action</th></tr></thead><tbody>
                                     @foreach($cancellationRequests as $cancellationRequest)
                                         <tr>
@@ -248,7 +248,7 @@
         <section class="today-grid">
             @if($cancellationRequests->isNotEmpty())
                 <section class="panel" aria-labelledby="cancellation-requests-title">
-                    <div class="panel-heading"><div><p class="admin-kicker">GUEST REQUESTS</p><h2 id="cancellation-requests-title">{{ $cancellationRequests->count() }} cancellation request{{ $cancellationRequests->count() === 1 ? '' : 's' }}</h2></div></div>
+                    <div class="panel-heading"><div><p class="admin-kicker">LEGACY REQUESTS</p><h2 id="cancellation-requests-title">{{ $cancellationRequests->count() }} cancellation request{{ $cancellationRequests->count() === 1 ? '' : 's' }}</h2></div></div>
                     <p class="today-panel-note">The booking stays active and the room stays reserved until you confirm.</p>
                     <div class="today-list">
                         @foreach($cancellationRequests as $booking)

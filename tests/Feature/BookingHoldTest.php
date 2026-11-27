@@ -26,6 +26,29 @@ beforeEach(function () {
     config()->set('booking.hold_minutes', 30);
 });
 
+test('guests cancel immediately without changing the three-day refund cutoff', function (string $day, bool $eligible) {
+    Mail::fake();
+    $room = holdRoom();
+    $user = User::factory()->create();
+    $booking = heldBooking($room, [
+        'user_id' => $user->id,
+        'status' => 'confirmed',
+        'payment_status' => 'paid',
+        'check_in' => $day,
+        'check_out' => $day,
+        'check_in_at' => "$day 12:00:00",
+        'check_out_at' => "$day 18:00:00",
+    ]);
+
+    $this->actingAs($user)->patch(route('bookings.cancel', $booking))->assertSessionHasNoErrors();
+    $booking->refresh();
+    expect($booking->status)->toBe('cancelled')
+        ->and($booking->cancellation_request_status)->toBeNull()
+        ->and($booking->isRefundEligible())->toBe($eligible)
+        ->and($booking->payment_status)->toBe('paid')
+        ->and($room->bookings()->blocking()->exists())->toBeFalse();
+})->with([['2026-10-07', true], ['2026-10-05', false]]);
+
 test('a public request has a finite hold which duplicate submission cannot extend', function () {
     Mail::fake();
     $room = holdRoom();
