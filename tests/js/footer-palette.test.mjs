@@ -5,7 +5,7 @@ import { chromium } from 'playwright';
 
 const stylesheets = await Promise.all(['site.css', 'palette.css', 'responsive.css', 'footer-apple.css'].map(file =>
     readFile(new URL(`../../public/css/${file}`, import.meta.url), 'utf8')));
-const paletteColors = ['A84F00', '934609', '773C12', '5C321F', '47403A', '39393A'];
+const paletteColors = ['683619', '40281F', '24201E'];
 const luminance = (rgb) => {
     const [r, g, b] = rgb.match(/\d+/g).map(Number).map(value => {
         const channel = value / 255;
@@ -33,7 +33,7 @@ test('footer uses the supplied warm gradient with readable text in both themes',
                 overflow: document.documentElement.scrollWidth > innerWidth,
             }));
             assert.ok(footer.background.includes('linear-gradient'), `${theme} footer should use the palette gradient`);
-            for (const color of ['168, 79, 0', '119, 60, 18', '57, 57, 58']) {
+            for (const color of ['104, 54, 25', '64, 40, 31', '36, 32, 30']) {
                 assert.ok(footer.background.includes(color), `${theme} footer gradient should include ${color}`);
             }
             assert.equal(footer.text, 'rgb(245, 240, 232)', `${theme} footer links should use the high-contrast warm-white text color`);
