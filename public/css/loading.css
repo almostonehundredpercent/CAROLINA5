@@ -14,16 +14,26 @@
     font-size: 14px;
 }
 .network-loader.is-visible { visibility: visible; }
-.network-loader-steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; }
-.network-loader-steps i { height: 5px; border-radius: 3px; background: #b86a0d; opacity: .35; }
-.network-loader.is-visible .network-loader-steps i { animation: availability-step 1.5s steps(1, end) infinite; }
-.network-loader.is-visible .network-loader-steps i:nth-child(2) { animation-delay: .25s; }
-.network-loader.is-visible .network-loader-steps i:nth-child(3) { animation-delay: .5s; }
-.dark-mode .network-loader-steps i { background: #f5ad54; }
+.network-loader-steps { --step-color: #a85809; display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; }
+.network-loader-steps i { height: 7px; border-radius: 4px; overflow: hidden; background: rgba(184,106,13,.22); }
+.network-loader-steps i::before {
+    content: '';
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: var(--step-color);
+    transform: scaleX(0);
+    transform-origin: left;
+}
+.network-loader.is-visible .network-loader-steps i::before { animation: availability-step 1.35s ease-in-out infinite; }
+.network-loader.is-visible .network-loader-steps i:nth-child(2)::before { animation-delay: .22s; }
+.network-loader.is-visible .network-loader-steps i:nth-child(3)::before { animation-delay: .44s; }
+.dark-mode .network-loader-steps { --step-color: #f5ad54; }
 @keyframes availability-step {
-    0% { opacity: 1; }
-    65%, 100% { opacity: .35; }
+    0% { transform: scaleX(0); opacity: 1; }
+    22%, 42% { transform: scaleX(1); opacity: 1; }
+    64%, 100% { transform: scaleX(1); opacity: 0; }
 }
 @media (prefers-reduced-motion: reduce) {
-    .network-loader.is-visible .network-loader-steps i { animation: none; opacity: .85; }
+    .network-loader.is-visible .network-loader-steps i::before { animation: none; transform: scaleX(1); }
 }
