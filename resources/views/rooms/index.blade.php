@@ -267,7 +267,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (loaded) return;
             detail.textContent = 'Loading this room’s schedule…';
             try {
-                const response = await fetch(card.dataset.availabilityUrl, { headers: { Accept: 'application/json' }, cache: 'no-store' });
+                const response = await fetch(card.dataset.availabilityUrl, { headers: { Accept: 'application/json' }, cache: 'no-store', signal: AbortSignal.timeout(12000) });
                 if (response.status === 429) throw new Error('rate-limited');
                 if (!response.ok) throw new Error('Availability unavailable');
                 const data = await response.json();

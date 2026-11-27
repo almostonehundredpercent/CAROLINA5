@@ -513,7 +513,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const refreshHourlyAvailability = async () => {
             syncTimeOptions();
             try {
-                const response = await fetch(@json(route('rooms.availability', $room)), { headers: { Accept: 'application/json' }, cache: 'no-store' });
+                const response = await fetch(@json(route('rooms.availability', $room)), { headers: { Accept: 'application/json' }, cache: 'no-store', signal: AbortSignal.timeout(12000) });
                 if (!response.ok) return;
                 const data = await response.json();
                 hourlyBlockedSlots = data.slots ?? [];
@@ -618,7 +618,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const refreshAvailability = async () => {
         updatePropertyDate();
         try {
-            const response = await fetch(document.querySelector('.availability-calendar').dataset.availabilityUrl, { headers: { Accept: 'application/json' }, cache: 'no-store' });
+            const response = await fetch(document.querySelector('.availability-calendar').dataset.availabilityUrl, { headers: { Accept: 'application/json' }, cache: 'no-store', signal: AbortSignal.timeout(12000) });
             if (!response.ok) return;
             const data = await response.json();
             ranges.splice(0, ranges.length, ...data.ranges);
@@ -706,14 +706,14 @@ document.addEventListener('DOMContentLoaded', () => {
         payload.append('promo_code', code);
         button.disabled = true; message.className = 'promo-message'; message.textContent = 'Checking promo…';
         try {
-            const response = await fetch(section.dataset.promoQuoteUrl, { method: 'POST', body: payload, headers: { Accept: 'application/json' }, credentials: 'same-origin' });
+            const response = await fetch(section.dataset.promoQuoteUrl, { method: 'POST', body: payload, headers: { Accept: 'application/json' }, credentials: 'same-origin', signal: AbortSignal.timeout(12000) });
             const result = await response.json().catch(() => ({}));
             if (!response.ok) throw new Error(result.errors?.promo_code?.[0] || result.message || 'This promo could not be applied.');
             message.className = 'promo-message success';
             message.textContent = `${result.name}: ${money(result.original)} → ${money(result.total)}. You save ${money(result.discount)}. Downpayment (30% of original, up to final total): ${money(Math.min(result.original * 0.30, result.total))}.`;
             window.dispatchEvent(new CustomEvent('booking:promo-quote', { detail: { total: result.total } }));
         } catch (error) {
-            message.className = 'promo-message error'; message.textContent = error.message;
+            message.className = 'promo-message error'; message.textContent = error.name === 'TimeoutError' ? 'The promo check took too long. Please try again.' : error.message;
         } finally { button.disabled = false; }
     });
     form.addEventListener('change', event => { if (event.target !== input && !event.target.closest('.promo-entry')) resetMessage(); });
@@ -740,15 +740,17 @@ document.addEventListener('DOMContentLoaded', () => {
     window.addEventListener('resize', alignSummaryWithReview, {passive: true});
     const guestDraftUrl = form.dataset.guestDraftUrl;
     const guestDraftFields = ['guest_name', 'guest_email', 'guest_phone'];
-    let guestDraftTimer, guestDraftQueue = Promise.resolve();
+    let guestDraftTimer, guestDraftQueue = Promise.resolve(), draftRevision = 0;
     const saveGuestDraft = (keepalive = false) => {
         if (!guestDraftUrl) return Promise.resolve(false);
         clearTimeout(guestDraftTimer);
         const payload = Object.fromEntries(guestDraftFields.map(name => [name, form.elements.namedItem(name)?.value ?? '']));
-        guestDraftQueue = guestDraftQueue.catch(() => false).then(() => fetch(guestDraftUrl, {
+        const revision = ++draftRevision;
+        guestDraftQueue = guestDraftQueue.catch(() => false).then(() => revision !== draftRevision ? false : fetch(guestDraftUrl, {
             method: 'POST',
             credentials: 'same-origin',
             keepalive,
+            signal: AbortSignal.timeout(5000),
             headers: {
                 'Accept': 'application/json',
                 'Content-Type': 'application/json',
@@ -769,7 +771,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             input.addEventListener('change', () => { void saveGuestDraft(); });
         });
-        window.addEventListener('pagehide', () => { clearTimeout(guestDraftTimer); void saveGuestDraft(true); });
+        window.addEventListener('pagehide', () => { clearTimeout(guestDraftTimer); if (!allowed) void saveGuestDraft(true); });
     }
     let sequence = 0, allowed = false, pendingCheck;
     const durationEndForAvailability = (start, duration) => {
