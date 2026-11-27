@@ -46,7 +46,7 @@
     </div>
     <div class="network-loader" id="network-loader" role="status" aria-live="polite">
         <span class="network-loader-label">Updating availability…</span>
-        <span class="network-loader-steps" aria-hidden="true"><i></i><i></i><i></i></span>
+        <span class="network-loader-track" aria-hidden="true"><i></i></span>
     </div>
     <header class="nav{{ request()->routeIs('home') ? ' nav--over-hero' : '' }}">
         <a class="brand" href="{{ route('home') }}">
@@ -183,7 +183,10 @@
                         return;
                     }
                     network.classList.add('is-complete');
-                    networkHideTimer = setTimeout(() => network.classList.remove('is-visible', 'is-complete'), 450);
+                    networkHideTimer = setTimeout(() => {
+                        network.classList.remove('is-visible');
+                        networkHideTimer = setTimeout(() => network.classList.remove('is-complete'), 180);
+                    }, 550);
                 });
             };
             window.addEventListener('pageshow', hide);
