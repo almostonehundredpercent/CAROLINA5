@@ -44,7 +44,10 @@
     <div class="page-loader" id="page-loader" role="status" aria-live="polite" aria-label="Loading">
         <div class="page-loader-card"><div class="loader-mark" aria-hidden="true"></div><b id="page-loader-title">Preparing your stay</b><p id="page-loader-message">Just a moment…</p></div>
     </div>
-    <div class="network-loader" id="network-loader" role="status" aria-live="polite"><span class="network-loader-dots" aria-hidden="true"><i></i><i></i><i></i></span><span>Updating availability</span></div>
+    <div class="network-loader" id="network-loader" role="status" aria-live="polite">
+        <span class="network-loader-label">Updating availability…</span>
+        <span class="network-loader-steps" aria-hidden="true"><i></i><i></i><i></i></span>
+    </div>
     <header class="nav{{ request()->routeIs('home') ? ' nav--over-hero' : '' }}">
         <a class="brand" href="{{ route('home') }}">
             <picture class="brand-logo-picture"><source type="image/webp" srcset="{{ asset('images/carolina-logo-256.webp') }}"><img class="brand-logo" src="{{ asset('images/carolina-logo.jpg') }}" alt="Carolina logo"></picture><span>Carolina <small>TRANSIENT & AIRBNB</small></span>
