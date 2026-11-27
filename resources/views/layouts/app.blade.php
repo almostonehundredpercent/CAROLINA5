@@ -153,6 +153,7 @@
                 show('Opening your next step', 'Getting everything ready…');
             });
             document.addEventListener('submit', (event) => {
+                if (event.defaultPrevented) return;
                 const form = event.target;
                 if (!(form instanceof HTMLFormElement) || form.dataset.noLoading !== undefined) return;
                 const submitter = event.submitter;

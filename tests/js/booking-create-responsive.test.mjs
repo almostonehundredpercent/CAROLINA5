@@ -62,6 +62,28 @@ async function render(viewport) {
     return page;
 }
 
+test('cancellation only shows the loading overlay after Yes submits the form', async () => {
+    const page = await browser.newPage();
+    try {
+        const dialogScript = await readFile(new URL('../../public/js/booking-cancel-dialog.js', import.meta.url), 'utf8');
+        await page.setContent(`<div id="page-loader"><span id="page-loader-title"></span><span id="page-loader-message"></span></div>
+            <div id="network-loader"></div>
+            <form data-booking-cancel-confirm target="result"><button>Cancel booking</button></form>
+            <iframe name="result"></iframe>
+            <dialog data-booking-cancel-dialog><button data-booking-cancel-accept>Yes</button><button data-booking-cancel-close>No</button></dialog>
+            <script>${loaderScript}\n${dialogScript}</script>`);
+        const loading = () => page.locator('#page-loader').evaluate(el => el.classList.contains('is-visible'));
+        await page.getByRole('button', {name: 'Cancel booking'}).click();
+        await page.getByRole('button', {name: 'No', exact: true}).click();
+        assert.equal(await loading(), false);
+        await page.getByRole('button', {name: 'Cancel booking'}).click();
+        await page.getByRole('button', {name: 'Yes', exact: true}).click();
+        assert.equal(await loading(), true);
+    } finally {
+        await page.close();
+    }
+});
+
 test('booking page source gives the room summary one estimate and keeps the promo code expandable', () => {
     assert.match(view, /class="booking-page-heading"/);
     assert.match(view, /class="booking-summary-total"/);
