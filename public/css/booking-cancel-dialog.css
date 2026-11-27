@@ -50,23 +50,23 @@
 }
 
 .booking-cancel-no {
-    background: transparent;
-    color: var(--ink);
-}
-
-.booking-cancel-no:hover {
-    background: var(--sand);
-}
-
-.booking-cancel-yes {
     border-color: #a63224 !important;
     background: #a63224;
     color: #fff;
 }
 
-.booking-cancel-yes:hover {
+.booking-cancel-no:hover {
     border-color: #84271d !important;
     background: #84271d;
+}
+
+.booking-cancel-yes {
+    background: #fff;
+    color: #24201e;
+}
+
+.booking-cancel-yes:hover {
+    background: #f4efe9;
 }
 
 .booking-cancel-dialog button:focus-visible {
