@@ -140,6 +140,7 @@
             const hide = () => loader.classList.remove('is-visible');
             window.CarolinaLoading = { show, hide };
             document.addEventListener('click', (event) => {
+                if (event.defaultPrevented) return;
                 const link = event.target.closest('a[href]');
                 if (!link || link.target === '_blank' || link.hasAttribute('download') || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
                 const destination = new URL(link.href, window.location.href);

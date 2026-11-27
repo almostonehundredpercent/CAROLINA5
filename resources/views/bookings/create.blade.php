@@ -798,10 +798,12 @@ document.addEventListener('DOMContentLoaded', () => {
             start = `${data.get('check_in')}T00:00:00Z`; end = `${data.get('check_out')}T00:00:00Z`;
         }
         status.textContent = 'Checking your selected stay…';
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 12000);
         try {
             const url = new URL(@json(route('rooms.availability', $room)));
             url.searchParams.set('start', start); url.searchParams.set('end', end); url.searchParams.set('booking_type', data.get('booking_type'));
-            const response = await fetch(url, {headers:{Accept:'application/json'},cache:'no-store'});
+            const response = await fetch(url, {headers:{Accept:'application/json'},cache:'no-store',signal:controller.signal});
             if (!response.ok) throw new Error('Availability unavailable');
             const result = await response.json();
             if (run !== sequence) return false;
@@ -810,6 +812,8 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (error) {
             if (run === sequence) status.textContent = 'We could not refresh availability. Please try again.';
             return false;
+        } finally {
+            clearTimeout(timeout);
         }
     };
     const dateLabel = value => value ? new Date(`${value}T00:00:00`).toLocaleDateString('en-PH', {month:'short', day:'numeric', year:'numeric'}) : '';
@@ -890,7 +894,8 @@ document.addEventListener('DOMContentLoaded', () => {
             event.preventDefault();
             reviewPanel.hidden = true;
             entryFields.hidden = false;
-            alignSummaryWithReview();
+            const summaryCard = document.querySelector('.booking-summary');
+            if (summaryCard) summaryCard.style.marginTop = '';
             submit.textContent = 'Continue to review';
             entryFields.scrollIntoView({behavior:'smooth', block:'start'});
             entryFields.querySelector('input:not([type="hidden"]), button, a')?.focus({preventScroll:true});

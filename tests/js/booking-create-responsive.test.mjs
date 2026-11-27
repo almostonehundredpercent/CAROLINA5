@@ -12,11 +12,41 @@ const [view, baseStyles, paletteStyles] = await Promise.all([
 const bookingStyles = [...view.matchAll(/<style>([\s\S]*?)<\/style>/g)].map(match => match[1]).join('\n');
 const estimateScript = view.match(/<script>\s*(document.addEventListener\('DOMContentLoaded', \(\) => \{\s*const total = document.getElementById\('booking-summary-total'[\s\S]*?)<\/script>/)?.[1];
 const bookingBackScript = view.match(/<script id="booking-review-back-navigation">([\s\S]*?)<\/script>/)?.[1] ?? '';
+const layout = await readFile(new URL('../../resources/views/layouts/app.blade.php', import.meta.url), 'utf8');
+const loaderScript = layout.match(/\(\(\) => \{\s*const loader = document.getElementById\('page-loader'\)[\s\S]*?window.addEventListener\('pageshow', hide\);\s*\}\)\(\);/)?.[0];
 const datePickerScript = view.match(/const ranges = @json\(\$blockedRanges\);\s*([\s\S]*?)\s*const updatePropertyDate =/)?.[1];
 let browser;
 
 before(async () => { browser = await chromium.launch({ headless: true }); });
 after(async () => { await browser?.close(); });
+
+test('a stalled availability check lets the guest retry Continue to review', async () => {
+    const page = await browser.newPage();
+    try {
+        await page.clock.install();
+        const script = [...view.matchAll(/<script>([\s\S]*?)<\/script>/g)]
+            .map(match => match[1]).find(source => source.includes('const check = async ()'))
+            .replace(/@json\(route\('rooms\.availability', \$room\)\)/, '"https://booking.test/availability"')
+            .replace(/@json\(\$room->\w+\)/g, '""')
+            .replace(/@json\(auth\(\)->user\(\)->\w+ \?\? ''\)/g, '""');
+        await page.setContent(`<form><input name="check_in" value="2026-12-01"><input name="check_out" value="2026-12-02">
+            <div id="booking-entry-fields"></div><div id="booking-review-panel" hidden></div>
+            <p id="booking-availability-status"></p><button id="booking-submit">Continue to review</button>
+            </form><script>
+            window.fetch = (url, {signal}) => new Promise((resolve, reject) => {
+                signal?.addEventListener('abort', () => reject(signal.reason), {once: true});
+            });
+            ${script}</script>`);
+        await page.locator('form').dispatchEvent('submit', {cancelable: true, bubbles: true});
+        assert.match(await page.locator('#booking-availability-status').textContent(), /Checking your selected stay/);
+        await page.clock.fastForward(16000);
+        assert.match(await page.locator('#booking-availability-status').textContent(), /Please try again/);
+        assert.equal(await page.locator('#booking-submit').isEnabled(), true);
+    } finally {
+        await page.close();
+    }
+});
+
 
 async function render(viewport) {
     const page = await browser.newPage({ viewport });
@@ -49,20 +79,40 @@ test('header back button returns from review to reservation details without a du
     assert.doesNotMatch(view, /id="booking-previous"/, 'the review actions should not render a second back button');
     const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
     try {
+        await page.route('https://booking.test/**', route => route.fulfill({contentType: 'text/html', body: '<body></body>'}));
+        await page.goto('https://booking.test/room/book');
+        const errors = [];
+        page.on('pageerror', error => errors.push(error.message));
+        assert.ok(loaderScript);
         await page.setContent(`<body>
+            <div id="page-loader"><span id="page-loader-title"></span><span id="page-loader-message"></span></div>
+            <div id="network-loader"></div>
             <a id="booking-heading-back" href="/book">Back to previous page</a>
-            <section id="booking-entry-fields" hidden>Reservation details form</section>
+            <section id="booking-entry-fields" hidden>
+                <input name="guest_name" value="Maria Santos">
+                <input name="hourly_date" value="2026-12-01">
+                <select name="guest_count"><option value="2" selected>2 guests</option></select>
+                <textarea name="special_request">Extra pillow</textarea>
+                <input name="terms" type="checkbox" checked>
+            </section>
             <section id="booking-review-panel">Reservation review</section>
             <button id="booking-submit" type="button">Proceed to payment</button>
-            <script>${bookingBackScript}</script>
+            <script>${loaderScript}\n${bookingBackScript}</script>
         </body>`);
 
         await page.locator('#booking-heading-back').click();
 
+        assert.equal(await page.locator('#page-loader').evaluate(el => el.classList.contains('is-visible')), false, 'an in-page action must not display the navigation loader');
+        assert.deepEqual(errors, []);
         assert.equal(await page.locator('#booking-entry-fields').isVisible(), true, 'reservation details should return when backing out of review');
+        assert.equal(await page.locator('[name="guest_name"]').inputValue(), 'Maria Santos');
+        assert.equal(await page.locator('[name="hourly_date"]').inputValue(), '2026-12-01');
+        assert.equal(await page.locator('[name="guest_count"]').inputValue(), '2');
+        assert.equal(await page.locator('[name="special_request"]').inputValue(), 'Extra pillow');
+        assert.equal(await page.locator('[name="terms"]').isChecked(), true);
         assert.equal(await page.locator('#booking-review-panel').isHidden(), true, 'the review panel should close');
         assert.equal(await page.locator('#booking-submit').textContent(), 'Continue to review', 'the primary action should return to its first-step label');
-        assert.equal(page.url(), 'about:blank', 'the back action should not navigate to the general Book now page');
+        assert.equal(page.url(), 'https://booking.test/room/book', 'the back action should not navigate to the general Book now page');
     } finally {
         await page.close();
     }
