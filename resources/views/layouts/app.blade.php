@@ -49,8 +49,8 @@
         <span class="network-loader-track" aria-hidden="true"><i></i></span>
     </div>
     <header class="nav{{ request()->routeIs('home') ? ' nav--over-hero' : '' }}">
-        <a class="brand" href="{{ route('home') }}">
-            <picture class="brand-logo-picture"><source type="image/webp" srcset="{{ asset('images/carolina-logo-256.webp') }}"><img class="brand-logo" src="{{ asset('images/carolina-logo.jpg') }}" alt="Carolina logo"></picture><span>Carolina <small>TRANSIENT HOUSE</small></span>
+        <a class="brand brand--modern" href="{{ route('home') }}">
+            <picture class="brand-logo-picture"><source type="image/webp" srcset="{{ asset('images/carolina-logo-256.webp') }}"><img class="brand-logo" src="{{ asset('images/carolina-logo.jpg') }}" alt=""></picture><span class="brand-wordmark">Carolina <small>TRANSIENT HOUSE</small></span>
         </a>
         <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="primary-navigation">
             <span class="sr-only">Open navigation menu</span>

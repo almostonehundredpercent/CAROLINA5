@@ -1,4 +1,26 @@
 /* Shared public-site header: the espresso glass treatment stays scoped to navigation. */
+.nav .brand.brand--modern {
+    flex: none;
+    gap: 9px;
+    padding: 5px 10px 5px 5px;
+    border: 1px solid #e4cda9;
+    border-radius: 10px;
+    background: #f6eddf;
+    color: #2b2019;
+    font: 800 1.25rem/1 'DM Sans', Arial, sans-serif;
+}
+.nav .brand--modern .brand-logo { width: 36px; height: 36px; box-shadow: none; }
+.nav .brand--modern .brand-wordmark { display: grid; gap: 3px; white-space: nowrap; }
+.nav .brand--modern .brand-wordmark small {
+    margin: 0;
+    color: #874511;
+    font: 800 .58rem/1.2 'DM Sans', Arial, sans-serif;
+    letter-spacing: .11em;
+}
+@media (min-width: 1200px) {
+    .nav .brand--modern .brand-wordmark { display: flex; align-items: center; gap: 10px; }
+    .nav .brand--modern .brand-wordmark small { border-inline-start: 1px solid #b46b26; padding-inline-start: 10px; }
+}
 .nav {
     background-color: rgba(28, 20, 15, 0.9);
     border-bottom: 1px solid rgba(222, 158, 82, 0.38);
