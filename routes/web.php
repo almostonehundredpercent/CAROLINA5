@@ -152,6 +152,7 @@ Route::middleware(['auth', 'admin', 'staff.mfa'])->prefix('admin')->name('admin.
     Route::get('/bookings', [AdminController::class, 'bookings'])->middleware('admin.permission:bookings')->name('bookings');
     Route::get('/bookings-export.csv', [AdminController::class, 'exportBookings'])->middleware('admin.permission:exports')->name('bookings.export');
     Route::get('/bookings/{booking}', [AdminController::class, 'showBooking'])->middleware('admin.permission:bookings')->name('bookings.show');
+    Route::post('/bookings/{booking}/extend', [BookingController::class, 'extendCheckedInStayForStaff'])->middleware(['admin.permission:frontdesk', 'throttle:6,1'])->name('bookings.extend');
     Route::get('/reviews', [AdminController::class, 'reviews'])->middleware('admin.permission:reviews')->name('reviews');
     Route::get('/guests', [AdminController::class, 'guests'])->middleware('admin.permission:guests')->name('guests');
     Route::get('/guests/{guest}', [AdminController::class, 'showGuest'])->middleware('admin.permission:guests')->name('guests.show');

@@ -194,6 +194,22 @@
 .booking-reschedule-form button { justify-self: start; padding: 8px 11px; border: 0; border-radius: 8px; background: var(--gold); color: #fff; font: inherit; font-size: .78rem; font-weight: 750; cursor: pointer; }
 .booking-reschedule-form button:hover { filter: brightness(.94); }
 .dark-mode .booking-reschedule-form input { background: #18120e; }
+.booking-stay-tools { grid-column: 1 / -1; width: 100%; margin-top: 8px; padding: 18px; border-top: 1px solid var(--customer-profile-border); background: var(--customer-profile-raised); border-radius: 0 0 14px 14px; }
+.booking-stay-tools[hidden] { display: none; }
+.booking-stay-tools-heading { display: flex; justify-content: space-between; align-items: end; gap: 12px; margin-bottom: 14px; }
+.booking-stay-tools-heading h4 { margin: 3px 0 0; color: var(--ink); font-size: 1.1rem; }
+.booking-stay-tools-heading > span { color: var(--muted); font-size: .78rem; }
+.booking-stay-tools-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.booking-stay-tool { padding: 15px; border: 1px solid var(--customer-profile-border); border-radius: 11px; background: var(--customer-profile-surface); }
+.booking-stay-tool h5 { margin: 0 0 6px; color: var(--ink); font-size: .95rem; }
+.booking-stay-tool p, .booking-stay-tool small { color: var(--muted); font-size: .78rem; line-height: 1.45; }
+.booking-stay-tool p { margin: 0 0 12px; }
+.booking-stay-tool form { display: grid; justify-items: start; gap: 9px; }
+.booking-stay-tool label { display: grid; gap: 5px; color: var(--ink); font-size: .8rem; font-weight: 700; }
+.booking-stay-tool input { width: 100px; padding: 9px 10px; border: 1px solid var(--customer-profile-border); border-radius: 8px; background: var(--customer-profile-surface); color: var(--ink); font: inherit; }
+.booking-stay-tool .booking-stay-error { color: #a33932; }
+.booking-stay-tool .button { min-height: 40px; padding: 8px 14px; font-size: .82rem; }
+@media (max-width: 700px) { .booking-stay-tools-grid { grid-template-columns: 1fr; } .booking-stay-tools-heading { align-items: start; flex-direction: column; } }
 
 .dark-mode .customer-profile-action:hover { box-shadow: 0 12px 26px rgba(0, 0, 0, .22); }
 

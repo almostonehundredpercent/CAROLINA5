@@ -12,6 +12,7 @@
     </div>
 </section>
 <section class="section compact customer-profile">
+    @if(session('success'))<p class="customer-profile-alert" role="status">{{ session('success') }}</p>@endif
     <div class="customer-profile-actions" aria-label="Quick actions">
         <a class="customer-profile-action" href="{{ route('booking.start') }}"><span aria-hidden="true">＋</span><strong>New booking</strong><small>Find your next stay</small></a>
         <a class="customer-profile-action" href="{{ route('contact') }}"><span aria-hidden="true">✉</span><strong>Contact Carolina</strong><small>Get help with your stay</small></a>
@@ -41,6 +42,7 @@
             </div>
         </div>
         <div class="booking-actions">
+            @php($isActiveStay = $booking->status === 'confirmed' && $booking->checked_in_at && ! $booking->checked_out_at)
             <strong>₱{{ number_format($booking->total_amount) }}</strong>
             <a class="text-link" href="{{ route('bookings.confirmation', $booking) }}">View details</a>
             @if($holdExpired)
@@ -49,7 +51,11 @@
                 <a class="button booking-receipt-link" href="{{ route('bookings.receipt', $booking) }}">Continue payment</a>
             @endif
             @if($booking->status === 'confirmed' || in_array($booking->payment_status, ['paid', 'partial', 'refunded'], true))
-                <a class="button button-outline booking-receipt-link" href="{{ \App\Http\Controllers\StayController::link($booking) }}">{{ $booking->payment_status === 'partial' ? 'View downpayment receipt' : 'View receipt' }}</a>
+                <a class="{{ $isActiveStay ? 'text-link' : 'button button-outline booking-receipt-link' }}" href="{{ \App\Http\Controllers\StayController::link($booking) }}">{{ $booking->payment_status === 'partial' ? 'View downpayment receipt' : 'View receipt' }}</a>
+            @endif
+            @if($isActiveStay)
+                <button class="button booking-receipt-link" type="button" data-stay-toggle aria-controls="stay-tools-{{ $booking->id }}" aria-expanded="{{ old('booking_id') == $booking->id && ($errors->has('extension') || $errors->has('hours')) ? 'true' : 'false' }}">Manage stay</button>
+                <small>Extend hours or request early check-out</small>
             @endif
             @if($booking->early_checkout_status === 'requested' && ! $booking->checked_out_at)
                 <small>Early check-out request sent. Reception must confirm before your stay ends.</small>
@@ -58,15 +64,6 @@
                 @endif
             @elseif($booking->early_checkout_status === 'declined' && ! $booking->checked_out_at)
                 <small>Reception could not confirm your request. Contact Carolina to arrange check-out.</small>
-            @elseif($booking->status === 'confirmed' && $booking->checked_in_at && ! $booking->checked_out_at && ($booking->check_out_at ?? $booking->check_out->copy()->endOfDay())->gt(\App\Support\PropertyTime::now()))
-                @if($bookingFinance['outstanding'] <= 0.001)
-                    <form method="POST" action="{{ route('bookings.early-checkout', $booking) }}" onsubmit="return window.confirm('Send an early check-out request? Your stay remains active until reception confirms your departure. Your booking total stays the same.')">
-                        @csrf
-                        <button class="button button-outline booking-receipt-link" type="submit">Request early check-out</button>
-                    </form>
-                @else
-                    <small role="status">Pay the remaining balance of ₱{{ number_format($bookingFinance['outstanding'], 2) }} before requesting an early check-out.</small>
-                @endif
             @endif
             @if($booking->cancellation_request_status === 'requested' && $booking->status !== 'cancelled')
                 <small role="status">Cancellation request sent. Your booking remains active until reception confirms it.</small>
@@ -99,6 +96,33 @@
                 @endif
             @endif
         </div>
+        @if($isActiveStay)
+            <section class="booking-stay-tools" id="stay-tools-{{ $booking->id }}" aria-label="Manage stay for {{ $booking->room->name }}" @if(old('booking_id') != $booking->id || ! ($errors->has('extension') || $errors->has('hours'))) hidden @endif>
+                <div class="booking-stay-tools-heading"><div><span class="profile-kicker">CURRENT STAY</span><h4>Manage your stay</h4></div><span>Scheduled check-out: {{ ($booking->check_out_at ?? $booking->check_out->copy()->endOfDay())->format('M j, g:i A') }}</span></div>
+                <div class="booking-stay-tools-grid">
+                    <section class="booking-stay-tool"><h5>Extend hours</h5><p>Add time at ₱{{ number_format(\App\Support\StayPricing::EXTRA_HOUR_RATE, 0) }} per hour. We check room availability and cleaning time before saving.</p>
+                        <form method="POST" action="{{ route('bookings.lookup.extend', $booking) }}">
+                            @csrf
+                            <input type="hidden" name="booking_id" value="{{ $booking->id }}">
+                            <label>Extra hours<input type="number" name="hours" min="1" max="168" step="1" value="{{ old('booking_id') == $booking->id ? old('hours', 1) : 1 }}" required></label>
+                            <small>The added charge is payable at the property.</small>
+                            @if(old('booking_id') == $booking->id)
+                                @error('extension')<small class="booking-stay-error" role="alert">{{ $message }}</small>@enderror
+                                @error('hours')<small class="booking-stay-error" role="alert">{{ $message }}</small>@enderror
+                            @endif
+                            <button class="button" type="submit" onclick="return window.confirm('Add these hours to your stay? The extra charge will be added to your balance.')">Add hours</button>
+                        </form>
+                    </section>
+                    <section class="booking-stay-tool"><h5>Check out early</h5>
+                        @if($booking->early_checkout_status === 'requested')<p>Your request is waiting for reception confirmation. Your stay remains active until staff records checkout.</p>
+                        @elseif($booking->early_checkout_status === 'declined')<p>Reception could not confirm your request. Please contact Carolina.</p>
+                        @elseif(($booking->check_out_at ?? $booking->check_out->copy()->endOfDay())->lte(\App\Support\PropertyTime::now()))<p>Your scheduled checkout time has passed. Please contact reception.</p>
+                        @elseif($bookingFinance['outstanding'] > 0.001)<p>Settle your remaining balance of ₱{{ number_format($bookingFinance['outstanding'], 2) }} with reception before requesting early checkout.</p>
+                        @else<p>Reception must confirm your departure. Your booking total stays the same.</p><form method="POST" action="{{ route('bookings.early-checkout', $booking) }}" onsubmit="return window.confirm('Send an early check-out request? Your stay remains active until reception confirms your departure.')">@csrf<button class="button button-outline" type="submit">Request early check-out</button></form>@endif
+                    </section>
+                </div>
+            </section>
+        @endif
         @if($booking->checked_out_at)
             <div class="booking-review-area">
                 @if($booking->review)
@@ -152,4 +176,14 @@
     </nav>
 @endif
 @include('bookings.cancel-dialog')
+<script>
+document.querySelectorAll('[data-stay-toggle]').forEach((button) => {
+    button.addEventListener('click', () => {
+        const panel = document.getElementById(button.getAttribute('aria-controls'));
+        if (!panel) return;
+        panel.hidden = !panel.hidden;
+        button.setAttribute('aria-expanded', String(!panel.hidden));
+    });
+});
+</script>
 @endsection

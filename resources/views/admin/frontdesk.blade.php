@@ -346,6 +346,7 @@
                             </dl>
                             <div class="today-actions">
                                 <a class="status-select" href="{{ route('admin.bookings.show', ['booking' => $booking, 'from' => 'today']) }}">View booking</a>
+                                <a class="status-select confirmed" href="{{ route('admin.bookings.show', ['booking' => $booking, 'from' => 'today']) }}#stay-extension">Extend hours</a>
                                 <form method="POST" action="{{ route('admin.bookings.check-out', $booking) }}" data-admin-confirm data-confirm-kicker="GUEST DEPARTURE" data-confirm-title="{{ $booking->early_checkout_status === 'requested' ? 'Confirm early check-out?' : 'Check out this guest?' }}" data-confirm-message="{{ $booking->early_checkout_status === 'requested' ? 'Confirm this guest’s requested departure now? This records check-out and starts room cleaning.' : 'Check out ' . ($booking->guest_name ?? $booking->user?->name ?? 'this guest') . ' now? This records the departure and starts room cleaning.' }}" data-confirm-action="Check out guest">
                                     @csrf<input type="hidden" name="action" value="check_out"><button class="checkout-action-button" type="submit" @disabled($activeStayBalance > 0.001)>Check out</button>
                                 </form>

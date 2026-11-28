@@ -968,10 +968,21 @@ class BookingController extends Controller
     public function extendCheckedInStay(Request $request, Booking $booking)
     {
         $this->authorizeBookingAccess($request, $booking);
+
+        return $this->applyStayExtension($request, $booking, false);
+    }
+
+    public function extendCheckedInStayForStaff(Request $request, Booking $booking)
+    {
+        return $this->applyStayExtension($request, $booking, true);
+    }
+
+    private function applyStayExtension(Request $request, Booking $booking, bool $byStaff)
+    {
         $data = $request->validate(['hours' => 'nullable|integer|min:1|max:168']);
         $hoursToAdd = (int) ($data['hours'] ?? 1);
 
-        DB::transaction(function () use ($booking, $request, $hoursToAdd) {
+        DB::transaction(function () use ($booking, $request, $hoursToAdd, $byStaff) {
             $room = Room::whereKey($booking->room_id)->lockForUpdate()->firstOrFail();
             $locked = Booking::whereKey($booking->id)->lockForUpdate()->firstOrFail();
             abort_unless($locked->checked_in_at && ! $locked->checked_out_at && $locked->status !== 'cancelled', 422, 'An extra hour is available only during an active checked-in stay.');
@@ -979,7 +990,7 @@ class BookingController extends Controller
             $extensionStart = $oldCheckout->gt(PropertyTime::now()) ? $oldCheckout->copy() : PropertyTime::now();
             $newCheckout = $extensionStart->copy()->addHours($hoursToAdd);
             $bookingConflict = $room->bookings()->blocking()->overlapping($extensionStart, $newCheckout)->whereKeyNot($locked->id)->exists();
-            $blockConflict = $room->blocks()->overlapping($extensionStart, $newCheckout)->exists();
+            $blockConflict = $room->blocks()->overlapping($extensionStart, $newCheckout->copy()->addHours(Booking::CLEANING_HOURS))->exists();
             if ($bookingConflict || $blockConflict) {
                 throw ValidationException::withMessages(['extension' => 'The room is reserved or unavailable for that extension. Choose fewer hours or contact Carolina.']);
             }
@@ -1004,12 +1015,12 @@ class BookingController extends Controller
                 'booking_id' => $locked->id,
                 'user_id' => $request->user()?->id,
                 'event' => 'stay_extended',
-                'description' => 'Guest added '.$hoursToAdd.' hour'.($hoursToAdd === 1 ? '' : 's').' to the checked-in stay for ₱'.number_format($extraHourTotal, 2).'.',
+                'description' => ($byStaff ? 'Staff' : 'Guest').' added '.$hoursToAdd.' hour'.($hoursToAdd === 1 ? '' : 's').' to the checked-in stay for ₱'.number_format($extraHourTotal, 2).'.',
                 'before_values' => $before,
                 'after_values' => ['check_out_at' => $newCheckout->toIso8601String(), 'total_amount' => (float) $locked->total_amount, 'hours' => (int) $locked->hours],
             ]);
         });
-        return back()->with('success', $hoursToAdd.' extra hour'.($hoursToAdd === 1 ? '' : 's').' added for ₱'.number_format(StayPricing::EXTRA_HOUR_RATE * $hoursToAdd, 2).'. Your updated checkout time and balance are shown below.');
+        return back()->with('success', $hoursToAdd.' extra hour'.($hoursToAdd === 1 ? '' : 's').' added for ₱'.number_format(StayPricing::EXTRA_HOUR_RATE * $hoursToAdd, 2).'. The updated checkout time and balance are shown below.');
     }
 
     public function earlyCheckout(Request $request, Booking $booking)

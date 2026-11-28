@@ -425,6 +425,9 @@
                                             @php($refundableAmount = max(0, (float) $booking->payments->where('status', 'paid')->sum('amount') - (float) $booking->payments->where('status', 'refunded')->sum('amount')))
                                             @php($refundPolicyEligible = $booking->isRefundEligible())
                                             @php($earlyCheckoutBalance = \App\Support\FinancialSummary::forBooking($booking)['outstanding'])
+                                            @if($booking->status === 'confirmed' && $booking->checked_in_at && ! $booking->checked_out_at && \App\Support\AdminPermissions::allows(auth()->user(), 'frontdesk'))
+                                                <a class="status-select confirmed" href="{{ route('admin.bookings.show', $booking) }}">Extend stay hours</a>
+                                            @endif
                                             @if($hasPaidPayMongoPayment && ! $expiredCashHold)
                                                 <div class="booking-payment-proof" role="status">
                                                     <span class="booking-payment-proof-icon" aria-hidden="true">✓</span>
