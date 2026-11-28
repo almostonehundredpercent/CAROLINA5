@@ -63,6 +63,17 @@
         .promo-room-names { margin: 0; color: #d8c7b7; font-size: 13px; line-height: 1.6; overflow-wrap: anywhere; }
         .promo-edit { padding-top: 9px; border-top: 1px solid rgba(255,220,182,.13); }
         .promo-edit .promo-form { margin-top: 8px; }
+        .promo-draft-card > :is(.promo-room-scope, .promo-edit) { padding-top: 6px; }
+        .promo-draft-card > details > summary { padding-inline: 8px; border-radius: 8px; }
+        .promo-draft-card > details > summary::before { flex: 0 0 22px; }
+        .promo-draft-card > details > summary:hover { background: rgba(201, 121, 0, .09); }
+        .promo-draft-card > details > summary:focus-visible { outline: 2px solid currentColor; outline-offset: -2px; }
+        .promo-draft-card .promo-review-actions { margin-top: 4px; }
+        .promo-draft-card .promo-review-actions button { min-height: 42px; font-size: 13px; }
+        .promo-draft-card .promo-approve { background: #944707; color: #fff8ee; }
+        .promo-draft-card .promo-approve:hover { background: #763705; }
+        html:not(.dark-mode) .promo-draft-card .promo-dismiss { background: #fff0ed; border-color: #dfaca1; color: #8c2c22; }
+        html:not(.dark-mode) .promo-draft-card .promo-dismiss:hover { background: #ffe3dd; }
         html:not(.dark-mode) .promo-panel-note, html:not(.dark-mode) .promo-form-section-heading p, html:not(.dark-mode) .room-fieldset > p, html:not(.dark-mode) .promo-field-note { color: #74685e; }
         html:not(.dark-mode) .promo-form label, html:not(.dark-mode) .room-fieldset legend { color: #3d3027; }
         html:not(.dark-mode) .promo-form label small { color: #74685e; }
@@ -99,7 +110,7 @@
     @include('admin.partials.flash')
     <section class="panel promo-offers-panel"><div class="panel-heading"><div><p class="admin-kicker">CAROL · NEEDS REVIEW</p><h2>Suggested promo drafts</h2><p class="promo-panel-note">CAROL prepares inactive offers from quiet dates. Review the rule and discount before activating any code.</p></div><span class="booking-count">{{ $promoDrafts->count() }} pending</span></div>
         <div class="promo-list">@forelse($promoDrafts as $promo)
-            <article class="promo-card"><div class="promo-card-head"><div><span class="promo-code">{{ $promo->code }}</span><h3>{{ $promo->name }}</h3></div><span class="promo-status pending">Awaiting review · inactive</span></div>
+            <article class="promo-card promo-draft-card"><div class="promo-card-head"><div><span class="promo-code">{{ $promo->code }}</span><h3>{{ $promo->name }}</h3></div><span class="promo-status pending">Awaiting review · inactive</span></div>
                 <p>{{ $promo->description }}</p><p>{{ $promo->carol_notes }}</p>
                 <div class="promo-meta"><span>{{ $promo->discount_type === 'percentage' ? rtrim(rtrim(number_format($promo->discount_value, 2), '0'), '.') . '% off' : ($promo->discount_type === 'fixed_amount' ? '₱'.number_format($promo->discount_value).' off' : '₱'.number_format($promo->discount_value).' total') }}</span><span>{{ ucfirst($promo->carol_category) }}</span><span>Stay {{ $promo->stay_start_date?->format('M j') }}–{{ $promo->stay_end_date?->format('M j, Y') }}</span>@if($promo->stay_day_type)<span>{{ $promo->stay_day_type === 'weekday' ? 'Mon–Fri check-in' : 'Sat–Sun check-in' }}</span>@endif</div>
                 <details class="promo-room-scope"><summary>Eligible room <span class="promo-room-count">{{ $promo->rooms->count() }}</span></summary><p class="promo-room-names">{{ $promo->rooms->pluck('name')->join(', ') }}</p></details>
