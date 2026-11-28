@@ -1,25 +1,22 @@
 /* Shared public-site header: the espresso glass treatment stays scoped to navigation. */
-.nav .brand.brand--modern {
+.nav .brand.brand--heritage {
     flex: none;
-    gap: 9px;
-    padding: 5px 10px 5px 5px;
-    border: 1px solid #e4cda9;
-    border-radius: 10px;
-    background: #f6eddf;
-    color: #2b2019;
-    font: 800 1.25rem/1 'DM Sans', Arial, sans-serif;
+    gap: 12px;
+    color: #fff3df;
+    font: 700 clamp(1.35rem, 2.2vw, 1.85rem)/1 Georgia, serif;
 }
-.nav .brand--modern .brand-logo { width: 36px; height: 36px; box-shadow: none; }
-.nav .brand--modern .brand-wordmark { display: grid; gap: 3px; white-space: nowrap; }
-.nav .brand--modern .brand-wordmark small {
+.nav .brand--heritage .brand-logo { width: 46px; height: 46px; box-shadow: none; }
+.nav .brand--heritage .brand-wordmark { display: grid; gap: 4px; white-space: nowrap; }
+.nav .brand--heritage .brand-wordmark small {
     margin: 0;
-    color: #874511;
-    font: 800 .58rem/1.2 'DM Sans', Arial, sans-serif;
-    letter-spacing: .11em;
+    color: #efbc79;
+    font: 700 .62rem/1.2 'DM Sans', Arial, sans-serif;
+    letter-spacing: .18em;
 }
-@media (min-width: 1200px) {
-    .nav .brand--modern .brand-wordmark { display: flex; align-items: center; gap: 10px; }
-    .nav .brand--modern .brand-wordmark small { border-inline-start: 1px solid #b46b26; padding-inline-start: 10px; }
+@media (max-width: 800px) {
+    .nav .brand.brand--heritage { gap: 9px; }
+    .nav .brand--heritage .brand-logo { width: 39px; height: 39px; }
+    .nav .brand--heritage .brand-wordmark small { font-size: .56rem; }
 }
 .nav {
     background-color: rgba(28, 20, 15, 0.9);
