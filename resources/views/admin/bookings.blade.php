@@ -159,6 +159,14 @@
             border-color: color-mix(in srgb, currentColor 45%, transparent);
             background: color-mix(in srgb, currentColor 14%, transparent);
         }
+        html.dark-mode .bookings-page .booking-stat-grid .room-stat-trigger > em {
+            border-color: transparent;
+            background: #fffaf3;
+            color: #8a440a !important;
+        }
+        html.dark-mode .bookings-page .booking-stat-grid .room-stat-trigger:is(:hover, :focus-visible) > em {
+            background: #ffe8cc;
+        }
         .bookings-page .booking-stat-grid .room-stat-trigger:focus-visible { outline: 3px solid var(--orange); outline-offset: 3px; z-index: 1; }
         .booking-payment-proof {
             display: inline-flex;
