@@ -113,7 +113,33 @@
         }
         .booking-note { color: var(--muted); font-size: 12px; margin: 5px 0; }
         .bookings-page .booking-stat-grid article { position: relative; }
-        .bookings-page .booking-stat-grid .room-stat-trigger { position: absolute; inset: 0; box-sizing: border-box; display: block; width: 100%; height: 100%; padding: inherit; border: 0; border-radius: inherit; background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+        .bookings-page .booking-stat-grid article:has(.room-stat-trigger) { display: grid; padding: 0 !important; }
+        .bookings-page .booking-stat-grid .room-stat-trigger {
+            display: grid;
+            place-content: center;
+            justify-items: center;
+            gap: 5px;
+            width: 100%;
+            min-height: 118px;
+            padding: 12px 8px;
+            border: 0;
+            border-radius: inherit;
+            background: transparent;
+            color: inherit;
+            font: inherit;
+            text-align: center;
+            cursor: pointer;
+        }
+        .bookings-page .booking-stat-grid .room-stat-trigger > small,
+        .bookings-page .booking-stat-grid .room-stat-trigger > em {
+            margin: 0;
+            color: inherit !important;
+            opacity: 1;
+            line-height: 1.35;
+        }
+        .bookings-page .booking-stat-grid .room-stat-trigger > small { font-size: .875rem; font-weight: 700; }
+        .bookings-page .booking-stat-grid .room-stat-trigger > strong { margin: 0; font-size: 1.875rem; line-height: 1.1; }
+        .bookings-page .booking-stat-grid .room-stat-trigger > em { font-size: .8125rem; text-decoration: underline; text-underline-offset: 3px; }
         .bookings-page .booking-stat-grid .room-stat-trigger:hover { filter: brightness(1.08); }
         .bookings-page .booking-stat-grid .room-stat-trigger:focus-visible { outline: 3px solid var(--orange); outline-offset: 3px; z-index: 1; }
         .booking-payment-proof {
