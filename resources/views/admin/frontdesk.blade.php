@@ -75,7 +75,10 @@
                 <h1>Today</h1>
                 <p class="admin-subtitle">Front desk overview · {{ $propertyNow->format('l, F j, Y') }}</p>
             </div>
-            <a class="frontdesk-walkin" href="{{ route('admin.walk-ins.create') }}">+ New walk-in</a>
+            <a class="frontdesk-walkin" href="{{ route('admin.walk-ins.create') }}">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14"/></svg>
+                New walk-in
+            </a>
         </header>
         @include('admin.partials.flash')
 
