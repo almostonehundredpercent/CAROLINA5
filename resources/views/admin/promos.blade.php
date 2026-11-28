@@ -50,6 +50,7 @@
         .promo-approve { border-color: rgba(255,205,128,.44); background: linear-gradient(135deg,#e89413,#c66700); color: #fff; }
         .promo-dismiss { border-color: rgba(255,139,122,.32); background: rgba(155,54,38,.14); color: #ffb6a9; }
         .promo-status.pending { border-color: rgba(255,180,77,.38); background: rgba(227,138,0,.14); color: #ffd18e; }
+        .promo-draft-card .promo-status.pending { min-height: 34px; padding: 6px 12px; font-size: 13px; max-width: 100%; flex-shrink: 1; }
         .promo-delete-form { margin: 0; }
         .promo-delete { min-height: 30px; padding: 5px 10px; border: 1px solid rgba(255,139,122,.32); border-radius: 999px; background: rgba(155,54,38,.14); color: #ffb6a9; font: inherit; font-size: 12px; font-weight: 750; cursor: pointer; }
         .promo-delete:hover { border-color: rgba(255,139,122,.62); background: rgba(155,54,38,.26); }
