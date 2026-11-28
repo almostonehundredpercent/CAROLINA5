@@ -36,7 +36,7 @@ test('promo editor groups setup into clear steps and summarizes each offer room 
     $promo->rooms()->sync([$firstRoom->id, $secondRoom->id]);
 
     $this->actingAsStaff($admin)
-        ->get(route('admin.promos'))
+        ->get(route('admin.promos', ['section' => 'offers']))
         ->assertOk()
         ->assertSee('Offer details')
         ->assertSee('Discount rules')
@@ -45,6 +45,25 @@ test('promo editor groups setup into clear steps and summarizes each offer room 
         ->assertSee('View eligible rooms')
         ->assertSee($firstRoom->name)
         ->assertSee($secondRoom->name);
+});
+
+test('promo navigation renders only the selected section and paginates drafts', function () {
+    $admin = User::factory()->create(['is_admin' => true]);
+    foreach (range(1, 6) as $number) {
+        PromoCode::create([
+            'code' => 'NAVDRAFT'.$number, 'name' => 'Navigation draft '.$number,
+            'discount_type' => 'percentage', 'discount_value' => 10,
+            'review_status' => 'pending', 'is_active' => false,
+        ]);
+    }
+
+    $this->actingAsStaff($admin)->get(route('admin.promos'))
+        ->assertOk()->assertSee('Page 1 of 2')->assertSee('Navigation draft 6')
+        ->assertDontSee('Navigation draft 1')->assertDontSee('Create promo code');
+    $this->get(route('admin.promos', ['section' => 'drafts', 'page' => 2]))
+        ->assertOk()->assertSee('Page 2 of 2')->assertSee('Navigation draft 1');
+    $this->get(route('admin.promos', ['section' => 'create']))
+        ->assertOk()->assertSee('Create promo code')->assertDontSee('Navigation draft 6');
 });
 
 test('monthly promo sets a selected room thirty-day stay to six thousand pesos', function () {

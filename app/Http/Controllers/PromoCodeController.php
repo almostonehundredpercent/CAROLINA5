@@ -11,11 +11,26 @@ use Illuminate\Validation\Rule;
 
 class PromoCodeController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
+        $section = $request->query('section');
+        $section = in_array($section, ['drafts', 'offers', 'create'], true) ? $section : 'drafts';
+        $drafts = PromoCode::where('review_status', 'pending');
+        $offers = PromoCode::where('review_status', 'approved');
+        $items = match ($section) {
+            'drafts' => $drafts->with('rooms')->latest()->orderByDesc('id')->paginate(5)->appends(['section' => $section]),
+            'offers' => $offers->with('rooms')->latest()->orderByDesc('id')->paginate(5)->appends(['section' => $section]),
+            default => null,
+        };
+        if ($items && $items->currentPage() > $items->lastPage()) {
+            return redirect($items->url($items->lastPage()));
+        }
+
         return view('admin.promos', [
-            'promoDrafts' => PromoCode::with('rooms')->where('review_status', 'pending')->latest()->get(),
-            'promos' => PromoCode::with('rooms')->where('review_status', 'approved')->latest()->get(),
+            'section' => $section,
+            'items' => $items,
+            'draftCount' => $section === 'drafts' ? $items->total() : $drafts->count(),
+            'offerCount' => $section === 'offers' ? $items->total() : $offers->count(),
             'rooms' => Room::where('is_active', true)->orderBy('id')->get(),
         ]);
     }
@@ -25,7 +40,7 @@ class PromoCodeController extends Controller
         $promo = PromoCode::create($this->validated($request));
         $promo->rooms()->sync($request->input('room_ids', []));
 
-        return back()->with('success', 'Promo code '.$promo->code.' created.');
+        return redirect()->route('admin.promos', ['section' => 'offers'])->with('success', 'Promo code '.$promo->code.' created.');
     }
 
     public function update(Request $request, PromoCode $promo)

@@ -7,6 +7,13 @@
     <style>
         .promo-layout { display: grid; grid-template-columns: minmax(360px, .9fr) minmax(0, 1.45fr); align-items: start; gap: 22px; }
         .promo-layout > .panel { min-width: 0; padding: 24px; }
+        .promo-section-nav, .promo-pagination { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+        .promo-section-nav { margin-bottom: 16px; }
+        .promo-pagination { margin-top: 16px; }
+        .promo-section-nav a, .promo-pagination a, .promo-pagination span[aria-disabled] { display: inline-flex; align-items: center; gap: 7px; min-height: 42px; padding: 6px 12px; border: 1px solid var(--line); border-radius: 9px; color: inherit; text-decoration: none; font-weight: 700; }
+        .promo-section-nav a[aria-current="page"] { background: #914507; color: #fff8ee; border-color: transparent; }
+        .promo-section-nav a:not([aria-current]):hover, .promo-pagination a:hover { border-color: #be730d; }
+        .promo-pagination span[aria-disabled] { opacity: .55; }
         .promo-panel-note { margin: 7px 0 0; color: #d0bead; font-size: 13px; line-height: 1.5; }
         .promo-form { display: grid; gap: 14px; }
         .promo-form label { display: grid; align-content: start; gap: 7px; color: #f1e3d5; font-size: 13px; font-weight: 650; line-height: 1.4; }
@@ -109,8 +116,14 @@
 <body><div class="admin-shell">@include('admin.partials.sidebar')<main class="admin-main">
     <header class="admin-topbar"><div><p class="admin-kicker">PRICING</p><h1>Promo codes</h1><p class="admin-subtitle">Create discounts and restrict them to selected rooms, stay lengths, dates, or redemption counts.</p></div></header>
     @include('admin.partials.flash')
-    <section class="panel promo-offers-panel"><div class="panel-heading"><div><p class="admin-kicker">CAROL · NEEDS REVIEW</p><h2>Suggested promo drafts</h2><p class="promo-panel-note">CAROL prepares inactive offers from quiet dates. Review the rule and discount before activating any code.</p></div><span class="booking-count">{{ $promoDrafts->count() }} pending</span></div>
-        <div class="promo-list">@forelse($promoDrafts as $promo)
+    <nav class="promo-section-nav" aria-label="Promo code sections">
+        @foreach(['drafts' => ['Drafts', $draftCount], 'offers' => ['Offers', $offerCount], 'create' => ['Create promo', null]] as $key => [$label, $count])
+            <a href="{{ route('admin.promos', ['section' => $key]) }}" @if($section === $key) aria-current="page" @endif>{{ $label }} @if($count !== null)<span>({{ $count }})</span>@endif</a>
+        @endforeach
+    </nav>
+    @if($section === 'drafts')
+    <section class="panel promo-offers-panel"><div class="panel-heading"><div><p class="admin-kicker">CAROL · NEEDS REVIEW</p><h2>Suggested promo drafts</h2><p class="promo-panel-note">CAROL prepares inactive offers from quiet dates. Review the rule and discount before activating any code.</p></div><span class="booking-count">{{ $draftCount }} pending</span></div>
+        <div class="promo-list">@forelse($items as $promo)
             <article class="promo-card promo-draft-card"><div class="promo-card-head"><div><span class="promo-code">{{ $promo->code }}</span><h3>{{ $promo->name }}</h3></div><span class="promo-status pending">Awaiting review · inactive</span></div>
                 <p>{{ $promo->description }}</p><p>{{ $promo->carol_notes }}</p>
                 <div class="promo-meta"><span>{{ $promo->discount_type === 'percentage' ? rtrim(rtrim(number_format($promo->discount_value, 2), '0'), '.') . '% off' : ($promo->discount_type === 'fixed_amount' ? '₱'.number_format($promo->discount_value).' off' : '₱'.number_format($promo->discount_value).' total') }}</span><span>{{ ucfirst($promo->carol_category) }}</span><span>Stay {{ $promo->stay_start_date?->format('M j') }}–{{ $promo->stay_end_date?->format('M j, Y') }}</span>@if($promo->stay_day_type)<span>{{ $promo->stay_day_type === 'weekday' ? 'Mon–Fri check-in' : 'Sat–Sun check-in' }}</span>@endif</div>
@@ -123,15 +136,16 @@
             </article>
         @empty<p class="empty-copy">No CAROL drafts are waiting for review. Open CAROL to generate drafts from current low-occupancy dates.</p>@endforelse</div>
     </section>
-    <div class="promo-layout">
+    @elseif($section === 'create')
         <section class="panel promo-create-panel"><div class="panel-heading"><div><p class="admin-kicker">NEW OFFER</p><h2>Create promo</h2><p class="promo-panel-note">Set the discount, choose who can use it, and decide when it is available.</p></div></div>
             <form class="promo-form" method="POST" action="{{ route('admin.promos.store') }}">@csrf
                 @include('admin.partials.promo-fields', ['promo' => new \App\Models\PromoCode(['discount_type' => 'fixed_total', 'minimum_hours' => 720, 'maximum_hours' => 720, 'is_active' => true]), 'rooms' => $rooms])
                 <button class="promo-submit" type="submit">Create promo code</button>
             </form>
         </section>
-        <section class="panel promo-offers-panel"><div class="panel-heading"><div><p class="admin-kicker">ACTIVE & PAST</p><h2>Offers</h2><p class="promo-panel-note">Review each offer's status, discount, and room access.</p></div><span class="booking-count">{{ $promos->count() }} total</span></div>
-            <div class="promo-list">@forelse($promos as $promo)
+    @else
+        <section class="panel promo-offers-panel"><div class="panel-heading"><div><p class="admin-kicker">ACTIVE & PAST</p><h2>Offers</h2><p class="promo-panel-note">Review each offer's status, discount, and room access.</p></div><span class="booking-count">{{ $offerCount }} total</span></div>
+            <div class="promo-list">@forelse($items as $promo)
                 <article class="promo-card"><div class="promo-card-head"><div><span class="promo-code">{{ $promo->code }}</span><h3>{{ $promo->name }}</h3></div><div class="promo-card-actions"><span class="promo-status {{ $promo->is_active ? '' : 'off' }}">{{ $promo->is_active ? 'Active' : 'Paused' }}</span><form class="promo-delete-form" method="POST" action="{{ route('admin.promos.destroy', $promo) }}" onsubmit="return confirm('Delete promo code {{ $promo->code }}? This cannot be undone.');">@csrf @method('DELETE')<button class="promo-delete" type="submit">Delete</button></form></div></div>
                     <p>{{ $promo->description ?: 'No description added.' }}</p>
                     <div class="promo-meta"><span>{{ $promo->discount_type === 'percentage' ? rtrim(rtrim(number_format($promo->discount_value, 2), '0'), '.') . '% off' : ($promo->discount_type === 'fixed_amount' ? '₱'.number_format($promo->discount_value).' off' : '₱'.number_format($promo->discount_value).' total') }}</span><span>{{ $promo->minimum_hours ? $promo->minimum_hours.'h minimum' : 'No minimum stay' }}</span><span>{{ $promo->usage_limit ? $promo->times_used.'/'.$promo->usage_limit.' redeemed' : $promo->times_used.' redeemed' }}</span>@if($promo->stay_start_date || $promo->stay_end_date)<span>Stay dates {{ $promo->stay_start_date?->format('M j') ?? 'Any' }}–{{ $promo->stay_end_date?->format('M j, Y') ?? 'Any' }}</span>@endif @if($promo->stay_day_type)<span>{{ $promo->stay_day_type === 'weekday' ? 'Mon–Fri check-in' : 'Sat–Sun check-in' }}</span>@endif</div>
@@ -143,5 +157,12 @@
                 </article>
             @empty<p class="empty-copy">No promo codes yet.</p>@endforelse</div>
         </section>
-    </div>
+    @endif
+    @if($items?->hasPages())
+        <nav class="promo-pagination" aria-label="Promo list pagination">
+            @if($items->onFirstPage())<span aria-disabled="true">Previous</span>@else<a href="{{ $items->previousPageUrl() }}" rel="prev">Previous</a>@endif
+            <span>Page {{ $items->currentPage() }} of {{ $items->lastPage() }}</span>
+            @if($items->hasMorePages())<a href="{{ $items->nextPageUrl() }}" rel="next">Next</a>@else<span aria-disabled="true">Next</span>@endif
+        </nav>
+    @endif
 </main></div></body></html>
