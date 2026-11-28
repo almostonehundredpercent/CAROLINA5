@@ -62,6 +62,21 @@ async function render(viewport) {
     return page;
 }
 
+test('closing the payment success dialog does not start the page loader', async () => {
+    const page = await browser.newPage();
+    try {
+        await page.setContent(`<div id="page-loader"><span id="page-loader-title"></span><span id="page-loader-message"></span></div>
+            <div id="network-loader"></div>
+            <dialog><form method="dialog"><button>Close confirmation</button></form></dialog>
+            <script>${loaderScript}\ndocument.querySelector('dialog').showModal();</script>`);
+        await page.getByRole('button', {name: 'Close confirmation'}).click();
+        assert.equal(await page.locator('dialog').isHidden(), true);
+        assert.equal(await page.locator('#page-loader').evaluate(el => el.classList.contains('is-visible')), false);
+    } finally {
+        await page.close();
+    }
+});
+
 test('cancellation only shows the loading overlay after Yes submits the form', async () => {
     const page = await browser.newPage();
     try {

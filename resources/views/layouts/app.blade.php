@@ -157,6 +157,7 @@
                 const form = event.target;
                 if (!(form instanceof HTMLFormElement) || form.dataset.noLoading !== undefined) return;
                 const submitter = event.submitter;
+                if ((submitter?.getAttribute('formmethod')?.toLowerCase() ?? form.method) === 'dialog') return;
                 const copy = submitter?.dataset.loadingText || (form.matches('.booking-form form') ? 'Saving your reservation…' : 'Saving your changes…');
                 show('Please wait', copy);
             });
