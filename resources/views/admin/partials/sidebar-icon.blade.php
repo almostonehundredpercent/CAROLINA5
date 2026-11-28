@@ -32,7 +32,10 @@
             <svg viewBox="0 0 24 24"><path d="M21 12.59 12.59 21a2 2 0 0 1-2.83 0L3 14.24A2 2 0 0 1 2.41 13V4a2 2 0 0 1 2-2h9a2 2 0 0 1 1.41.59L21 8.76a2.7 2.7 0 0 1 0 3.83ZM7.5 6A1.5 1.5 0 1 0 7.5 9 1.5 1.5 0 0 0 7.5 6Z"/></svg>
             @break
         @case('admin.activity')
-            <svg viewBox="0 0 24 24"><path fill-rule="evenodd" d="M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20Zm1-15a1 1 0 1 0-2 0v5c0 .38.21.72.55.9l3.5 1.75a1 1 0 1 0 .9-1.8L13 11.38V7Z" clip-rule="evenodd"/></svg>
+            <svg viewBox="0 0 24 24"><path d="M6 3h12a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Zm0 2v14h12V5H6Zm2 3h2v2H8V8Zm4 0h4v2h-4V8Zm-4 6h2v2H8v-2Zm4 0h4v2h-4v-2Z"/></svg>
+            @break
+        @case('admin.account')
+            <svg viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M10 3h4l.5 2.6 1.7.9 2.5-.9 2 3.4-2 1.7v2.6l2 1.7-2 3.4-2.5-.9-1.7.9L14 21h-4l-.5-2.6-1.7-.9-2.5.9-2-3.4 2-1.7v-2.6l-2-1.7 2-3.4 2.5.9 1.7-.9Z"/><circle cx="12" cy="12" r="3"/></g></svg>
             @break
         @default
             <svg viewBox="0 0 24 24"><path d="M5 3a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2H5Z"/></svg>

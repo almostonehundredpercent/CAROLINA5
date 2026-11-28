@@ -463,7 +463,7 @@ td small {
 body, .admin-shell, .admin-main { background-color: var(--admin-canvas); color: var(--ink); }
 .admin-sidebar { background: var(--admin-rail); color: var(--paper); border-color: var(--line); }
 .admin-nav a, .admin-logout button { color: var(--paper); }
-.admin-nav a:hover, .admin-nav a.active { background: rgba(201, 121, 0, .18); color: var(--paper); box-shadow: inset 3px 0 var(--orange); }
+.admin-nav a:hover, .admin-nav a.active { background: rgba(201, 121, 0, .18); color: var(--paper); }
 .admin-home { border-color: rgba(231, 236, 239, .55) !important; color: var(--paper) !important; }
 .admin-logout .logout-button { background: rgba(5, 5, 5, .18); border-color: rgba(231, 236, 239, .55); color: var(--paper); }
 .admin-logout .logout-button:hover { background: var(--paper); color: var(--deep); }

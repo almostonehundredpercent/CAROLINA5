@@ -39,6 +39,8 @@ test('theme switches stay synchronized, persist the choice, and fit a mobile nav
 
         const publicSwitch = page.getByRole('switch', { name: 'Dark mode' }).first();
         const staffSwitch = page.getByRole('switch', { name: 'Dark mode' }).nth(1);
+        const lightIcons = await Promise.all([publicSwitch, staffSwitch].map(control => control.locator('.theme-switch-thumb svg').evaluate(icon => icon.innerHTML)));
+        assert.deepEqual(lightIcons, ['', ''], 'light-mode switch thumbs should contain no artwork');
         await publicSwitch.click();
         await assert.equal(await publicSwitch.getAttribute('aria-checked'), 'true');
         await assert.equal(await staffSwitch.getAttribute('aria-checked'), 'true');
