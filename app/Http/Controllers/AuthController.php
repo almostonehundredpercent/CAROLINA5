@@ -191,8 +191,14 @@ class AuthController extends Controller
             event(new PasswordReset($user));
         });
 
-        return $status === Password::PASSWORD_RESET
-            ? redirect()->route('login')->with('success', 'Password reset. You can now sign in.')
-            : back()->withErrors(['email' => __($status)]);
+        if ($status === Password::PASSWORD_RESET) {
+            auth()->logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+
+            return redirect()->route('login')->with('success', 'Password reset. You can now sign in.');
+        }
+
+        return back()->withErrors(['email' => __($status)]);
     }
 }

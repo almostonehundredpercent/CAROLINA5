@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Queue;
+use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
 
 function testRoom(): Room
@@ -122,6 +123,30 @@ test('password resets are queued for the mail worker', function () {
     Queue::assertPushed(SendQueuedNotifications::class,
         fn ($job) => $job->connection === 'database' && $job->queue === 'mail'
             && $job->notification instanceof QueuedResetPassword);
+});
+
+test('a signed-in guest can request and complete a password reset without their current password', function () {
+    Queue::fake();
+    $user = User::factory()->create(['staff_role' => 'guest', 'is_admin' => false]);
+
+    $this->actingAs($user)->get(route('profile.show'))
+        ->assertOk()->assertSee('Email me a reset link');
+    $this->post(route('profile.password.reset-link'))
+        ->assertRedirect(route('profile.show'))->assertSessionHas('profile_success');
+    Queue::assertPushed(SendQueuedNotifications::class,
+        fn ($job) => $job->notification instanceof QueuedResetPassword);
+
+    $token = Password::createToken($user);
+    $this->get(route('password.reset', ['token' => $token, 'email' => $user->email]))
+        ->assertOk()->assertSee('Choose a new password');
+    $this->post(route('password.update'), [
+        'token' => $token,
+        'email' => $user->email,
+        'password' => 'new-safe-password',
+        'password_confirmation' => 'new-safe-password',
+    ])->assertRedirect(route('login'));
+    $this->assertGuest();
+    expect(\Illuminate\Support\Facades\Hash::check('new-safe-password', $user->fresh()->password))->toBeTrue();
 });
 
 test('a reservation request reserves its times and queues booking emails', function () {

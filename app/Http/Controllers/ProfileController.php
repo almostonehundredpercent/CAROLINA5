@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Throwable;
@@ -12,6 +13,17 @@ class ProfileController extends Controller
     public function show()
     {
         return view('profile.index');
+    }
+
+    public function sendPasswordResetLink(Request $request)
+    {
+        try {
+            Password::sendResetLink(['email' => $request->user()->email]);
+        } catch (Throwable $exception) {
+            report($exception);
+        }
+
+        return redirect()->route('profile.show')->with('profile_success', 'If your account email can receive messages, a password reset link has been sent.');
     }
 
     public function update(Request $request)

@@ -42,5 +42,10 @@
             </div>
         </form>
     </article>
+    <article class="customer-profile-information" aria-labelledby="profile-password-heading">
+        <div class="customer-profile-card-heading"><div><span class="profile-kicker">ACCOUNT SECURITY</span><h2 id="profile-password-heading">Forgot your password?</h2></div></div>
+        <p>We will email a secure reset link to your account address. You do not need to enter your current password.</p>
+        <form method="POST" action="{{ route('profile.password.reset-link') }}">@csrf<button class="button" type="submit">Email me a reset link</button></form>
+    </article>
 </section>
 @endsection
