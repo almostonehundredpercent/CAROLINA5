@@ -139,8 +139,26 @@
         }
         .bookings-page .booking-stat-grid .room-stat-trigger > small { font-size: .875rem; font-weight: 700; }
         .bookings-page .booking-stat-grid .room-stat-trigger > strong { margin: 0; font-size: 1.875rem; line-height: 1.1; }
-        .bookings-page .booking-stat-grid .room-stat-trigger > em { font-size: .8125rem; text-decoration: underline; text-underline-offset: 3px; }
-        .bookings-page .booking-stat-grid .room-stat-trigger:hover { filter: brightness(1.08); }
+        .bookings-page .booking-stat-grid .room-stat-trigger > em {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            margin-top: 3px;
+            padding: 5px 9px;
+            border: 1px solid currentColor;
+            border-color: color-mix(in srgb, currentColor 26%, transparent);
+            border-radius: 8px;
+            background: color-mix(in srgb, currentColor 7%, transparent);
+            font-size: .8125rem;
+            font-style: normal;
+            font-weight: 650;
+        }
+        .room-stat-trigger > em svg { width: 13px; height: 13px; flex: none; }
+        .room-stat-trigger:is(:hover, :focus-visible) > em {
+            border-color: color-mix(in srgb, currentColor 45%, transparent);
+            background: color-mix(in srgb, currentColor 14%, transparent);
+        }
         .bookings-page .booking-stat-grid .room-stat-trigger:focus-visible { outline: 3px solid var(--orange); outline-offset: 3px; z-index: 1; }
         .booking-payment-proof {
             display: inline-flex;
@@ -225,10 +243,10 @@
             @endif
 
             <section class="booking-stat-grid">
-                <article class="occupied"><button class="room-stat-trigger" type="button" data-room-stat-dialog-open="room-stat-occupied" aria-haspopup="dialog" aria-controls="room-stat-occupied"><small>Rooms occupied</small><strong>{{ $occupiedRooms }}</strong><em>View room details</em></button></article>
-                <article class="reserved"><button class="room-stat-trigger" type="button" data-room-stat-dialog-open="room-stat-upcoming" aria-haspopup="dialog" aria-controls="room-stat-upcoming"><small>Upcoming</small><strong>{{ $reservedRooms }}</strong><em>View room details</em></button></article>
-                <article class="available"><button class="room-stat-trigger" type="button" data-room-stat-dialog-open="room-stat-available" aria-haspopup="dialog" aria-controls="room-stat-available"><small>Ready to book</small><strong>{{ $availableRooms }}</strong><em>View room details</em></button></article>
-                <article class="maintenance"><button class="room-stat-trigger" type="button" data-room-stat-dialog-open="room-stat-unavailable" aria-haspopup="dialog" aria-controls="room-stat-unavailable"><small>Unavailable</small><strong>{{ $unavailableRooms }}</strong><em>View room details</em></button></article>
+                <article class="occupied"><button class="room-stat-trigger" type="button" data-room-stat-dialog-open="room-stat-occupied" aria-haspopup="dialog" aria-controls="room-stat-occupied"><small>Rooms occupied</small><strong>{{ $occupiedRooms }}</strong><em>View room details <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 4 4 4-4 4"/></svg></em></button></article>
+                <article class="reserved"><button class="room-stat-trigger" type="button" data-room-stat-dialog-open="room-stat-upcoming" aria-haspopup="dialog" aria-controls="room-stat-upcoming"><small>Upcoming</small><strong>{{ $reservedRooms }}</strong><em>View room details <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 4 4 4-4 4"/></svg></em></button></article>
+                <article class="available"><button class="room-stat-trigger" type="button" data-room-stat-dialog-open="room-stat-available" aria-haspopup="dialog" aria-controls="room-stat-available"><small>Ready to book</small><strong>{{ $availableRooms }}</strong><em>View room details <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 4 4 4-4 4"/></svg></em></button></article>
+                <article class="maintenance"><button class="room-stat-trigger" type="button" data-room-stat-dialog-open="room-stat-unavailable" aria-haspopup="dialog" aria-controls="room-stat-unavailable"><small>Unavailable</small><strong>{{ $unavailableRooms }}</strong><em>View room details <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 4 4 4-4 4"/></svg></em></button></article>
             </section>
 
             <dialog class="dashboard-detail-dialog" id="room-stat-occupied" aria-labelledby="room-stat-occupied-title">
