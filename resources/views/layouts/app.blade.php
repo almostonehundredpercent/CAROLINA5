@@ -3,13 +3,13 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>@yield('title', 'Carolina Transient & Airbnb | Tabaco City')</title>
-    <meta name="description" content="Reserve short and overnight stays with Carolina Transient & Airbnb in Tabaco City, Albay.">
+    <title>@yield('title', 'Carolina Transient House | Tabaco City')</title>
+    <meta name="description" content="Reserve short and overnight stays with Carolina Transient House in Tabaco City, Albay.">
     <link rel="icon" type="image/png" href="{{ asset('images/carolina-favicon.png') }}">
     <link rel="canonical" href="{{ url()->current() }}">
-    <meta property="og:type" content="website"><meta property="og:title" content="@yield('title', 'Carolina Transient & Airbnb | Tabaco City')"><meta property="og:description" content="Reserve short and overnight stays in Tabaco City, Albay."><meta property="og:url" content="{{ url()->current() }}"><meta property="og:image" content="{{ asset('images/carolina-logo.jpg') }}">
+    <meta property="og:type" content="website"><meta property="og:title" content="@yield('title', 'Carolina Transient House | Tabaco City')"><meta property="og:description" content="Reserve short and overnight stays in Tabaco City, Albay."><meta property="og:url" content="{{ url()->current() }}"><meta property="og:image" content="{{ asset('images/carolina-logo.jpg') }}">
     <meta name="twitter:card" content="summary_large_image">
-    <script type="application/ld+json">{!! json_encode(['@context' => 'https://schema.org', '@type' => 'LodgingBusiness', 'name' => 'Carolina Transient & Airbnb', 'url' => url('/'), 'address' => ['@type' => 'PostalAddress', 'addressLocality' => 'Tabaco City', 'addressRegion' => 'Albay', 'addressCountry' => 'PH'] ], JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE) !!}</script>
+    <script type="application/ld+json">{!! json_encode(['@context' => 'https://schema.org', '@type' => 'LodgingBusiness', 'name' => 'Carolina Transient House', 'url' => url('/'), 'address' => ['@type' => 'PostalAddress', 'addressLocality' => 'Tabaco City', 'addressRegion' => 'Albay', 'addressCountry' => 'PH'] ], JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE) !!}</script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     @if(request()->routeIs('home'))
@@ -50,7 +50,7 @@
     </div>
     <header class="nav{{ request()->routeIs('home') ? ' nav--over-hero' : '' }}">
         <a class="brand" href="{{ route('home') }}">
-            <picture class="brand-logo-picture"><source type="image/webp" srcset="{{ asset('images/carolina-logo-256.webp') }}"><img class="brand-logo" src="{{ asset('images/carolina-logo.jpg') }}" alt="Carolina logo"></picture><span>Carolina <small>TRANSIENT & AIRBNB</small></span>
+            <picture class="brand-logo-picture"><source type="image/webp" srcset="{{ asset('images/carolina-logo-256.webp') }}"><img class="brand-logo" src="{{ asset('images/carolina-logo.jpg') }}" alt="Carolina logo"></picture><span>Carolina <small>TRANSIENT HOUSE</small></span>
         </a>
         <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="primary-navigation">
             <span class="sr-only">Open navigation menu</span>
@@ -104,7 +104,7 @@
     <footer id="contact" class="site-footer">
         <div class="footer-content">
             <section class="footer-brand">
-                <a class="brand" href="{{ route('home') }}"><picture class="brand-logo-picture"><source type="image/webp" srcset="{{ asset('images/carolina-logo-256.webp') }}"><img class="brand-logo" src="{{ asset('images/carolina-logo.jpg') }}" alt="Carolina logo"></picture><span>Carolina <small>TRANSIENT & AIRBNB</small></span></a>
+                <a class="brand" href="{{ route('home') }}"><picture class="brand-logo-picture"><source type="image/webp" srcset="{{ asset('images/carolina-logo-256.webp') }}"><img class="brand-logo" src="{{ asset('images/carolina-logo.jpg') }}" alt="Carolina logo"></picture><span>Carolina <small>TRANSIENT HOUSE</small></span></a>
                 <p>A thoughtful, comfortable stay in the heart of Tabaco City.</p>
             </section>
 
@@ -125,7 +125,7 @@
             </section>
         </div>
         <div class="footer-bottom">
-            <small>&copy; {{ date('Y') }} Carolina Transient & Airbnb</small>
+            <small>&copy; {{ date('Y') }} Carolina Transient House</small>
             <div class="footer-bottom-actions">
                 <a href="{{ route('privacy') }}">Privacy Policy</a><a href="{{ route('terms') }}">Terms of Service</a>
             </div>

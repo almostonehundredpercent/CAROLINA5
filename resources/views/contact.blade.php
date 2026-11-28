@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('title', 'Contact Carolina · Carolina Transient & Airbnb')
+@section('title', 'Contact Carolina · Carolina Transient House')
 @push('styles')
 <link rel="stylesheet" href="{{ asset('css/contact-page.css') }}?v={{ filemtime(public_path('css/contact-page.css')) }}">
 @endpush

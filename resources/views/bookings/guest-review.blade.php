@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Share feedback | Carolina Transient & Airbnb')
+@section('title', 'Share feedback | Carolina Transient House')
 
 @section('content')
 <style>

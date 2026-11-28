@@ -24,7 +24,7 @@
     }
 </style>
 <aside class="admin-sidebar">
-    <a class="admin-brand" href="{{ route('home') }}"><img src="{{ asset('images/carolina-logo.jpg') }}" alt="Carolina logo"><b>Carolina</b><small>TRANSIENT & AIRBNB</small></a>
+    <a class="admin-brand" href="{{ route('home') }}"><img src="{{ asset('images/carolina-logo.jpg') }}" alt="Carolina logo"><b>Carolina</b><small>TRANSIENT HOUSE</small></a>
     <nav class="admin-nav" aria-label="Staff navigation">
         @foreach($adminNavigation as $item)
             <a class="{{ request()->routeIs($item['route']) ? 'active' : '' }}" href="{{ route($item['route']) }}">@include('admin.partials.sidebar-icon', ['route' => $item['route']]){{ $item['label'] }}</a>
