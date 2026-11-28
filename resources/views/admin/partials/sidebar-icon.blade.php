@@ -1,43 +1,47 @@
 <i class="admin-nav-icon" aria-hidden="true">
-    @switch($route)
-        @case('home')
-            <svg viewBox="0 0 24 24"><path d="m12 2.8 9 7.9a1 1 0 0 1-.66 1.75H19V20a2 2 0 0 1-2 2h-3v-6h-4v6H7a2 2 0 0 1-2-2v-7.55H3.66A1 1 0 0 1 3 10.7l9-7.9Z"/></svg>
-            @break
-        @case('admin.frontdesk')
-            <svg viewBox="0 0 24 24"><path fill-rule="evenodd" d="M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20Zm1-15a1 1 0 1 0-2 0v5c0 .38.21.72.55.9l3.5 1.75a1 1 0 1 0 .9-1.8L13 11.38V7Z" clip-rule="evenodd"/></svg>
-            @break
-        @case('admin.bookings')
-            <svg viewBox="0 0 24 24"><path d="M8 2a2 2 0 0 0-2 2H5a3 3 0 0 0-3 3v12a3 3 0 0 0 3 3h14a3 3 0 0 0 3-3V7a3 3 0 0 0-3-3h-1a2 2 0 0 0-2-2H8Zm0 2h8v2H8V4Zm-2 6h2v2H6v-2Zm4 0h8v2h-8v-2Zm-4 4h2v2H6v-2Zm4 0h8v2h-8v-2Zm-4 4h2v2H6v-2Zm4 0h8v2h-8v-2Z"/></svg>
-            @break
-        @case('admin.reviews')
-            <svg viewBox="0 0 24 24"><path d="m12 2.5 2.86 5.79 6.39.93-4.62 4.5 1.09 6.36L12 17.08l-5.72 3 1.09-6.36-4.62-4.5 6.39-.93L12 2.5Zm0 3.4-1.74 3.52-3.89.57 2.81 2.74-.66 3.87L12 14.77l3.48 1.83-.66-3.87 2.81-2.74-3.89-.57L12 5.9Z"/></svg>
-            @break
-        @case('admin.rooms')
-            <svg viewBox="0 0 24 24"><path d="M12.67 2.5a1 1 0 0 0-1.34 0l-9 8A1 1 0 0 0 3 12.25h1V20a2 2 0 0 0 2 2h4v-6h4v6h4a2 2 0 0 0 2-2v-7.75h1a1 1 0 0 0 .67-1.75l-9-8Z"/></svg>
-            @break
-        @case('admin.guests')
-        @case('admin.staff')
-            <svg viewBox="0 0 24 24"><path d="M9.5 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM2 19.5C2 15.91 5.36 13 9.5 13s7.5 2.91 7.5 6.5c0 .83-.67 1.5-1.5 1.5h-12c-.83 0-1.5-.67-1.5-1.5ZM17.5 10a3 3 0 1 0 0-6 3 3 0 0 0 0 6Zm.76 3.04c2.2.72 3.74 2.45 3.74 4.46 0 .83-.67 1.5-1.5 1.5H19c-.14-2.3-1.27-4.36-3.02-5.85.48-.1.98-.15 1.52-.15.26 0 .51.01.76.04Z"/></svg>
-            @break
-        @case('admin.dashboard')
-            <svg viewBox="0 0 24 24"><path d="M4 2a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H4Zm10 2a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2V4ZM4 14a2 2 0 0 0-2 2v4a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2v-4a2 2 0 0 0-2-2H4Zm10 2a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2v-4Z"/></svg>
-            @break
-        @case('admin.reports')
-            <svg viewBox="0 0 24 24"><path d="M4 2a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H4Zm3 16a1 1 0 0 1-2 0v-4a1 1 0 1 1 2 0v4Zm4 0a1 1 0 0 1-2 0V9a1 1 0 1 1 2 0v9Zm4 0a1 1 0 0 1-2 0v-6a1 1 0 1 1 2 0v6Zm4 0a1 1 0 0 1-2 0V6a1 1 0 1 1 2 0v12Z"/></svg>
-            @break
-        @case('admin.decision-support')
-            <svg viewBox="0 0 24 24"><path d="M12 2 2 7v10l10 5 10-5V7L12 2Zm0 2.2L18.8 7.6 12 11 5.2 7.6 12 4.2ZM4 9.2l7 3.5v6.7l-7-3.5V9.2Zm9 10.2v-6.7l7-3.5v6.7l-7 3.5Z"/></svg>
-            @break
-        @case('admin.promos')
-            <svg viewBox="0 0 24 24"><path d="M21 12.59 12.59 21a2 2 0 0 1-2.83 0L3 14.24A2 2 0 0 1 2.41 13V4a2 2 0 0 1 2-2h9a2 2 0 0 1 1.41.59L21 8.76a2.7 2.7 0 0 1 0 3.83ZM7.5 6A1.5 1.5 0 1 0 7.5 9 1.5 1.5 0 0 0 7.5 6Z"/></svg>
-            @break
-        @case('admin.activity')
-            <svg viewBox="0 0 24 24"><path d="M6 3h12a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Zm0 2v14h12V5H6Zm2 3h2v2H8V8Zm4 0h4v2h-4V8Zm-4 6h2v2H8v-2Zm4 0h4v2h-4v-2Z"/></svg>
-            @break
-        @case('admin.account')
-            <svg viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M10 3h4l.5 2.6 1.7.9 2.5-.9 2 3.4-2 1.7v2.6l2 1.7-2 3.4-2.5-.9-1.7.9L14 21h-4l-.5-2.6-1.7-.9-2.5.9-2-3.4 2-1.7v-2.6l-2-1.7 2-3.4 2.5.9 1.7-.9Z"/><circle cx="12" cy="12" r="3"/></g></svg>
-            @break
-        @default
-            <svg viewBox="0 0 24 24"><path d="M5 3a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2H5Z"/></svg>
-    @endswitch
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" focusable="false">
+        @switch($route)
+            @case('home')
+                <path d="m3 11 9-8 9 8M5 10v10h5v-6h4v6h5V10"/>
+                @break
+            @case('admin.dashboard')
+                <rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>
+                @break
+            @case('admin.frontdesk')
+                <circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>
+                @break
+            @case('admin.bookings')
+                <rect x="3" y="5" width="18" height="16" rx="3"/><path d="M7 3v4m10-4v4M3 10h18m-12 5 2 2 4-4"/>
+                @break
+            @case('admin.reviews')
+                <path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-3-5.6 3 1.1-6.2L3 9.6l6.2-.9L12 3Z"/>
+                @break
+            @case('admin.rooms')
+                <path d="M3 19V7m18 12v-5a2 2 0 0 0-2-2h-8v5M3 17h18"/><circle cx="7" cy="11" r="2"/>
+                @break
+            @case('admin.guests')
+                <circle cx="9" cy="8" r="3"/><path d="M3 20v-1a6 6 0 0 1 12 0v1m1-15a3 3 0 0 1 0 6m1 3a5 5 0 0 1 4 5v1"/>
+                @break
+            @case('admin.staff')
+                <rect x="3" y="5" width="18" height="14" rx="3"/><circle cx="8.5" cy="10" r="1.5"/><path d="M6 15a2.5 2.5 0 0 1 5 0m3-5h4m-4 4h4"/>
+                @break
+            @case('admin.reports')
+                <path d="M4 4v16h16M8 16v-4m5 4V8m5 8V5"/>
+                @break
+            @case('admin.decision-support')
+                <path d="M12 3a6 6 0 0 0-4 10.5c1.1 1 1.5 1.8 1.5 3.5h5c0-1.7.4-2.5 1.5-3.5A6 6 0 0 0 12 3Zm-2 17h4"/>
+                @break
+            @case('admin.promos')
+                <path d="M3 4h8l9.4 9.4a1.8 1.8 0 0 1 0 2.5l-4.5 4.5a1.8 1.8 0 0 1-2.5 0L3 10V4Z"/><circle cx="7.5" cy="8" r="1"/>
+                @break
+            @case('admin.activity')
+                <rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 8h6m-6 4h6m-6 4h4"/>
+                @break
+            @case('admin.account')
+                <path d="M10 3h4l.5 2.6 1.7.9 2.5-.9 2 3.4-2 1.7v2.6l2 1.7-2 3.4-2.5-.9-1.7.9L14 21h-4l-.5-2.6-1.7-.9-2.5.9-2-3.4 2-1.7v-2.6L3.3 9l2-3.4 2.5.9 1.7-.9Z"/><circle cx="12" cy="12" r="3"/>
+                @break
+            @default
+                <circle cx="12" cy="12" r="8"/><path d="M12 11v5m0-8h.01"/>
+        @endswitch
+    </svg>
 </i>

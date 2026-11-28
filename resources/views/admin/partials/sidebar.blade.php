@@ -20,7 +20,7 @@
         display: block;
         width: 18px;
         height: 18px;
-        fill: currentColor;
+        fill: none;
     }
 </style>
 <aside class="admin-sidebar">
