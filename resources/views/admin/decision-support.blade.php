@@ -31,7 +31,14 @@
         html.dark-mode .dss-review-count { background: rgba(227,138,0,.18); color: #ffc16b; }
         html.dark-mode .dss-review-copy strong { color: #fff0dc; }
         html.dark-mode .dss-review-copy small { color: #cdbbae; }
-        html.dark-mode .dss-review-banner a { color: #ffc16b; }
+        html.dark-mode .dss-review-banner a[data-carol-promo-link] {
+            background: #914507 !important;
+            color: #fff8ee !important;
+            border-color: #bc7536 !important;
+        }
+        html.dark-mode .dss-review-banner a[data-carol-promo-link]:is(:hover, :focus-visible) {
+            background: #a34f0a !important;
+        }
         .dss-settings-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
         .dss-settings-card { min-width: 0; padding: 16px; border: 1px solid var(--line); border-radius: 10px; background: var(--paper); }
         .dss-page .panel-heading { flex-wrap: wrap; gap: 12px; }
