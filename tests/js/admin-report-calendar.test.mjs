@@ -22,6 +22,8 @@ test('bookings date picker selects past dates and clears without submitting', as
     await page.addScriptTag({ type: 'module', content: await load('public/js/admin-report-calendar.mjs') });
     await page.evaluate(() => window.mountReportDateCalendars(document.querySelector('[data-booking-date-calendar]')));
     const trigger = page.locator('[data-date-trigger="arrival"]');
+    assert.equal(await trigger.getByText('Arrival or departure date', {exact: true}).isVisible(), false);
+    assert.equal(await page.getByRole('button', {name: /Arrival or departure date.*Jan/}).count(), 1);
     const submittedDate = () => page.evaluate(() => new FormData(document.querySelector('form')).get('arrival'));
     await trigger.click();
     const dialog = page.getByRole('dialog');

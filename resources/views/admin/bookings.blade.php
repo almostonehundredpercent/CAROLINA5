@@ -270,7 +270,7 @@
                     <div class="report-date-field booking-date-field" data-booking-date-calendar>
                         <input type="date" name="arrival" value="{{ request('arrival') }}" aria-label="Arrival or departure date">
                         <button type="button" class="report-date-trigger" data-date-trigger="arrival" aria-haspopup="dialog" aria-expanded="false" aria-controls="booking-arrival-calendar" aria-labelledby="booking-date-label booking-date-value" hidden>
-                            <span id="booking-date-label" class="sr-only">Arrival or departure date</span>
+                            <span id="booking-date-label" hidden>Arrival or departure date</span>
                             <span id="booking-date-value" class="report-date-value" data-date-value>Any date</span>
                             <svg viewBox="0 0 20 20" aria-hidden="true"><rect x="3" y="5" width="14" height="12" rx="2"/><path d="M6 3v4M14 3v4M3 9h14"/></svg>
                         </button>
