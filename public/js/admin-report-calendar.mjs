@@ -60,7 +60,10 @@ export function mountReportDateCalendars(root) {
     const form = root.closest('form');
     if (!form) return;
 
-    const fields = {
+    const single = root.hasAttribute('data-booking-date-calendar');
+    const fields = single ? {
+        arrival: { input: form.querySelector('[name="arrival"]'), trigger: root.querySelector('[data-date-trigger="arrival"]'), calendar: root.querySelector('[data-date-calendar="arrival"]') },
+    } : {
         from: { input: form.querySelector('[name="from"]'), trigger: root.querySelector('[data-date-trigger="from"]'), calendar: root.querySelector('[data-date-calendar="from"]') },
         to: { input: form.querySelector('[name="to"]'), trigger: root.querySelector('[data-date-trigger="to"]'), calendar: root.querySelector('[data-date-calendar="to"]') },
     };
@@ -71,7 +74,7 @@ export function mountReportDateCalendars(root) {
     const error = form.querySelector('#report-range-error');
     let serverError = error?.textContent.trim() || '';
     let hasInteracted = false;
-    let anchor = fields.from.input.value ? 'from' : 'to';
+    let anchor = fields.from?.input.value ? 'from' : 'to';
     let openField = null;
     const cursors = { from: null, to: null };
 
@@ -80,6 +83,7 @@ export function mountReportDateCalendars(root) {
     };
 
     const validateRange = () => {
+        if (single) return;
         const fromValue = fields.from.input.value;
         const toValue = fields.to.input.value;
         let message = '';
@@ -95,8 +99,8 @@ export function mountReportDateCalendars(root) {
     };
 
     const updateTriggers = () => {
-        for (const key of ['from', 'to']) {
-            fields[key].trigger.querySelector('[data-date-value]').textContent = formattedDate(fields[key].input.value);
+        for (const key of Object.keys(fields)) {
+            fields[key].trigger.querySelector('[data-date-value]').textContent = single && !fields[key].input.value ? 'Any date' : formattedDate(fields[key].input.value);
         }
     };
 
@@ -165,7 +169,14 @@ export function mountReportDateCalendars(root) {
         }).join('');
 
         field.calendar.innerHTML = `<div class="report-calendar-head"><button type="button" data-month-shift="-1" aria-label="Previous month"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="m12.5 4.5-5 5.5 5 5.5"/></svg></button><strong aria-live="polite">${monthLabel}</strong><button type="button" data-month-shift="1" aria-label="Next month"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="m7.5 4.5 5 5.5-5 5.5"/></svg></button><button type="button" data-calendar-close aria-label="Close calendar"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="m5 5 10 10M15 5 5 15"/></svg></button></div><div class="report-calendar-week" aria-hidden="true">${['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => `<span>${day}</span>`).join('')}</div><div class="report-calendar-days">${cells}</div><div class="report-calendar-foot"><button type="button" data-select-today${((min && utcDay(todayISO()) < utcDay(min)) || (max && utcDay(todayISO()) > utcDay(max))) ? ' disabled' : ''}>Today</button><span>${min && max ? 'Up to 3 months' : 'Choose a date'}</span></div>`;
-        field.calendar.setAttribute('aria-label', `Choose ${key === 'from' ? 'start' : 'end'} date`);
+        if (single) {
+            const clear = document.createElement('button');
+            clear.type = 'button';
+            clear.dataset.clearDate = '';
+            clear.textContent = 'Clear';
+            field.calendar.querySelector('.report-calendar-foot span').replaceWith(clear);
+        }
+        field.calendar.setAttribute('aria-label', single ? 'Choose arrival or departure date' : `Choose ${key === 'from' ? 'start' : 'end'} date`);
     };
 
     const open = (key) => {
@@ -186,6 +197,11 @@ export function mountReportDateCalendars(root) {
         serverError = '';
         hasInteracted = true;
         fields[key].input.value = value;
+        if (single) {
+            updateTriggers();
+            close(true);
+            return;
+        }
         if (key === 'from') {
             const latestTo = shiftMonths(value, 3);
             if (!fields.to.input.value || utcDay(fields.to.input.value) < utcDay(value) || utcDay(fields.to.input.value) > utcDay(latestTo)) {
@@ -199,9 +215,13 @@ export function mountReportDateCalendars(root) {
         close(true);
     };
 
-    for (const key of ['from', 'to']) {
+    for (const key of Object.keys(fields)) {
         fields[key].trigger.addEventListener('click', () => open(key));
         fields[key].calendar.addEventListener('click', (event) => {
+            if (single && event.target.closest('[data-clear-date]')) {
+                handleSelect(key, '');
+                return;
+            }
             if (event.target.closest('[data-calendar-close]')) {
                 close(true);
                 return;
@@ -241,6 +261,10 @@ export function mountReportDateCalendars(root) {
 
     updateTriggers();
     validateRange();
+    if (single) {
+        fields.arrival.input.type = 'hidden';
+        fields.arrival.trigger.hidden = false;
+    }
 }
 
 if (typeof window !== 'undefined') window.mountReportDateCalendars = mountReportDateCalendars;

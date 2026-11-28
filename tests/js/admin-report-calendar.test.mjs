@@ -8,6 +8,36 @@ try {
     calendarModule = await import('../../public/js/admin-report-calendar.mjs');
 } catch {}
 
+test('bookings date picker selects past dates and clears without submitting', async (t) => {
+    const browser = await chromium.launch();
+    t.after(() => browser.close());
+    const page = await browser.newPage({ viewport: { width: 360, height: 720 } });
+    page.setDefaultTimeout(2000);
+    const load = (path) => readFile(new URL('../../' + path, import.meta.url), 'utf8');
+    const template = await load('resources/views/admin/bookings.blade.php');
+    const field = template.match(/<div class="report-date-field booking-date-field"[\s\S]*?<\/div>\s*<\/div>/)[0];
+    await page.setContent('<html class="dark-mode"><body><form class="booking-filters">' + field.replace("{{ request('arrival') }}", '2020-01-15') + '<button type="submit">Filter</button></form></body></html>');
+    await page.addStyleTag({ content: await load('public/css/admin.css') });
+    await page.addStyleTag({ content: await load('public/css/admin-report-calendar.css') });
+    await page.addScriptTag({ type: 'module', content: await load('public/js/admin-report-calendar.mjs') });
+    await page.evaluate(() => window.mountReportDateCalendars(document.querySelector('[data-booking-date-calendar]')));
+    const trigger = page.locator('[data-date-trigger="arrival"]');
+    const submittedDate = () => page.evaluate(() => new FormData(document.querySelector('form')).get('arrival'));
+    await trigger.click();
+    const dialog = page.getByRole('dialog');
+    assert.equal(await dialog.evaluate(el => getComputedStyle(el).backgroundColor), 'rgb(33, 25, 20)');
+    await dialog.getByRole('button', {name: 'Previous month'}).click();
+    await dialog.locator('[data-date-value="2019-12-10"]').click();
+    assert.equal(await submittedDate(), '2019-12-10');
+    await trigger.click();
+    await page.keyboard.press('Escape');
+    assert.equal(await trigger.evaluate(el => el === document.activeElement), true);
+    await trigger.click();
+    await dialog.getByRole('button', {name: 'Clear'}).click();
+    assert.equal(await submittedDate(), '');
+    assert.match(await trigger.innerText(), /Any date/);
+});
+
 test('report calendar exports the real date-grid behavior', () => {
     assert.ok(calendarModule?.buildMonthCells, 'the custom report calendar module should expose its month-grid behavior');
     assert.deepEqual(calendarModule.buildMonthCells(2026, 9), [

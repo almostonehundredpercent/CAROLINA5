@@ -6,6 +6,11 @@
     <title>Bookings - Carolina Admin</title>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ asset('css/admin.css') }}?v={{ filemtime(public_path('css/admin.css')) }}">
+    <link rel="stylesheet" href="{{ asset('css/admin-report-calendar.css') }}?v={{ filemtime(public_path('css/admin-report-calendar.css')) }}">
+    <script type="module">
+        import { mountReportDateCalendars } from "{{ asset('js/admin-report-calendar.mjs') }}?v={{ filemtime(public_path('js/admin-report-calendar.mjs')) }}";
+        mountReportDateCalendars(document.querySelector('[data-booking-date-calendar]'));
+    </script>
     <style>
         .booking-actions {
             display: grid;
@@ -262,7 +267,15 @@
                             <option value="{{ $filterStatus }}" @selected(request('status') === $filterStatus)>{{ $filterStatus === 'pending' ? 'Pending staff confirmation' : ucfirst($filterStatus) }}</option>
                         @endforeach
                     </select>
-                    <input type="date" name="arrival" value="{{ request('arrival') }}" aria-label="Arrival or departure date">
+                    <div class="report-date-field booking-date-field" data-booking-date-calendar>
+                        <input type="date" name="arrival" value="{{ request('arrival') }}" aria-label="Arrival or departure date">
+                        <button type="button" class="report-date-trigger" data-date-trigger="arrival" aria-haspopup="dialog" aria-expanded="false" aria-controls="booking-arrival-calendar" aria-labelledby="booking-date-label booking-date-value" hidden>
+                            <span id="booking-date-label" class="sr-only">Arrival or departure date</span>
+                            <span id="booking-date-value" class="report-date-value" data-date-value>Any date</span>
+                            <svg viewBox="0 0 20 20" aria-hidden="true"><rect x="3" y="5" width="14" height="12" rx="2"/><path d="M6 3v4M14 3v4M3 9h14"/></svg>
+                        </button>
+                        <div id="booking-arrival-calendar" class="report-date-calendar" data-date-calendar="arrival" role="dialog" aria-label="Choose arrival or departure date" hidden></div>
+                    </div>
                     <select name="per_page" class="booking-page-size" aria-label="Bookings per page" onchange="this.form.requestSubmit()">
                         @foreach([5, 15, 25, 50, 100] as $pageSize)
                             <option value="{{ $pageSize }}" @selected($individualBookings->perPage() === $pageSize)>{{ $pageSize }} per page</option>

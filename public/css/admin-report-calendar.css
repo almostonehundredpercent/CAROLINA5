@@ -36,6 +36,9 @@
 }
 
 .booking-filters .report-date-trigger { padding: 9px 12px; }
+.booking-filters .booking-date-field { flex: 0 1 220px; }
+.booking-date-field .report-date-trigger[hidden],
+.booking-date-field input[type="hidden"] { display: none; }
 
 .report-date-trigger:hover,
 .report-date-trigger[aria-expanded="true"] {
