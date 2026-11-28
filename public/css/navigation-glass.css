@@ -1,22 +1,23 @@
 /* Shared public-site header: the espresso glass treatment stays scoped to navigation. */
 .nav .brand.brand--heritage {
     flex: none;
-    gap: 12px;
-    color: #fff3df;
-    font: 700 clamp(1.35rem, 2.2vw, 1.85rem)/1 Georgia, serif;
+    gap: 9px;
+    color: #f7ebd7;
+    font: 700 1.75rem/.94 'Playfair Display', Georgia, serif;
 }
-.nav .brand--heritage .brand-logo { width: 46px; height: 46px; box-shadow: none; }
-.nav .brand--heritage .brand-wordmark { display: grid; gap: 4px; white-space: nowrap; }
+.nav .brand--heritage .brand-logo { width: 54px; height: 54px; box-shadow: none; }
+.nav .brand--heritage .brand-wordmark { display: grid; gap: 5px; white-space: nowrap; }
 .nav .brand--heritage .brand-wordmark small {
     margin: 0;
-    color: #efbc79;
-    font: 700 .62rem/1.2 'DM Sans', Arial, sans-serif;
-    letter-spacing: .18em;
+    color: #e2aa60;
+    font: 700 .625rem/1.2 'DM Sans', Arial, sans-serif;
+    letter-spacing: .29em;
 }
-@media (max-width: 800px) {
-    .nav .brand.brand--heritage { gap: 9px; }
-    .nav .brand--heritage .brand-logo { width: 39px; height: 39px; }
-    .nav .brand--heritage .brand-wordmark small { font-size: .56rem; }
+@media (max-width: 1100px) {
+    .nav .brand.brand--heritage { gap: 7px; font-size: 1.4rem; }
+    .nav .brand--heritage .brand-logo { width: 43px; height: 43px; }
+    .nav .brand--heritage .brand-wordmark { gap: 4px; }
+    .nav .brand--heritage .brand-wordmark small { font-size: .5rem; }
 }
 .nav {
     background-color: rgba(28, 20, 15, 0.9);
