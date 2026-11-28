@@ -60,13 +60,14 @@ class RoomAvailability
             return null; // A manual closure without a future end cannot be predicted.
         }
 
+        $checkoutCutoff = $from->copy()->subHours(Booking::CLEANING_HOURS);
         $intervals = Booking::where('room_id', $room->id)->blocking()
-            ->where(fn ($query) => $query->where('check_out_at', '>', $from)
-                ->orWhere(fn ($legacy) => $legacy->whereNull('check_in_at')->whereDate('check_out', '>=', $from->toDateString())))
+            ->where(fn ($query) => $query->where('check_out_at', '>', $checkoutCutoff)
+                ->orWhere(fn ($legacy) => $legacy->whereNull('check_in_at')->whereDate('check_out', '>', $checkoutCutoff->toDateString())))
             ->get(['check_in', 'check_out', 'check_in_at', 'check_out_at'])
             ->map(fn (Booking $booking) => [
-                $booking->check_in_at ?? $booking->check_in->copy()->startOfDay(),
-                $booking->check_out_at ?? $booking->check_out->copy()->startOfDay(),
+                ($booking->check_in_at ?? $booking->check_in->copy()->startOfDay())->copy()->subHours(Booking::CLEANING_HOURS),
+                ($booking->check_out_at ?? $booking->check_out->copy()->startOfDay())->copy()->addHours(Booking::CLEANING_HOURS),
             ])->all();
 
         $blocks = RoomBlock::where('room_id', $room->id)->whereNull('completed_at')

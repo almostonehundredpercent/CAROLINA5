@@ -127,7 +127,9 @@ test('turnover priorities only pair confirmed stays in the same room and day, or
     $shortGapRoom = decisionSupportTestRoom('Short gap room');
     $shortDeparture = $day->copy()->setTime(11, 0);
     decisionSupportTestBooking($guest, $shortGapRoom, $shortDeparture->copy()->subHours(6), $shortDeparture);
-    decisionSupportTestBooking($guest, $shortGapRoom, $shortDeparture->copy()->setTime(12, 0), $shortDeparture->copy()->setTime(18, 0));
+    $existingArrival = decisionSupportTestBooking($guest, $shortGapRoom, $shortDeparture->copy()->setTime(13, 0), $shortDeparture->copy()->setTime(19, 0));
+    // Simulate a reservation made before the cleaning-buffer rule applied.
+    Booking::whereKey($existingArrival->id)->update(['check_in_at' => $shortDeparture->copy()->setTime(12, 0)]);
 
     $differentDayRoom = decisionSupportTestRoom('Different day room');
     $lateDeparture = $day->copy()->setTime(22, 0);
@@ -137,6 +139,7 @@ test('turnover priorities only pair confirmed stays in the same room and day, or
     $this->actingAsStaff($admin)
         ->get(route('admin.dashboard'))
         ->assertOk()
+        ->assertSee('Insufficient room-prep time for Short gap room')
         ->assertViewHas('turnovers', function (Collection $turnovers) {
             return $turnovers->count() === 2
                 && $turnovers->first()['room']->name === 'Short gap room'

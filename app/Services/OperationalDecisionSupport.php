@@ -123,25 +123,24 @@ class OperationalDecisionSupport
         }
 
         $dismissedSignatures = array_flip($dismissedSignatures);
-        $zeroGapTurnovers = $this->upcomingTurnovers()
-            ->filter(fn (array $turnover) => $turnover['gap_minutes'] === 0)
+        $shortTurnovers = $this->upcomingTurnovers()
+            ->filter(fn (array $turnover) => $turnover['gap_minutes'] < Booking::CLEANING_HOURS * 60)
             ->reverse();
-        foreach ($zeroGapTurnovers as $zeroGapTurnover) {
-            if (isset($dismissedSignatures[$zeroGapTurnover['signature']])) {
+        foreach ($shortTurnovers as $turnover) {
+            if (isset($dismissedSignatures[$turnover['signature']])) {
                 continue;
             }
 
-            $roomName = $zeroGapTurnover['room']?->name ?? 'A room';
-            $signature = $zeroGapTurnover['signature'];
+            $roomName = $turnover['room']?->name ?? 'A room';
             $signals->prepend([
                 'kind' => 'zero_turnover_gap',
-                'room_id' => (int) $zeroGapTurnover['room']?->id,
-                'signature' => $signature,
-                'departure_booking_id' => $zeroGapTurnover['departure_booking_id'],
-                'next_arrival_booking_id' => $zeroGapTurnover['next_arrival_booking_id'],
-                'title' => "No room-prep time for {$roomName}",
-                'evidence' => 'Checkout and the next check-in are scheduled for the same time on '.$zeroGapTurnover['check_out_at']->format('D, M j · g:i A').'.',
-                'rule' => 'Triggered when confirmed stays in one room have identical checkout and next check-in times within the next 7 days.',
+                'room_id' => (int) $turnover['room']?->id,
+                'signature' => $turnover['signature'],
+                'departure_booking_id' => $turnover['departure_booking_id'],
+                'next_arrival_booking_id' => $turnover['next_arrival_booking_id'],
+                'title' => "Insufficient room-prep time for {$roomName}",
+                'evidence' => 'Only '.$turnover['gap_label'].' between checkout and the next check-in on '.$turnover['check_out_at']->format('D, M j · g:i A').'.',
+                'rule' => 'Triggered when the next confirmed check-in leaves less than '.Booking::CLEANING_HOURS.' hours after checkout in the same room.',
                 'recommendation' => 'Confirm to review both bookings here.',
             ]);
         }
@@ -216,7 +215,8 @@ class OperationalDecisionSupport
                 && $candidate->room_id === $departure->room_id
                 && $candidate->check_in_at
                 && $candidate->check_in_at->greaterThanOrEqualTo($departure->check_out_at)
-                && $candidate->check_in_at->toDateString() === $departure->check_out_at->toDateString());
+                && ($candidate->check_in_at->toDateString() === $departure->check_out_at->toDateString()
+                    || $candidate->check_in_at->lt($departure->check_out_at->copy()->addHours(Booking::CLEANING_HOURS))));
 
             if (! $nextArrival) {
                 return null;
@@ -288,6 +288,9 @@ class OperationalDecisionSupport
                     $block->starts_at->getTimestamp(),
                     $block->ends_at->getTimestamp(),
                 ])->all();
+                foreach ($allBookingIntervals as [, $checkout]) {
+                    $operationIntervals[] = [$checkout, $checkout + Booking::CLEANING_HOURS * 3600];
+                }
 
                 $window = [$windowStart->getTimestamp(), $windowEnd->getTimestamp()];
                 $operationSeconds = $this->durationWithin($operationIntervals, $window);

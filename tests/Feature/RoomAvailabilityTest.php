@@ -4,6 +4,7 @@ use App\Models\Booking;
 use App\Models\Room;
 use App\Models\RoomBlock;
 use App\Models\User;
+use App\Support\RoomAvailability;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
@@ -121,6 +122,56 @@ function availabilityTestBooking(Room $room, Carbon $start, Carbon $end): Bookin
     ]);
 }
 
+test('a future 22 hour stay reserves two hours of cleaning before checkout is recorded', function () {
+    $this->travelTo(Carbon::parse('2026-11-28 04:00:00', 'UTC'));
+    $room = availabilityTestRoom('Room 1');
+    $arrival = Carbon::parse('2026-11-29 12:00:00', 'UTC');
+    $checkout = $arrival->copy()->addHours(22);
+    $booking = availabilityTestBooking($room, $arrival, $checkout);
+    $readyAt = $checkout->copy()->addHours(2);
+
+    expect($booking->fresh()->check_out_at->equalTo($checkout))->toBeTrue()
+        ->and($room->blocks()->exists())->toBeFalse()
+        ->and(RoomAvailability::nextAvailableAt($room, $checkout, 3)->equalTo($readyAt))->toBeTrue();
+
+    foreach ([$checkout, $checkout->copy()->addHour(), $readyAt] as $start) {
+        $this->get(route('rooms.availability', [
+            'room' => $room,
+            'start' => $start->toIso8601String(),
+            'end' => $start->copy()->addHours(3)->toIso8601String(),
+            'booking_type' => 'hourly',
+        ]))->assertOk()->assertJson(['available' => $start->equalTo($readyAt)]);
+    }
+
+    expect(fn () => availabilityTestBooking($room, $checkout->copy()->addHour(), $checkout->copy()->addHours(4)))
+        ->toThrow(\Illuminate\Validation\ValidationException::class);
+    expect(availabilityTestBooking($room, $readyAt, $readyAt->copy()->addHours(3))->exists)->toBeTrue();
+});
+
+test('staff cannot check in an existing arrival while cleaning from a late checkout is active', function () {
+    Mail::fake();
+    $this->travelTo(Carbon::parse('2026-11-30 04:00:00', 'UTC'));
+    $room = availabilityTestRoom('Late checkout room');
+    $arrival = Carbon::parse('2026-11-30 12:00:00', 'UTC');
+    $booking = availabilityTestBooking($room, $arrival, $arrival->copy()->addHours(3));
+    RoomBlock::create([
+        'room_id' => $room->id,
+        'status' => 'cleaning',
+        'starts_at' => $arrival->copy()->subMinutes(90),
+        'ends_at' => $arrival->copy()->addMinutes(30),
+    ]);
+    $this->actingAsStaff(User::factory()->create(['is_admin' => true]));
+
+    $this->post(route('admin.bookings.check-in', $booking), ['action' => 'check_in'])
+        ->assertUnprocessable();
+    expect($booking->fresh()->checked_in_at)->toBeNull();
+
+    $this->travel(30)->minutes();
+    $this->post(route('admin.bookings.check-in', $booking), ['action' => 'check_in'])
+        ->assertRedirect();
+    expect($booking->fresh()->checked_in_at->equalTo($arrival->copy()->addMinutes(30)))->toBeTrue();
+});
+
 test('room operation scheduling rejects a reservation overlap', function () {
     $room = availabilityTestRoom();
     $admin = User::factory()->create(['is_admin' => true]);
@@ -171,7 +222,7 @@ test('hourly booking picker names the exact reserved window for its selected dat
     $response
         ->assertOk()
         ->assertSee('Booked times on Sep 29')
-        ->assertSee('1 PM – 7 PM');
+        ->assertSee('1 PM – 9 PM');
 
     $this->get(route('rooms.availability', [
         'room' => $room,

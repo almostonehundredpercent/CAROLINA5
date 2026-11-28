@@ -30,14 +30,16 @@ test('the public home page loads with a Carolina title', function () {
     $this->get('/')->assertOk()->assertSee('Carolina');
 });
 
-test('legacy date-only stays block hourly arrivals but allow checkout boundaries', function () {
+test('legacy date-only stays also leave time for cleaning', function () {
     $room = testRoom();
     $day = now()->addDays(4)->startOfDay();
     $booking = confirmedBooking($room, $day, $day->copy()->addDay());
     $booking->update(['check_in_at' => null, 'check_out_at' => null]);
     expect($room->bookings()->blocking()->overlapping($day->copy()->addHours(6), $day->copy()->addHours(12))->exists())->toBeTrue();
-    expect($room->bookings()->blocking()->overlapping($day->copy()->subDay(), $day)->exists())->toBeFalse();
-    expect($room->bookings()->blocking()->overlapping($day->copy()->addDay(), $day->copy()->addDays(2))->exists())->toBeFalse();
+    expect($room->bookings()->blocking()->overlapping($day->copy()->subDay(), $day)->exists())->toBeTrue();
+    expect($room->bookings()->blocking()->overlapping($day->copy()->subDay(), $day->copy()->subHours(2))->exists())->toBeFalse();
+    expect($room->bookings()->blocking()->overlapping($day->copy()->addDay(), $day->copy()->addDays(2))->exists())->toBeTrue();
+    expect($room->bookings()->blocking()->overlapping($day->copy()->addDay()->addHours(2), $day->copy()->addDays(2))->exists())->toBeFalse();
 });
 
 test('an administrator can sign in with a fresh session and must complete mfa', function () {

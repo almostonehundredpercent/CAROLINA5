@@ -419,7 +419,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 end.setTime(end.getTime() + duration * 3600000);
             }
             return end;
-        };        const isTimeBooked = (dateValue, time, duration) => { const start = dateAtBookingTime(dateValue, time), end = durationEnd(start, duration); return hourlyBlockedSlots.some(slot => start < new Date(slot.end) && end > new Date(slot.start)); };
+        };
+        const overlapsBlockedSlot = (start, end, slot) =>
+            start < new Date(slot.end) && end > new Date(slot.conflict_start ?? slot.start);
+        const isTimeBooked = (dateValue, time, duration) => {
+            const start = dateAtBookingTime(dateValue, time);
+            return hourlyBlockedSlots.some(slot => overlapsBlockedSlot(start, durationEnd(start, duration), slot));
+        };
         const hasAvailableStartTime = dateValue => candidateTimes.some(button => {
             const past = dateValue < todayValue || (dateValue === todayValue && button.dataset.time <= propertyNow.time);
             return !past && !isTimeBooked(dateValue, button.dataset.time, Number(hourlyHours.value));
@@ -452,7 +458,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const conflictingSlots = (date, time, duration) => {
             const start = dateAtBookingTime(date, time);
             const end = durationEnd(start, duration);
-            return hourlyBlockedSlots.filter(slot => start < new Date(slot.end) && end > new Date(slot.start));
+            return hourlyBlockedSlots.filter(slot => overlapsBlockedSlot(start, end, slot));
         };
         const describeSlot = slot => {
             const start = new Date(slot.start), end = new Date(slot.end);

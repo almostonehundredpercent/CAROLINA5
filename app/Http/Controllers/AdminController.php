@@ -208,12 +208,18 @@ class AdminController extends Controller
 
         if ($action === 'check_in') {
             $checkedIn = DB::transaction(function () use ($booking) {
-                Room::whereKey($booking->room_id)->lockForUpdate()->firstOrFail();
+                $room = Room::whereKey($booking->room_id)->lockForUpdate()->firstOrFail();
                 $locked = Booking::whereKey($booking->id)->lockForUpdate()->firstOrFail();
                 abort_if($locked->status !== 'confirmed' || $locked->checked_out_at, 422, 'Only confirmed bookings can be checked in.');
                 abort_if($locked->cancellation_request_status === 'requested', 422, 'Resolve the guest’s cancellation request before checking them in.');
-                abort_if($locked->check_in_at && $locked->check_in_at->gt(PropertyTime::now()), 422, 'This guest cannot be checked in before the scheduled arrival time.');
-                $locked->update(['checked_in_at' => PropertyTime::now(), 'status' => 'confirmed']);
+                $now = PropertyTime::now();
+                abort_if($locked->check_in_at && $locked->check_in_at->gt($now), 422, 'This guest cannot be checked in before the scheduled arrival time.');
+                $previousGuestIsStillInHouse = $room->bookings()->whereKeyNot($locked->id)
+                    ->whereNotNull('checked_in_at')->whereNull('checked_out_at')->exists();
+                $cleaningInProgress = $room->blocks()->where('status', 'cleaning')
+                    ->overlapping($now, $now->copy()->addSecond())->exists();
+                abort_if($previousGuestIsStillInHouse || $cleaningInProgress, 422, 'This room is still occupied or being cleaned. Check in the guest when the room is ready.');
+                $locked->update(['checked_in_at' => $now, 'status' => 'confirmed']);
 
                 return $locked;
             });
@@ -246,7 +252,7 @@ class AdminController extends Controller
                     'room_id' => $lockedRoom->id,
                     'status' => 'cleaning',
                     'starts_at' => $checkedOutAt,
-                    'ends_at' => $checkedOutAt->copy()->addHours(2),
+                    'ends_at' => $checkedOutAt->copy()->addHours(Booking::CLEANING_HOURS),
                     'notes' => $wasEarlyCheckoutRequest
                         ? 'Automatic 2-hour cleaning period after staff-confirmed early check-out.'
                         : 'Automatic 2-hour cleaning period after check-out.',
@@ -445,7 +451,7 @@ class AdminController extends Controller
                     'room_id' => $room->id,
                     'status' => 'cleaning',
                     'starts_at' => $resolvedAt,
-                    'ends_at' => $resolvedAt->copy()->addHours(2),
+                    'ends_at' => $resolvedAt->copy()->addHours(Booking::CLEANING_HOURS),
                     'notes' => 'Automatic 2-hour cleaning period after staff-confirmed early check-out.',
                     'created_by' => $request->user()->id,
                 ]);
@@ -1682,7 +1688,7 @@ class AdminController extends Controller
         $notes = $data['notes'] ?? null;
         $overlap = DB::transaction(function () use ($room, $startsAt, $endsAt, $override, $notes, $data, $request) {
             $lockedRoom = Room::whereKey($room->id)->lockForUpdate()->firstOrFail();
-            $overlap = $lockedRoom->bookings()->blocking()->overlapping($startsAt, $endsAt)->exists();
+            $overlap = $lockedRoom->bookings()->blocking()->overlapping($startsAt, $endsAt, includeCleaning: false)->exists();
 
             if ($overlap && (! $override || ! $request->user()->isAdmin())) {
                 throw ValidationException::withMessages(['operational_until' => 'This operation overlaps a confirmed stay. Choose another time, or have an Organization Admin record an override.']);

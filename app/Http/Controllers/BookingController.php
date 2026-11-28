@@ -184,14 +184,20 @@ class BookingController extends Controller
     {
         $slots = $room->bookings()
             ->blocking()
-            ->whereDate('check_out', '>=', Carbon::now('Asia/Manila')->toDateString())
+            ->whereDate('check_out', '>=', PropertyTime::now()->startOfDay()->subHours(Booking::CLEANING_HOURS)->toDateString())
             ->orderBy('check_in')
             ->get()
             ->map(function (Booking $booking) {
                 $start = $booking->check_in_at ?? $booking->check_in->copy()->startOfDay();
                 $end = $booking->check_out_at ?? $booking->check_out->copy()->startOfDay();
 
-                return ['start' => $start->toIso8601String(), 'end' => $end->toIso8601String(), 'booking_type' => $booking->booking_type, 'nights' => $booking->nights];
+                return [
+                    'start' => $start->toIso8601String(),
+                    'end' => $end->copy()->addHours(Booking::CLEANING_HOURS)->toIso8601String(),
+                    'conflict_start' => $start->copy()->subHours(Booking::CLEANING_HOURS)->toIso8601String(),
+                    'booking_type' => $booking->booking_type,
+                    'nights' => $booking->nights,
+                ];
             });
         $room->blocks()->whereNull('completed_at')
             ->where(fn ($active) => $active->whereNull('hold_expires_at')->orWhere('hold_expires_at', '>', now()))

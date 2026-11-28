@@ -36,7 +36,10 @@ test('a selected date with no valid start time cannot keep a booked time selecte
     const slots = [{ start: `${date}T06:00:00+00:00`, end: `${endDate}T00:00:00+00:00` }];
 
     try {
-        await page.setContent(`<label class="clean-select"><input id="hourly-hours" type="hidden" value="48"><span class="selector-display"></span></label>
+        await page.setContent(`<div class="hourly-rental" data-pricing='{"48":{"aircon":450}}'></div>
+            <div id="cooling-field"><select id="cooling-type"><option value="aircon">Air-conditioned</option></select></div>
+            <p id="cooling-note"></p><p id="breakfast-eligibility"></p>
+            <label class="clean-select"><input id="hourly-hours" type="hidden" value="48"><span class="selector-display"></span></label>
             <input id="hourly-date" value="${date}"><button id="hourly-date-trigger"></button>
             <section id="hourly-calendar" hidden><div id="hourly-calendar-days"></div><b id="hourly-calendar-month"></b><button id="hourly-calendar-prev"></button><button id="hourly-calendar-next"></button></section>
             <input id="hourly-time" value="06:00"><button id="hourly-time-trigger"></button>

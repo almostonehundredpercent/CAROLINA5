@@ -10,6 +10,8 @@ use Illuminate\Validation\ValidationException;
 
 class Booking extends Model
 {
+    public const CLEANING_HOURS = 2;
+
     protected $fillable = ['user_id', 'guest_name', 'guest_email', 'guest_phone', 'room_id', 'cooling_type', 'room_rate_at_booking', 'promo_code_id', 'reference', 'submission_token', 'check_in', 'check_out', 'check_in_at', 'check_out_at', 'booking_type', 'hours', 'guests', 'children_count', 'pets_count', 'nights', 'total_amount', 'promo_code', 'original_amount', 'discount_amount', 'deposit_amount', 'deposit_status', 'deposit_due_at', 'deposit_submitted_at', 'deposit_verified_at', 'deposit_verified_by', 'hold_expires_at', 'paymongo_checkout_attempt_id', 'payment_reminder_sent_at', 'check_in_reminder_sent_at', 'status', 'payment_method', 'payment_status', 'paid_at', 'special_request', 'add_ons', 'staff_notes', 'checked_in_at', 'checked_out_at', 'early_checkout_status', 'early_checkout_requested_at', 'early_checkout_reviewed_at', 'early_checkout_reviewed_by', 'review_invited_at', 'cancelled_at', 'cancelled_by', 'cancellation_reason', 'cancellation_request_status', 'cancellation_requested_at', 'cancellation_reviewed_at', 'cancellation_reviewed_by'];
 
     protected function casts(): array
@@ -238,8 +240,14 @@ class Booking extends Model
             ->update(['status' => 'cancelled', 'cancelled_at' => now(), 'cancellation_reason' => 'Unpaid reservation hold expired.']);
     }
 
-    public function scopeOverlapping($query, $startsAt, $endsAt)
+    public function scopeOverlapping($query, $startsAt, $endsAt, bool $includeCleaning = true)
     {
+        if ($includeCleaning) {
+            // Leave the same buffer after the existing stay and the proposed stay.
+            $startsAt = $startsAt->copy()->subHours(self::CLEANING_HOURS);
+            $endsAt = $endsAt->copy()->addHours(self::CLEANING_HOURS);
+        }
+
         return $query->where(function ($query) use ($startsAt, $endsAt) {
             $query->where(fn ($timed) => $timed->whereNotNull('check_in_at')->where('check_in_at', '<', $endsAt)->where('check_out_at', '>', $startsAt))
                 ->orWhere(fn ($legacy) => $legacy->whereNull('check_in_at')->whereDate('check_in', '<', $endsAt->copy()->ceilDay()->toDateString())->whereDate('check_out', '>', $startsAt->toDateString()));
