@@ -6528,3 +6528,80 @@ html.dark-mode .carol-confirm-dialog{border-color:var(--line);background:var(--p
 .carol-action-error{color:var(--danger,#a93226)}
 .carol-reminder-status{grid-template-columns:minmax(0,1fr) auto;align-items:center}
 @media(max-width:520px){.carol-reminder-status{grid-template-columns:1fr}.carol-reminder-status form,.carol-reminder-status button{width:100%}}
+
+/* CAROL recommendation cards: warm surfaces and clear action contrast. */
+.admin-main .carol-recommendation-card,
+.admin-main .carol-reminder-status {
+    border-color: #ead6c0;
+    background: linear-gradient(145deg, #fffdf9, #f8f0e7);
+    color: #30251d;
+    box-shadow: 0 6px 18px rgba(48, 31, 14, .08);
+}
+.admin-main .carol-recommendation-card h3,
+.admin-main .carol-recommendation-card .carol-recommendation-copy {
+    color: #30251d;
+}
+.admin-main .carol-recommendation-card p,
+.admin-main .carol-recommendation-card > small,
+.admin-main .carol-reminder-status span {
+    color: #66584c;
+}
+.admin-main .carol-action-button {
+    min-height: 40px;
+    border-color: #d8c4af;
+    background: #fffaf4;
+    color: #483626;
+    transition: background-color .16s ease, border-color .16s ease, transform .16s ease;
+}
+.admin-main .carol-action-button:hover:not(:disabled) {
+    border-color: #bd6a16;
+    background: #fff0dc;
+}
+.admin-main .carol-action-button.is-primary,
+.admin-main .carol-action-button.is-primary:disabled {
+    border-color: #a94f00 !important;
+    background: linear-gradient(135deg, #cf700b, #a94f00) !important;
+    color: #fff !important;
+}
+.admin-main .carol-action-button.is-primary:disabled {
+    opacity: .78;
+}
+.admin-main .carol-action-button:focus-visible {
+    outline: 3px solid #e7a64a;
+    outline-offset: 2px;
+}
+.admin-main .carol-action-result {
+    border: 1px solid #ead6c0;
+    background: #fffaf4;
+    color: #30251d;
+}
+html.dark-mode .admin-main .carol-recommendation-card,
+html.dark-mode .admin-main .carol-reminder-status {
+    border-color: rgba(255, 211, 165, .25);
+    background: linear-gradient(145deg, #3b2b20, #302118);
+    color: #fff4e8;
+    box-shadow: 0 8px 22px rgba(0, 0, 0, .2);
+}
+html.dark-mode .admin-main .carol-recommendation-card h3,
+html.dark-mode .admin-main .carol-recommendation-card .carol-recommendation-copy {
+    color: #fff4e8;
+}
+html.dark-mode .admin-main .carol-recommendation-card p,
+html.dark-mode .admin-main .carol-recommendation-card > small,
+html.dark-mode .admin-main .carol-reminder-status span {
+    color: #ddc9b5;
+}
+html.dark-mode .admin-main .carol-action-button:not(.is-primary) {
+    border-color: rgba(255, 211, 165, .28);
+    background: rgba(255, 249, 240, .06);
+    color: #fff1df;
+}
+html.dark-mode .admin-main .carol-action-button:not(.is-primary):hover:not(:disabled) {
+    border-color: #ffc16b;
+    background: rgba(227, 138, 0, .16);
+}
+html.dark-mode .admin-main .carol-action-result {
+    border-color: rgba(255, 211, 165, .22);
+    background: #302118;
+    color: #fff4e8;
+}
